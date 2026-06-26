@@ -1,9 +1,10 @@
 import { defineField, FieldType } from 'twenty-sdk/define';
 import { DEAL_LINE_ITEM_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/constants/crm-objects';
 import { LINE_ITEM_STAGES } from 'src/constants/stages';
+import { DEAL_LINE_ITEM_STAGE_FIELD_UNIVERSAL_IDENTIFIER } from 'src/constants/universal-identifiers';
 
 export default defineField({
-  universalIdentifier: 'b1c2d3e4-f5a6-7890-abcd-ef1234567001',
+  universalIdentifier: DEAL_LINE_ITEM_STAGE_FIELD_UNIVERSAL_IDENTIFIER,
   objectUniversalIdentifier: DEAL_LINE_ITEM_OBJECT_UNIVERSAL_IDENTIFIER,
   name: 'stage',
   type: FieldType.SELECT,

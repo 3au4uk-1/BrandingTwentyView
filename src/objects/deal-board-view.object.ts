@@ -1,7 +1,15 @@
-import { defineField, defineObject, FieldType } from 'twenty-sdk/define';
+import { defineObject, FieldType } from 'twenty-sdk/define';
+import {
+  DEAL_BOARD_VIEW_CHILD_COLUMNS_FIELD_UNIVERSAL_IDENTIFIER,
+  DEAL_BOARD_VIEW_FILTERS_FIELD_UNIVERSAL_IDENTIFIER,
+  DEAL_BOARD_VIEW_IS_DEFAULT_FIELD_UNIVERSAL_IDENTIFIER,
+  DEAL_BOARD_VIEW_OBJECT_UNIVERSAL_IDENTIFIER,
+  DEAL_BOARD_VIEW_PARENT_COLUMNS_FIELD_UNIVERSAL_IDENTIFIER,
+  DEAL_BOARD_VIEW_SORT_FIELD_UNIVERSAL_IDENTIFIER,
+  DEAL_BOARD_VIEW_VISIBILITY_FIELD_UNIVERSAL_IDENTIFIER,
+} from 'src/constants/universal-identifiers';
 
-export const DEAL_BOARD_VIEW_OBJECT_UNIVERSAL_IDENTIFIER =
-  'c3d4e5f6-a7b8-9012-cdef-345678901234';
+export { DEAL_BOARD_VIEW_OBJECT_UNIVERSAL_IDENTIFIER };
 
 export default defineObject({
   universalIdentifier: DEAL_BOARD_VIEW_OBJECT_UNIVERSAL_IDENTIFIER,
@@ -11,8 +19,8 @@ export default defineObject({
   labelPlural: 'Views реализации',
   icon: 'IconTable',
   fields: [
-    defineField({
-      universalIdentifier: 'd4e5f6a7-b8c9-0123-defa-456789012301',
+    {
+      universalIdentifier: DEAL_BOARD_VIEW_VISIBILITY_FIELD_UNIVERSAL_IDENTIFIER,
       name: 'visibility',
       type: FieldType.SELECT,
       label: 'Видимость',
@@ -20,37 +28,37 @@ export default defineObject({
         { value: 'personal', label: 'Личный', position: 0, color: 'blue' },
         { value: 'workspace', label: 'Общий', position: 1, color: 'green' },
       ],
-    }),
-    defineField({
-      universalIdentifier: 'd4e5f6a7-b8c9-0123-defa-456789012302',
+    },
+    {
+      universalIdentifier: DEAL_BOARD_VIEW_PARENT_COLUMNS_FIELD_UNIVERSAL_IDENTIFIER,
       name: 'parentColumns',
       type: FieldType.RAW_JSON,
       label: 'Колонки сделок',
-    }),
-    defineField({
-      universalIdentifier: 'd4e5f6a7-b8c9-0123-defa-456789012303',
+    },
+    {
+      universalIdentifier: DEAL_BOARD_VIEW_CHILD_COLUMNS_FIELD_UNIVERSAL_IDENTIFIER,
       name: 'childColumns',
       type: FieldType.RAW_JSON,
       label: 'Колонки позиций',
-    }),
-    defineField({
-      universalIdentifier: 'd4e5f6a7-b8c9-0123-defa-456789012304',
+    },
+    {
+      universalIdentifier: DEAL_BOARD_VIEW_FILTERS_FIELD_UNIVERSAL_IDENTIFIER,
       name: 'filters',
       type: FieldType.RAW_JSON,
       label: 'Фильтры',
-    }),
-    defineField({
-      universalIdentifier: 'd4e5f6a7-b8c9-0123-defa-456789012305',
+    },
+    {
+      universalIdentifier: DEAL_BOARD_VIEW_SORT_FIELD_UNIVERSAL_IDENTIFIER,
       name: 'sort',
       type: FieldType.RAW_JSON,
       label: 'Сортировка',
-    }),
-    defineField({
-      universalIdentifier: 'd4e5f6a7-b8c9-0123-defa-456789012306',
+    },
+    {
+      universalIdentifier: DEAL_BOARD_VIEW_IS_DEFAULT_FIELD_UNIVERSAL_IDENTIFIER,
       name: 'isDefault',
       type: FieldType.BOOLEAN,
       label: 'По умолчанию',
       defaultValue: false,
-    }),
+    },
   ],
 });

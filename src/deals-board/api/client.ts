@@ -1,4 +1,4 @@
-import { CoreApiClient } from 'twenty-sdk/clients';
+import { CoreApiClient } from 'twenty-client-sdk/core';
 
 let client: CoreApiClient | null = null;
 
