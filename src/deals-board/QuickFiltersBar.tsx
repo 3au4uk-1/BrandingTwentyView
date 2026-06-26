@@ -237,29 +237,6 @@ export const QuickFiltersBar = ({ colorScheme, value, onChange, onReset }: Quick
         ) : null}
       </div>
 
-      <select
-        value={value.oplata}
-        onChange={(event) =>
-          onChange({
-            ...value,
-            oplata: event.target.value as OplataQuickFilter,
-          })
-        }
-        style={{
-          border: `1px solid ${border}`,
-          borderRadius: '8px',
-          backgroundColor: inputBackground,
-          color: text,
-          padding: '6px 8px',
-          fontSize: '12px',
-          minWidth: '140px',
-        }}
-      >
-        <option value="all">Оплата: любая</option>
-        <option value="filled">Оплата: заполнена</option>
-        <option value="empty">Оплата: пусто</option>
-      </select>
-
       <input
         type="search"
         value={value.search}

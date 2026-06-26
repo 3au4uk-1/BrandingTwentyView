@@ -5,7 +5,7 @@ export const DEFAULT_PARENT_COLUMNS: ColumnConfig[] = [
   { field: 'loadDate', label: 'Дата', order: 1, visible: true, width: 100 },
   { field: 'companyName', label: 'Компания', order: 2, visible: true, width: 160 },
   { field: 'summary', label: 'Сводка позиций', order: 3, visible: true, width: 200 },
-  { field: 'links', label: 'Ссылки', order: 4, visible: true, width: 80 },
+  { field: 'links', label: 'Ссылки', order: 4, visible: false, width: 80 },
 ];
 
 export const DEFAULT_CHILD_COLUMNS: ColumnConfig[] = [

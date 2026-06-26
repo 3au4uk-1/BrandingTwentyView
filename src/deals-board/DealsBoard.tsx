@@ -60,7 +60,6 @@ const DealsBoardContent = () => {
     quickFilters.dateFrom,
     quickFilters.dateTo,
     quickFilters.search,
-    quickFilters.oplata,
     (quickFilters.stages ?? []).join(','),
   ]);
 
@@ -115,23 +114,16 @@ const DealsBoardContent = () => {
   }, [lineItems, mergedStages]);
 
   const visibleRecords = useMemo(() => {
-    let result = records;
-
-    if (stageMatchedOpportunityIds) {
-      result = result.filter((record) => stageMatchedOpportunityIds.has(record.id));
+    if (!stageMatchedOpportunityIds) {
+      return records;
     }
 
-    if (quickFilters.oplata === 'filled') {
-      result = result.filter((record) => Boolean(record.oplata));
-    } else if (quickFilters.oplata === 'empty') {
-      result = result.filter((record) => !record.oplata);
-    }
+    return records.filter((record) => stageMatchedOpportunityIds.has(record.id));
+  }, [records, stageMatchedOpportunityIds]);
 
-    return result;
-  }, [records, quickFilters.oplata, stageMatchedOpportunityIds]);
-
-  const visibleTotalCount =
-    stageMatchedOpportunityIds || quickFilters.oplata !== 'all' ? visibleRecords.length : totalCount;
+  const visibleTotalCount = stageMatchedOpportunityIds
+    ? visibleRecords.length
+    : totalCount;
 
   const loadError =
     viewsQuery.error ??
