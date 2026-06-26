@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { VIEW_VISIBILITY } from 'src/constants/view-visibility';
+
 import type { DealBoardViewRecord } from './types';
 
 type ViewSwitcherProps = {
@@ -43,8 +45,8 @@ export const ViewSwitcher = ({
   const sortedViews = useMemo(() => sortViews(views), [views]);
   const activeView =
     sortedViews.find((view) => view.id === activeViewId) ?? sortedViews.find((view) => view.isDefault);
-  const personalViews = sortedViews.filter((view) => view.visibility === 'personal');
-  const workspaceViews = sortedViews.filter((view) => view.visibility === 'workspace');
+  const personalViews = sortedViews.filter((view) => view.visibility === VIEW_VISIBILITY.PERSONAL);
+  const workspaceViews = sortedViews.filter((view) => view.visibility === VIEW_VISIBILITY.WORKSPACE);
 
   const background = colorScheme === 'dark' ? '#1d1d1d' : '#fff';
   const border = colorScheme === 'dark' ? '#404040' : '#ddd';

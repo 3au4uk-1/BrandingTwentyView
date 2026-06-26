@@ -1,4 +1,5 @@
 import type { LineItemStage } from 'src/constants/stages';
+import type { ViewVisibility } from 'src/constants/view-visibility';
 
 export type ColumnConfig = {
   field: string;
@@ -21,7 +22,7 @@ export type DealBoardSort = { field: string; direction: 'AscNullsFirst' | 'DescN
 export type DealBoardViewRecord = {
   id: string;
   name: string;
-  visibility: 'personal' | 'workspace';
+  visibility: ViewVisibility;
   parentColumns: ColumnConfig[];
   childColumns: ColumnConfig[];
   filters: DealBoardFilters;

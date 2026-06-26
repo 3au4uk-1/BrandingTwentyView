@@ -25,8 +25,8 @@ export default defineObject({
       type: FieldType.SELECT,
       label: 'Видимость',
       options: [
-        { value: 'personal', label: 'Личный', position: 0, color: 'blue' },
-        { value: 'workspace', label: 'Общий', position: 1, color: 'green' },
+        { value: 'PERSONAL', label: 'Личный', position: 0, color: 'blue' },
+        { value: 'WORKSPACE', label: 'Общий', position: 1, color: 'green' },
       ],
     },
     {

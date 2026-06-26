@@ -5,6 +5,7 @@ import {
   DEFAULT_CHILD_COLUMNS,
   DEFAULT_PARENT_COLUMNS,
 } from 'src/constants/column-definitions';
+import { VIEW_VISIBILITY } from 'src/constants/view-visibility';
 
 import {
   createDealBoardView,
@@ -22,7 +23,7 @@ export const useDealBoardViews = () => {
     mutationFn: () =>
       createDealBoardView({
         name: 'Базовый обзор',
-        visibility: 'workspace',
+        visibility: VIEW_VISIBILITY.WORKSPACE,
         parentColumns: DEFAULT_PARENT_COLUMNS,
         childColumns: DEFAULT_CHILD_COLUMNS,
         filters: {},

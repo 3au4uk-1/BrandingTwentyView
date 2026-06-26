@@ -4,6 +4,7 @@ import {
   DEFAULT_CHILD_COLUMNS,
   DEFAULT_PARENT_COLUMNS,
 } from 'src/constants/column-definitions';
+import { VIEW_VISIBILITY, type ViewVisibility } from 'src/constants/view-visibility';
 
 import { useCreateDealBoardView, useUpdateDealBoardView } from './hooks/useDealBoardViews';
 import type { DealBoardViewRecord } from './types';
@@ -26,13 +27,13 @@ export const ViewSettingsModal = ({
   const createViewMutation = useCreateDealBoardView();
   const updateViewMutation = useUpdateDealBoardView();
   const [name, setName] = useState('');
-  const [visibility, setVisibility] = useState<'personal' | 'workspace'>('personal');
+  const [visibility, setVisibility] = useState<ViewVisibility>(VIEW_VISIBILITY.PERSONAL);
 
   useEffect(() => {
     if (!isOpen) return;
 
     setName(initialView?.name ?? '');
-    setVisibility(initialView?.visibility ?? 'personal');
+    setVisibility(initialView?.visibility ?? VIEW_VISIBILITY.PERSONAL);
   }, [initialView, isOpen]);
 
   const isPending = createViewMutation.isPending || updateViewMutation.isPending;
@@ -142,7 +143,7 @@ export const ViewSettingsModal = ({
             <span>Видимость</span>
             <select
               value={visibility}
-              onChange={(event) => setVisibility(event.target.value as 'personal' | 'workspace')}
+              onChange={(event) => setVisibility(event.target.value as ViewVisibility)}
               style={{
                 borderRadius: '8px',
                 border: `1px solid ${border}`,
@@ -152,8 +153,8 @@ export const ViewSettingsModal = ({
                 fontSize: '12px',
               }}
             >
-              <option value="personal">Личный</option>
-              <option value="workspace">Общий</option>
+              <option value={VIEW_VISIBILITY.PERSONAL}>Личный</option>
+              <option value={VIEW_VISIBILITY.WORKSPACE}>Общий</option>
             </select>
           </label>
         </div>
