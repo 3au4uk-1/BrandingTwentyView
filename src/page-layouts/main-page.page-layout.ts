@@ -2,7 +2,7 @@ import { definePageLayout, PageLayoutTabLayoutMode } from 'twenty-sdk/define';
 
 import {
   APP_DISPLAY_NAME,
-  MAIN_PAGE_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
+  DEALS_BOARD_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
   MAIN_PAGE_LAYOUT_TAB_UNIVERSAL_IDENTIFIER,
   MAIN_PAGE_LAYOUT_UNIVERSAL_IDENTIFIER,
   MAIN_PAGE_WIDGET_UNIVERSAL_IDENTIFIER,
@@ -28,7 +28,7 @@ export default definePageLayout({
           configuration: {
             configurationType: 'FRONT_COMPONENT',
             frontComponentUniversalIdentifier:
-              MAIN_PAGE_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
+              DEALS_BOARD_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
           },
         },
       ],
