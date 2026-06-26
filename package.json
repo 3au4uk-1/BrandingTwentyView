@@ -17,7 +17,9 @@
     "test:unit": "vitest run --config vitest.unit.config.ts",
     "test:watch": "vitest"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@tanstack/react-query": "^5.101.1"
+  },
   "devDependencies": {
     "@types/node": "^24.7.2",
     "@types/react": "^19.0.0",
