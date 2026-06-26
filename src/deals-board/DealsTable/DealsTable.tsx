@@ -10,13 +10,10 @@ import { DONE_STAGES } from 'src/constants/stages';
 import { fetchCompanyNames } from '../api/companies';
 import type { ExpandMode } from '../hooks/useExpandMode';
 import { useExpandMode } from '../hooks/useExpandMode';
-import { useLineItems } from '../hooks/useLineItems';
-import { useOpportunities } from '../hooks/useOpportunities';
-import type { DealBoardViewRecord } from '../types';
+import type { DealBoardViewRecord, LineItemRow, OpportunityRow } from '../types';
 import { visibleColumns } from '../utils/columns';
 import { DealRow } from './DealRow';
 
-const PAGE_SIZE = 50;
 const EXPANDED_IDS_STORAGE_PREFIX = 'deals-board-expanded-ids';
 
 const shouldAutoExpand = (
@@ -29,17 +26,30 @@ const shouldAutoExpand = (
 type DealsTableProps = {
   colorScheme: 'light' | 'dark';
   activeView?: DealBoardViewRecord;
+  records: OpportunityRow[];
+  lineItems: LineItemRow[];
+  totalCount: number;
+  page: number;
+  totalPages: number;
+  onPageChange: (nextPage: number) => void;
+  isLoading?: boolean;
   isViewLoading?: boolean;
 };
 
-export const DealsTable = ({ colorScheme, activeView, isViewLoading = false }: DealsTableProps) => {
-  const [page, setPage] = useState(0);
+export const DealsTable = ({
+  colorScheme,
+  activeView,
+  records,
+  lineItems,
+  totalCount,
+  page,
+  totalPages,
+  onPageChange,
+  isLoading = false,
+  isViewLoading = false,
+}: DealsTableProps) => {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const { mode } = useExpandMode();
-
-  useEffect(() => {
-    setPage(0);
-  }, [activeView?.id]);
 
   const parentColumns = useMemo(
     () => visibleColumns(activeView?.parentColumns ?? DEFAULT_PARENT_COLUMNS),
@@ -49,26 +59,6 @@ export const DealsTable = ({ colorScheme, activeView, isViewLoading = false }: D
     () => visibleColumns(activeView?.childColumns ?? DEFAULT_CHILD_COLUMNS),
     [activeView?.childColumns],
   );
-
-  const opportunitiesQuery = useOpportunities({
-    viewId: activeView?.id,
-    filters: activeView?.filters ?? {},
-    sort: activeView?.sort ?? [],
-    page,
-    pageSize: PAGE_SIZE,
-    enabled: !isViewLoading && Boolean(activeView),
-  });
-
-  const records = opportunitiesQuery.data?.records ?? [];
-  const totalCount = opportunitiesQuery.data?.totalCount ?? 0;
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-  const visibleOpportunityIds = useMemo(() => records.map((record) => record.id), [records]);
-
-  useEffect(() => {
-    if (page > totalPages - 1) {
-      setPage(Math.max(0, totalPages - 1));
-    }
-  }, [page, totalPages]);
 
   const companyIds = useMemo(
     () =>
@@ -84,12 +74,6 @@ export const DealsTable = ({ colorScheme, activeView, isViewLoading = false }: D
   });
 
   const companyNameMap = companyNamesQuery.data ?? new Map<string, string>();
-  const lineItemsQuery = useLineItems(
-    visibleOpportunityIds,
-    activeView?.filters?.stages,
-    !opportunitiesQuery.isLoading,
-  );
-  const lineItems = lineItemsQuery.data ?? [];
 
   const lineItemsByOpportunity = useMemo(() => {
     const grouped = new Map<string, typeof lineItems>();
@@ -147,7 +131,7 @@ export const DealsTable = ({ colorScheme, activeView, isViewLoading = false }: D
     });
   }, [lineItemsByOpportunity, mode, records]);
 
-  if (isViewLoading || opportunitiesQuery.isLoading) {
+  if (isViewLoading || isLoading) {
     return (
       <div
         style={{
@@ -288,7 +272,7 @@ export const DealsTable = ({ colorScheme, activeView, isViewLoading = false }: D
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
             type="button"
-            onClick={() => setPage((prev) => Math.max(0, prev - 1))}
+            onClick={() => onPageChange(Math.max(0, page - 1))}
             disabled={!canPrev}
             style={{
               border: `1px solid ${colorScheme === 'dark' ? '#444' : '#ddd'}`,
@@ -303,7 +287,7 @@ export const DealsTable = ({ colorScheme, activeView, isViewLoading = false }: D
           </button>
           <button
             type="button"
-            onClick={() => setPage((prev) => Math.min(totalPages - 1, prev + 1))}
+            onClick={() => onPageChange(Math.min(totalPages - 1, page + 1))}
             disabled={!canNext}
             style={{
               border: `1px solid ${colorScheme === 'dark' ? '#444' : '#ddd'}`,
