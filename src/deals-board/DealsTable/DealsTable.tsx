@@ -8,11 +8,11 @@ import {
 import { DONE_STAGES } from 'src/constants/stages';
 
 import { fetchCompanyNames } from '../api/companies';
-import { useDealBoardViews } from '../hooks/useDealBoardViews';
 import type { ExpandMode } from '../hooks/useExpandMode';
 import { useExpandMode } from '../hooks/useExpandMode';
 import { useLineItems } from '../hooks/useLineItems';
 import { useOpportunities } from '../hooks/useOpportunities';
+import type { DealBoardViewRecord } from '../types';
 import { visibleColumns } from '../utils/columns';
 import { DealRow } from './DealRow';
 
@@ -28,19 +28,14 @@ const shouldAutoExpand = (
 
 type DealsTableProps = {
   colorScheme: 'light' | 'dark';
+  activeView?: DealBoardViewRecord;
+  isViewLoading?: boolean;
 };
 
-export const DealsTable = ({ colorScheme }: DealsTableProps) => {
+export const DealsTable = ({ colorScheme, activeView, isViewLoading = false }: DealsTableProps) => {
   const [page, setPage] = useState(0);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const { mode } = useExpandMode();
-
-  const viewsQuery = useDealBoardViews();
-  const views = viewsQuery.data ?? [];
-  const activeView = useMemo(
-    () => views.find((view) => view.isDefault) ?? views[0],
-    [views],
-  );
 
   useEffect(() => {
     setPage(0);
@@ -61,7 +56,7 @@ export const DealsTable = ({ colorScheme }: DealsTableProps) => {
     sort: activeView?.sort ?? [],
     page,
     pageSize: PAGE_SIZE,
-    enabled: !viewsQuery.isLoading,
+    enabled: !isViewLoading && Boolean(activeView),
   });
 
   const records = opportunitiesQuery.data?.records ?? [];
@@ -152,7 +147,7 @@ export const DealsTable = ({ colorScheme }: DealsTableProps) => {
     });
   }, [lineItemsByOpportunity, mode, records]);
 
-  if (viewsQuery.isLoading || opportunitiesQuery.isLoading) {
+  if (isViewLoading || opportunitiesQuery.isLoading) {
     return (
       <div
         style={{
@@ -164,6 +159,22 @@ export const DealsTable = ({ colorScheme }: DealsTableProps) => {
         }}
       >
         Загрузка сделок...
+      </div>
+    );
+  }
+
+  if (!activeView) {
+    return (
+      <div
+        style={{
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: colorScheme === 'dark' ? '#eee' : '#333',
+        }}
+      >
+        View не выбрана
       </div>
     );
   }
