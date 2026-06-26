@@ -1,19 +1,21 @@
 import { useState } from 'react';
 
 import { useUpdateLineItem } from '../hooks/useLineItems';
+import { useTheme } from '../theme/ThemeContext';
+import { EMPTY_VALUE } from '../theme/tokens';
+import { Input } from '../ui/Input';
 
 type NumberCellProps = {
   itemId: string;
   value?: number;
-  colorScheme: 'light' | 'dark';
 };
 
-export const NumberCell = ({ itemId, value, colorScheme }: NumberCellProps) => {
+export const NumberCell = ({ itemId, value }: NumberCellProps) => {
+  const theme = useTheme();
+  const { colors, font } = theme;
   const updateMutation = useUpdateLineItem();
   const [isEditing, setIsEditing] = useState(false);
-  const [draftValue, setDraftValue] = useState(
-    typeof value === 'number' ? String(value) : '',
-  );
+  const [draftValue, setDraftValue] = useState(typeof value === 'number' ? String(value) : '');
 
   const openEditor = () => {
     setDraftValue(typeof value === 'number' ? String(value) : '');
@@ -49,7 +51,8 @@ export const NumberCell = ({ itemId, value, colorScheme }: NumberCellProps) => {
 
   if (isEditing) {
     return (
-      <input
+      <Input
+        theme={theme}
         autoFocus
         type="number"
         value={draftValue}
@@ -64,16 +67,7 @@ export const NumberCell = ({ itemId, value, colorScheme }: NumberCellProps) => {
             closeEditor();
           }
         }}
-        style={{
-          width: '100%',
-          minWidth: '70px',
-          fontSize: '11px',
-          borderRadius: '4px',
-          border: `1px solid ${colorScheme === 'dark' ? '#444' : '#d9d9d9'}`,
-          padding: '2px 6px',
-          background: colorScheme === 'dark' ? '#262626' : '#fff',
-          color: colorScheme === 'dark' ? '#ececec' : '#222',
-        }}
+        style={{ minWidth: '70px', padding: '4px 8px', fontSize: font.sizeSm }}
       />
     );
   }
@@ -89,11 +83,12 @@ export const NumberCell = ({ itemId, value, colorScheme }: NumberCellProps) => {
         padding: 0,
         margin: 0,
         cursor: 'pointer',
-        color: colorScheme === 'dark' ? '#e3e3e3' : '#333',
-        fontSize: '11px',
+        color: colors.text,
+        fontSize: font.sizeSm,
+        fontWeight: font.weightMedium,
       }}
     >
-      {typeof value === 'number' ? value : '—'}
+      {typeof value === 'number' ? value : EMPTY_VALUE}
     </button>
   );
 };

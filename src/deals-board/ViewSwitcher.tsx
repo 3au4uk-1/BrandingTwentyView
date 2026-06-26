@@ -2,12 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { VIEW_VISIBILITY } from 'src/constants/view-visibility';
 
+import { useTheme } from './theme/ThemeContext';
+import { Button } from './ui/Button';
+import { ChevronDownIcon } from './ui/Icons';
 import type { DealBoardViewRecord } from './types';
 
 type ViewSwitcherProps = {
   views: DealBoardViewRecord[];
   activeViewId?: string;
-  colorScheme: 'light' | 'dark';
   onSelectView: (id: string) => void;
   onCreateView: () => void;
 };
@@ -22,10 +24,11 @@ const sortViews = (views: DealBoardViewRecord[]) =>
 export const ViewSwitcher = ({
   views,
   activeViewId,
-  colorScheme,
   onSelectView,
   onCreateView,
 }: ViewSwitcherProps) => {
+  const theme = useTheme();
+  const { colors, radius, font, spacing, zIndex } = theme;
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -48,13 +51,38 @@ export const ViewSwitcher = ({
   const personalViews = sortedViews.filter((view) => view.visibility === VIEW_VISIBILITY.PERSONAL);
   const workspaceViews = sortedViews.filter((view) => view.visibility === VIEW_VISIBILITY.WORKSPACE);
 
-  const background = colorScheme === 'dark' ? '#1d1d1d' : '#fff';
-  const border = colorScheme === 'dark' ? '#404040' : '#ddd';
-  const muted = colorScheme === 'dark' ? '#9a9a9a' : '#666';
-  const activeBg = colorScheme === 'dark' ? '#2a2f3a' : '#eef3ff';
+  const renderViewButton = (view: DealBoardViewRecord) => {
+    const isActive = view.id === activeView?.id;
+
+    return (
+      <button
+        key={view.id}
+        type="button"
+        onClick={() => {
+          onSelectView(view.id);
+          setIsOpen(false);
+        }}
+        style={{
+          width: '100%',
+          border: 'none',
+          backgroundColor: isActive ? colors.accentMuted : 'transparent',
+          color: isActive ? colors.accentText : colors.text,
+          textAlign: 'left',
+          padding: '8px 10px',
+          borderRadius: radius.sm,
+          fontSize: font.sizeSm,
+          fontWeight: isActive ? font.weightMedium : font.weightNormal,
+          cursor: 'pointer',
+          fontFamily: font.family,
+        }}
+      >
+        {view.name}
+      </button>
+    );
+  };
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', minWidth: '240px' }}>
+    <div ref={containerRef} style={{ position: 'relative', minWidth: '220px', flexShrink: 0 }}>
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
@@ -63,20 +91,22 @@ export const ViewSwitcher = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '8px',
-          border: `1px solid ${border}`,
-          backgroundColor: background,
-          color: colorScheme === 'dark' ? '#eee' : '#333',
-          borderRadius: '8px',
-          padding: '6px 10px',
-          fontSize: '12px',
+          gap: spacing.sm,
+          border: `1px solid ${colors.border}`,
+          backgroundColor: colors.bgElevated,
+          color: colors.text,
+          borderRadius: radius.md,
+          padding: '7px 10px',
+          fontSize: font.sizeSm,
+          fontWeight: font.weightMedium,
           cursor: 'pointer',
+          fontFamily: font.family,
         }}
       >
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {activeView?.name ?? 'Выберите view'}
         </span>
-        <span aria-hidden>{isOpen ? '▴' : '▾'}</span>
+        <ChevronDownIcon color={colors.textMuted} />
       </button>
 
       {isOpen ? (
@@ -86,102 +116,71 @@ export const ViewSwitcher = ({
             top: 'calc(100% + 6px)',
             left: 0,
             width: '100%',
-            zIndex: 30,
-            border: `1px solid ${border}`,
-            borderRadius: '10px',
-            backgroundColor: background,
-            boxShadow: colorScheme === 'dark' ? '0 8px 20px rgba(0, 0, 0, 0.45)' : '0 8px 20px rgba(0, 0, 0, 0.12)',
-            padding: '6px',
+            minWidth: '240px',
+            zIndex: zIndex.dropdown,
+            border: `1px solid ${colors.border}`,
+            borderRadius: radius.lg,
+            backgroundColor: colors.bgElevated,
+            boxShadow: colors.shadowLg,
+            padding: spacing.xs,
             boxSizing: 'border-box',
           }}
         >
-          <div style={{ padding: '4px 6px', fontSize: '11px', color: muted, fontWeight: 600 }}>Общие</div>
+          <div
+            style={{
+              padding: '6px 10px 4px',
+              fontSize: font.sizeXs,
+              color: colors.textMuted,
+              fontWeight: font.weightSemibold,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+            }}
+          >
+            Общие
+          </div>
           {workspaceViews.length ? (
-            workspaceViews.map((view) => {
-              const isActive = view.id === activeView?.id;
-              return (
-                <button
-                  key={view.id}
-                  type="button"
-                  onClick={() => {
-                    onSelectView(view.id);
-                    setIsOpen(false);
-                  }}
-                  style={{
-                    width: '100%',
-                    border: 'none',
-                    backgroundColor: isActive ? activeBg : 'transparent',
-                    color: colorScheme === 'dark' ? '#eee' : '#333',
-                    textAlign: 'left',
-                    padding: '7px 8px',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {view.name}
-                </button>
-              );
-            })
+            workspaceViews.map(renderViewButton)
           ) : (
-            <div style={{ padding: '6px 8px', fontSize: '12px', color: muted }}>Нет общих views</div>
+            <div style={{ padding: '6px 10px', fontSize: font.sizeSm, color: colors.textMuted }}>
+              Нет общих views
+            </div>
           )}
 
-          <div style={{ marginTop: '6px', padding: '4px 6px', fontSize: '11px', color: muted, fontWeight: 600 }}>
+          <div
+            style={{
+              marginTop: spacing.xs,
+              padding: '6px 10px 4px',
+              fontSize: font.sizeXs,
+              color: colors.textMuted,
+              fontWeight: font.weightSemibold,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+            }}
+          >
             Личные
           </div>
           {personalViews.length ? (
-            personalViews.map((view) => {
-              const isActive = view.id === activeView?.id;
-              return (
-                <button
-                  key={view.id}
-                  type="button"
-                  onClick={() => {
-                    onSelectView(view.id);
-                    setIsOpen(false);
-                  }}
-                  style={{
-                    width: '100%',
-                    border: 'none',
-                    backgroundColor: isActive ? activeBg : 'transparent',
-                    color: colorScheme === 'dark' ? '#eee' : '#333',
-                    textAlign: 'left',
-                    padding: '7px 8px',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {view.name}
-                </button>
-              );
-            })
+            personalViews.map(renderViewButton)
           ) : (
-            <div style={{ padding: '6px 8px', fontSize: '12px', color: muted }}>Нет личных views</div>
+            <div style={{ padding: '6px 10px', fontSize: font.sizeSm, color: colors.textMuted }}>
+              Нет личных views
+            </div>
           )}
 
-          <button
-            type="button"
-            onClick={() => {
-              setIsOpen(false);
-              onCreateView();
-            }}
-            style={{
-              width: '100%',
-              marginTop: '8px',
-              border: `1px dashed ${border}`,
-              backgroundColor: 'transparent',
-              color: colorScheme === 'dark' ? '#eee' : '#333',
-              textAlign: 'center',
-              padding: '7px 8px',
-              borderRadius: '6px',
-              fontSize: '12px',
-              cursor: 'pointer',
-            }}
-          >
-            + Новый view
-          </button>
+          <div style={{ marginTop: spacing.sm, padding: `0 ${spacing.xs}` }}>
+            <Button
+              theme={theme}
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setIsOpen(false);
+                onCreateView();
+              }}
+              style={{ width: '100%', borderStyle: 'dashed' }}
+            >
+              + Новый view
+            </Button>
+          </div>
         </div>
       ) : null}
     </div>

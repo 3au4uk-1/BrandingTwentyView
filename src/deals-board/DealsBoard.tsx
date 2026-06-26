@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
-import { useColorScheme } from 'twenty-sdk/front-component';
+
+import { APP_DISPLAY_NAME } from 'src/constants/universal-identifiers';
 
 import { AppSettingsModal } from './AppSettingsModal';
 import { ColumnPicker } from './ColumnPicker';
@@ -11,6 +12,9 @@ import { useLineItems } from './hooks/useLineItems';
 import { useOpportunities } from './hooks/useOpportunities';
 import { QuickFiltersBar, type QuickFiltersValue } from './QuickFiltersBar';
 import type { DealBoardViewRecord, LineItemRow, OpportunityRow } from './types';
+import { ThemeProvider, useTheme } from './theme/ThemeContext';
+import { Button } from './ui/Button';
+import { SettingsIcon } from './ui/Icons';
 import { mergeStageFilters } from './utils/filters';
 import { asArray } from './utils/parse-json-field';
 import { ViewSettingsModal } from './ViewSettingsModal';
@@ -29,7 +33,8 @@ const DEFAULT_QUICK_FILTERS: QuickFiltersValue = {
 };
 
 const DealsBoardContent = () => {
-  const colorScheme = useColorScheme();
+  const theme = useTheme();
+  const { colors, font, spacing } = theme;
   const viewsQuery = useDealBoardViews();
   const updateViewMutation = useUpdateDealBoardView();
   const [activeViewId, setActiveViewId] = useState<string>();
@@ -123,9 +128,7 @@ const DealsBoardContent = () => {
     return records.filter((record) => stageMatchedOpportunityIds.has(record.id));
   }, [records, stageMatchedOpportunityIds]);
 
-  const visibleTotalCount = stageMatchedOpportunityIds
-    ? visibleRecords.length
-    : totalCount;
+  const visibleTotalCount = stageMatchedOpportunityIds ? visibleRecords.length : totalCount;
 
   const loadError = viewsQuery.error ?? opportunitiesQuery.error ?? null;
   const lineItemsWarning =
@@ -158,92 +161,111 @@ const DealsBoardContent = () => {
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        backgroundColor: colorScheme === 'dark' ? '#1f1f1f' : '#ffffff',
-        color: colorScheme === 'dark' ? '#eee' : '#333',
+        backgroundColor: colors.bg,
+        color: colors.text,
+        fontFamily: font.family,
+        fontSize: font.sizeSm,
       }}
     >
-      <div
+      <header
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '8px 10px',
-          borderBottom: `1px solid ${colorScheme === 'dark' ? '#333' : '#eee'}`,
-          backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : '#fafafa',
-          flexWrap: 'nowrap',
+          flexShrink: 0,
+          borderBottom: `1px solid ${colors.border}`,
+          backgroundColor: colors.bgSecondary,
         }}
       >
-        <ViewSwitcher
-          views={views}
-          activeViewId={activeView?.id}
-          colorScheme={colorScheme}
-          onSelectView={setActiveViewId}
-          onCreateView={() => setIsCreateModalOpen(true)}
-        />
-
-        <QuickFiltersBar
-          colorScheme={colorScheme}
-          value={quickFilters}
-          onChange={setQuickFilters}
-          onReset={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
-        />
-
-        <button
-          type="button"
-          onClick={() => setIsSettingsModalOpen(true)}
-          style={{ fontSize: '12px', whiteSpace: 'nowrap' }}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: spacing.sm,
+            padding: `${spacing.sm} ${spacing.md}`,
+            borderBottom: `1px solid ${colors.borderSubtle}`,
+          }}
         >
-          ⚙ Настройки
-        </button>
-      </div>
+          <ViewSwitcher
+            views={views}
+            activeViewId={activeView?.id}
+            onSelectView={setActiveViewId}
+            onCreateView={() => setIsCreateModalOpen(true)}
+          />
 
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-end',
-          gap: '8px',
-          padding: '6px 10px',
-          borderBottom: `1px solid ${colorScheme === 'dark' ? '#333' : '#eee'}`,
-          backgroundColor: colorScheme === 'dark' ? '#191919' : '#fdfdfd',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button
-            type="button"
-            onClick={() => {
-              if (activeView) {
-                setEditViewDraft(activeView);
-              }
-            }}
-            disabled={!activeView}
-            style={{ fontSize: '12px' }}
+          <QuickFiltersBar
+            value={quickFilters}
+            onChange={setQuickFilters}
+            onReset={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
+          />
+
+          <Button
+            theme={theme}
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsSettingsModalOpen(true)}
+            aria-label="Настройки"
+            style={{ flexShrink: 0, padding: '6px 8px' }}
           >
-            Редактировать view
-          </button>
-          <ColumnPicker
-            target="parent"
-            colorScheme={colorScheme}
-            columns={activeView?.parentColumns ?? []}
-            onSave={(columns) => saveActiveViewColumns('parent', columns)}
-          />
-          <ColumnPicker
-            target="child"
-            colorScheme={colorScheme}
-            columns={activeView?.childColumns ?? []}
-            onSave={(columns) => saveActiveViewColumns('child', columns)}
-          />
+            <SettingsIcon size={16} color={colors.textSecondary} />
+          </Button>
         </div>
-      </div>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: spacing.md,
+            padding: `${spacing.xs} ${spacing.md}`,
+            minHeight: '36px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: spacing.sm, minWidth: 0 }}>
+            <span style={{ fontSize: font.sizeMd, fontWeight: font.weightSemibold, color: colors.text }}>
+              {APP_DISPLAY_NAME}
+            </span>
+            {activeView ? (
+              <span style={{ fontSize: font.sizeSm, color: colors.textMuted, whiteSpace: 'nowrap' }}>
+                {activeView.name}
+                {!opportunitiesQuery.isLoading ? ` · ${visibleTotalCount} сделок` : ''}
+              </span>
+            ) : null}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, flexShrink: 0 }}>
+            <Button
+              theme={theme}
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                if (activeView) {
+                  setEditViewDraft(activeView);
+                }
+              }}
+              disabled={!activeView}
+            >
+              Редактировать view
+            </Button>
+            <ColumnPicker
+              target="parent"
+              columns={activeView?.parentColumns ?? []}
+              onSave={(columns) => saveActiveViewColumns('parent', columns)}
+            />
+            <ColumnPicker
+              target="child"
+              columns={activeView?.childColumns ?? []}
+              onSave={(columns) => saveActiveViewColumns('child', columns)}
+            />
+          </div>
+        </div>
+      </header>
 
       {lineItemsWarning ? (
         <div
           style={{
-            padding: '6px 10px',
-            fontSize: '12px',
-            color: colorScheme === 'dark' ? '#f5c26b' : '#8a5a00',
-            backgroundColor: colorScheme === 'dark' ? '#2a2418' : '#fff8e6',
-            borderBottom: `1px solid ${colorScheme === 'dark' ? '#4a3b1f' : '#f0e2b6'}`,
+            padding: `${spacing.xs} ${spacing.md}`,
+            fontSize: font.sizeSm,
+            color: colors.warning,
+            backgroundColor: colors.warningMuted,
+            borderBottom: `1px solid ${colors.border}`,
             flexShrink: 0,
           }}
         >
@@ -252,7 +274,6 @@ const DealsBoardContent = () => {
       ) : null}
 
       <DealsTable
-        colorScheme={colorScheme}
         activeView={activeView}
         records={visibleRecords}
         lineItems={lineItems}
@@ -268,7 +289,6 @@ const DealsBoardContent = () => {
 
       <ViewSettingsModal
         isOpen={isCreateModalOpen}
-        colorScheme={colorScheme}
         onClose={() => setIsCreateModalOpen(false)}
         onSaved={(view) => setActiveViewId(view.id)}
       />
@@ -276,16 +296,11 @@ const DealsBoardContent = () => {
       <ViewSettingsModal
         isOpen={Boolean(editViewDraft)}
         initialView={editViewDraft}
-        colorScheme={colorScheme}
         onClose={() => setEditViewDraft(undefined)}
         onSaved={(view) => setActiveViewId(view.id)}
       />
 
-      <AppSettingsModal
-        isOpen={isSettingsModalOpen}
-        colorScheme={colorScheme}
-        onClose={() => setIsSettingsModalOpen(false)}
-      />
+      <AppSettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
     </div>
   );
 };
@@ -293,9 +308,11 @@ const DealsBoardContent = () => {
 export const DealsBoard = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <ExpandModeProvider>
-        <DealsBoardContent />
-      </ExpandModeProvider>
+      <ThemeProvider>
+        <ExpandModeProvider>
+          <DealsBoardContent />
+        </ExpandModeProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 };

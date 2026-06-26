@@ -10,6 +10,10 @@ import { DONE_STAGES } from 'src/constants/stages';
 import { fetchCompanyNames } from '../api/companies';
 import type { ExpandMode } from '../hooks/useExpandMode';
 import { useExpandMode } from '../hooks/useExpandMode';
+import { useTheme } from '../theme/ThemeContext';
+import { Button } from '../ui/Button';
+import { EmptyState } from '../ui/EmptyState';
+import { Spinner } from '../ui/Spinner';
 import type { DealBoardViewRecord, LineItemRow, OpportunityRow } from '../types';
 import { visibleColumns } from '../utils/columns';
 import { readSessionStorage, writeSessionStorage } from '../utils/browser-storage';
@@ -25,7 +29,6 @@ const shouldAutoExpand = (
   items.some((i) => i.stage && !DONE_STAGES.includes(i.stage));
 
 type DealsTableProps = {
-  colorScheme: 'light' | 'dark';
   activeView?: DealBoardViewRecord;
   records: OpportunityRow[];
   lineItems: LineItemRow[];
@@ -40,7 +43,6 @@ type DealsTableProps = {
 };
 
 export const DealsTable = ({
-  colorScheme,
   activeView,
   records,
   lineItems,
@@ -53,7 +55,10 @@ export const DealsTable = ({
   isViewLoading = false,
   errorMessage,
 }: DealsTableProps) => {
+  const theme = useTheme();
+  const { colors, font, spacing, zIndex } = theme;
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
   const { mode } = useExpandMode();
   const prevExpandModeRef = useRef(mode);
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -148,91 +153,36 @@ export const DealsTable = ({
 
   if (isViewLoading || isLoading) {
     return (
-      <div
-        style={{
-          flex: 1,
-          minHeight: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: colorScheme === 'dark' ? '#eee' : '#333',
-        }}
-      >
-        Загрузка сделок...
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Spinner theme={theme} label="Загрузка сделок..." />
       </div>
     );
   }
 
   if (!activeView) {
     return (
-      <div
-        style={{
-          flex: 1,
-          minHeight: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: colorScheme === 'dark' ? '#eee' : '#333',
-        }}
-      >
-        View не выбрана
-      </div>
+      <EmptyState theme={theme} title="View не выбрана" description="Создайте или выберите представление в верхней панели." />
     );
   }
 
   if (errorMessage) {
     return (
-      <div
-        style={{
-          flex: 1,
-          minHeight: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '10px',
-          padding: '16px',
-          color: colorScheme === 'dark' ? '#ffb4b4' : '#b42318',
-          textAlign: 'center',
-        }}
-      >
-        <span>Не удалось загрузить данные</span>
-        <span style={{ fontSize: '12px', maxWidth: '520px' }}>{errorMessage}</span>
-      </div>
+      <EmptyState
+        theme={theme}
+        title="Не удалось загрузить данные"
+        description={errorMessage}
+      />
     );
   }
 
   if (!records.length) {
     return (
-      <div
-        style={{
-          flex: 1,
-          minHeight: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '10px',
-          color: colorScheme === 'dark' ? '#eee' : '#333',
-        }}
-      >
-        <span>Нет сделок по фильтрам</span>
-        <button
-          type="button"
-          onClick={() => onResetFilters?.()}
-          style={{
-            border: `1px solid ${colorScheme === 'dark' ? '#444' : '#ddd'}`,
-            backgroundColor: 'transparent',
-            color: colorScheme === 'dark' ? '#eee' : '#333',
-            borderRadius: '6px',
-            padding: '6px 10px',
-            cursor: 'pointer',
-            fontSize: '12px',
-          }}
-        >
-          Сбросить фильтры
-        </button>
-      </div>
+      <EmptyState
+        theme={theme}
+        title="Нет сделок по фильтрам"
+        description="Попробуйте изменить фильтры или сбросить их."
+        action={{ label: 'Сбросить фильтры', onClick: () => onResetFilters?.() }}
+      />
     );
   }
 
@@ -255,7 +205,6 @@ export const DealsTable = ({
           flex: 1,
           minHeight: 0,
           overflow: 'auto',
-          borderBottom: `1px solid ${colorScheme === 'dark' ? '#333' : '#eee'}`,
         }}
       >
         <table
@@ -264,7 +213,7 @@ export const DealsTable = ({
             minWidth: '100%',
             borderCollapse: 'collapse',
             tableLayout: 'fixed',
-            backgroundColor: colorScheme === 'dark' ? '#222' : '#fff',
+            backgroundColor: colors.bg,
           }}
         >
           <colgroup>
@@ -277,22 +226,24 @@ export const DealsTable = ({
               />
             ))}
           </colgroup>
-          <thead style={{ position: 'sticky', top: 0, zIndex: 4 }}>
+          <thead style={{ position: 'sticky', top: 0, zIndex: zIndex.sticky + 1 }}>
             <tr
               style={{
-                borderBottom: `1px solid ${colorScheme === 'dark' ? '#333' : '#eee'}`,
-                backgroundColor: colorScheme === 'dark' ? '#222' : '#fff',
+                borderBottom: `1px solid ${colors.border}`,
+                backgroundColor: colors.bgSecondary,
               }}
             >
               {parentColumns.map((column) => (
                 <th
                   key={column.field}
                   style={{
-                    padding: '8px 10px',
+                    padding: '10px 12px',
                     textAlign: 'left',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: colorScheme === 'dark' ? '#eee' : '#333',
+                    fontSize: font.sizeXs,
+                    fontWeight: font.weightSemibold,
+                    color: colors.textMuted,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
                     width: column.width ? `${column.width}px` : 'auto',
                     maxWidth: column.width ? `${column.width}px` : undefined,
                     whiteSpace: 'nowrap',
@@ -300,8 +251,9 @@ export const DealsTable = ({
                       ? {
                           position: 'sticky' as const,
                           left: 0,
-                          zIndex: 6,
-                          backgroundColor: colorScheme === 'dark' ? '#222' : '#fff',
+                          zIndex: zIndex.sticky + 2,
+                          backgroundColor: colors.bgSecondary,
+                          boxShadow: colors.stickyShadow,
                         }
                       : {}),
                   }}
@@ -320,6 +272,8 @@ export const DealsTable = ({
                 childColumns={childColumns}
                 lineItems={lineItemsByOpportunity.get(row.id) ?? []}
                 isExpanded={expandedIds.has(row.id)}
+                isHovered={hoveredRowId === row.id}
+                onHoverChange={(hovered) => setHoveredRowId(hovered ? row.id : null)}
                 onToggleExpand={(id) =>
                   setExpandedIds((previous) => {
                     const next = new Set(previous);
@@ -331,7 +285,6 @@ export const DealsTable = ({
                     return next;
                   })
                 }
-                colorScheme={colorScheme}
               />
             ))}
           </tbody>
@@ -343,10 +296,11 @@ export const DealsTable = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '8px 10px',
-          fontSize: '12px',
-          color: colorScheme === 'dark' ? '#eee' : '#333',
-          backgroundColor: colorScheme === 'dark' ? '#1f1f1f' : '#fafafa',
+          padding: `${spacing.sm} ${spacing.md}`,
+          fontSize: font.sizeSm,
+          color: colors.textSecondary,
+          backgroundColor: colors.bgSecondary,
+          borderTop: `1px solid ${colors.border}`,
           flexShrink: 0,
         }}
       >
@@ -354,37 +308,19 @@ export const DealsTable = ({
           Страница {page + 1} из {totalPages} · Всего: {totalCount}
         </span>
 
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            type="button"
-            onClick={() => onPageChange(Math.max(0, page - 1))}
-            disabled={!canPrev}
-            style={{
-              border: `1px solid ${colorScheme === 'dark' ? '#444' : '#ddd'}`,
-              backgroundColor: 'transparent',
-              color: colorScheme === 'dark' ? '#eee' : '#333',
-              borderRadius: '6px',
-              padding: '4px 8px',
-              cursor: canPrev ? 'pointer' : 'not-allowed',
-            }}
-          >
+        <div style={{ display: 'flex', gap: spacing.sm }}>
+          <Button theme={theme} variant="secondary" size="sm" onClick={() => onPageChange(Math.max(0, page - 1))} disabled={!canPrev}>
             Назад
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            theme={theme}
+            variant="secondary"
+            size="sm"
             onClick={() => onPageChange(Math.min(totalPages - 1, page + 1))}
             disabled={!canNext}
-            style={{
-              border: `1px solid ${colorScheme === 'dark' ? '#444' : '#ddd'}`,
-              backgroundColor: 'transparent',
-              color: colorScheme === 'dark' ? '#eee' : '#333',
-              borderRadius: '6px',
-              padding: '4px 8px',
-              cursor: canNext ? 'pointer' : 'not-allowed',
-            }}
           >
             Вперёд
-          </button>
+          </Button>
         </div>
       </div>
     </div>

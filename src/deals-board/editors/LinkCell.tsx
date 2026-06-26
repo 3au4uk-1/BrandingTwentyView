@@ -1,14 +1,20 @@
 import { useState } from 'react';
 
 import { useUpdateLineItem } from '../hooks/useLineItems';
+import { useTheme } from '../theme/ThemeContext';
+import { EMPTY_VALUE } from '../theme/tokens';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { ExternalLinkIcon, LinkIcon } from '../ui/Icons';
 
 type LinkCellProps = {
   itemId: string;
   value?: { primaryLinkUrl?: string; primaryLinkLabel?: string };
-  colorScheme: 'light' | 'dark';
 };
 
-export const LinkCell = ({ itemId, value, colorScheme }: LinkCellProps) => {
+export const LinkCell = ({ itemId, value }: LinkCellProps) => {
+  const theme = useTheme();
+  const { colors, font, spacing } = theme;
   const updateMutation = useUpdateLineItem();
   const [isEditing, setIsEditing] = useState(false);
   const [draftValue, setDraftValue] = useState(value?.primaryLinkUrl ?? '');
@@ -46,8 +52,9 @@ export const LinkCell = ({ itemId, value, colorScheme }: LinkCellProps) => {
 
   if (isEditing) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <input
+      <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xs }}>
+        <Input
+          theme={theme}
           autoFocus
           type="url"
           value={draftValue}
@@ -61,33 +68,41 @@ export const LinkCell = ({ itemId, value, colorScheme }: LinkCellProps) => {
               closeEditor();
             }
           }}
-          style={{
-            width: '100%',
-            minWidth: '120px',
-            fontSize: '11px',
-            borderRadius: '4px',
-            border: `1px solid ${colorScheme === 'dark' ? '#444' : '#d9d9d9'}`,
-            padding: '2px 6px',
-            background: colorScheme === 'dark' ? '#262626' : '#fff',
-            color: colorScheme === 'dark' ? '#ececec' : '#222',
-          }}
+          style={{ minWidth: '120px', padding: '4px 8px', fontSize: font.sizeSm }}
         />
-        <button
-          type="button"
-          onClick={() => void save()}
-          disabled={updateMutation.isPending}
-          style={{ fontSize: '11px' }}
-        >
-          Save
-        </button>
-        <button type="button" onClick={closeEditor} style={{ fontSize: '11px' }}>
-          Cancel
-        </button>
+        <Button theme={theme} variant="primary" size="sm" onClick={() => void save()} disabled={updateMutation.isPending}>
+          OK
+        </Button>
+        <Button theme={theme} variant="ghost" size="sm" onClick={closeEditor}>
+          Отмена
+        </Button>
       </div>
     );
   }
 
   const url = value?.primaryLinkUrl?.trim();
+
+  if (url) {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noreferrer"
+        title={url}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: spacing.xs,
+          color: colors.accentText,
+          fontSize: font.sizeSm,
+          textDecoration: 'none',
+        }}
+      >
+        <LinkIcon size={14} color={colors.accentText} />
+        <ExternalLinkIcon size={12} color={colors.textMuted} />
+      </a>
+    );
+  }
 
   return (
     <button
@@ -100,15 +115,14 @@ export const LinkCell = ({ itemId, value, colorScheme }: LinkCellProps) => {
         margin: 0,
         display: 'inline-flex',
         alignItems: 'center',
-        gap: '4px',
+        gap: spacing.xs,
         cursor: 'pointer',
-        color: colorScheme === 'dark' ? '#e3e3e3' : '#333',
-        fontSize: '11px',
+        color: colors.textMuted,
+        fontSize: font.sizeSm,
       }}
-      title={url || 'Добавить ссылку'}
+      title="Добавить ссылку"
     >
-      {url ? <span aria-hidden="true">🔗</span> : null}
-      <span>{url || '—'}</span>
+      {EMPTY_VALUE}
     </button>
   );
 };

@@ -3,14 +3,16 @@ import { useMemo } from 'react';
 import { LINE_ITEM_STAGES, type LineItemStage } from 'src/constants/stages';
 
 import { useUpdateLineItem } from '../hooks/useLineItems';
+import { useTheme } from '../theme/ThemeContext';
+import { Select } from '../ui/Input';
 
 type StageSelectProps = {
   itemId: string;
   value?: LineItemStage | null;
-  colorScheme: 'light' | 'dark';
 };
 
-export const StageSelect = ({ itemId, value, colorScheme }: StageSelectProps) => {
+export const StageSelect = ({ itemId, value }: StageSelectProps) => {
+  const theme = useTheme();
   const updateMutation = useUpdateLineItem();
   const selectedValue = useMemo(() => value ?? 'NOVYY', [value]);
 
@@ -37,19 +39,16 @@ export const StageSelect = ({ itemId, value, colorScheme }: StageSelectProps) =>
   };
 
   return (
-    <select
+    <Select
+      theme={theme}
       value={selectedValue}
       onChange={(event) => void handleChange(event.target.value)}
       disabled={updateMutation.isPending}
       style={{
         width: '100%',
         minWidth: 0,
-        fontSize: '11px',
-        borderRadius: '4px',
-        border: `1px solid ${colorScheme === 'dark' ? '#444' : '#d9d9d9'}`,
-        padding: '2px 6px',
-        background: colorScheme === 'dark' ? '#262626' : '#fff',
-        color: colorScheme === 'dark' ? '#ececec' : '#222',
+        fontSize: theme.font.sizeSm,
+        padding: '4px 8px',
       }}
     >
       {LINE_ITEM_STAGES.map((stage) => (
@@ -57,6 +56,6 @@ export const StageSelect = ({ itemId, value, colorScheme }: StageSelectProps) =>
           {stage.label}
         </option>
       ))}
-    </select>
+    </Select>
   );
 };

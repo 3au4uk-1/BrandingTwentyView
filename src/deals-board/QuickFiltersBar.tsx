@@ -2,6 +2,10 @@ import { useMemo, useState } from 'react';
 
 import { LINE_ITEM_STAGES, type LineItemStage } from 'src/constants/stages';
 
+import { useTheme } from './theme/ThemeContext';
+import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+
 type QuickDatePreset = 'today' | 'week' | 'month' | 'custom' | null;
 type OplataQuickFilter = 'all' | 'filled' | 'empty';
 
@@ -15,7 +19,6 @@ export type QuickFiltersValue = {
 };
 
 type QuickFiltersBarProps = {
-  colorScheme: 'light' | 'dark';
   value: QuickFiltersValue;
   onChange: (next: QuickFiltersValue) => void;
   onReset: () => void;
@@ -57,16 +60,11 @@ const presetLabel: Record<Exclude<QuickDatePreset, null>, string> = {
   custom: 'Диапазон',
 };
 
-export const QuickFiltersBar = ({ colorScheme, value, onChange, onReset }: QuickFiltersBarProps) => {
+export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarProps) => {
+  const theme = useTheme();
+  const { colors, radius, font, spacing, zIndex } = theme;
   const [isStageFilterOpen, setIsStageFilterOpen] = useState(false);
   const selectedStages = value.stages ?? [];
-  const border = colorScheme === 'dark' ? '#404040' : '#ddd';
-  const background = colorScheme === 'dark' ? '#1d1d1d' : '#fff';
-  const inputBackground = colorScheme === 'dark' ? '#171717' : '#fff';
-  const text = colorScheme === 'dark' ? '#eee' : '#333';
-  const muted = colorScheme === 'dark' ? '#9a9a9a' : '#666';
-  const activeBackground = colorScheme === 'dark' ? '#2b3340' : '#eaf1ff';
-
   const stageOptions = useMemo(() => LINE_ITEM_STAGES, []);
 
   const toggleStage = (stage: LineItemStage) => {
@@ -77,19 +75,39 @@ export const QuickFiltersBar = ({ colorScheme, value, onChange, onReset }: Quick
     onChange({ ...value, stages: nextStages });
   };
 
+  const segmentStyle = (isActive: boolean) => ({
+    border: 'none',
+    padding: '6px 10px',
+    fontSize: font.sizeSm,
+    fontFamily: font.family,
+    fontWeight: isActive ? font.weightMedium : font.weightNormal,
+    backgroundColor: isActive ? colors.accentMuted : 'transparent',
+    color: isActive ? colors.accentText : colors.textSecondary,
+    cursor: 'pointer' as const,
+    whiteSpace: 'nowrap' as const,
+  });
+
   return (
     <div
       style={{
         display: 'flex',
         alignItems: 'center',
         flexWrap: 'wrap',
-        gap: '8px',
+        gap: spacing.sm,
         flex: 1,
         minWidth: 0,
       }}
     >
-      <div style={{ display: 'inline-flex', border: `1px solid ${border}`, borderRadius: '8px', overflow: 'hidden' }}>
-        {(['today', 'week', 'month'] as const).map((preset) => {
+      <div
+        style={{
+          display: 'inline-flex',
+          border: `1px solid ${colors.border}`,
+          borderRadius: radius.md,
+          overflow: 'hidden',
+          backgroundColor: colors.bgElevated,
+        }}
+      >
+        {(['today', 'week', 'month'] as const).map((preset, index, arr) => {
           const isActive = value.datePreset === preset;
           return (
             <button
@@ -105,13 +123,8 @@ export const QuickFiltersBar = ({ colorScheme, value, onChange, onReset }: Quick
                 });
               }}
               style={{
-                border: 'none',
-                borderRight: preset === 'month' ? 'none' : `1px solid ${border}`,
-                padding: '6px 8px',
-                fontSize: '12px',
-                backgroundColor: isActive ? activeBackground : background,
-                color: text,
-                cursor: 'pointer',
+                ...segmentStyle(isActive),
+                borderRight: index < arr.length - 1 ? `1px solid ${colors.border}` : 'none',
               }}
             >
               {presetLabel[preset]}
@@ -131,13 +144,10 @@ export const QuickFiltersBar = ({ colorScheme, value, onChange, onReset }: Quick
           })
         }
         style={{
-          border: `1px solid ${border}`,
-          borderRadius: '8px',
-          backgroundColor: value.datePreset === 'custom' ? activeBackground : background,
-          color: text,
-          padding: '6px 8px',
-          fontSize: '12px',
-          cursor: 'pointer',
+          ...segmentStyle(value.datePreset === 'custom'),
+          border: `1px solid ${colors.border}`,
+          borderRadius: radius.md,
+          backgroundColor: value.datePreset === 'custom' ? colors.accentMuted : colors.bgElevated,
         }}
       >
         {presetLabel.custom}
@@ -145,31 +155,19 @@ export const QuickFiltersBar = ({ colorScheme, value, onChange, onReset }: Quick
 
       {value.datePreset === 'custom' ? (
         <>
-          <input
+          <Input
+            theme={theme}
             type="date"
             value={value.dateFrom ?? ''}
             onChange={(event) => onChange({ ...value, dateFrom: event.target.value || undefined })}
-            style={{
-              border: `1px solid ${border}`,
-              borderRadius: '8px',
-              backgroundColor: inputBackground,
-              color: text,
-              padding: '6px 8px',
-              fontSize: '12px',
-            }}
+            style={{ width: 'auto', padding: '6px 10px' }}
           />
-          <input
+          <Input
+            theme={theme}
             type="date"
             value={value.dateTo ?? ''}
             onChange={(event) => onChange({ ...value, dateTo: event.target.value || undefined })}
-            style={{
-              border: `1px solid ${border}`,
-              borderRadius: '8px',
-              backgroundColor: inputBackground,
-              color: text,
-              padding: '6px 8px',
-              fontSize: '12px',
-            }}
+            style={{ width: 'auto', padding: '6px 10px' }}
           />
         </>
       ) : null}
@@ -179,14 +177,11 @@ export const QuickFiltersBar = ({ colorScheme, value, onChange, onReset }: Quick
           type="button"
           onClick={() => setIsStageFilterOpen((prev) => !prev)}
           style={{
-            border: `1px solid ${border}`,
-            borderRadius: '8px',
-            backgroundColor: selectedStages.length ? activeBackground : background,
-            color: text,
-            padding: '6px 8px',
-            fontSize: '12px',
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
+            ...segmentStyle(selectedStages.length > 0),
+            border: `1px solid ${colors.border}`,
+            borderRadius: radius.md,
+            backgroundColor: selectedStages.length ? colors.accentMuted : colors.bgElevated,
+            color: selectedStages.length ? colors.accentText : colors.textSecondary,
           }}
         >
           Стадии{selectedStages.length ? `: ${selectedStages.length}` : ''}
@@ -198,16 +193,16 @@ export const QuickFiltersBar = ({ colorScheme, value, onChange, onReset }: Quick
               position: 'absolute',
               top: 'calc(100% + 6px)',
               left: 0,
-              zIndex: 20,
-              minWidth: '180px',
-              border: `1px solid ${border}`,
-              borderRadius: '8px',
-              backgroundColor: background,
-              boxShadow: colorScheme === 'dark' ? '0 8px 20px rgba(0,0,0,0.45)' : '0 8px 20px rgba(0,0,0,0.12)',
-              padding: '8px',
+              zIndex: zIndex.dropdown,
+              minWidth: '200px',
+              border: `1px solid ${colors.border}`,
+              borderRadius: radius.lg,
+              backgroundColor: colors.bgElevated,
+              boxShadow: colors.shadowLg,
+              padding: spacing.sm,
               display: 'flex',
               flexDirection: 'column',
-              gap: '6px',
+              gap: spacing.xs,
             }}
           >
             {stageOptions.map((stage) => {
@@ -218,10 +213,13 @@ export const QuickFiltersBar = ({ colorScheme, value, onChange, onReset }: Quick
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '12px',
-                    color: text,
+                    gap: spacing.sm,
+                    fontSize: font.sizeSm,
+                    color: colors.text,
                     cursor: 'pointer',
+                    padding: '4px 6px',
+                    borderRadius: radius.sm,
+                    backgroundColor: checked ? colors.accentMuted : 'transparent',
                   }}
                 >
                   <input
@@ -237,39 +235,18 @@ export const QuickFiltersBar = ({ colorScheme, value, onChange, onReset }: Quick
         ) : null}
       </div>
 
-      <input
+      <Input
+        theme={theme}
         type="search"
         value={value.search}
         onChange={(event) => onChange({ ...value, search: event.target.value })}
         placeholder="Поиск сделки..."
-        style={{
-          border: `1px solid ${border}`,
-          borderRadius: '8px',
-          backgroundColor: inputBackground,
-          color: text,
-          padding: '6px 8px',
-          fontSize: '12px',
-          minWidth: '180px',
-          flex: '1 1 220px',
-        }}
+        style={{ minWidth: '160px', flex: '1 1 200px', padding: '6px 10px' }}
       />
 
-      <button
-        type="button"
-        onClick={onReset}
-        style={{
-          border: `1px solid ${border}`,
-          borderRadius: '8px',
-          backgroundColor: background,
-          color: muted,
-          padding: '6px 8px',
-          fontSize: '12px',
-          cursor: 'pointer',
-          whiteSpace: 'nowrap',
-        }}
-      >
+      <Button theme={theme} variant="ghost" size="sm" onClick={onReset}>
         Сбросить
-      </button>
+      </Button>
     </div>
   );
 };

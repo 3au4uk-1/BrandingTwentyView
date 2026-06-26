@@ -1,4 +1,5 @@
 import { Chip, type ChipColor } from '../Chip';
+import { useTheme } from '../theme/ThemeContext';
 
 import { getStageColor, getStageLabel } from 'src/constants/stages';
 
@@ -10,6 +11,7 @@ type DealSummaryChipsProps = {
 };
 
 export const DealSummaryChips = ({ items }: DealSummaryChipsProps) => {
+  const theme = useTheme();
   const counts = new Map<string, number>();
 
   for (const item of items) {
@@ -21,12 +23,13 @@ export const DealSummaryChips = ({ items }: DealSummaryChipsProps) => {
 
   return (
     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-      <Chip text={buildStageSummary(items)} color="gray" />
+      <Chip text={buildStageSummary(items)} color="gray" theme={theme} />
       {stageChips.map(([stage, count]) => (
         <Chip
           key={stage}
           text={`${count} ${getStageLabel(stage)}`}
           color={getStageColor(stage) as ChipColor}
+          theme={theme}
         />
       ))}
     </div>

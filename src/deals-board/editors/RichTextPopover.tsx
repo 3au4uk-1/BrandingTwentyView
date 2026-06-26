@@ -1,25 +1,25 @@
 import { useState } from 'react';
 
 import { useUpdateLineItem } from '../hooks/useLineItems';
+import { useTheme } from '../theme/ThemeContext';
+import { EMPTY_VALUE } from '../theme/tokens';
+import { Button } from '../ui/Button';
+import { Textarea } from '../ui/Input';
 
 type RichTextPopoverProps = {
   itemId: string;
   value?: string;
   field: 'plenka.markdown' | 'kommentariy';
-  colorScheme: 'light' | 'dark';
 };
 
 const previewText = (value?: string) => {
   const text = value?.trim();
-  return text?.length ? text : '—';
+  return text?.length ? text : EMPTY_VALUE;
 };
 
-export const RichTextPopover = ({
-  itemId,
-  value,
-  field,
-  colorScheme,
-}: RichTextPopoverProps) => {
+export const RichTextPopover = ({ itemId, value, field }: RichTextPopoverProps) => {
+  const theme = useTheme();
+  const { colors, font, spacing, radius, zIndex } = theme;
   const updateMutation = useUpdateLineItem();
   const [isOpen, setIsOpen] = useState(false);
   const [draftValue, setDraftValue] = useState(value ?? '');
@@ -69,8 +69,8 @@ export const RichTextPopover = ({
           width: '100%',
           textAlign: 'left',
           cursor: 'pointer',
-          color: colorScheme === 'dark' ? '#dedede' : '#333',
-          fontSize: '11px',
+          color: value?.trim() ? colors.text : colors.textMuted,
+          fontSize: font.sizeSm,
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
@@ -83,49 +83,38 @@ export const RichTextPopover = ({
         <div
           style={{
             position: 'absolute',
-            zIndex: 10,
+            zIndex: zIndex.dropdown,
             top: 'calc(100% + 4px)',
             left: 0,
-            width: '280px',
-            padding: '10px',
-            borderRadius: '8px',
-            border: `1px solid ${colorScheme === 'dark' ? '#454545' : '#dddddd'}`,
-            background: colorScheme === 'dark' ? '#202020' : '#ffffff',
-            boxShadow:
-              colorScheme === 'dark'
-                ? '0 8px 18px rgba(0, 0, 0, 0.45)'
-                : '0 8px 18px rgba(0, 0, 0, 0.15)',
+            width: '300px',
+            padding: spacing.md,
+            borderRadius: radius.lg,
+            border: `1px solid ${colors.border}`,
+            background: colors.bgElevated,
+            boxShadow: colors.shadowLg,
           }}
         >
-          <textarea
+          <Textarea
+            theme={theme}
             value={draftValue}
             onChange={(event) => setDraftValue(event.target.value)}
             rows={6}
-            style={{
-              width: '100%',
-              resize: 'vertical',
-              fontSize: '12px',
-              borderRadius: '6px',
-              border: `1px solid ${colorScheme === 'dark' ? '#4a4a4a' : '#d5d5d5'}`,
-              background: colorScheme === 'dark' ? '#171717' : '#fff',
-              color: colorScheme === 'dark' ? '#ededed' : '#1e1e1e',
-              padding: '6px 8px',
-              boxSizing: 'border-box',
-            }}
+            style={{ fontSize: font.sizeSm }}
           />
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
-            <button
-              type="button"
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: spacing.sm, marginTop: spacing.sm }}>
+            <Button theme={theme} variant="ghost" size="sm" onClick={close}>
+              Отмена
+            </Button>
+            <Button
+              theme={theme}
+              variant="primary"
+              size="sm"
               onClick={() => void save()}
               disabled={updateMutation.isPending}
-              style={{ fontSize: '11px' }}
             >
-              Save
-            </button>
-            <button type="button" onClick={close} style={{ fontSize: '11px' }}>
-              Cancel
-            </button>
+              Сохранить
+            </Button>
           </div>
         </div>
       ) : null}

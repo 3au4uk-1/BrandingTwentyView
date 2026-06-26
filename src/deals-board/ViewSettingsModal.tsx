@@ -7,11 +7,14 @@ import {
 import { VIEW_VISIBILITY, type ViewVisibility } from 'src/constants/view-visibility';
 
 import { useCreateDealBoardView, useUpdateDealBoardView } from './hooks/useDealBoardViews';
+import { useTheme } from './theme/ThemeContext';
+import { Button } from './ui/Button';
+import { Input, Select } from './ui/Input';
+import { Modal } from './ui/Modal';
 import type { DealBoardViewRecord } from './types';
 
 type ViewSettingsModalProps = {
   isOpen: boolean;
-  colorScheme: 'light' | 'dark';
   initialView?: DealBoardViewRecord;
   onClose: () => void;
   onSaved?: (view: DealBoardViewRecord) => void;
@@ -19,11 +22,12 @@ type ViewSettingsModalProps = {
 
 export const ViewSettingsModal = ({
   isOpen,
-  colorScheme,
   initialView,
   onClose,
   onSaved,
 }: ViewSettingsModalProps) => {
+  const theme = useTheme();
+  const { font, spacing, colors } = theme;
   const createViewMutation = useCreateDealBoardView();
   const updateViewMutation = useUpdateDealBoardView();
   const [name, setName] = useState('');
@@ -76,98 +80,57 @@ export const ViewSettingsModal = ({
     }
   };
 
-  if (!isOpen) {
-    return null;
-  }
-
-  const overlayBackground = colorScheme === 'dark' ? 'rgba(0, 0, 0, 0.65)' : 'rgba(20, 24, 30, 0.28)';
-  const panelBackground = colorScheme === 'dark' ? '#1f1f1f' : '#fff';
-  const border = colorScheme === 'dark' ? '#434343' : '#ddd';
-  const text = colorScheme === 'dark' ? '#eee' : '#333';
-
   return (
-    <div
-      role="presentation"
-      onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 40,
-        backgroundColor: overlayBackground,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px',
-        boxSizing: 'border-box',
-      }}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        onClick={(event) => event.stopPropagation()}
-        style={{
-          width: '100%',
-          maxWidth: '420px',
-          border: `1px solid ${border}`,
-          borderRadius: '12px',
-          backgroundColor: panelBackground,
-          color: text,
-          padding: '14px',
-          boxSizing: 'border-box',
-          boxShadow: colorScheme === 'dark' ? '0 12px 28px rgba(0, 0, 0, 0.6)' : '0 12px 28px rgba(0, 0, 0, 0.2)',
-        }}
-      >
-        <div style={{ fontSize: '14px', fontWeight: 700 }}>{title}</div>
-
-        <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <label style={{ fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <span>Название</span>
-            <input
-              type="text"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Например, Продажи Q3"
-              style={{
-                borderRadius: '8px',
-                border: `1px solid ${border}`,
-                backgroundColor: colorScheme === 'dark' ? '#171717' : '#fff',
-                color: text,
-                padding: '7px 9px',
-                fontSize: '12px',
-              }}
-            />
-          </label>
-
-          <label style={{ fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <span>Видимость</span>
-            <select
-              value={visibility}
-              onChange={(event) => setVisibility(event.target.value as ViewVisibility)}
-              style={{
-                borderRadius: '8px',
-                border: `1px solid ${border}`,
-                backgroundColor: colorScheme === 'dark' ? '#171717' : '#fff',
-                color: text,
-                padding: '7px 9px',
-                fontSize: '12px',
-              }}
-            >
-              <option value={VIEW_VISIBILITY.PERSONAL}>Личный</option>
-              <option value={VIEW_VISIBILITY.WORKSPACE}>Общий</option>
-            </select>
-          </label>
-        </div>
-
-        <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-          <button type="button" onClick={onClose} disabled={isPending} style={{ fontSize: '12px' }}>
+    <Modal
+      theme={theme}
+      isOpen={isOpen}
+      title={title}
+      description="Настройте название и видимость представления для команды."
+      onClose={onClose}
+      footer={
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: spacing.sm,
+            padding: spacing.md,
+            borderTop: `1px solid ${colors.borderSubtle}`,
+            backgroundColor: colors.bgSecondary,
+          }}
+        >
+          <Button theme={theme} variant="ghost" size="sm" onClick={onClose} disabled={isPending}>
             Отмена
-          </button>
-          <button type="button" onClick={() => void handleSave()} disabled={isPending} style={{ fontSize: '12px' }}>
+          </Button>
+          <Button theme={theme} variant="primary" size="sm" onClick={() => void handleSave()} disabled={isPending}>
             {isPending ? 'Сохранение...' : 'Сохранить'}
-          </button>
+          </Button>
         </div>
+      }
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>
+        <label style={{ fontSize: font.sizeSm, display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
+          <span style={{ fontWeight: font.weightMedium, color: colors.text }}>Название</span>
+          <Input
+            theme={theme}
+            type="text"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Например, Продажи Q3"
+          />
+        </label>
+
+        <label style={{ fontSize: font.sizeSm, display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
+          <span style={{ fontWeight: font.weightMedium, color: colors.text }}>Видимость</span>
+          <Select
+            theme={theme}
+            value={visibility}
+            onChange={(event) => setVisibility(event.target.value as ViewVisibility)}
+          >
+            <option value={VIEW_VISIBILITY.PERSONAL}>Личный</option>
+            <option value={VIEW_VISIBILITY.WORKSPACE}>Общий</option>
+          </Select>
+        </label>
       </div>
-    </div>
+    </Modal>
   );
 };

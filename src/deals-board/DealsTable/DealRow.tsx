@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react';
 
 import { Chip } from '../Chip';
+import { useTheme } from '../theme/ThemeContext';
+import { EMPTY_VALUE } from '../theme/tokens';
+import { ChevronRightIcon } from '../ui/Icons';
 
 import type { ColumnConfig, LineItemRow, OpportunityRow } from '../types';
 import { DealSummaryChips } from './DealSummaryChips';
@@ -9,16 +12,16 @@ import { LineItemsTable } from './LineItemsTable';
 const shortDateFormatter = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short' });
 
 const formatDate = (value?: string) => {
-  if (!value) return '—';
+  if (!value) return EMPTY_VALUE;
 
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '—';
+  if (Number.isNaN(date.getTime())) return EMPTY_VALUE;
 
   return shortDateFormatter.format(date);
 };
 
 const formatAmount = (row: OpportunityRow) => {
-  if (!row.amount) return '—';
+  if (!row.amount) return EMPTY_VALUE;
 
   const amount = row.amount.amountMicros / 1_000_000;
   return `${amount.toLocaleString('ru-RU')} ${row.amount.currencyCode}`;
@@ -30,46 +33,10 @@ type DealRowProps = {
   childColumns: ColumnConfig[];
   lineItems: LineItemRow[];
   isExpanded: boolean;
+  isHovered: boolean;
+  onHoverChange: (hovered: boolean) => void;
   onToggleExpand: (id: string) => void;
-  colorScheme: 'light' | 'dark';
 };
-
-const linkStyle = (colorScheme: 'light' | 'dark') => ({
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '22px',
-  height: '22px',
-  borderRadius: '6px',
-  border: `1px solid ${colorScheme === 'dark' ? '#444' : '#ddd'}`,
-  color: colorScheme === 'dark' ? '#eee' : '#333',
-  textDecoration: 'none',
-  fontSize: '10px',
-  fontWeight: 700,
-});
-
-const expandButtonStyle = (colorScheme: 'light' | 'dark') => ({
-  border: 'none',
-  background: 'transparent',
-  padding: 0,
-  width: '14px',
-  minWidth: '14px',
-  height: '14px',
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  color: colorScheme === 'dark' ? '#e8e8e8' : '#333',
-  cursor: 'pointer',
-  fontSize: '10px',
-  lineHeight: 1,
-});
-
-const nameCellStyle = (colorScheme: 'light' | 'dark') => ({
-  position: 'sticky' as const,
-  left: 0,
-  zIndex: 2,
-  backgroundColor: colorScheme === 'dark' ? '#222' : '#fff',
-});
 
 export const DealRow = ({
   row,
@@ -77,62 +44,138 @@ export const DealRow = ({
   childColumns,
   lineItems,
   isExpanded,
+  isHovered,
+  onHoverChange,
   onToggleExpand,
-  colorScheme,
 }: DealRowProps) => {
+  const theme = useTheme();
+  const { colors, font, spacing, zIndex } = theme;
   const canExpand = lineItems.length > 0;
+  const rowBg = isHovered ? colors.bgHover : colors.bg;
 
   return (
     <>
-      <tr style={{ borderBottom: `1px solid ${colorScheme === 'dark' ? '#333' : '#eee'}` }}>
+      <tr
+        onMouseEnter={() => onHoverChange(true)}
+        onMouseLeave={() => onHoverChange(false)}
+        style={{
+          borderBottom: `1px solid ${colors.borderSubtle}`,
+          backgroundColor: rowBg,
+          transition: 'background-color 0.12s ease',
+        }}
+      >
         {columns.map((column) => {
-          let content: ReactNode = '—';
+          let content: ReactNode = EMPTY_VALUE;
 
           if (column.field === 'name') {
             content = (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, minWidth: 0 }}>
                 {canExpand ? (
                   <button
                     type="button"
                     onClick={() => onToggleExpand(row.id)}
-                    style={expandButtonStyle(colorScheme)}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      padding: 0,
+                      width: '20px',
+                      minWidth: '20px',
+                      height: '20px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: colors.textMuted,
+                      cursor: 'pointer',
+                      transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.15s ease',
+                    }}
                     aria-label={isExpanded ? 'Свернуть позиции' : 'Развернуть позиции'}
                   >
-                    {isExpanded ? '▼' : '▶'}
+                    <ChevronRightIcon size={14} color={colors.textSecondary} />
                   </button>
-                ) : null}
-                <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.name}</span>
+                ) : (
+                  <span style={{ width: '20px', minWidth: '20px' }} />
+                )}
+                <span
+                  style={{
+                    minWidth: 0,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    fontWeight: font.weightMedium,
+                    color: colors.text,
+                  }}
+                >
+                  {row.name}
+                </span>
               </div>
             );
           } else if (column.field === 'loadDate') {
             content = formatDate(row.loadDate);
           } else if (column.field === 'companyName') {
-            content = row.companyName ?? '—';
+            content = row.companyName ?? EMPTY_VALUE;
           } else if (column.field === 'summary') {
-            content = isExpanded ? '—' : <DealSummaryChips items={lineItems} />;
+            content = isExpanded ? EMPTY_VALUE : <DealSummaryChips items={lineItems} />;
           } else if (column.field === 'links') {
             const tonyUrl = row.tonyLink?.primaryLinkUrl;
             const bitrixUrl = row.bitrixLink?.primaryLinkUrl;
 
             content = (
-              <div style={{ display: 'inline-flex', gap: '6px' }}>
+              <div style={{ display: 'inline-flex', gap: spacing.xs }}>
                 {tonyUrl ? (
-                  <a href={tonyUrl} target="_blank" rel="noreferrer" style={linkStyle(colorScheme)}>
+                  <a
+                    href={tonyUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Tony"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: theme.radius.sm,
+                      border: `1px solid ${colors.border}`,
+                      backgroundColor: colors.bgElevated,
+                      color: colors.textSecondary,
+                      textDecoration: 'none',
+                      fontSize: font.sizeXs,
+                      fontWeight: font.weightSemibold,
+                    }}
+                  >
                     T
                   </a>
                 ) : null}
                 {bitrixUrl ? (
-                  <a href={bitrixUrl} target="_blank" rel="noreferrer" style={linkStyle(colorScheme)}>
+                  <a
+                    href={bitrixUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Bitrix"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: theme.radius.sm,
+                      border: `1px solid ${colors.border}`,
+                      backgroundColor: colors.bgElevated,
+                      color: colors.textSecondary,
+                      textDecoration: 'none',
+                      fontSize: font.sizeXs,
+                      fontWeight: font.weightSemibold,
+                    }}
+                  >
                     B
                   </a>
                 ) : null}
-                {!tonyUrl && !bitrixUrl ? '—' : null}
+                {!tonyUrl && !bitrixUrl ? EMPTY_VALUE : null}
               </div>
             );
           } else if (column.field === 'amount') {
-            content = <Chip text={formatAmount(row)} color="gray" />;
+            content = <Chip text={formatAmount(row)} color="gray" theme={theme} />;
           } else if (column.field === 'oplata') {
-            content = <Chip text={row.oplata ?? '—'} color={row.oplata ? 'green' : 'gray'} />;
+            content = <Chip text={row.oplata ?? EMPTY_VALUE} color={row.oplata ? 'green' : 'gray'} theme={theme} />;
           }
 
           return (
@@ -141,13 +184,21 @@ export const DealRow = ({
               style={{
                 width: column.width ? `${column.width}px` : 'auto',
                 maxWidth: column.width ? `${column.width}px` : undefined,
-                padding: '8px 10px',
-                fontSize: '12px',
+                padding: '10px 12px',
+                fontSize: font.sizeSm,
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
-                color: colorScheme === 'dark' ? '#eee' : '#333',
-                ...(column.field === 'name' ? nameCellStyle(colorScheme) : {}),
+                color: colors.textSecondary,
+                ...(column.field === 'name'
+                  ? {
+                      position: 'sticky' as const,
+                      left: 0,
+                      zIndex: zIndex.sticky,
+                      backgroundColor: rowBg,
+                      boxShadow: colors.stickyShadow,
+                    }
+                  : {}),
               }}
             >
               {content}
@@ -161,11 +212,11 @@ export const DealRow = ({
             colSpan={columns.length}
             style={{
               padding: 0,
-              backgroundColor: colorScheme === 'dark' ? '#191919' : '#f8f8f8',
-              borderBottom: `1px solid ${colorScheme === 'dark' ? '#333' : '#eee'}`,
+              backgroundColor: colors.bgInset,
+              borderBottom: `1px solid ${colors.border}`,
             }}
           >
-            <LineItemsTable items={lineItems} columns={childColumns} colorScheme={colorScheme} />
+            <LineItemsTable items={lineItems} columns={childColumns} />
           </td>
         </tr>
       ) : null}

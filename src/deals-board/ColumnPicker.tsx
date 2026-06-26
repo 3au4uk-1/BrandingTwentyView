@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { useTheme } from './theme/ThemeContext';
+import { Button } from './ui/Button';
 import type { ColumnConfig } from './types';
 
 type ColumnPickerProps = {
   target: 'parent' | 'child';
-  colorScheme: 'light' | 'dark';
   columns: ColumnConfig[];
   onSave: (columns: ColumnConfig[]) => Promise<void>;
 };
@@ -20,7 +21,9 @@ const sortColumns = (columns: ColumnConfig[]) =>
     (a, b) => a.order - b.order || a.label.localeCompare(b.label, 'ru'),
   );
 
-export const ColumnPicker = ({ target, colorScheme, columns, onSave }: ColumnPickerProps) => {
+export const ColumnPicker = ({ target, columns, onSave }: ColumnPickerProps) => {
+  const theme = useTheme();
+  const { colors, radius, font, spacing, zIndex } = theme;
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [draftColumns, setDraftColumns] = useState<ColumnConfig[]>([]);
@@ -45,10 +48,6 @@ export const ColumnPicker = ({ target, colorScheme, columns, onSave }: ColumnPic
   }, [columns]);
 
   const canInteract = !isSaving;
-  const background = colorScheme === 'dark' ? '#1d1d1d' : '#fff';
-  const border = colorScheme === 'dark' ? '#404040' : '#ddd';
-  const text = colorScheme === 'dark' ? '#eee' : '#333';
-  const muted = colorScheme === 'dark' ? '#9a9a9a' : '#666';
   const triggerLabel = useMemo(
     () => (target === 'parent' ? 'Колонки: сделки' : 'Колонки: позиции'),
     [target],
@@ -88,21 +87,9 @@ export const ColumnPicker = ({ target, colorScheme, columns, onSave }: ColumnPic
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
-      <button
-        type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        style={{
-          border: `1px solid ${border}`,
-          borderRadius: '8px',
-          padding: '6px 10px',
-          fontSize: '12px',
-          backgroundColor: background,
-          color: text,
-          cursor: 'pointer',
-        }}
-      >
+      <Button theme={theme} variant="ghost" size="sm" onClick={() => setIsOpen((prev) => !prev)}>
         {triggerLabel}
-      </button>
+      </Button>
 
       {isOpen ? (
         <div
@@ -110,18 +97,35 @@ export const ColumnPicker = ({ target, colorScheme, columns, onSave }: ColumnPic
             position: 'absolute',
             top: 'calc(100% + 6px)',
             right: 0,
-            width: '300px',
-            border: `1px solid ${border}`,
-            borderRadius: '10px',
-            backgroundColor: background,
-            boxShadow: colorScheme === 'dark' ? '0 8px 20px rgba(0, 0, 0, 0.45)' : '0 8px 20px rgba(0, 0, 0, 0.12)',
-            zIndex: 30,
-            padding: '10px',
+            width: '320px',
+            border: `1px solid ${colors.border}`,
+            borderRadius: radius.lg,
+            backgroundColor: colors.bgElevated,
+            boxShadow: colors.shadowLg,
+            zIndex: zIndex.dropdown,
+            padding: spacing.md,
             boxSizing: 'border-box',
           }}
         >
-          <div style={{ fontSize: '12px', fontWeight: 600, color: text, marginBottom: '8px' }}>{title}</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '260px', overflow: 'auto' }}>
+          <div
+            style={{
+              fontSize: font.sizeSm,
+              fontWeight: font.weightSemibold,
+              color: colors.text,
+              marginBottom: spacing.sm,
+            }}
+          >
+            {title}
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: spacing.xs,
+              maxHeight: '280px',
+              overflow: 'auto',
+            }}
+          >
             {draftColumns.map((column, index) => (
               <div
                 key={column.field}
@@ -129,13 +133,23 @@ export const ColumnPicker = ({ target, colorScheme, columns, onSave }: ColumnPic
                   display: 'grid',
                   gridTemplateColumns: '1fr auto',
                   alignItems: 'center',
-                  gap: '8px',
-                  border: `1px solid ${border}`,
-                  borderRadius: '8px',
-                  padding: '6px 8px',
+                  gap: spacing.sm,
+                  border: `1px solid ${colors.borderSubtle}`,
+                  borderRadius: radius.md,
+                  padding: '8px 10px',
+                  backgroundColor: column.visible ? colors.bg : colors.bgTertiary,
                 }}
               >
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: text, fontSize: '12px' }}>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing.sm,
+                    color: colors.text,
+                    fontSize: font.sizeSm,
+                    cursor: 'pointer',
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={column.visible}
@@ -146,25 +160,29 @@ export const ColumnPicker = ({ target, colorScheme, columns, onSave }: ColumnPic
                     {column.label}
                   </span>
                 </label>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  <button
-                    type="button"
+                <div style={{ display: 'flex', gap: '2px' }}>
+                  <Button
+                    theme={theme}
+                    variant="ghost"
+                    size="sm"
                     onClick={() => moveColumn(index, -1)}
                     disabled={index === 0 || !canInteract}
-                    style={{ fontSize: '11px' }}
                     aria-label={`Поднять ${column.label}`}
+                    style={{ padding: '2px 6px', minWidth: '28px' }}
                   >
                     ↑
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    theme={theme}
+                    variant="ghost"
+                    size="sm"
                     onClick={() => moveColumn(index, 1)}
                     disabled={index === draftColumns.length - 1 || !canInteract}
-                    style={{ fontSize: '11px' }}
                     aria-label={`Опустить ${column.label}`}
+                    style={{ padding: '2px 6px', minWidth: '28px' }}
                   >
                     ↓
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}
@@ -172,30 +190,31 @@ export const ColumnPicker = ({ target, colorScheme, columns, onSave }: ColumnPic
 
           <div
             style={{
-              marginTop: '10px',
+              marginTop: spacing.md,
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
             }}
           >
-            <span style={{ fontSize: '11px', color: muted }}>
+            <span style={{ fontSize: font.sizeXs, color: colors.textMuted }}>
               Видимых: {draftColumns.filter((column) => column.visible).length}
             </span>
-            <div style={{ display: 'flex', gap: '6px' }}>
-              <button
-                type="button"
+            <div style={{ display: 'flex', gap: spacing.xs }}>
+              <Button
+                theme={theme}
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setDraftColumns(sortColumns(columns));
                   setIsOpen(false);
                 }}
                 disabled={!canInteract}
-                style={{ fontSize: '11px' }}
               >
                 Отмена
-              </button>
-              <button type="button" onClick={() => void handleSave()} disabled={!canInteract} style={{ fontSize: '11px' }}>
+              </Button>
+              <Button theme={theme} variant="primary" size="sm" onClick={() => void handleSave()} disabled={!canInteract}>
                 {isSaving ? 'Сохранение...' : 'Применить'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
