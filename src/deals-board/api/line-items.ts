@@ -1,37 +1,39 @@
-import { getApiClient } from './client';
+import { RestApiClient } from 'twenty-client-sdk/rest';
+
 import type { LineItemRow } from '../types';
 
-const LINE_ITEM_FIELDS = {
-  id: true,
-  opportunityId: true,
-  name: true,
-  kolichestvo: true,
-  amount: { amountMicros: true, currencyCode: true },
-  kommentariy: true,
-  stage: true,
-  ssylkaNaMakety: { primaryLinkUrl: true, primaryLinkLabel: true },
-  plenka: { markdown: true },
-} as const;
+let restClient: RestApiClient | null = null;
+
+const getRestClient = (): RestApiClient => {
+  if (!restClient) restClient = new RestApiClient();
+  return restClient;
+};
+
+type RestListResponse<T> = {
+  data?: T[];
+};
+
+const buildListQuery = (opportunityIds: string[], stageFilter?: string[]) => {
+  const query: Record<string, string | number> = { limit: 500 };
+  query['filter[opportunityId][in]'] = opportunityIds.join(',');
+  if (stageFilter?.length) {
+    query['filter[stage][in]'] = stageFilter.join(',');
+  }
+  return query;
+};
 
 export const fetchLineItemsByOpportunityIds = async (
   opportunityIds: string[],
   stageFilter?: string[],
 ): Promise<LineItemRow[]> => {
   if (opportunityIds.length === 0) return [];
-  const client = getApiClient();
-  const filter: Record<string, unknown> = {
-    opportunityId: { in: opportunityIds },
-  };
-  if (stageFilter?.length) filter.stage = { in: stageFilter };
 
-  const result = await client.query({
-    dealLineItems: {
-      __args: { first: 500, filter },
-      edges: { node: LINE_ITEM_FIELDS },
-    },
+  const client = getRestClient();
+  const response = await client.get<RestListResponse<LineItemRow>>('/rest/dealLineItems', {
+    query: buildListQuery(opportunityIds, stageFilter),
   });
 
-  return (result.dealLineItems?.edges ?? []).map((e) => e.node as LineItemRow);
+  return response.data ?? [];
 };
 
 export const updateLineItem = async (
@@ -41,11 +43,6 @@ export const updateLineItem = async (
     plenka?: { markdown: string };
   },
 ): Promise<void> => {
-  const client = getApiClient();
-  await client.mutation({
-    updateDealLineItem: {
-      __args: { id, data },
-      id: true,
-    },
-  });
+  const client = getRestClient();
+  await client.patch(`/rest/dealLineItems/${id}`, data);
 };
