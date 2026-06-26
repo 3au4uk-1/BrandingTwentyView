@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react';
 import { Tag } from 'twenty-sdk/ui';
 
-import { getStageColor, getStageLabel } from 'src/constants/stages';
-
 import type { ColumnConfig, LineItemRow } from '../types';
+import { LinkCell } from '../editors/LinkCell';
+import { NumberCell } from '../editors/NumberCell';
+import { RichTextPopover } from '../editors/RichTextPopover';
+import { StageSelect } from '../editors/StageSelect';
 
 type LineItemsTableProps = {
   items: LineItemRow[];
@@ -17,12 +19,6 @@ const formatAmount = (item: LineItemRow) => {
   const amount = item.amount.amountMicros / 1_000_000;
   return `${amount.toLocaleString('ru-RU')} ${item.amount.currencyCode}`;
 };
-
-const linkStyle = (colorScheme: 'light' | 'dark') => ({
-  color: colorScheme === 'dark' ? '#7db4ff' : '#1868d8',
-  textDecoration: 'none',
-  borderBottom: `1px solid ${colorScheme === 'dark' ? '#4f6b93' : '#9ebff2'}`,
-});
 
 export const LineItemsTable = ({ items, columns, colorScheme }: LineItemsTableProps) => {
   if (!items.length) {
@@ -78,25 +74,49 @@ export const LineItemsTable = ({ items, columns, colorScheme }: LineItemsTablePr
               if (column.field === 'name') {
                 content = item.name;
               } else if (column.field === 'stage') {
-                const stage = item.stage ?? 'NOVYY';
-                content = <Tag text={getStageLabel(stage)} color={getStageColor(stage)} />;
+                content = (
+                  <StageSelect
+                    itemId={item.id}
+                    value={item.stage}
+                    colorScheme={colorScheme}
+                  />
+                );
               } else if (column.field === 'ssylkaNaMakety') {
-                const url = item.ssylkaNaMakety?.primaryLinkUrl;
-                content = url ? (
-                  <a href={url} target="_blank" rel="noreferrer" style={linkStyle(colorScheme)}>
-                    {item.ssylkaNaMakety?.primaryLinkLabel ?? 'Открыть'}
-                  </a>
-                ) : (
-                  '—'
+                content = (
+                  <LinkCell
+                    itemId={item.id}
+                    value={item.ssylkaNaMakety}
+                    colorScheme={colorScheme}
+                  />
                 );
               } else if (column.field === 'plenka') {
-                content = item.plenka?.markdown?.trim() || '—';
+                content = (
+                  <RichTextPopover
+                    itemId={item.id}
+                    field="plenka.markdown"
+                    value={item.plenka?.markdown}
+                    colorScheme={colorScheme}
+                  />
+                );
               } else if (column.field === 'kolichestvo') {
-                content = typeof item.kolichestvo === 'number' ? item.kolichestvo : '—';
+                content = (
+                  <NumberCell
+                    itemId={item.id}
+                    value={item.kolichestvo}
+                    colorScheme={colorScheme}
+                  />
+                );
               } else if (column.field === 'amount') {
                 content = <Tag text={formatAmount(item)} color="gray" />;
               } else if (column.field === 'kommentariy') {
-                content = item.kommentariy?.trim() || '—';
+                content = (
+                  <RichTextPopover
+                    itemId={item.id}
+                    field="kommentariy"
+                    value={item.kommentariy}
+                    colorScheme={colorScheme}
+                  />
+                );
               }
 
               return (
