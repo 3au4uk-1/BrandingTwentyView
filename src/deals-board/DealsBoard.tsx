@@ -243,6 +243,7 @@ const DealsBoardContent = () => {
             color: colorScheme === 'dark' ? '#f5c26b' : '#8a5a00',
             backgroundColor: colorScheme === 'dark' ? '#2a2418' : '#fff8e6',
             borderBottom: `1px solid ${colorScheme === 'dark' ? '#4a3b1f' : '#f0e2b6'}`,
+            flexShrink: 0,
           }}
         >
           Позиции сделок не загрузились: {lineItemsWarning}

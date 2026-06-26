@@ -1,4 +1,5 @@
 import { getApiClient } from './client';
+import { asArray } from '../utils/parse-json-field';
 import type { DealBoardFilters, DealBoardSort, OpportunityRow } from '../types';
 
 /** Fields available on standard Opportunity in the app GraphQL schema. */
@@ -45,11 +46,10 @@ export const fetchOpportunities = async (params: {
     },
   });
 
-  const records = (result.opportunities?.edges ?? []).map((e) => {
-    const node = e.node as OpportunityRow & {
-      company?: { id?: string; name?: string };
-      closeDate?: string;
-    };
+  const records = asArray<{ node: OpportunityRow & { company?: { id?: string; name?: string }; closeDate?: string } }>(
+    result.opportunities?.edges,
+  ).map((e) => {
+    const node = e.node;
 
     return {
       ...node,
