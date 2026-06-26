@@ -37,6 +37,7 @@ type DealsTableProps = {
   onResetFilters?: () => void;
   isLoading?: boolean;
   isViewLoading?: boolean;
+  errorMessage?: string;
 };
 
 export const DealsTable = ({
@@ -51,6 +52,7 @@ export const DealsTable = ({
   onResetFilters,
   isLoading = false,
   isViewLoading = false,
+  errorMessage,
 }: DealsTableProps) => {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const { mode } = useExpandMode();
@@ -176,6 +178,27 @@ export const DealsTable = ({
         }}
       >
         View не выбрана
+      </div>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <div
+        style={{
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '10px',
+          padding: '16px',
+          color: colorScheme === 'dark' ? '#ffb4b4' : '#b42318',
+          textAlign: 'center',
+        }}
+      >
+        <span>Не удалось загрузить данные</span>
+        <span style={{ fontSize: '12px', maxWidth: '520px' }}>{errorMessage}</span>
       </div>
     );
   }

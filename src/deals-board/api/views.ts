@@ -4,6 +4,8 @@ import {
 } from 'src/constants/column-definitions';
 
 import { parseColumns } from '../utils/columns';
+import { parseJsonField } from '../utils/parse-json-field';
+import { normalizeStageList } from '../utils/filters';
 import type { DealBoardFilters, DealBoardSort, DealBoardViewRecord } from '../types';
 import { getApiClient } from './client';
 
@@ -30,13 +32,22 @@ type RawViewNode = {
 };
 
 const parseFilters = (raw: unknown): DealBoardFilters => {
-  if (!raw || typeof raw !== 'object') return {};
-  return raw as DealBoardFilters;
+  const parsed = parseJsonField(raw);
+  if (!parsed || typeof parsed !== 'object') return {};
+
+  const filters = parsed as DealBoardFilters;
+  const stages = normalizeStageList((filters as { stages?: unknown }).stages);
+
+  return {
+    ...filters,
+    stages: stages.length ? stages : undefined,
+  };
 };
 
 const parseSort = (raw: unknown): DealBoardSort[] => {
-  if (!Array.isArray(raw)) return [];
-  return raw.filter(
+  const parsed = parseJsonField(raw);
+  if (!Array.isArray(parsed)) return [];
+  return parsed.filter(
     (s): s is DealBoardSort =>
       typeof s === 'object' &&
       s !== null &&

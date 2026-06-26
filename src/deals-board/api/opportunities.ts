@@ -6,6 +6,7 @@ const OPPORTUNITY_FIELDS = {
   name: true,
   loadDate: true,
   companyId: true,
+  company: { id: true, name: true },
   amount: { amountMicros: true, currencyCode: true },
   tonyLink: { primaryLinkUrl: true, primaryLinkLabel: true },
   bitrixLink: { primaryLinkUrl: true, primaryLinkLabel: true },
@@ -28,8 +29,9 @@ export const fetchOpportunities = async (params: {
   filters: DealBoardFilters;
 }): Promise<{ records: OpportunityRow[]; totalCount: number }> => {
   const client = getApiClient();
-  const orderBy = params.sort.length
-    ? params.sort.map((s) => ({ [s.field]: s.direction }))
+  const sort = Array.isArray(params.sort) ? params.sort : [];
+  const orderBy = sort.length
+    ? sort.map((s) => ({ [s.field]: s.direction }))
     : [{ loadDate: 'AscNullsFirst' as const }];
 
   const result = await client.query({
@@ -45,6 +47,15 @@ export const fetchOpportunities = async (params: {
     },
   });
 
-  const records = (result.opportunities?.edges ?? []).map((e) => e.node as OpportunityRow);
+  const records = (result.opportunities?.edges ?? []).map((e) => {
+    const node = e.node as OpportunityRow & {
+      company?: { id?: string; name?: string };
+    };
+
+    return {
+      ...node,
+      companyName: node.company?.name,
+    };
+  });
   return { records, totalCount: result.opportunities?.totalCount ?? 0 };
 };

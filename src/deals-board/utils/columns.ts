@@ -1,11 +1,14 @@
 import type { ColumnConfig } from '../types';
+import { parseJsonField } from './parse-json-field';
 
 export const parseColumns = (raw: unknown, fallback: ColumnConfig[]): ColumnConfig[] => {
-  if (!Array.isArray(raw)) return fallback;
-  return raw
+  const parsed = parseJsonField(raw);
+  if (!Array.isArray(parsed)) return fallback;
+
+  return parsed
     .filter((c): c is ColumnConfig => typeof c?.field === 'string')
     .sort((a, b) => a.order - b.order);
 };
 
 export const visibleColumns = (columns: ColumnConfig[]): ColumnConfig[] =>
-  columns.filter((c) => c.visible);
+  (columns ?? []).filter((c) => c.visible);

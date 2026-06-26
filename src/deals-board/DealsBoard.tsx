@@ -2,8 +2,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useColorScheme } from 'twenty-sdk/front-component';
 
-import type { LineItemStage } from 'src/constants/stages';
-
 import { AppSettingsModal } from './AppSettingsModal';
 import { ColumnPicker } from './ColumnPicker';
 import { DealsTable } from './DealsTable/DealsTable';
@@ -12,6 +10,7 @@ import { useLineItems } from './hooks/useLineItems';
 import { useOpportunities } from './hooks/useOpportunities';
 import { QuickFiltersBar, type QuickFiltersValue } from './QuickFiltersBar';
 import type { DealBoardViewRecord } from './types';
+import { mergeStageFilters } from './utils/filters';
 import { ViewSettingsModal } from './ViewSettingsModal';
 import { ViewSwitcher } from './ViewSwitcher';
 
@@ -25,27 +24,6 @@ const DEFAULT_QUICK_FILTERS: QuickFiltersValue = {
   stages: [],
   oplata: 'all',
   search: '',
-};
-
-const mergeStageFilters = (
-  fromView?: LineItemStage[],
-  fromQuick?: LineItemStage[],
-): LineItemStage[] | undefined => {
-  const viewStages = fromView ?? [];
-  const quickStages = fromQuick ?? [];
-
-  if (!viewStages.length && !quickStages.length) {
-    return undefined;
-  }
-  if (!viewStages.length) {
-    return quickStages;
-  }
-  if (!quickStages.length) {
-    return viewStages;
-  }
-
-  const quickSet = new Set(quickStages);
-  return viewStages.filter((stage) => quickSet.has(stage));
 };
 
 const DealsBoardContent = () => {
@@ -83,7 +61,7 @@ const DealsBoardContent = () => {
     quickFilters.dateTo,
     quickFilters.search,
     quickFilters.oplata,
-    quickFilters.stages.join(','),
+    (quickFilters.stages ?? []).join(','),
   ]);
 
   const mergedStages = useMemo(
@@ -154,6 +132,12 @@ const DealsBoardContent = () => {
 
   const visibleTotalCount =
     stageMatchedOpportunityIds || quickFilters.oplata !== 'all' ? visibleRecords.length : totalCount;
+
+  const loadError =
+    viewsQuery.error ??
+    opportunitiesQuery.error ??
+    lineItemsQuery.error ??
+    null;
 
   const saveActiveViewColumns = async (target: 'parent' | 'child', columns: DealBoardViewRecord['parentColumns']) => {
     if (!activeView) return;
@@ -268,6 +252,7 @@ const DealsBoardContent = () => {
         onResetFilters={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
         isLoading={opportunitiesQuery.isLoading || lineItemsQuery.isLoading}
         isViewLoading={viewsQuery.isLoading || viewsQuery.isSeedingDefault}
+        errorMessage={loadError instanceof Error ? loadError.message : loadError ? String(loadError) : undefined}
       />
 
       <ViewSettingsModal

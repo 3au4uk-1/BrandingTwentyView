@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { LINE_ITEM_STAGES, type LineItemStage } from 'src/constants/stages';
 
@@ -58,6 +58,8 @@ const presetLabel: Record<Exclude<QuickDatePreset, null>, string> = {
 };
 
 export const QuickFiltersBar = ({ colorScheme, value, onChange, onReset }: QuickFiltersBarProps) => {
+  const [isStageFilterOpen, setIsStageFilterOpen] = useState(false);
+  const selectedStages = value.stages ?? [];
   const border = colorScheme === 'dark' ? '#404040' : '#ddd';
   const background = colorScheme === 'dark' ? '#1d1d1d' : '#fff';
   const inputBackground = colorScheme === 'dark' ? '#171717' : '#fff';
@@ -66,6 +68,14 @@ export const QuickFiltersBar = ({ colorScheme, value, onChange, onReset }: Quick
   const activeBackground = colorScheme === 'dark' ? '#2b3340' : '#eaf1ff';
 
   const stageOptions = useMemo(() => LINE_ITEM_STAGES, []);
+
+  const toggleStage = (stage: LineItemStage) => {
+    const nextStages = selectedStages.includes(stage)
+      ? selectedStages.filter((item) => item !== stage)
+      : [...selectedStages, stage];
+
+    onChange({ ...value, stages: nextStages });
+  };
 
   return (
     <div
@@ -164,31 +174,68 @@ export const QuickFiltersBar = ({ colorScheme, value, onChange, onReset }: Quick
         </>
       ) : null}
 
-      <select
-        multiple
-        value={value.stages}
-        onChange={(event) => {
-          const selected = Array.from(event.target.selectedOptions).map((option) => option.value as LineItemStage);
-          onChange({ ...value, stages: selected });
-        }}
-        style={{
-          border: `1px solid ${border}`,
-          borderRadius: '8px',
-          backgroundColor: inputBackground,
-          color: text,
-          padding: '6px 8px',
-          fontSize: '12px',
-          minWidth: '150px',
-          height: '72px',
-        }}
-        aria-label="Фильтр по этапам"
-      >
-        {stageOptions.map((stage) => (
-          <option key={stage.value} value={stage.value}>
-            {stage.label}
-          </option>
-        ))}
-      </select>
+      <div style={{ position: 'relative' }}>
+        <button
+          type="button"
+          onClick={() => setIsStageFilterOpen((prev) => !prev)}
+          style={{
+            border: `1px solid ${border}`,
+            borderRadius: '8px',
+            backgroundColor: selectedStages.length ? activeBackground : background,
+            color: text,
+            padding: '6px 8px',
+            fontSize: '12px',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Стадии{selectedStages.length ? `: ${selectedStages.length}` : ''}
+        </button>
+
+        {isStageFilterOpen ? (
+          <div
+            style={{
+              position: 'absolute',
+              top: 'calc(100% + 6px)',
+              left: 0,
+              zIndex: 20,
+              minWidth: '180px',
+              border: `1px solid ${border}`,
+              borderRadius: '8px',
+              backgroundColor: background,
+              boxShadow: colorScheme === 'dark' ? '0 8px 20px rgba(0,0,0,0.45)' : '0 8px 20px rgba(0,0,0,0.12)',
+              padding: '8px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+            }}
+          >
+            {stageOptions.map((stage) => {
+              const checked = selectedStages.includes(stage.value);
+              return (
+                <label
+                  key={stage.value}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontSize: '12px',
+                    color: text,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleStage(stage.value)}
+                  />
+                  <span>{stage.label}</span>
+                </label>
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
 
       <select
         value={value.oplata}
