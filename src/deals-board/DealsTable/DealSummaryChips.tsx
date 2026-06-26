@@ -1,4 +1,4 @@
-import { Tag } from 'twenty-sdk/ui';
+import { Chip, type ChipColor } from '../Chip';
 
 import { getStageColor, getStageLabel } from 'src/constants/stages';
 
@@ -21,12 +21,12 @@ export const DealSummaryChips = ({ items }: DealSummaryChipsProps) => {
 
   return (
     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-      <Tag text={buildStageSummary(items)} color="gray" />
+      <Chip text={buildStageSummary(items)} color="gray" />
       {stageChips.map(([stage, count]) => (
-        <Tag
+        <Chip
           key={stage}
           text={`${count} ${getStageLabel(stage)}`}
-          color={getStageColor(stage)}
+          color={getStageColor(stage) as ChipColor}
         />
       ))}
     </div>

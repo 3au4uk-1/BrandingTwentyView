@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Status, Tag } from 'twenty-sdk/ui';
+
+import { Chip } from '../Chip';
 
 import type { ColumnConfig, LineItemRow, OpportunityRow } from '../types';
 import { DealSummaryChips } from './DealSummaryChips';
@@ -129,9 +130,9 @@ export const DealRow = ({
               </div>
             );
           } else if (column.field === 'amount') {
-            content = <Tag text={formatAmount(row)} color="gray" />;
+            content = <Chip text={formatAmount(row)} color="gray" />;
           } else if (column.field === 'oplata') {
-            content = <Status text={row.oplata ?? '—'} color={row.oplata ? 'green' : 'gray'} />;
+            content = <Chip text={row.oplata ?? '—'} color={row.oplata ? 'green' : 'gray'} />;
           }
 
           return (

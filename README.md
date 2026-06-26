@@ -17,13 +17,12 @@ yarn twenty dev             # live-sync изменений
 
 Демо-аккаунт локального сервера: `tim@apple.dev` / `tim@apple.dev`
 
-## CI/CD (GitHub Actions)
+## CD (GitHub Actions)
 
-В репозитории настроены два workflow:
+В репозитории настроен workflow деплоя:
 
 | Workflow | Файл | Триггер | Назначение |
 |----------|------|---------|------------|
-| **CI** | `.github/workflows/ci.yml` | push/PR в `main` | Интеграционные тесты на изолированном Twenty |
 | **CD** | `.github/workflows/cd.yml` | push в `main`, PR с меткой `deploy` | Публикация и установка app на сервер |
 
 ### Настройка деплоя
@@ -38,15 +37,11 @@ yarn twenty dev             # live-sync изменений
 
 **Preview-деплой из PR:** добавьте метку `deploy` на pull request.
 
-### CI
-
-Секреты не нужны — workflow поднимает временный Twenty через `spawn-twenty-app-dev-test`.
-
 ## Полезные команды
 
 ```bash
 yarn twenty help
-yarn twenty dev --once      # одноразовый sync (как в CI)
+yarn twenty dev --once      # одноразовый sync
 yarn test                   # интеграционные тесты
 yarn lint
 ```

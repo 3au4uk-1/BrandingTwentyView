@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Tag } from 'twenty-sdk/ui';
+import { Chip } from '../Chip';
 
 import type { ColumnConfig, LineItemRow } from '../types';
 import { LinkCell } from '../editors/LinkCell';
@@ -107,7 +107,7 @@ export const LineItemsTable = ({ items, columns, colorScheme }: LineItemsTablePr
                   />
                 );
               } else if (column.field === 'amount') {
-                content = <Tag text={formatAmount(item)} color="gray" />;
+                content = <Chip text={formatAmount(item)} color="gray" />;
               } else if (column.field === 'kommentariy') {
                 content = (
                   <RichTextPopover
