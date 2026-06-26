@@ -3,9 +3,9 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { APP_DISPLAY_NAME } from 'src/constants/universal-identifiers';
 
-import { AppSettingsModal } from './AppSettingsModal';
 import { ColumnPicker } from './ColumnPicker';
 import { DealsTable } from './DealsTable/DealsTable';
+import { ExpandModeToggle } from './ExpandModeToggle';
 import { ExpandModeProvider } from './hooks/useExpandMode';
 import { useDealBoardViews, useUpdateDealBoardView } from './hooks/useDealBoardViews';
 import { useLineItems } from './hooks/useLineItems';
@@ -14,7 +14,6 @@ import { QuickFiltersBar, type QuickFiltersValue } from './QuickFiltersBar';
 import type { DealBoardViewRecord, LineItemRow, OpportunityRow } from './types';
 import { ThemeProvider, useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
-import { SettingsIcon } from './ui/Icons';
 import { mergeStageFilters } from './utils/filters';
 import { asArray } from './utils/parse-json-field';
 import { ViewSettingsModal } from './ViewSettingsModal';
@@ -40,7 +39,6 @@ const DealsBoardContent = () => {
   const [activeViewId, setActiveViewId] = useState<string>();
   const [page, setPage] = useState(0);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [editViewDraft, setEditViewDraft] = useState<DealBoardViewRecord>();
   const [quickFilters, setQuickFilters] = useState<QuickFiltersValue>(DEFAULT_QUICK_FILTERS);
   const views = asArray<DealBoardViewRecord>(viewsQuery.data);
@@ -108,7 +106,7 @@ const DealsBoardContent = () => {
 
   const lineItemsQuery = useLineItems(
     visibleOpportunityIds,
-    mergedStages,
+    undefined,
     !opportunitiesQuery.isLoading,
   );
   const lineItems = asArray<LineItemRow>(lineItemsQuery.data);
@@ -196,16 +194,7 @@ const DealsBoardContent = () => {
             onReset={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
           />
 
-          <Button
-            theme={theme}
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsSettingsModalOpen(true)}
-            aria-label="Настройки"
-            style={{ flexShrink: 0, padding: '6px 8px' }}
-          >
-            <SettingsIcon size={16} color={colors.textSecondary} />
-          </Button>
+          <ExpandModeToggle />
         </div>
 
         <div
@@ -299,8 +288,6 @@ const DealsBoardContent = () => {
         onClose={() => setEditViewDraft(undefined)}
         onSaved={(view) => setActiveViewId(view.id)}
       />
-
-      <AppSettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
     </div>
   );
 };

@@ -22,7 +22,7 @@ const ExpandModeContext = createContext<ExpandModeContextValue | null>(null);
 
 const readStoredMode = (): ExpandMode => {
   const stored = readLocalStorage(STORAGE_KEY);
-  return stored === 'smart' ? 'smart' : 'collapsed';
+  return stored === 'collapsed' ? 'collapsed' : 'smart';
 };
 
 export const ExpandModeProvider = ({ children }: { children: ReactNode }) => {

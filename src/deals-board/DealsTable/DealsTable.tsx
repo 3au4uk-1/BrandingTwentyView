@@ -1,14 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import {
   DEFAULT_CHILD_COLUMNS,
   DEFAULT_PARENT_COLUMNS,
 } from 'src/constants/column-definitions';
-import { DONE_STAGES } from 'src/constants/stages';
 
 import { fetchCompanyNames } from '../api/companies';
-import type { ExpandMode } from '../hooks/useExpandMode';
+import { useDealExpandState } from '../hooks/useDealExpandState';
 import { useExpandMode } from '../hooks/useExpandMode';
 import { useTheme } from '../theme/ThemeContext';
 import { Button } from '../ui/Button';
@@ -16,17 +15,7 @@ import { EmptyState } from '../ui/EmptyState';
 import { Spinner } from '../ui/Spinner';
 import type { DealBoardViewRecord, LineItemRow, OpportunityRow } from '../types';
 import { visibleColumns } from '../utils/columns';
-import { readSessionStorage, writeSessionStorage } from '../utils/browser-storage';
 import { DealRow } from './DealRow';
-
-const EXPANDED_IDS_STORAGE_PREFIX = 'deals-board-expanded-ids';
-
-const shouldAutoExpand = (
-  items: ReadonlyArray<{ stage?: string | null }>,
-  mode: ExpandMode,
-) =>
-  mode === 'smart' &&
-  items.some((i) => i.stage && !DONE_STAGES.includes(i.stage));
 
 type DealsTableProps = {
   activeView?: DealBoardViewRecord;
@@ -57,10 +46,8 @@ export const DealsTable = ({
 }: DealsTableProps) => {
   const theme = useTheme();
   const { colors, font, spacing, zIndex } = theme;
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
   const { mode } = useExpandMode();
-  const prevExpandModeRef = useRef(mode);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const parentColumns = useMemo(
@@ -96,60 +83,11 @@ export const DealsTable = ({
     return grouped;
   }, [lineItems]);
 
-  const expandedStorageKey = activeView?.id ? `${EXPANDED_IDS_STORAGE_PREFIX}:${activeView.id}` : null;
-
-  useEffect(() => {
-    if (!expandedStorageKey) {
-      setExpandedIds(new Set());
-      return;
-    }
-
-    const stored = readSessionStorage(expandedStorageKey);
-    if (!stored) {
-      setExpandedIds(new Set());
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(stored);
-      const ids = Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === 'string') : [];
-      setExpandedIds(new Set(ids));
-    } catch {
-      setExpandedIds(new Set());
-    }
-  }, [expandedStorageKey]);
-
-  useEffect(() => {
-    if (!expandedStorageKey) return;
-    writeSessionStorage(expandedStorageKey, JSON.stringify([...expandedIds]));
-  }, [expandedIds, expandedStorageKey]);
-
-  useEffect(() => {
-    const previousMode = prevExpandModeRef.current;
-    prevExpandModeRef.current = mode;
-
-    if (mode === 'collapsed') {
-      if (previousMode !== 'collapsed') {
-        setExpandedIds(new Set());
-      }
-      return;
-    }
-
-    setExpandedIds((previous) => {
-      const next = new Set(previous);
-      let changed = false;
-
-      for (const record of records) {
-        const items = lineItemsByOpportunity.get(record.id) ?? [];
-        if (shouldAutoExpand(items, mode) && !next.has(record.id)) {
-          next.add(record.id);
-          changed = true;
-        }
-      }
-
-      return changed ? next : previous;
-    });
-  }, [lineItemsByOpportunity, mode, records]);
+  const { isExpanded, toggleExpand } = useDealExpandState(
+    activeView?.id,
+    lineItemsByOpportunity,
+    mode,
+  );
 
   if (isViewLoading || isLoading) {
     return (
@@ -271,20 +209,10 @@ export const DealsTable = ({
                 columns={parentColumns}
                 childColumns={childColumns}
                 lineItems={lineItemsByOpportunity.get(row.id) ?? []}
-                isExpanded={expandedIds.has(row.id)}
+                isExpanded={isExpanded(row.id)}
                 isHovered={hoveredRowId === row.id}
                 onHoverChange={(hovered) => setHoveredRowId(hovered ? row.id : null)}
-                onToggleExpand={(id) =>
-                  setExpandedIds((previous) => {
-                    const next = new Set(previous);
-                    if (next.has(id)) {
-                      next.delete(id);
-                    } else {
-                      next.add(id);
-                    }
-                    return next;
-                  })
-                }
+                onToggleExpand={toggleExpand}
               />
             ))}
           </tbody>
