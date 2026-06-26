@@ -16,7 +16,9 @@ const normalizeColumns = (columns: ColumnConfig[]) =>
   }));
 
 const sortColumns = (columns: ColumnConfig[]) =>
-  [...columns].sort((a, b) => a.order - b.order || a.label.localeCompare(b.label, 'ru'));
+  [...(Array.isArray(columns) ? columns : [])].sort(
+    (a, b) => a.order - b.order || a.label.localeCompare(b.label, 'ru'),
+  );
 
 export const ColumnPicker = ({ target, colorScheme, columns, onSave }: ColumnPickerProps) => {
   const [isOpen, setIsOpen] = useState(false);

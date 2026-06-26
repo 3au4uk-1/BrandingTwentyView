@@ -1,16 +1,13 @@
 import { RestApiClient } from 'twenty-client-sdk/rest';
 
 import type { LineItemRow } from '../types';
+import { normalizeRestListResponse } from './rest-list';
 
 let restClient: RestApiClient | null = null;
 
 const getRestClient = (): RestApiClient => {
   if (!restClient) restClient = new RestApiClient();
   return restClient;
-};
-
-type RestListResponse<T> = {
-  data?: T[];
 };
 
 const buildListQuery = (opportunityIds: string[], stageFilter?: string[]) => {
@@ -29,11 +26,11 @@ export const fetchLineItemsByOpportunityIds = async (
   if (opportunityIds.length === 0) return [];
 
   const client = getRestClient();
-  const response = await client.get<RestListResponse<LineItemRow>>('/rest/dealLineItems', {
+  const response = await client.get<unknown>('/rest/dealLineItems', {
     query: buildListQuery(opportunityIds, stageFilter),
   });
 
-  return response.data ?? [];
+  return normalizeRestListResponse<LineItemRow>(response, 'dealLineItems');
 };
 
 export const updateLineItem = async (

@@ -11,4 +11,4 @@ export const parseColumns = (raw: unknown, fallback: ColumnConfig[]): ColumnConf
 };
 
 export const visibleColumns = (columns: ColumnConfig[]): ColumnConfig[] =>
-  (columns ?? []).filter((c) => c.visible);
+  (Array.isArray(columns) ? columns : []).filter((c) => c.visible);

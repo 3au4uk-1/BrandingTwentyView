@@ -9,8 +9,9 @@ import { useDealBoardViews, useUpdateDealBoardView } from './hooks/useDealBoardV
 import { useLineItems } from './hooks/useLineItems';
 import { useOpportunities } from './hooks/useOpportunities';
 import { QuickFiltersBar, type QuickFiltersValue } from './QuickFiltersBar';
-import type { DealBoardViewRecord } from './types';
+import type { DealBoardViewRecord, LineItemRow, OpportunityRow } from './types';
 import { mergeStageFilters } from './utils/filters';
+import { asArray } from './utils/parse-json-field';
 import { ViewSettingsModal } from './ViewSettingsModal';
 import { ViewSwitcher } from './ViewSwitcher';
 
@@ -36,7 +37,7 @@ const DealsBoardContent = () => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [editViewDraft, setEditViewDraft] = useState<DealBoardViewRecord>();
   const [quickFilters, setQuickFilters] = useState<QuickFiltersValue>(DEFAULT_QUICK_FILTERS);
-  const views = viewsQuery.data ?? [];
+  const views = asArray<DealBoardViewRecord>(viewsQuery.data);
 
   const activeView = useMemo(() => {
     if (!views.length) return undefined;
@@ -88,7 +89,7 @@ const DealsBoardContent = () => {
     enabled: !viewsQuery.isLoading && !viewsQuery.isSeedingDefault && Boolean(activeView),
   });
 
-  const records = opportunitiesQuery.data?.records ?? [];
+  const records = asArray<OpportunityRow>(opportunitiesQuery.data?.records);
   const totalCount = opportunitiesQuery.data?.totalCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const visibleOpportunityIds = useMemo(() => records.map((record) => record.id), [records]);
@@ -104,7 +105,7 @@ const DealsBoardContent = () => {
     mergedStages,
     !opportunitiesQuery.isLoading,
   );
-  const lineItems = lineItemsQuery.data ?? [];
+  const lineItems = asArray<LineItemRow>(lineItemsQuery.data);
 
   const stageMatchedOpportunityIds = useMemo(() => {
     if (!mergedStages?.length) {

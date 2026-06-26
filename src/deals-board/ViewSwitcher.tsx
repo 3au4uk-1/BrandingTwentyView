@@ -13,7 +13,7 @@ type ViewSwitcherProps = {
 };
 
 const sortViews = (views: DealBoardViewRecord[]) =>
-  [...views].sort((a, b) => {
+  [...(Array.isArray(views) ? views : [])].sort((a, b) => {
     if (a.isDefault && !b.isDefault) return -1;
     if (!a.isDefault && b.isDefault) return 1;
     return a.name.localeCompare(b.name, 'ru');

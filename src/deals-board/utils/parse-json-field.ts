@@ -10,6 +10,8 @@ export const parseJsonField = (raw: unknown): unknown => {
   return raw;
 };
 
+export const asArray = <T>(raw: unknown): T[] => (Array.isArray(raw) ? raw : []);
+
 export const asStringArray = (raw: unknown): string[] => {
   const parsed = parseJsonField(raw);
 
