@@ -125,11 +125,13 @@ const DealsBoardContent = () => {
     ? visibleRecords.length
     : totalCount;
 
-  const loadError =
-    viewsQuery.error ??
-    opportunitiesQuery.error ??
-    lineItemsQuery.error ??
-    null;
+  const loadError = viewsQuery.error ?? opportunitiesQuery.error ?? null;
+  const lineItemsWarning =
+    lineItemsQuery.error instanceof Error
+      ? lineItemsQuery.error.message
+      : lineItemsQuery.error
+        ? String(lineItemsQuery.error)
+        : undefined;
 
   const saveActiveViewColumns = async (target: 'parent' | 'child', columns: DealBoardViewRecord['parentColumns']) => {
     if (!activeView) return;
@@ -232,6 +234,20 @@ const DealsBoardContent = () => {
         </div>
       </div>
 
+      {lineItemsWarning ? (
+        <div
+          style={{
+            padding: '6px 10px',
+            fontSize: '12px',
+            color: colorScheme === 'dark' ? '#f5c26b' : '#8a5a00',
+            backgroundColor: colorScheme === 'dark' ? '#2a2418' : '#fff8e6',
+            borderBottom: `1px solid ${colorScheme === 'dark' ? '#4a3b1f' : '#f0e2b6'}`,
+          }}
+        >
+          Позиции сделок не загрузились: {lineItemsWarning}
+        </div>
+      ) : null}
+
       <DealsTable
         colorScheme={colorScheme}
         activeView={activeView}
@@ -242,7 +258,7 @@ const DealsBoardContent = () => {
         totalPages={totalPages}
         onPageChange={setPage}
         onResetFilters={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
-        isLoading={opportunitiesQuery.isLoading || lineItemsQuery.isLoading}
+        isLoading={opportunitiesQuery.isLoading}
         isViewLoading={viewsQuery.isLoading || viewsQuery.isSeedingDefault}
         errorMessage={loadError instanceof Error ? loadError.message : loadError ? String(loadError) : undefined}
       />
