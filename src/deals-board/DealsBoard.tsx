@@ -5,6 +5,7 @@ import { useColorScheme } from 'twenty-sdk/front-component';
 import { AppSettingsModal } from './AppSettingsModal';
 import { ColumnPicker } from './ColumnPicker';
 import { DealsTable } from './DealsTable/DealsTable';
+import { ExpandModeProvider } from './hooks/useExpandMode';
 import { useDealBoardViews, useUpdateDealBoardView } from './hooks/useDealBoardViews';
 import { useLineItems } from './hooks/useLineItems';
 import { useOpportunities } from './hooks/useOpportunities';
@@ -292,7 +293,9 @@ const DealsBoardContent = () => {
 export const DealsBoard = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <DealsBoardContent />
+      <ExpandModeProvider>
+        <DealsBoardContent />
+      </ExpandModeProvider>
     </QueryClientProvider>
   );
 };

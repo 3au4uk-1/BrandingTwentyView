@@ -55,6 +55,7 @@ export const DealsTable = ({
 }: DealsTableProps) => {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const { mode } = useExpandMode();
+  const prevExpandModeRef = useRef(mode);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const parentColumns = useMemo(
@@ -119,7 +120,15 @@ export const DealsTable = ({
   }, [expandedIds, expandedStorageKey]);
 
   useEffect(() => {
-    if (mode !== 'smart') return;
+    const previousMode = prevExpandModeRef.current;
+    prevExpandModeRef.current = mode;
+
+    if (mode === 'collapsed') {
+      if (previousMode !== 'collapsed') {
+        setExpandedIds(new Set());
+      }
+      return;
+    }
 
     setExpandedIds((previous) => {
       const next = new Set(previous);
