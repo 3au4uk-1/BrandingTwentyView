@@ -265,6 +265,7 @@ const DealsBoardContent = () => {
         page={page}
         totalPages={totalPages}
         onPageChange={setPage}
+        onResetFilters={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
         isLoading={opportunitiesQuery.isLoading || lineItemsQuery.isLoading}
         isViewLoading={viewsQuery.isLoading || viewsQuery.isSeedingDefault}
       />

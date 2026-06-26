@@ -63,6 +63,13 @@ const expandButtonStyle = (colorScheme: 'light' | 'dark') => ({
   lineHeight: 1,
 });
 
+const nameCellStyle = (colorScheme: 'light' | 'dark') => ({
+  position: 'sticky' as const,
+  left: 0,
+  zIndex: 2,
+  backgroundColor: colorScheme === 'dark' ? '#222' : '#fff',
+});
+
 export const DealRow = ({
   row,
   columns,
@@ -139,6 +146,7 @@ export const DealRow = ({
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 color: colorScheme === 'dark' ? '#eee' : '#333',
+                ...(column.field === 'name' ? nameCellStyle(colorScheme) : {}),
               }}
             >
               {content}

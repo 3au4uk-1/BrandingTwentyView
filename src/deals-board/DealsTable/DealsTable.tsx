@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   DEFAULT_CHILD_COLUMNS,
@@ -32,6 +33,7 @@ type DealsTableProps = {
   page: number;
   totalPages: number;
   onPageChange: (nextPage: number) => void;
+  onResetFilters?: () => void;
   isLoading?: boolean;
   isViewLoading?: boolean;
 };
@@ -45,11 +47,13 @@ export const DealsTable = ({
   page,
   totalPages,
   onPageChange,
+  onResetFilters,
   isLoading = false,
   isViewLoading = false,
 }: DealsTableProps) => {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const { mode } = useExpandMode();
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const parentColumns = useMemo(
     () => visibleColumns(activeView?.parentColumns ?? DEFAULT_PARENT_COLUMNS),
@@ -131,6 +135,18 @@ export const DealsTable = ({
     });
   }, [lineItemsByOpportunity, mode, records]);
 
+  const rowVirtualizer = useVirtualizer({
+    count: records.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 48,
+    overscan: 8,
+    measureElement: (element) => element.getBoundingClientRect().height,
+  });
+
+  useEffect(() => {
+    rowVirtualizer.measure();
+  }, [expandedIds, rowVirtualizer]);
+
   if (isViewLoading || isLoading) {
     return (
       <div
@@ -169,12 +185,29 @@ export const DealsTable = ({
         style={{
           height: '100%',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
+          gap: '10px',
           color: colorScheme === 'dark' ? '#eee' : '#333',
         }}
       >
-        Сделки не найдены
+        <span>Нет сделок по фильтрам</span>
+        <button
+          type="button"
+          onClick={() => onResetFilters?.()}
+          style={{
+            border: `1px solid ${colorScheme === 'dark' ? '#444' : '#ddd'}`,
+            backgroundColor: 'transparent',
+            color: colorScheme === 'dark' ? '#eee' : '#333',
+            borderRadius: '6px',
+            padding: '6px 10px',
+            cursor: 'pointer',
+            fontSize: '12px',
+          }}
+        >
+          Сбросить фильтры
+        </button>
       </div>
     );
   }
@@ -192,66 +225,137 @@ export const DealsTable = ({
       }}
     >
       <div
+        ref={scrollRef}
         style={{
           flex: 1,
           overflow: 'auto',
+          position: 'relative',
           borderBottom: `1px solid ${colorScheme === 'dark' ? '#333' : '#eee'}`,
         }}
       >
-        <table
-          style={{
-            width: '100%',
-            borderCollapse: 'collapse',
-            tableLayout: 'fixed',
-            backgroundColor: colorScheme === 'dark' ? '#222' : '#fff',
-          }}
-        >
-          <thead>
-            <tr style={{ borderBottom: `1px solid ${colorScheme === 'dark' ? '#333' : '#eee'}` }}>
+        <div style={{ minWidth: '100%', width: 'max-content' }}>
+          <table
+            style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+              tableLayout: 'fixed',
+              backgroundColor: colorScheme === 'dark' ? '#222' : '#fff',
+            }}
+          >
+            <colgroup>
               {parentColumns.map((column) => (
-                <th
+                <col
                   key={column.field}
                   style={{
-                    padding: '8px 10px',
-                    textAlign: 'left',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: colorScheme === 'dark' ? '#eee' : '#333',
                     width: column.width ? `${column.width}px` : 'auto',
-                    maxWidth: column.width ? `${column.width}px` : undefined,
-                    whiteSpace: 'nowrap',
+                  }}
+                />
+              ))}
+            </colgroup>
+            <thead style={{ position: 'sticky', top: 0, zIndex: 4 }}>
+              <tr
+                style={{
+                  borderBottom: `1px solid ${colorScheme === 'dark' ? '#333' : '#eee'}`,
+                  backgroundColor: colorScheme === 'dark' ? '#222' : '#fff',
+                }}
+              >
+                {parentColumns.map((column) => (
+                  <th
+                    key={column.field}
+                    style={{
+                      padding: '8px 10px',
+                      textAlign: 'left',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: colorScheme === 'dark' ? '#eee' : '#333',
+                      width: column.width ? `${column.width}px` : 'auto',
+                      maxWidth: column.width ? `${column.width}px` : undefined,
+                      whiteSpace: 'nowrap',
+                      ...(column.field === 'name'
+                        ? {
+                            position: 'sticky' as const,
+                            left: 0,
+                            zIndex: 6,
+                            backgroundColor: colorScheme === 'dark' ? '#222' : '#fff',
+                          }
+                        : {}),
+                    }}
+                  >
+                    {column.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+          </table>
+
+          <div
+            style={{
+              height: rowVirtualizer.getTotalSize(),
+              position: 'relative',
+            }}
+          >
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const row = records[virtualRow.index];
+              if (!row) return null;
+
+              return (
+                <div
+                  key={virtualRow.key}
+                  ref={rowVirtualizer.measureElement}
+                  data-index={virtualRow.index}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start}px)`,
                   }}
                 >
-                  {column.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {records.map((row) => (
-              <DealRow
-                key={row.id}
-                row={{ ...row, companyName: row.companyName ?? companyNameMap.get(row.companyId ?? '') }}
-                columns={parentColumns}
-                childColumns={childColumns}
-                lineItems={lineItemsByOpportunity.get(row.id) ?? []}
-                isExpanded={expandedIds.has(row.id)}
-                onToggleExpand={(id) =>
-                  setExpandedIds((previous) => {
-                    const next = new Set(previous);
-                    if (next.has(id)) {
-                      next.delete(id);
-                    } else {
-                      next.add(id);
-                    }
-                    return next;
-                  })
-                }
-                colorScheme={colorScheme}
-              />
-            ))}
-          </tbody>
-        </table>
+                  <table
+                    style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      tableLayout: 'fixed',
+                      backgroundColor: colorScheme === 'dark' ? '#222' : '#fff',
+                    }}
+                  >
+                    <colgroup>
+                      {parentColumns.map((column) => (
+                        <col
+                          key={column.field}
+                          style={{
+                            width: column.width ? `${column.width}px` : 'auto',
+                          }}
+                        />
+                      ))}
+                    </colgroup>
+                    <tbody>
+                      <DealRow
+                        row={{ ...row, companyName: row.companyName ?? companyNameMap.get(row.companyId ?? '') }}
+                        columns={parentColumns}
+                        childColumns={childColumns}
+                        lineItems={lineItemsByOpportunity.get(row.id) ?? []}
+                        isExpanded={expandedIds.has(row.id)}
+                        onToggleExpand={(id) =>
+                          setExpandedIds((previous) => {
+                            const next = new Set(previous);
+                            if (next.has(id)) {
+                              next.delete(id);
+                            } else {
+                              next.add(id);
+                            }
+                            return next;
+                          })
+                        }
+                        colorScheme={colorScheme}
+                      />
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       <div
