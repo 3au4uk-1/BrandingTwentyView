@@ -1,17 +1,23 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+
+import { readLocalStorage, writeLocalStorage } from '../utils/browser-storage';
 
 export type ExpandMode = 'collapsed' | 'smart';
 
 const STORAGE_KEY = 'deals-board-expand-mode';
 
 export const useExpandMode = () => {
-  const [mode, setModeState] = useState<ExpandMode>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored === 'smart' ? 'smart' : 'collapsed';
-  });
+  const [mode, setModeState] = useState<ExpandMode>('collapsed');
+
+  useEffect(() => {
+    const stored = readLocalStorage(STORAGE_KEY);
+    if (stored === 'smart') {
+      setModeState('smart');
+    }
+  }, []);
 
   const setMode = useCallback((next: ExpandMode) => {
-    localStorage.setItem(STORAGE_KEY, next);
+    writeLocalStorage(STORAGE_KEY, next);
     setModeState(next);
   }, []);
 

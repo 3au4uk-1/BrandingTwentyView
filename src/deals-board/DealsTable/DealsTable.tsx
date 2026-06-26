@@ -13,6 +13,7 @@ import type { ExpandMode } from '../hooks/useExpandMode';
 import { useExpandMode } from '../hooks/useExpandMode';
 import type { DealBoardViewRecord, LineItemRow, OpportunityRow } from '../types';
 import { visibleColumns } from '../utils/columns';
+import { readSessionStorage, writeSessionStorage } from '../utils/browser-storage';
 import { DealRow } from './DealRow';
 
 const EXPANDED_IDS_STORAGE_PREFIX = 'deals-board-expanded-ids';
@@ -96,7 +97,7 @@ export const DealsTable = ({
       return;
     }
 
-    const stored = sessionStorage.getItem(expandedStorageKey);
+    const stored = readSessionStorage(expandedStorageKey);
     if (!stored) {
       setExpandedIds(new Set());
       return;
@@ -113,7 +114,7 @@ export const DealsTable = ({
 
   useEffect(() => {
     if (!expandedStorageKey) return;
-    sessionStorage.setItem(expandedStorageKey, JSON.stringify([...expandedIds]));
+    writeSessionStorage(expandedStorageKey, JSON.stringify([...expandedIds]));
   }, [expandedIds, expandedStorageKey]);
 
   useEffect(() => {
