@@ -36,3 +36,17 @@ export const normalizeRestListResponse = <T>(
 
   return [];
 };
+
+export type RestPageInfo = {
+  hasNextPage?: boolean;
+  endCursor?: string | null;
+};
+
+export const extractRestPageInfo = (response: unknown): RestPageInfo => {
+  if (!response || typeof response !== 'object') return {};
+
+  const pageInfo = (response as Record<string, unknown>).pageInfo;
+  if (!pageInfo || typeof pageInfo !== 'object') return {};
+
+  return pageInfo as RestPageInfo;
+};
