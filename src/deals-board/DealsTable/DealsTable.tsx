@@ -1,15 +1,30 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 
-import { DEFAULT_PARENT_COLUMNS } from 'src/constants/column-definitions';
+import {
+  DEFAULT_CHILD_COLUMNS,
+  DEFAULT_PARENT_COLUMNS,
+} from 'src/constants/column-definitions';
+import { DONE_STAGES } from 'src/constants/stages';
 
 import { fetchCompanyNames } from '../api/companies';
 import { useDealBoardViews } from '../hooks/useDealBoardViews';
+import type { ExpandMode } from '../hooks/useExpandMode';
+import { useExpandMode } from '../hooks/useExpandMode';
+import { useLineItems } from '../hooks/useLineItems';
 import { useOpportunities } from '../hooks/useOpportunities';
 import { visibleColumns } from '../utils/columns';
 import { DealRow } from './DealRow';
 
 const PAGE_SIZE = 50;
+const EXPANDED_IDS_STORAGE_PREFIX = 'deals-board-expanded-ids';
+
+const shouldAutoExpand = (
+  items: ReadonlyArray<{ stage?: string | null }>,
+  mode: ExpandMode,
+) =>
+  mode === 'smart' &&
+  items.some((i) => i.stage && !DONE_STAGES.includes(i.stage));
 
 type DealsTableProps = {
   colorScheme: 'light' | 'dark';
@@ -17,6 +32,8 @@ type DealsTableProps = {
 
 export const DealsTable = ({ colorScheme }: DealsTableProps) => {
   const [page, setPage] = useState(0);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const { mode } = useExpandMode();
 
   const viewsQuery = useDealBoardViews();
   const views = viewsQuery.data ?? [];
@@ -33,6 +50,10 @@ export const DealsTable = ({ colorScheme }: DealsTableProps) => {
     () => visibleColumns(activeView?.parentColumns ?? DEFAULT_PARENT_COLUMNS),
     [activeView?.parentColumns],
   );
+  const childColumns = useMemo(
+    () => visibleColumns(activeView?.childColumns ?? DEFAULT_CHILD_COLUMNS),
+    [activeView?.childColumns],
+  );
 
   const opportunitiesQuery = useOpportunities({
     viewId: activeView?.id,
@@ -46,6 +67,7 @@ export const DealsTable = ({ colorScheme }: DealsTableProps) => {
   const records = opportunitiesQuery.data?.records ?? [];
   const totalCount = opportunitiesQuery.data?.totalCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const visibleOpportunityIds = useMemo(() => records.map((record) => record.id), [records]);
 
   useEffect(() => {
     if (page > totalPages - 1) {
@@ -67,6 +89,68 @@ export const DealsTable = ({ colorScheme }: DealsTableProps) => {
   });
 
   const companyNameMap = companyNamesQuery.data ?? new Map<string, string>();
+  const lineItemsQuery = useLineItems(
+    visibleOpportunityIds,
+    activeView?.filters?.stages,
+    !opportunitiesQuery.isLoading,
+  );
+  const lineItems = lineItemsQuery.data ?? [];
+
+  const lineItemsByOpportunity = useMemo(() => {
+    const grouped = new Map<string, typeof lineItems>();
+    for (const item of lineItems) {
+      const current = grouped.get(item.opportunityId) ?? [];
+      grouped.set(item.opportunityId, [...current, item]);
+    }
+    return grouped;
+  }, [lineItems]);
+
+  const expandedStorageKey = activeView?.id ? `${EXPANDED_IDS_STORAGE_PREFIX}:${activeView.id}` : null;
+
+  useEffect(() => {
+    if (!expandedStorageKey) {
+      setExpandedIds(new Set());
+      return;
+    }
+
+    const stored = sessionStorage.getItem(expandedStorageKey);
+    if (!stored) {
+      setExpandedIds(new Set());
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(stored);
+      const ids = Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === 'string') : [];
+      setExpandedIds(new Set(ids));
+    } catch {
+      setExpandedIds(new Set());
+    }
+  }, [expandedStorageKey]);
+
+  useEffect(() => {
+    if (!expandedStorageKey) return;
+    sessionStorage.setItem(expandedStorageKey, JSON.stringify([...expandedIds]));
+  }, [expandedIds, expandedStorageKey]);
+
+  useEffect(() => {
+    if (mode !== 'smart') return;
+
+    setExpandedIds((previous) => {
+      const next = new Set(previous);
+      let changed = false;
+
+      for (const record of records) {
+        const items = lineItemsByOpportunity.get(record.id) ?? [];
+        if (shouldAutoExpand(items, mode) && !next.has(record.id)) {
+          next.add(record.id);
+          changed = true;
+        }
+      }
+
+      return changed ? next : previous;
+    });
+  }, [lineItemsByOpportunity, mode, records]);
 
   if (viewsQuery.isLoading || opportunitiesQuery.isLoading) {
     return (
@@ -154,6 +238,20 @@ export const DealsTable = ({ colorScheme }: DealsTableProps) => {
                 key={row.id}
                 row={{ ...row, companyName: row.companyName ?? companyNameMap.get(row.companyId ?? '') }}
                 columns={parentColumns}
+                childColumns={childColumns}
+                lineItems={lineItemsByOpportunity.get(row.id) ?? []}
+                isExpanded={expandedIds.has(row.id)}
+                onToggleExpand={(id) =>
+                  setExpandedIds((previous) => {
+                    const next = new Set(previous);
+                    if (next.has(id)) {
+                      next.delete(id);
+                    } else {
+                      next.add(id);
+                    }
+                    return next;
+                  })
+                }
                 colorScheme={colorScheme}
               />
             ))}

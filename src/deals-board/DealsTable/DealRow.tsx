@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
 import { Status, Tag } from 'twenty-sdk/ui';
 
-import type { ColumnConfig, OpportunityRow } from '../types';
+import type { ColumnConfig, LineItemRow, OpportunityRow } from '../types';
+import { DealSummaryChips } from './DealSummaryChips';
+import { LineItemsTable } from './LineItemsTable';
 
 const shortDateFormatter = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short' });
 
@@ -24,6 +26,10 @@ const formatAmount = (row: OpportunityRow) => {
 type DealRowProps = {
   row: OpportunityRow;
   columns: ColumnConfig[];
+  childColumns: ColumnConfig[];
+  lineItems: LineItemRow[];
+  isExpanded: boolean;
+  onToggleExpand: (id: string) => void;
   colorScheme: 'light' | 'dark';
 };
 
@@ -41,63 +47,119 @@ const linkStyle = (colorScheme: 'light' | 'dark') => ({
   fontWeight: 700,
 });
 
-export const DealRow = ({ row, columns, colorScheme }: DealRowProps) => {
+const expandButtonStyle = (colorScheme: 'light' | 'dark') => ({
+  border: 'none',
+  background: 'transparent',
+  padding: 0,
+  width: '14px',
+  minWidth: '14px',
+  height: '14px',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: colorScheme === 'dark' ? '#e8e8e8' : '#333',
+  cursor: 'pointer',
+  fontSize: '10px',
+  lineHeight: 1,
+});
+
+export const DealRow = ({
+  row,
+  columns,
+  childColumns,
+  lineItems,
+  isExpanded,
+  onToggleExpand,
+  colorScheme,
+}: DealRowProps) => {
+  const canExpand = lineItems.length > 0;
+
   return (
-    <tr style={{ borderBottom: `1px solid ${colorScheme === 'dark' ? '#333' : '#eee'}` }}>
-      {columns.map((column) => {
-        let content: ReactNode = '—';
+    <>
+      <tr style={{ borderBottom: `1px solid ${colorScheme === 'dark' ? '#333' : '#eee'}` }}>
+        {columns.map((column) => {
+          let content: ReactNode = '—';
 
-        if (column.field === 'name') {
-          content = row.name;
-        } else if (column.field === 'loadDate') {
-          content = formatDate(row.loadDate);
-        } else if (column.field === 'companyName') {
-          content = row.companyName ?? '—';
-        } else if (column.field === 'summary') {
-          content = '—';
-        } else if (column.field === 'links') {
-          const tonyUrl = row.tonyLink?.primaryLinkUrl;
-          const bitrixUrl = row.bitrixLink?.primaryLinkUrl;
+          if (column.field === 'name') {
+            content = (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                {canExpand ? (
+                  <button
+                    type="button"
+                    onClick={() => onToggleExpand(row.id)}
+                    style={expandButtonStyle(colorScheme)}
+                    aria-label={isExpanded ? 'Свернуть позиции' : 'Развернуть позиции'}
+                  >
+                    {isExpanded ? '▼' : '▶'}
+                  </button>
+                ) : null}
+                <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.name}</span>
+              </div>
+            );
+          } else if (column.field === 'loadDate') {
+            content = formatDate(row.loadDate);
+          } else if (column.field === 'companyName') {
+            content = row.companyName ?? '—';
+          } else if (column.field === 'summary') {
+            content = isExpanded ? '—' : <DealSummaryChips items={lineItems} />;
+          } else if (column.field === 'links') {
+            const tonyUrl = row.tonyLink?.primaryLinkUrl;
+            const bitrixUrl = row.bitrixLink?.primaryLinkUrl;
 
-          content = (
-            <div style={{ display: 'inline-flex', gap: '6px' }}>
-              {tonyUrl ? (
-                <a href={tonyUrl} target="_blank" rel="noreferrer" style={linkStyle(colorScheme)}>
-                  T
-                </a>
-              ) : null}
-              {bitrixUrl ? (
-                <a href={bitrixUrl} target="_blank" rel="noreferrer" style={linkStyle(colorScheme)}>
-                  B
-                </a>
-              ) : null}
-              {!tonyUrl && !bitrixUrl ? '—' : null}
-            </div>
+            content = (
+              <div style={{ display: 'inline-flex', gap: '6px' }}>
+                {tonyUrl ? (
+                  <a href={tonyUrl} target="_blank" rel="noreferrer" style={linkStyle(colorScheme)}>
+                    T
+                  </a>
+                ) : null}
+                {bitrixUrl ? (
+                  <a href={bitrixUrl} target="_blank" rel="noreferrer" style={linkStyle(colorScheme)}>
+                    B
+                  </a>
+                ) : null}
+                {!tonyUrl && !bitrixUrl ? '—' : null}
+              </div>
+            );
+          } else if (column.field === 'amount') {
+            content = <Tag text={formatAmount(row)} color="gray" />;
+          } else if (column.field === 'oplata') {
+            content = <Status text={row.oplata ?? '—'} color={row.oplata ? 'green' : 'gray'} />;
+          }
+
+          return (
+            <td
+              key={column.field}
+              style={{
+                width: column.width ? `${column.width}px` : 'auto',
+                maxWidth: column.width ? `${column.width}px` : undefined,
+                padding: '8px 10px',
+                fontSize: '12px',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                color: colorScheme === 'dark' ? '#eee' : '#333',
+              }}
+            >
+              {content}
+            </td>
           );
-        } else if (column.field === 'amount') {
-          content = <Tag text={formatAmount(row)} color="gray" />;
-        } else if (column.field === 'oplata') {
-          content = <Status text={row.oplata ?? '—'} color={row.oplata ? 'green' : 'gray'} />;
-        }
-
-        return (
+        })}
+      </tr>
+      {canExpand && isExpanded ? (
+        <tr>
           <td
-            key={column.field}
+            colSpan={columns.length}
             style={{
-              width: column.width ? `${column.width}px` : 'auto',
-              maxWidth: column.width ? `${column.width}px` : undefined,
-              padding: '8px 10px',
-              fontSize: '12px',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              color: colorScheme === 'dark' ? '#eee' : '#333',
+              padding: 0,
+              backgroundColor: colorScheme === 'dark' ? '#191919' : '#f8f8f8',
+              borderBottom: `1px solid ${colorScheme === 'dark' ? '#333' : '#eee'}`,
             }}
           >
-            {content}
+            <LineItemsTable items={lineItems} columns={childColumns} colorScheme={colorScheme} />
           </td>
-        );
-      })}
-    </tr>
+        </tr>
+      ) : null}
+    </>
   );
 };

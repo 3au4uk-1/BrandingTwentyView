@@ -1,0 +1,34 @@
+import { Tag } from 'twenty-sdk/ui';
+
+import { getStageColor, getStageLabel } from 'src/constants/stages';
+
+import { buildStageSummary } from '../utils/summary';
+import type { LineItemRow } from '../types';
+
+type DealSummaryChipsProps = {
+  items: LineItemRow[];
+};
+
+export const DealSummaryChips = ({ items }: DealSummaryChipsProps) => {
+  const counts = new Map<string, number>();
+
+  for (const item of items) {
+    const key = item.stage ?? 'NOVYY';
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+
+  const stageChips = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+
+  return (
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+      <Tag text={buildStageSummary(items)} color="gray" />
+      {stageChips.map(([stage, count]) => (
+        <Tag
+          key={stage}
+          text={`${count} ${getStageLabel(stage)}`}
+          color={getStageColor(stage)}
+        />
+      ))}
+    </div>
+  );
+};
