@@ -1,5 +1,6 @@
 import type { ColumnConfig } from 'src/deals-board/types';
 
+/** Fallback column layouts when the metadata API is unavailable. */
 export const DEFAULT_PARENT_COLUMNS: ColumnConfig[] = [
   { field: 'name', label: 'Сделка', order: 0, visible: true, width: 320 },
   { field: 'loadDate', label: 'Дата', order: 1, visible: true, width: 100 },

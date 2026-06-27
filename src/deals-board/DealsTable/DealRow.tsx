@@ -1,37 +1,17 @@
-import type { ReactNode } from 'react';
-
-import { Chip } from '../Chip';
+import { DynamicFieldCell } from '../cells/DynamicFieldCell';
+import type { FieldDescriptor } from '../metadata/types';
 import { useTheme } from '../theme/ThemeContext';
-import { EMPTY_VALUE } from '../theme/tokens';
-import { ChevronRightIcon } from '../ui/Icons';
-
 import type { ColumnConfig, LineItemRow, OpportunityRow } from '../types';
 import { getColumnWidth } from '../utils/columns';
-import { DealSummaryChips } from './DealSummaryChips';
+import { resolveFieldValue } from '../utils/resolve-field-value';
 import { LineItemsTable } from './LineItemsTable';
-
-const shortDateFormatter = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short' });
-
-const formatDate = (value?: string) => {
-  if (!value) return EMPTY_VALUE;
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return EMPTY_VALUE;
-
-  return shortDateFormatter.format(date);
-};
-
-const formatAmount = (row: OpportunityRow) => {
-  if (!row.amount) return EMPTY_VALUE;
-
-  const amount = row.amount.amountMicros / 1_000_000;
-  return `${amount.toLocaleString('ru-RU')} ${row.amount.currencyCode}`;
-};
 
 type DealRowProps = {
   row: OpportunityRow;
   columns: ColumnConfig[];
   childColumns: ColumnConfig[];
+  parentDescriptorByField: Map<string, FieldDescriptor>;
+  childDescriptorByField: Map<string, FieldDescriptor>;
   lineItems: LineItemRow[];
   isExpanded: boolean;
   isHovered: boolean;
@@ -45,6 +25,8 @@ export const DealRow = ({
   row,
   columns,
   childColumns,
+  parentDescriptorByField,
+  childDescriptorByField,
   lineItems,
   isExpanded,
   isHovered,
@@ -54,7 +36,7 @@ export const DealRow = ({
   onChildColumnResizeStart,
 }: DealRowProps) => {
   const theme = useTheme();
-  const { colors, font, spacing, zIndex } = theme;
+  const { colors, font, zIndex } = theme;
   const canExpand = lineItems.length > 0;
   const rowBg = isHovered ? colors.bgHover : colors.bg;
 
@@ -69,149 +51,47 @@ export const DealRow = ({
           transition: 'background-color 0.12s ease',
         }}
       >
-        {columns.map((column) => {
-          let content: ReactNode = EMPTY_VALUE;
-
-          if (column.field === 'name') {
-            content = (
-              <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, minWidth: 0 }}>
-                {canExpand ? (
-                  <button
-                    type="button"
-                    onClick={() => onToggleExpand(row.id)}
-                    style={{
-                      border: 'none',
-                      background: 'transparent',
-                      padding: 0,
-                      width: '20px',
-                      minWidth: '20px',
-                      height: '20px',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: colors.textMuted,
-                      cursor: 'pointer',
-                      transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-                      transition: 'transform 0.15s ease',
-                    }}
-                    aria-label={isExpanded ? 'Свернуть позиции' : 'Развернуть позиции'}
-                  >
-                    <ChevronRightIcon size={14} color={colors.textSecondary} />
-                  </button>
-                ) : (
-                  <span style={{ width: '20px', minWidth: '20px' }} />
-                )}
-                <span
-                  style={{
-                    minWidth: 0,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    fontWeight: font.weightMedium,
-                    color: colors.text,
-                  }}
-                >
-                  {row.name}
-                </span>
-              </div>
-            );
-          } else if (column.field === 'loadDate') {
-            content = formatDate(row.loadDate);
-          } else if (column.field === 'companyName') {
-            content = row.companyName ?? EMPTY_VALUE;
-          } else if (column.field === 'summary') {
-            content = isExpanded ? EMPTY_VALUE : <DealSummaryChips items={lineItems} />;
-          } else if (column.field === 'links') {
-            const tonyUrl = row.tonyLink?.primaryLinkUrl;
-            const bitrixUrl = row.bitrixLink?.primaryLinkUrl;
-
-            content = (
-              <div style={{ display: 'inline-flex', gap: spacing.xs }}>
-                {tonyUrl ? (
-                  <a
-                    href={tonyUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    title="Tony"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: theme.radius.sm,
-                      border: `1px solid ${colors.border}`,
-                      backgroundColor: colors.bgElevated,
-                      color: colors.textSecondary,
-                      textDecoration: 'none',
-                      fontSize: font.sizeXs,
-                      fontWeight: font.weightSemibold,
-                    }}
-                  >
-                    T
-                  </a>
-                ) : null}
-                {bitrixUrl ? (
-                  <a
-                    href={bitrixUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    title="Bitrix"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: theme.radius.sm,
-                      border: `1px solid ${colors.border}`,
-                      backgroundColor: colors.bgElevated,
-                      color: colors.textSecondary,
-                      textDecoration: 'none',
-                      fontSize: font.sizeXs,
-                      fontWeight: font.weightSemibold,
-                    }}
-                  >
-                    B
-                  </a>
-                ) : null}
-                {!tonyUrl && !bitrixUrl ? EMPTY_VALUE : null}
-              </div>
-            );
-          } else if (column.field === 'amount') {
-            content = <Chip text={formatAmount(row)} color="gray" theme={theme} />;
-          } else if (column.field === 'oplata') {
-            content = <Chip text={row.oplata ?? EMPTY_VALUE} color={row.oplata ? 'green' : 'gray'} theme={theme} />;
-          }
-
-          return (
-            <td
-              key={column.field}
-              style={{
-                width: `${getColumnWidth(column)}px`,
-                maxWidth: `${getColumnWidth(column)}px`,
-                minWidth: `${getColumnWidth(column)}px`,
-                padding: '10px 12px',
-                fontSize: font.sizeSm,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                color: colors.textSecondary,
-                boxSizing: 'border-box',
-                ...(column.field === 'name'
-                  ? {
-                      position: 'sticky' as const,
-                      left: 0,
-                      zIndex: zIndex.sticky,
-                      backgroundColor: rowBg,
-                      boxShadow: colors.stickyShadow,
-                    }
-                  : {}),
-              }}
-            >
-              {content}
-            </td>
-          );
-        })}
+        {columns.map((column) => (
+          <td
+            key={column.field}
+            style={{
+              width: `${getColumnWidth(column)}px`,
+              maxWidth: `${getColumnWidth(column)}px`,
+              minWidth: `${getColumnWidth(column)}px`,
+              padding: '10px 12px',
+              fontSize: font.sizeSm,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              color: colors.textSecondary,
+              boxSizing: 'border-box',
+              ...(column.field === 'name'
+                ? {
+                    position: 'sticky' as const,
+                    left: 0,
+                    zIndex: zIndex.sticky,
+                    backgroundColor: rowBg,
+                    boxShadow: colors.stickyShadow,
+                  }
+                : {}),
+            }}
+          >
+            <DynamicFieldCell
+              objectName="opportunity"
+              recordId={row.id}
+              field={column.field}
+              descriptor={parentDescriptorByField.get(column.field)}
+              value={resolveFieldValue(row, column.field)}
+              variant="parent"
+              lineItems={lineItems}
+              isExpanded={isExpanded}
+              companyName={row.companyName}
+              tonyLink={row.tonyLink}
+              bitrixLink={row.bitrixLink}
+              onToggleExpand={onToggleExpand}
+            />
+          </td>
+        ))}
       </tr>
       {canExpand && isExpanded ? (
         <tr>
@@ -226,6 +106,7 @@ export const DealRow = ({
             <LineItemsTable
               items={lineItems}
               columns={childColumns}
+              descriptorByField={childDescriptorByField}
               userSized={childUserSized}
               onColumnResizeStart={onChildColumnResizeStart}
             />

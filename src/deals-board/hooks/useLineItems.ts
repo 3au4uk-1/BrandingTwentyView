@@ -34,29 +34,13 @@ type LineItemsSnapshot = {
   data: LineItemRow[] | undefined;
 };
 
-const hasOptimisticField = (
-  data: Parameters<typeof updateLineItem>[1],
-): boolean =>
-  'stage' in data ||
-  'kolichestvo' in data ||
-  'kommentariy' in data ||
-  'ssylkaNaMakety' in data ||
-  'plenka' in data;
-
 const applyOptimisticPatch = (
   item: LineItemRow,
-  data: Parameters<typeof updateLineItem>[1],
-): LineItemRow => {
-  const nextItem: LineItemRow = { ...item };
-
-  if ('stage' in data) nextItem.stage = (data.stage ?? null) as LineItemStage | null;
-  if ('kolichestvo' in data) nextItem.kolichestvo = data.kolichestvo;
-  if ('kommentariy' in data) nextItem.kommentariy = data.kommentariy;
-  if ('ssylkaNaMakety' in data) nextItem.ssylkaNaMakety = data.ssylkaNaMakety;
-  if ('plenka' in data) nextItem.plenka = data.plenka;
-
-  return nextItem;
-};
+  data: Record<string, unknown>,
+): LineItemRow => ({
+  ...item,
+  ...data,
+});
 
 export const useUpdateLineItem = () => {
   const queryClient = useQueryClient();
@@ -67,11 +51,11 @@ export const useUpdateLineItem = () => {
       data,
     }: {
       id: string;
-      data: Parameters<typeof updateLineItem>[1];
+      data: Record<string, unknown>;
     }) => updateLineItem(id, data),
 
     onMutate: async ({ id, data }) => {
-      if (!hasOptimisticField(data)) return { snapshots: [] as LineItemsSnapshot[] };
+      if (Object.keys(data).length === 0) return { snapshots: [] as LineItemsSnapshot[] };
 
       await queryClient.cancelQueries({ queryKey: ['lineItems'] });
 

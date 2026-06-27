@@ -5,12 +5,20 @@ import type { ColumnConfig } from '../types';
 
 const MIN_COLUMN_WIDTH = 60;
 
+type ActiveResize = {
+  field: string;
+  startX: number;
+  startWidth: number;
+};
+
 export const useColumnResize = (
   columns: ColumnConfig[],
   onSave: (columns: ColumnConfig[]) => void,
   onUserResize?: () => void,
 ) => {
   const [displayColumns, setDisplayColumns] = useState(columns);
+  const [isResizing, setIsResizing] = useState(false);
+  const activeResizeRef = useRef<ActiveResize | null>(null);
   const isDraggingRef = useRef(false);
   const latestColumnsRef = useRef(columns);
   const onSaveRef = useRef(onSave);
@@ -34,55 +42,51 @@ export const useColumnResize = (
       event.preventDefault();
       event.stopPropagation();
 
-      const target = event.currentTarget;
-      const ownerDocument =
-        target && typeof (target as Node).ownerDocument !== 'undefined'
-          ? (target as Node).ownerDocument
-          : document;
-      const win = ownerDocument.defaultView ?? window;
-
       isDraggingRef.current = true;
       onUserResizeRef.current?.();
 
-      const dragState = {
+      activeResizeRef.current = {
         field,
         startX: event.clientX,
         startWidth: Math.max(MIN_COLUMN_WIDTH, startWidth || DEFAULT_COLUMN_WIDTH),
       };
-
-      const onMouseMove = (moveEvent: MouseEvent) => {
-        moveEvent.preventDefault();
-
-        const nextWidth = Math.max(
-          MIN_COLUMN_WIDTH,
-          dragState.startWidth + (moveEvent.clientX - dragState.startX),
-        );
-
-        setDisplayColumns((prev) => {
-          const next = prev.map((column) =>
-            column.field === dragState.field ? { ...column, width: nextWidth } : column,
-          );
-          latestColumnsRef.current = next;
-          return next;
-        });
-      };
-
-      const finishResize = () => {
-        win.removeEventListener('mousemove', onMouseMove, true);
-        win.removeEventListener('mouseup', finishResize, true);
-        ownerDocument.body.style.cursor = '';
-        ownerDocument.body.style.userSelect = '';
-        isDraggingRef.current = false;
-        onSaveRef.current(latestColumnsRef.current);
-      };
-
-      ownerDocument.body.style.cursor = 'col-resize';
-      ownerDocument.body.style.userSelect = 'none';
-      win.addEventListener('mousemove', onMouseMove, true);
-      win.addEventListener('mouseup', finishResize, true);
+      setIsResizing(true);
     },
     [],
   );
 
-  return { displayColumns, beginResize };
+  const handleResizeMove = useCallback((clientX: number) => {
+    const activeResize = activeResizeRef.current;
+    if (!activeResize) return;
+
+    const nextWidth = Math.max(
+      MIN_COLUMN_WIDTH,
+      activeResize.startWidth + (clientX - activeResize.startX),
+    );
+
+    setDisplayColumns((prev) => {
+      const next = prev.map((column) =>
+        column.field === activeResize.field ? { ...column, width: nextWidth } : column,
+      );
+      latestColumnsRef.current = next;
+      return next;
+    });
+  }, []);
+
+  const finishResize = useCallback(() => {
+    if (!activeResizeRef.current) return;
+
+    activeResizeRef.current = null;
+    isDraggingRef.current = false;
+    setIsResizing(false);
+    onSaveRef.current(latestColumnsRef.current);
+  }, []);
+
+  return {
+    displayColumns,
+    beginResize,
+    handleResizeMove,
+    finishResize,
+    isResizing,
+  };
 };

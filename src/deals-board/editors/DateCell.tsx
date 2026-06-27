@@ -6,43 +6,52 @@ import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
 import { Input } from '../ui/Input';
 
-type NumberCellProps = {
+type DateCellProps = {
   objectName: BoardObjectName;
   recordId: string;
   fieldName: string;
-  value?: number;
+  value?: string | null;
 };
 
-export const NumberCell = ({ objectName, recordId, fieldName, value }: NumberCellProps) => {
+const toInputDate = (value?: string | null): string => {
+  if (!value) return '';
+  const datePart = value.slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? datePart : '';
+};
+
+const formatDisplayDate = (value?: string | null): string | null => {
+  const inputDate = toInputDate(value);
+  if (!inputDate) return null;
+
+  const [year, month, day] = inputDate.split('-');
+  return `${day}.${month}.${year}`;
+};
+
+export const DateCell = ({ objectName, recordId, fieldName, value }: DateCellProps) => {
   const theme = useTheme();
   const { colors, font } = theme;
   const updateMutation = useUpdateRecord(objectName);
   const [isEditing, setIsEditing] = useState(false);
-  const [draftValue, setDraftValue] = useState(typeof value === 'number' ? String(value) : '');
+  const [draftValue, setDraftValue] = useState(toInputDate(value));
 
   const openEditor = () => {
-    setDraftValue(typeof value === 'number' ? String(value) : '');
+    setDraftValue(toInputDate(value));
     setIsEditing(true);
   };
 
   const closeEditor = () => {
-    setDraftValue(typeof value === 'number' ? String(value) : '');
+    setDraftValue(toInputDate(value));
     setIsEditing(false);
   };
 
   const save = async () => {
     const trimmed = draftValue.trim();
-    const parsed = Number(trimmed);
-
-    if (!trimmed || Number.isNaN(parsed)) {
-      window.alert('Введите корректное число');
-      return;
-    }
+    const nextValue = trimmed || null;
 
     try {
       await updateMutation.mutateAsync({
         id: recordId,
-        data: { [fieldName]: parsed },
+        data: { [fieldName]: nextValue },
       });
       setIsEditing(false);
     } catch (error) {
@@ -57,7 +66,7 @@ export const NumberCell = ({ objectName, recordId, fieldName, value }: NumberCel
       <Input
         theme={theme}
         autoFocus
-        type="number"
+        type="date"
         value={draftValue}
         onChange={(event) => setDraftValue(event.target.value)}
         onBlur={() => void save()}
@@ -70,10 +79,12 @@ export const NumberCell = ({ objectName, recordId, fieldName, value }: NumberCel
             closeEditor();
           }
         }}
-        style={{ minWidth: '70px', padding: '4px 8px', fontSize: font.sizeSm }}
+        style={{ minWidth: '130px', padding: '4px 8px', fontSize: font.sizeSm }}
       />
     );
   }
+
+  const displayValue = formatDisplayDate(value);
 
   return (
     <button
@@ -91,7 +102,7 @@ export const NumberCell = ({ objectName, recordId, fieldName, value }: NumberCel
         fontWeight: font.weightMedium,
       }}
     >
-      {typeof value === 'number' ? value : EMPTY_VALUE}
+      {displayValue || EMPTY_VALUE}
     </button>
   );
 };

@@ -124,10 +124,7 @@ export const fetchLineItemsByOpportunityIds = async (
 
 export const updateLineItem = async (
   id: string,
-  data: Partial<Pick<LineItemRow, 'stage' | 'kolichestvo' | 'kommentariy'>> & {
-    ssylkaNaMakety?: { primaryLinkUrl: string; primaryLinkLabel?: string };
-    plenka?: { markdown: string };
-  },
+  data: Record<string, unknown>,
 ): Promise<void> => {
   const client = getRestClient();
   await client.patch(`/rest/dealLineItems/${id}`, data);

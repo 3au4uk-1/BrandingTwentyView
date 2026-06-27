@@ -6,43 +6,37 @@ import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
 import { Input } from '../ui/Input';
 
-type NumberCellProps = {
+type TextCellProps = {
   objectName: BoardObjectName;
   recordId: string;
   fieldName: string;
-  value?: number;
+  value?: string | null;
 };
 
-export const NumberCell = ({ objectName, recordId, fieldName, value }: NumberCellProps) => {
+export const TextCell = ({ objectName, recordId, fieldName, value }: TextCellProps) => {
   const theme = useTheme();
   const { colors, font } = theme;
   const updateMutation = useUpdateRecord(objectName);
   const [isEditing, setIsEditing] = useState(false);
-  const [draftValue, setDraftValue] = useState(typeof value === 'number' ? String(value) : '');
+  const [draftValue, setDraftValue] = useState(value ?? '');
 
   const openEditor = () => {
-    setDraftValue(typeof value === 'number' ? String(value) : '');
+    setDraftValue(value ?? '');
     setIsEditing(true);
   };
 
   const closeEditor = () => {
-    setDraftValue(typeof value === 'number' ? String(value) : '');
+    setDraftValue(value ?? '');
     setIsEditing(false);
   };
 
   const save = async () => {
     const trimmed = draftValue.trim();
-    const parsed = Number(trimmed);
-
-    if (!trimmed || Number.isNaN(parsed)) {
-      window.alert('Введите корректное число');
-      return;
-    }
 
     try {
       await updateMutation.mutateAsync({
         id: recordId,
-        data: { [fieldName]: parsed },
+        data: { [fieldName]: trimmed || null },
       });
       setIsEditing(false);
     } catch (error) {
@@ -57,7 +51,7 @@ export const NumberCell = ({ objectName, recordId, fieldName, value }: NumberCel
       <Input
         theme={theme}
         autoFocus
-        type="number"
+        type="text"
         value={draftValue}
         onChange={(event) => setDraftValue(event.target.value)}
         onBlur={() => void save()}
@@ -70,10 +64,12 @@ export const NumberCell = ({ objectName, recordId, fieldName, value }: NumberCel
             closeEditor();
           }
         }}
-        style={{ minWidth: '70px', padding: '4px 8px', fontSize: font.sizeSm }}
+        style={{ minWidth: '100px', padding: '4px 8px', fontSize: font.sizeSm }}
       />
     );
   }
+
+  const displayValue = value?.trim();
 
   return (
     <button
@@ -89,9 +85,13 @@ export const NumberCell = ({ objectName, recordId, fieldName, value }: NumberCel
         color: colors.text,
         fontSize: font.sizeSm,
         fontWeight: font.weightMedium,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        maxWidth: '100%',
       }}
     >
-      {typeof value === 'number' ? value : EMPTY_VALUE}
+      {displayValue || EMPTY_VALUE}
     </button>
   );
 };
