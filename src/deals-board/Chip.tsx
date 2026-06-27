@@ -1,6 +1,9 @@
-import type { ThemeTokens } from './theme/tokens';
+import type { ColorScheme, ThemeTokens } from './theme/tokens';
 
 export type ChipColor = 'gray' | 'blue' | 'green' | 'yellow' | 'orange' | 'purple' | 'pink' | 'red';
+
+export const getChipPalette = (color: ChipColor, scheme: ColorScheme) =>
+  CHIP_PALETTE[color]?.[scheme] ?? CHIP_PALETTE.gray[scheme];
 
 const CHIP_PALETTE: Record<
   ChipColor,
@@ -48,7 +51,7 @@ type ChipProps = {
 
 export const Chip = ({ text, color = 'gray', theme }: ChipProps) => {
   const scheme = theme?.colorScheme ?? 'light';
-  const palette = CHIP_PALETTE[color]?.[scheme] ?? CHIP_PALETTE.gray[scheme];
+  const palette = getChipPalette(color, scheme);
 
   return (
     <span

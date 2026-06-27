@@ -1,4 +1,7 @@
+import { getStageColor } from 'src/constants/stages';
+
 import { DynamicFieldCell } from '../cells/DynamicFieldCell';
+import { getChipPalette, type ChipColor } from '../Chip';
 import type { FieldDescriptor } from '../metadata/types';
 import { useTheme } from '../theme/ThemeContext';
 import { getColumnWidth, getTableLayoutStyle, sumColumnWidths } from '../utils/columns';
@@ -27,8 +30,11 @@ export const LineItemsTable = ({
   onColumnResizeStart,
 }: LineItemsTableProps) => {
   const theme = useTheme();
-  const { colors, font, spacing } = theme;
+  const { colorScheme, colors, font, spacing } = theme;
   const tableStyle = getTableLayoutStyle(columns, sumColumnWidths(columns));
+
+  const getRowBackground = (stage: LineItemRow['stage']) =>
+    getChipPalette(getStageColor(stage ?? 'NOVYY') as ChipColor, colorScheme).bg;
 
   if (!items.length) {
     return (
@@ -77,13 +83,17 @@ export const LineItemsTable = ({
             </tr>
           </thead>
           <tbody>
-            {items.map((item, rowIndex) => (
+            {items.map((item, rowIndex) => {
+              const rowBackground = getRowBackground(item.stage);
+
+              return (
               <tr
                 key={item.id}
                 style={{
                   borderBottom:
                     rowIndex < items.length - 1 ? `1px solid ${colors.borderSubtle}` : 'none',
-                  backgroundColor: colors.bgElevated,
+                  backgroundColor: rowBackground,
+                  transition: 'background-color 0.12s ease',
                 }}
               >
                 {columns.map((column) => {
@@ -119,7 +129,8 @@ export const LineItemsTable = ({
                   );
                 })}
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
