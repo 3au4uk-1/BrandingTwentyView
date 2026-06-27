@@ -18,6 +18,7 @@ export const useDealExpandState = (
   activeViewId: string | undefined,
   lineItemsByOpportunity: Map<string, LineItemRow[]>,
   mode: ExpandMode,
+  opportunityStageById: ReadonlyMap<string, string | null | undefined> = new Map(),
 ) => {
   const storageKey = activeViewId ? `${EXPAND_OVERRIDES_STORAGE_PREFIX}:${activeViewId}` : null;
   const [overrides, setOverrides] = useState<ExpandOverrides>(EMPTY_EXPAND_OVERRIDES);
@@ -50,17 +51,31 @@ export const useDealExpandState = (
   const isExpanded = useCallback(
     (opportunityId: string) => {
       const items = lineItemsByOpportunity.get(opportunityId) ?? [];
-      return computeIsExpanded(opportunityId, items, mode, overrides);
+      return computeIsExpanded(
+        opportunityId,
+        items,
+        mode,
+        overrides,
+        opportunityStageById.get(opportunityId),
+      );
     },
-    [lineItemsByOpportunity, mode, overrides],
+    [lineItemsByOpportunity, mode, opportunityStageById, overrides],
   );
 
   const toggleExpand = useCallback(
     (opportunityId: string) => {
       const items = lineItemsByOpportunity.get(opportunityId) ?? [];
-      setOverrides((current) => toggleExpandOverride(opportunityId, items, mode, current));
+      setOverrides((current) =>
+        toggleExpandOverride(
+          opportunityId,
+          items,
+          mode,
+          current,
+          opportunityStageById.get(opportunityId),
+        ),
+      );
     },
-    [lineItemsByOpportunity, mode],
+    [lineItemsByOpportunity, mode, opportunityStageById],
   );
 
   return {

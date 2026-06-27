@@ -15,8 +15,13 @@ export const EMPTY_EXPAND_OVERRIDES: ExpandOverrides = {
 
 const DEFAULT_ACTIVE_STAGE: LineItemStage = 'NOVYY';
 
+export const CANCELLED_OPPORTUNITY_STAGE: LineItemStage = 'OTMENA';
+
 export const resolveLineItemStage = (stage?: LineItemStage | null): LineItemStage =>
   stage ?? DEFAULT_ACTIVE_STAGE;
+
+export const isCancelledOpportunity = (stage?: string | null): boolean =>
+  stage === CANCELLED_OPPORTUNITY_STAGE;
 
 export const hasActiveLineItems = (items: ReadonlyArray<Pick<LineItemRow, 'stage'>>): boolean =>
   items.some((item) => !DONE_STAGES.includes(resolveLineItemStage(item.stage)));
@@ -24,13 +29,19 @@ export const hasActiveLineItems = (items: ReadonlyArray<Pick<LineItemRow, 'stage
 export const shouldAutoExpandDeal = (
   items: ReadonlyArray<Pick<LineItemRow, 'stage'>>,
   mode: ExpandMode,
-): boolean => mode === 'smart' && items.length > 0 && hasActiveLineItems(items);
+  opportunityStage?: string | null,
+): boolean =>
+  mode === 'smart' &&
+  items.length > 0 &&
+  !isCancelledOpportunity(opportunityStage) &&
+  hasActiveLineItems(items);
 
 export const computeIsExpanded = (
   opportunityId: string,
   items: ReadonlyArray<Pick<LineItemRow, 'stage'>>,
   mode: ExpandMode,
   overrides: ExpandOverrides,
+  opportunityStage?: string | null,
 ): boolean => {
   if (items.length === 0) {
     return false;
@@ -43,6 +54,10 @@ export const computeIsExpanded = (
 
     if (overrides.expanded.includes(opportunityId)) {
       return true;
+    }
+
+    if (isCancelledOpportunity(opportunityStage)) {
+      return false;
     }
 
     return hasActiveLineItems(items);
@@ -76,13 +91,15 @@ export const toggleExpandOverride = (
   items: ReadonlyArray<Pick<LineItemRow, 'stage'>>,
   mode: ExpandMode,
   overrides: ExpandOverrides,
+  opportunityStage?: string | null,
 ): ExpandOverrides => {
-  const isExpanded = computeIsExpanded(opportunityId, items, mode, overrides);
+  const isExpanded = computeIsExpanded(opportunityId, items, mode, overrides, opportunityStage);
   const allDone = items.length > 0 && !hasActiveLineItems(items);
+  const treatAsComplete = allDone || isCancelledOpportunity(opportunityStage);
 
   if (mode === 'smart') {
     if (isExpanded) {
-      if (allDone) {
+      if (treatAsComplete) {
         return {
           ...overrides,
           expanded: overrides.expanded.filter((id) => id !== opportunityId),
@@ -95,7 +112,7 @@ export const toggleExpandOverride = (
       };
     }
 
-    if (allDone) {
+    if (treatAsComplete) {
       return {
         ...overrides,
         expanded: [...new Set([...overrides.expanded, opportunityId])],

@@ -31,6 +31,12 @@ describe('shouldAutoExpandDeal', () => {
     expect(shouldAutoExpandDeal(items, 'collapsed')).toBe(false);
     expect(shouldAutoExpandDeal([], 'smart')).toBe(false);
   });
+
+  it('does not auto-expand cancelled opportunities', () => {
+    const items = [{ stage: 'V_RABOTE' as const }];
+
+    expect(shouldAutoExpandDeal(items, 'smart', 'OTMENA')).toBe(false);
+  });
 });
 
 describe('computeIsExpanded', () => {
@@ -38,6 +44,12 @@ describe('computeIsExpanded', () => {
 
   it('expands active deals in smart mode by default', () => {
     expect(computeIsExpanded('deal-1', activeItems, 'smart', EMPTY_EXPAND_OVERRIDES)).toBe(true);
+  });
+
+  it('keeps cancelled opportunities collapsed in smart mode', () => {
+    expect(
+      computeIsExpanded('deal-1', activeItems, 'smart', EMPTY_EXPAND_OVERRIDES, 'OTMENA'),
+    ).toBe(false);
   });
 
   it('respects manual collapse in smart mode', () => {
@@ -83,5 +95,22 @@ describe('toggleExpandOverride', () => {
     const collapsed = toggleExpandOverride('deal-1', doneItems, 'smart', expanded);
     expect(collapsed.expanded).toEqual([]);
     expect(computeIsExpanded('deal-1', doneItems, 'smart', collapsed)).toBe(false);
+  });
+
+  it('allows manually expanding cancelled opportunities in smart mode', () => {
+    const activeItems = [{ stage: 'V_RABOTE' as const }];
+    expect(
+      computeIsExpanded('deal-1', activeItems, 'smart', EMPTY_EXPAND_OVERRIDES, 'OTMENA'),
+    ).toBe(false);
+
+    const expanded = toggleExpandOverride(
+      'deal-1',
+      activeItems,
+      'smart',
+      EMPTY_EXPAND_OVERRIDES,
+      'OTMENA',
+    );
+    expect(expanded.expanded).toEqual(['deal-1']);
+    expect(computeIsExpanded('deal-1', activeItems, 'smart', expanded, 'OTMENA')).toBe(true);
   });
 });

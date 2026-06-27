@@ -194,10 +194,22 @@ export const DealsTable = ({
     return grouped;
   }, [lineItems]);
 
+  const opportunityStageById = useMemo(
+    () =>
+      new Map(
+        records.map((record) => [
+          record.id,
+          typeof record.stage === 'string' ? record.stage : null,
+        ]),
+      ),
+    [records],
+  );
+
   const { isExpanded, toggleExpand } = useDealExpandState(
     activeView?.id,
     lineItemsByOpportunity,
     mode,
+    opportunityStageById,
   );
 
   if (isViewLoading || isLoading) {
