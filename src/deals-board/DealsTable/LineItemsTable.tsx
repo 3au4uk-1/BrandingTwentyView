@@ -33,6 +33,9 @@ export const LineItemsTable = ({
   const { colorScheme, colors, font, spacing } = theme;
   const tableStyle = getTableLayoutStyle(columns, sumColumnWidths(columns));
 
+  const getRowBackground = (stage: LineItemRow['stage']) =>
+    getChipPalette(getStageColor(stage ?? 'NOVYY') as ChipColor, colorScheme).bg;
+
   const getStageAccent = (stage: LineItemRow['stage']) =>
     getChipPalette(getStageColor(stage ?? 'NOVYY') as ChipColor, colorScheme).text;
 
@@ -90,6 +93,7 @@ export const LineItemsTable = ({
           </thead>
           <tbody>
             {items.map((item, rowIndex) => {
+              const rowBackground = getRowBackground(item.stage);
               const stageAccent = getStageAccent(item.stage);
 
               return (
@@ -98,7 +102,7 @@ export const LineItemsTable = ({
                   style={{
                     borderBottom:
                       rowIndex < items.length - 1 ? `1px solid ${colors.borderSubtle}` : 'none',
-                    backgroundColor: colors.bgElevated,
+                    backgroundColor: rowBackground,
                     transition: 'background-color 0.12s ease',
                     boxShadow: `inset 3px 0 0 ${stageAccent}`,
                   }}
