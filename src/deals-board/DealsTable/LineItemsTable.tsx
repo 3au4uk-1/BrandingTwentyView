@@ -1,8 +1,9 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, PointerEvent as ReactPointerEvent } from 'react';
 
 import { Chip } from '../Chip';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
+import { sumColumnWidths } from '../utils/columns';
 
 import type { ColumnConfig, LineItemRow } from '../types';
 import { LinkCell } from '../editors/LinkCell';
@@ -14,7 +15,11 @@ import { ResizableColumnHeader } from './ResizableColumnHeader';
 type LineItemsTableProps = {
   items: LineItemRow[];
   columns: ColumnConfig[];
-  onColumnResizeStart: (field: string, clientX: number, startWidth: number) => void;
+  onColumnResizePointerDown: (
+    event: ReactPointerEvent<HTMLDivElement>,
+    field: string,
+    startWidth: number,
+  ) => void;
 };
 
 const formatAmount = (item: LineItemRow) => {
@@ -24,9 +29,10 @@ const formatAmount = (item: LineItemRow) => {
   return `${amount.toLocaleString('ru-RU')} ${item.amount.currencyCode}`;
 };
 
-export const LineItemsTable = ({ items, columns, onColumnResizeStart }: LineItemsTableProps) => {
+export const LineItemsTable = ({ items, columns, onColumnResizePointerDown }: LineItemsTableProps) => {
   const theme = useTheme();
   const { colors, font, spacing } = theme;
+  const tableWidth = sumColumnWidths(columns);
 
   if (!items.length) {
     return (
@@ -46,7 +52,7 @@ export const LineItemsTable = ({ items, columns, onColumnResizeStart }: LineItem
     <div style={{ padding: `${spacing.xs} ${spacing.md} ${spacing.sm} 36px` }}>
       <table
         style={{
-          width: '100%',
+          width: `${tableWidth}px`,
           borderCollapse: 'collapse',
           tableLayout: 'fixed',
           backgroundColor: colors.bgElevated,
@@ -68,7 +74,7 @@ export const LineItemsTable = ({ items, columns, onColumnResizeStart }: LineItem
               <ResizableColumnHeader
                 key={column.field}
                 column={column}
-                onResizeStart={onColumnResizeStart}
+                onResizePointerDown={onColumnResizePointerDown}
                 compact
               >
                 {column.label}

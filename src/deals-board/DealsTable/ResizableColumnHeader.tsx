@@ -1,11 +1,16 @@
-import type { CSSProperties, ReactNode } from 'react';
+import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 
 import { useTheme } from '../theme/ThemeContext';
+import { DEFAULT_COLUMN_WIDTH } from '../utils/columns';
 import type { ColumnConfig } from '../types';
 
 type ResizableColumnHeaderProps = {
   column: ColumnConfig;
-  onResizeStart: (field: string, clientX: number, startWidth: number) => void;
+  onResizePointerDown: (
+    event: ReactPointerEvent<HTMLDivElement>,
+    field: string,
+    startWidth: number,
+  ) => void;
   stickyStyle?: CSSProperties;
   children: ReactNode;
   compact?: boolean;
@@ -13,14 +18,14 @@ type ResizableColumnHeaderProps = {
 
 export const ResizableColumnHeader = ({
   column,
-  onResizeStart,
+  onResizePointerDown,
   stickyStyle,
   children,
   compact = false,
 }: ResizableColumnHeaderProps) => {
   const theme = useTheme();
   const { colors, font } = theme;
-  const width = column.width ?? 120;
+  const width = column.width ?? DEFAULT_COLUMN_WIDTH;
 
   return (
     <th
@@ -38,6 +43,7 @@ export const ResizableColumnHeader = ({
         minWidth: `${width}px`,
         whiteSpace: 'nowrap',
         userSelect: 'none',
+        boxSizing: 'border-box',
         ...(compact ? { backgroundColor: colors.bgTertiary } : {}),
         ...stickyStyle,
       }}
@@ -49,19 +55,16 @@ export const ResizableColumnHeader = ({
         role="separator"
         aria-orientation="vertical"
         aria-label={`Изменить ширину колонки ${column.label}`}
-        onMouseDown={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          onResizeStart(column.field, event.clientX, width);
-        }}
+        onPointerDown={(event) => onResizePointerDown(event, column.field, width)}
         style={{
           position: 'absolute',
           top: 0,
           right: 0,
-          width: '8px',
+          width: '10px',
           height: '100%',
           cursor: 'col-resize',
           touchAction: 'none',
+          zIndex: 1,
         }}
       >
         <div
@@ -69,10 +72,11 @@ export const ResizableColumnHeader = ({
             position: 'absolute',
             top: '20%',
             bottom: '20%',
-            right: '3px',
-            width: '1px',
+            right: '4px',
+            width: '2px',
             backgroundColor: colors.borderStrong,
-            opacity: 0.6,
+            opacity: 0.75,
+            pointerEvents: 'none',
           }}
         />
       </div>

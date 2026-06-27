@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ColumnConfig } from '../types';
-import { parseColumns, visibleColumns } from './columns';
+import { parseColumns, visibleColumns, sumColumnWidths } from './columns';
 
 const fallback: ColumnConfig[] = [
   { field: 'name', label: 'Name', order: 0, visible: true },
@@ -47,5 +47,15 @@ describe('visibleColumns', () => {
       { field: 'name', label: 'Name', order: 0, visible: true },
       { field: 'amount', label: 'Amount', order: 2, visible: true },
     ]);
+  });
+});
+
+describe('sumColumnWidths', () => {
+  it('sums explicit and default column widths', () => {
+    const columns: ColumnConfig[] = [
+      { field: 'name', label: 'Name', order: 0, visible: true, width: 200 },
+      { field: 'stage', label: 'Stage', order: 1, visible: true },
+    ];
+    expect(sumColumnWidths(columns)).toBe(320);
   });
 });

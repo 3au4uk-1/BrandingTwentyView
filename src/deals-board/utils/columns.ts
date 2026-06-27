@@ -12,3 +12,8 @@ export const parseColumns = (raw: unknown, fallback: ColumnConfig[]): ColumnConf
 
 export const visibleColumns = (columns: ColumnConfig[]): ColumnConfig[] =>
   (Array.isArray(columns) ? columns : []).filter((c) => c.visible);
+
+export const DEFAULT_COLUMN_WIDTH = 120;
+
+export const sumColumnWidths = (columns: ColumnConfig[]): number =>
+  columns.reduce((sum, column) => sum + (column.width ?? DEFAULT_COLUMN_WIDTH), 0);

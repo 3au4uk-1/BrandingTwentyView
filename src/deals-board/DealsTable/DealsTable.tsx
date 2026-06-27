@@ -14,7 +14,7 @@ import { Button } from '../ui/Button';
 import { EmptyState } from '../ui/EmptyState';
 import { Spinner } from '../ui/Spinner';
 import type { ColumnConfig, DealBoardViewRecord, LineItemRow, OpportunityRow } from '../types';
-import { visibleColumns } from '../utils/columns';
+import { visibleColumns, sumColumnWidths } from '../utils/columns';
 import { useColumnResize } from '../hooks/useColumnResize';
 import { DealRow } from './DealRow';
 import { ResizableColumnHeader } from './ResizableColumnHeader';
@@ -93,14 +93,12 @@ export const DealsTable = ({
     [allChildColumns, mergeColumnWidths, onChildColumnsSave],
   );
 
-  const { displayColumns: displayParentColumns, beginResize: beginParentResize } = useColumnResize(
-    parentColumns,
-    handleParentColumnsSave,
-  );
-  const { displayColumns: displayChildColumns, beginResize: beginChildResize } = useColumnResize(
-    childColumns,
-    handleChildColumnsSave,
-  );
+  const { displayColumns: displayParentColumns, handleResizePointerDown: handleParentResizePointerDown } =
+    useColumnResize(parentColumns, handleParentColumnsSave);
+  const { displayColumns: displayChildColumns, handleResizePointerDown: handleChildResizePointerDown } =
+    useColumnResize(childColumns, handleChildColumnsSave);
+
+  const parentTableWidth = sumColumnWidths(displayParentColumns);
 
   const companyIds = useMemo(
     () =>
@@ -190,8 +188,7 @@ export const DealsTable = ({
       >
         <table
           style={{
-            width: 'max-content',
-            minWidth: '100%',
+            width: `${parentTableWidth}px`,
             borderCollapse: 'collapse',
             tableLayout: 'fixed',
             backgroundColor: colors.bg,
@@ -218,7 +215,7 @@ export const DealsTable = ({
                 <ResizableColumnHeader
                   key={column.field}
                   column={column}
-                  onResizeStart={beginParentResize}
+                  onResizePointerDown={handleParentResizePointerDown}
                   stickyStyle={
                     column.field === 'name'
                       ? {
@@ -243,7 +240,7 @@ export const DealsTable = ({
                 row={{ ...row, companyName: row.companyName ?? companyNameMap.get(row.companyId ?? '') }}
                 columns={displayParentColumns}
                 childColumns={displayChildColumns}
-                onChildColumnResizeStart={beginChildResize}
+                onChildColumnResizePointerDown={handleChildResizePointerDown}
                 lineItems={lineItemsByOpportunity.get(row.id) ?? []}
                 isExpanded={isExpanded(row.id)}
                 isHovered={hoveredRowId === row.id}

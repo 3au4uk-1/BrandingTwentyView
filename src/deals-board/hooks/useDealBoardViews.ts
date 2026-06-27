@@ -81,7 +81,22 @@ export const useUpdateDealBoardView = () => {
       id: string;
       data: Partial<Omit<DealBoardViewRecord, 'id'>>;
     }) => updateDealBoardView(id, data),
-    onSuccess: () => {
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: dealBoardViewsQueryKey() });
+      const previous = queryClient.getQueryData<DealBoardViewRecord[]>(dealBoardViewsQueryKey());
+
+      queryClient.setQueryData<DealBoardViewRecord[]>(dealBoardViewsQueryKey(), (current) =>
+        current?.map((view) => (view.id === id ? { ...view, ...data } : view)),
+      );
+
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(dealBoardViewsQueryKey(), context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: dealBoardViewsQueryKey() });
     },
   });

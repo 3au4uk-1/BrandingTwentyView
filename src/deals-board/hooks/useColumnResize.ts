@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 
 import type { ColumnConfig } from '../types';
 
@@ -9,48 +9,71 @@ export const useColumnResize = (
   onSave: (columns: ColumnConfig[]) => void,
 ) => {
   const [displayColumns, setDisplayColumns] = useState(columns);
+  const isDraggingRef = useRef(false);
   const latestColumnsRef = useRef(columns);
+  const onSaveRef = useRef(onSave);
 
-  useEffect(() => {
-    setDisplayColumns(columns);
-    latestColumnsRef.current = columns;
-  }, [columns]);
+  onSaveRef.current = onSave;
 
   useEffect(() => {
     latestColumnsRef.current = displayColumns;
   }, [displayColumns]);
 
-  const beginResize = useCallback((field: string, clientX: number, startWidth: number) => {
-    const dragState = { field, startX: clientX, startWidth: startWidth || 120 };
+  useEffect(() => {
+    if (isDraggingRef.current) return;
+    setDisplayColumns(columns);
+    latestColumnsRef.current = columns;
+  }, [columns]);
 
-    const onMouseMove = (event: MouseEvent) => {
-      const nextWidth = Math.max(
-        MIN_COLUMN_WIDTH,
-        dragState.startWidth + (event.clientX - dragState.startX),
-      );
+  const handleResizePointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>, field: string, startWidth: number) => {
+      event.preventDefault();
+      event.stopPropagation();
 
-      setDisplayColumns((prev) => {
-        const next = prev.map((column) =>
-          column.field === dragState.field ? { ...column, width: nextWidth } : column,
+      const handle = event.currentTarget;
+      handle.setPointerCapture(event.pointerId);
+
+      isDraggingRef.current = true;
+      const dragState = { field, startX: event.clientX, startWidth: startWidth || 120 };
+
+      const onPointerMove = (moveEvent: PointerEvent) => {
+        if (moveEvent.pointerId !== event.pointerId) return;
+
+        const nextWidth = Math.max(
+          MIN_COLUMN_WIDTH,
+          dragState.startWidth + (moveEvent.clientX - dragState.startX),
         );
-        latestColumnsRef.current = next;
-        return next;
-      });
-    };
 
-    const onMouseUp = () => {
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-      onSave(latestColumnsRef.current);
-    };
+        setDisplayColumns((prev) => {
+          const next = prev.map((column) =>
+            column.field === dragState.field ? { ...column, width: nextWidth } : column,
+          );
+          latestColumnsRef.current = next;
+          return next;
+        });
+      };
 
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-  }, [onSave]);
+      const finishResize = (upEvent: PointerEvent) => {
+        if (upEvent.pointerId !== event.pointerId) return;
 
-  return { displayColumns, beginResize };
+        handle.removeEventListener('pointermove', onPointerMove);
+        handle.removeEventListener('pointerup', finishResize);
+        handle.removeEventListener('pointercancel', finishResize);
+
+        if (handle.hasPointerCapture(event.pointerId)) {
+          handle.releasePointerCapture(event.pointerId);
+        }
+
+        isDraggingRef.current = false;
+        onSaveRef.current(latestColumnsRef.current);
+      };
+
+      handle.addEventListener('pointermove', onPointerMove);
+      handle.addEventListener('pointerup', finishResize);
+      handle.addEventListener('pointercancel', finishResize);
+    },
+    [],
+  );
+
+  return { displayColumns, handleResizePointerDown };
 };
