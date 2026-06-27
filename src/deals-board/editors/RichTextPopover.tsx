@@ -28,6 +28,7 @@ export const RichTextPopover = ({ itemId, value, field }: RichTextPopoverProps) 
   const [draftValue, setDraftValue] = useState(value ?? '');
 
   const open = (event: ReactMouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
     setAnchorPoint({ x: event.clientX, y: event.clientY });
     setDraftValue(value ?? '');
     setIsOpen(true);
@@ -67,12 +68,15 @@ export const RichTextPopover = ({ itemId, value, field }: RichTextPopoverProps) 
         ref={anchorRef}
         type="button"
         onClick={open}
+        onMouseDown={(event) => event.stopPropagation()}
+        title="Редактировать"
         style={{
           border: 'none',
           background: 'transparent',
-          padding: 0,
+          padding: '2px 0',
           margin: 0,
           width: '100%',
+          minHeight: '24px',
           textAlign: 'left',
           cursor: 'pointer',
           color: value?.trim() ? colors.text : colors.textMuted,

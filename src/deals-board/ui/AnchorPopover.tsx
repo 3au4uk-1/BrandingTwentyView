@@ -9,6 +9,7 @@ import {
 import { createPortal } from 'react-dom';
 
 import type { ThemeTokens } from '../theme/tokens';
+import { getPortalContainer } from '../utils/dom';
 
 export type AnchorPoint = {
   x: number;
@@ -88,7 +89,15 @@ export const AnchorPopover = ({
 }: AnchorPopoverProps) => {
   const { colors, radius, spacing, zIndex } = theme;
   const popoverRef = useRef<HTMLDivElement | null>(null);
+  const openedAtRef = useRef(0);
   const [coords, setCoords] = useState<PopoverCoords>({ top: 0, left: 0 });
+  const [portalContainer, setPortalContainer] = useState<Element | null>(null);
+
+  useLayoutEffect(() => {
+    if (!isOpen || !anchorRef.current) return;
+    setPortalContainer(getPortalContainer(anchorRef.current));
+    openedAtRef.current = Date.now();
+  }, [anchorRef, isOpen]);
 
   useLayoutEffect(() => {
     if (!isOpen || !anchorRef.current) return;
@@ -129,7 +138,10 @@ export const AnchorPopover = ({
       if (event.key === 'Escape') onClose();
     };
 
-    const handleScroll = () => onClose();
+    const handleScroll = () => {
+      if (Date.now() - openedAtRef.current < 200) return;
+      onClose();
+    };
 
     const doc = typeof document !== 'undefined' ? document : undefined;
     const view = typeof window !== 'undefined' ? window : undefined;
@@ -145,7 +157,7 @@ export const AnchorPopover = ({
     };
   }, [anchorRef, isOpen, onClose]);
 
-  if (!isOpen || typeof document === 'undefined') return null;
+  if (!isOpen || typeof document === 'undefined' || !portalContainer) return null;
 
   return createPortal(
     <div
@@ -155,7 +167,7 @@ export const AnchorPopover = ({
         top: coords.top,
         left: coords.left,
         width,
-        zIndex: zIndex.dropdown,
+        zIndex: zIndex.modal,
         padding: spacing.md,
         borderRadius: radius.lg,
         border: `1px solid ${colors.border}`,
@@ -165,6 +177,6 @@ export const AnchorPopover = ({
     >
       {children}
     </div>,
-    document.body,
+    portalContainer,
   );
 };

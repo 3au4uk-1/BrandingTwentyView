@@ -1,10 +1,7 @@
-import { useMemo, useRef } from 'react';
-
 import { DynamicFieldCell } from '../cells/DynamicFieldCell';
-import { useContainerWidth } from '../hooks/useContainerWidth';
 import type { FieldDescriptor } from '../metadata/types';
 import { useTheme } from '../theme/ThemeContext';
-import { getColumnWidth, getTableLayoutStyle, layoutColumnsForContainer } from '../utils/columns';
+import { getColumnWidth, getTableLayoutStyle, sumColumnWidths } from '../utils/columns';
 import { resolveFieldValue } from '../utils/resolve-field-value';
 
 import type { ColumnConfig, LineItemRow } from '../types';
@@ -14,8 +11,12 @@ type LineItemsTableProps = {
   items: LineItemRow[];
   columns: ColumnConfig[];
   descriptorByField: Map<string, FieldDescriptor>;
-  onColumnResizeStart: (event: MouseEvent, field: string, startWidth: number) => void;
-  userSized?: boolean;
+  onColumnResizeStart: (
+    event: MouseEvent,
+    field: string,
+    startWidth: number,
+    scaleSource?: HTMLElement | null,
+  ) => void;
 };
 
 export const LineItemsTable = ({
@@ -23,19 +24,10 @@ export const LineItemsTable = ({
   columns,
   descriptorByField,
   onColumnResizeStart,
-  userSized = false,
 }: LineItemsTableProps) => {
   const theme = useTheme();
   const { colors, font, spacing } = theme;
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const containerWidth = useContainerWidth(containerRef);
-
-  const layoutColumns = useMemo(() => {
-    if (userSized) return columns;
-    return layoutColumnsForContainer(columns, containerWidth, 'name');
-  }, [columns, containerWidth, userSized]);
-
-  const tableStyle = getTableLayoutStyle(layoutColumns, containerWidth);
+  const tableStyle = getTableLayoutStyle(columns, sumColumnWidths(columns));
 
   if (!items.length) {
     return (
@@ -53,7 +45,7 @@ export const LineItemsTable = ({
 
   return (
     <div style={{ padding: `${spacing.xs} ${spacing.md} ${spacing.sm} 36px` }}>
-      <div ref={containerRef}>
+      <div>
         <table
           style={{
             ...tableStyle,
@@ -65,13 +57,13 @@ export const LineItemsTable = ({
           }}
         >
           <colgroup>
-            {layoutColumns.map((column) => (
+            {columns.map((column) => (
               <col key={column.field} style={{ width: `${getColumnWidth(column)}px` }} />
             ))}
           </colgroup>
           <thead>
             <tr style={{ borderBottom: `1px solid ${colors.borderSubtle}` }}>
-              {layoutColumns.map((column) => (
+              {columns.map((column) => (
                 <ResizableColumnHeader
                   key={column.field}
                   column={column}
@@ -93,7 +85,7 @@ export const LineItemsTable = ({
                   backgroundColor: colors.bgElevated,
                 }}
               >
-                {layoutColumns.map((column) => {
+                {columns.map((column) => {
                   const width = getColumnWidth(column);
 
                   return (
@@ -111,6 +103,7 @@ export const LineItemsTable = ({
                         textOverflow: 'ellipsis',
                         verticalAlign: 'middle',
                         boxSizing: 'border-box',
+                        position: 'relative',
                       }}
                     >
                       <DynamicFieldCell

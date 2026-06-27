@@ -6,7 +6,12 @@ import type { ColumnConfig } from '../types';
 
 type ResizableColumnHeaderProps = {
   column: ColumnConfig;
-  onResizeStart: (event: MouseEvent, field: string, startWidth: number) => void;
+  onResizeStart: (
+    event: MouseEvent,
+    field: string,
+    startWidth: number,
+    scaleSource?: HTMLElement | null,
+  ) => void;
   stickyStyle?: CSSProperties;
   children: ReactNode;
   compact?: boolean;
@@ -32,7 +37,8 @@ export const ResizableColumnHeader = ({
     if (!handle) return;
 
     const onMouseDown = (event: MouseEvent) => {
-      onResizeStartRef.current(event, column.field, width);
+      const scaleSource = handle.closest('th');
+      onResizeStartRef.current(event, column.field, width, scaleSource);
     };
 
     handle.addEventListener('mousedown', onMouseDown);

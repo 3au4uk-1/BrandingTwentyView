@@ -17,8 +17,12 @@ type DealRowProps = {
   isHovered: boolean;
   onHoverChange: (hovered: boolean) => void;
   onToggleExpand: (id: string) => void;
-  childUserSized: boolean;
-  onChildColumnResizeStart: (event: MouseEvent, field: string, startWidth: number) => void;
+  onChildColumnResizeStart: (
+    event: MouseEvent,
+    field: string,
+    startWidth: number,
+    scaleSource?: HTMLElement | null,
+  ) => void;
 };
 
 export const DealRow = ({
@@ -32,7 +36,6 @@ export const DealRow = ({
   isHovered,
   onHoverChange,
   onToggleExpand,
-  childUserSized,
   onChildColumnResizeStart,
 }: DealRowProps) => {
   const theme = useTheme();
@@ -107,7 +110,6 @@ export const DealRow = ({
               items={lineItems}
               columns={childColumns}
               descriptorByField={childDescriptorByField}
-              userSized={childUserSized}
               onColumnResizeStart={onChildColumnResizeStart}
             />
           </td>

@@ -53,3 +53,19 @@ export const writeSessionStorage = (key: string, value: string): void => {
     // Storage may be unavailable in the front component sandbox.
   }
 };
+
+export type ColumnResizeTarget = 'parent' | 'child';
+
+export const columnUserSizedStorageKey = (viewId: string, target: ColumnResizeTarget) =>
+  `deals-board-columns-user-sized:${viewId}:${target}`;
+
+export const readColumnUserSized = (viewId: string, target: ColumnResizeTarget): boolean =>
+  readLocalStorage(columnUserSizedStorageKey(viewId, target)) === '1';
+
+export const writeColumnUserSized = (
+  viewId: string,
+  target: ColumnResizeTarget,
+  userSized: boolean,
+): void => {
+  writeLocalStorage(columnUserSizedStorageKey(viewId, target), userSized ? '1' : '0');
+};

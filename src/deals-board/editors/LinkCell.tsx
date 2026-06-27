@@ -23,6 +23,7 @@ export const LinkCell = ({ itemId, value }: LinkCellProps) => {
   const [draftValue, setDraftValue] = useState(value?.primaryLinkUrl ?? '');
 
   const openEditor = (event: ReactMouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
     setAnchorPoint({ x: event.clientX, y: event.clientY });
     setDraftValue(value?.primaryLinkUrl ?? '');
     setIsEditing(true);
@@ -86,6 +87,7 @@ export const LinkCell = ({ itemId, value }: LinkCellProps) => {
           ref={anchorRef}
           type="button"
           onClick={openEditor}
+          onMouseDown={(event) => event.stopPropagation()}
           title={url ? 'Изменить ссылку' : 'Добавить ссылку'}
           style={{
             border: 'none',

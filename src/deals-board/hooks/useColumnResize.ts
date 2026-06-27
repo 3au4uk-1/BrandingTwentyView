@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { getElementScaleX } from '../utils/dom';
 import { DEFAULT_COLUMN_WIDTH } from '../utils/columns';
 import type { ColumnConfig } from '../types';
 
-const MIN_COLUMN_WIDTH = 60;
+export const MIN_COLUMN_WIDTH = 32;
 
 type ActiveResize = {
   field: string;
   startX: number;
   startWidth: number;
+  scaleX: number;
 };
 
 export const useColumnResize = (
@@ -38,7 +40,7 @@ export const useColumnResize = (
   }, [columns]);
 
   const beginResize = useCallback(
-    (event: MouseEvent, field: string, startWidth: number) => {
+    (event: MouseEvent, field: string, startWidth: number, scaleSource?: HTMLElement | null) => {
       event.preventDefault();
       event.stopPropagation();
 
@@ -49,6 +51,7 @@ export const useColumnResize = (
         field,
         startX: event.clientX,
         startWidth: Math.max(MIN_COLUMN_WIDTH, startWidth || DEFAULT_COLUMN_WIDTH),
+        scaleX: getElementScaleX(scaleSource ?? (event.currentTarget as HTMLElement | null)),
       };
       setIsResizing(true);
     },
@@ -59,10 +62,8 @@ export const useColumnResize = (
     const activeResize = activeResizeRef.current;
     if (!activeResize) return;
 
-    const nextWidth = Math.max(
-      MIN_COLUMN_WIDTH,
-      activeResize.startWidth + (clientX - activeResize.startX),
-    );
+    const delta = (clientX - activeResize.startX) / activeResize.scaleX;
+    const nextWidth = Math.max(MIN_COLUMN_WIDTH, activeResize.startWidth + delta);
 
     setDisplayColumns((prev) => {
       const next = prev.map((column) =>
@@ -81,6 +82,21 @@ export const useColumnResize = (
     setIsResizing(false);
     onSaveRef.current(latestColumnsRef.current);
   }, []);
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const onMove = (event: MouseEvent) => handleResizeMove(event.clientX);
+    const onUp = () => finishResize();
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+
+    return () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+  }, [finishResize, handleResizeMove, isResizing]);
 
   return {
     displayColumns,
