@@ -1,11 +1,14 @@
-const isDomElement = (value: unknown): value is HTMLElement =>
-  Boolean(value) &&
-  typeof value === 'object' &&
-  typeof (value as HTMLElement).parentElement !== 'undefined';
+const hasDomMethod = (value: unknown, method: string): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && typeof (value as Record<string, unknown>)[method] === 'function';
+
+export const isDomElement = (value: unknown): value is HTMLElement =>
+  hasDomMethod(value, 'getBoundingClientRect') || hasDomMethod(value, 'contains');
 
 /** Cumulative horizontal scale from CSS transforms on element and its ancestors. */
 export const getElementScaleX = (element: HTMLElement | null | undefined): number => {
-  if (!isDomElement(element) || typeof window === 'undefined') return 1;
+  if (!element || typeof window === 'undefined' || typeof element.parentElement === 'undefined') {
+    return 1;
+  }
 
   let scaleX = 1;
   let current: HTMLElement | null = element;
@@ -25,21 +28,29 @@ export const getElementScaleX = (element: HTMLElement | null | undefined): numbe
   return scaleX || 1;
 };
 
-/** Portal target that stays inside shadow roots used by embedded front components. */
-export const getPortalContainer = (anchor: HTMLElement | null | undefined): Element => {
-  if (!isDomElement(anchor) || typeof document === 'undefined') return document.body;
+/** Portal target; falls back to document.body when worker refs lack full DOM APIs. */
+export const getPortalContainer = (anchor: unknown): Element => {
+  if (typeof document === 'undefined') {
+    throw new Error('document is unavailable');
+  }
 
-  const root = anchor.getRootNode();
-  if (root instanceof ShadowRoot) {
-    const existing = root.querySelector('[data-deals-board-portal]');
-    if (existing) return existing;
+  if (hasDomMethod(anchor, 'getRootNode')) {
+    try {
+      const root = (anchor as HTMLElement).getRootNode();
+      if (root instanceof ShadowRoot) {
+        const existing = root.querySelector('[data-deals-board-portal]');
+        if (existing) return existing;
 
-    const container = document.createElement('div');
-    container.setAttribute('data-deals-board-portal', '');
-    container.style.position = 'relative';
-    container.style.zIndex = '9999';
-    root.appendChild(container);
-    return container;
+        const container = document.createElement('div');
+        container.setAttribute('data-deals-board-portal', '');
+        container.style.position = 'relative';
+        container.style.zIndex = '9999';
+        root.appendChild(container);
+        return container;
+      }
+    } catch {
+      // Worker refs may expose getRootNode but fail at runtime.
+    }
   }
 
   return document.body;

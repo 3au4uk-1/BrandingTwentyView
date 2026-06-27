@@ -91,13 +91,11 @@ export const AnchorPopover = ({
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const openedAtRef = useRef(0);
   const [coords, setCoords] = useState<PopoverCoords>({ top: 0, left: 0 });
-  const [portalContainer, setPortalContainer] = useState<Element | null>(null);
 
   useLayoutEffect(() => {
-    if (!isOpen || !anchorRef.current) return;
-    setPortalContainer(getPortalContainer(anchorRef.current));
+    if (!isOpen) return;
     openedAtRef.current = Date.now();
-  }, [anchorRef, isOpen]);
+  }, [isOpen]);
 
   useLayoutEffect(() => {
     if (!isOpen || !anchorRef.current) return;
@@ -157,7 +155,9 @@ export const AnchorPopover = ({
     };
   }, [anchorRef, isOpen, onClose]);
 
-  if (!isOpen || typeof document === 'undefined' || !portalContainer) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
+
+  const portalContainer = getPortalContainer(anchorRef.current);
 
   return createPortal(
     <div
