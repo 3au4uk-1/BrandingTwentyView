@@ -2,12 +2,11 @@ import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 
 import { useTheme } from '../theme/ThemeContext';
 import { getColumnWidth } from '../utils/columns';
-import type { ColumnResizeStartEvent } from '../hooks/useColumnResize';
 import type { ColumnConfig } from '../types';
 
 type ResizableColumnHeaderProps = {
   column: ColumnConfig;
-  onResizeStart: (event: ColumnResizeStartEvent, field: string, startWidth: number) => void;
+  onResizeStart: (event: MouseEvent, field: string, startWidth: number) => void;
   stickyStyle?: CSSProperties;
   children: ReactNode;
   compact?: boolean;
@@ -33,16 +32,7 @@ export const ResizableColumnHeader = ({
     if (!handle) return;
 
     const onMouseDown = (event: MouseEvent) => {
-      onResizeStartRef.current(
-        {
-          clientX: event.clientX,
-          currentTarget: handle,
-          preventDefault: () => event.preventDefault(),
-          stopPropagation: () => event.stopPropagation(),
-        },
-        column.field,
-        width,
-      );
+      onResizeStartRef.current(event, column.field, width);
     };
 
     handle.addEventListener('mousedown', onMouseDown);

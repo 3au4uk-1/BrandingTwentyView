@@ -7,7 +7,6 @@ import { ChevronRightIcon } from '../ui/Icons';
 
 import type { ColumnConfig, LineItemRow, OpportunityRow } from '../types';
 import { getColumnWidth } from '../utils/columns';
-import type { ColumnResizeStartEvent } from '../hooks/useColumnResize';
 import { DealSummaryChips } from './DealSummaryChips';
 import { LineItemsTable } from './LineItemsTable';
 
@@ -39,11 +38,7 @@ type DealRowProps = {
   onHoverChange: (hovered: boolean) => void;
   onToggleExpand: (id: string) => void;
   childUserSized: boolean;
-  onChildColumnResizeStart: (
-    event: ColumnResizeStartEvent,
-    field: string,
-    startWidth: number,
-  ) => void;
+  onChildColumnResizeStart: (event: MouseEvent, field: string, startWidth: number) => void;
 };
 
 export const DealRow = ({
