@@ -9,10 +9,12 @@ import { LinkCell } from '../editors/LinkCell';
 import { NumberCell } from '../editors/NumberCell';
 import { RichTextPopover } from '../editors/RichTextPopover';
 import { StageSelect } from '../editors/StageSelect';
+import { ResizableColumnHeader } from './ResizableColumnHeader';
 
 type LineItemsTableProps = {
   items: LineItemRow[];
   columns: ColumnConfig[];
+  onColumnResizeStart: (field: string, clientX: number, startWidth: number) => void;
 };
 
 const formatAmount = (item: LineItemRow) => {
@@ -22,7 +24,7 @@ const formatAmount = (item: LineItemRow) => {
   return `${amount.toLocaleString('ru-RU')} ${item.amount.currencyCode}`;
 };
 
-export const LineItemsTable = ({ items, columns }: LineItemsTableProps) => {
+export const LineItemsTable = ({ items, columns, onColumnResizeStart }: LineItemsTableProps) => {
   const theme = useTheme();
   const { colors, font, spacing } = theme;
 
@@ -50,27 +52,27 @@ export const LineItemsTable = ({ items, columns }: LineItemsTableProps) => {
           backgroundColor: colors.bgElevated,
           border: `1px solid ${colors.borderSubtle}`,
           borderRadius: theme.radius.md,
-          overflow: 'hidden',
         }}
       >
+        <colgroup>
+          {columns.map((column) => (
+            <col
+              key={column.field}
+              style={{ width: column.width ? `${column.width}px` : 'auto' }}
+            />
+          ))}
+        </colgroup>
         <thead>
-          <tr style={{ borderBottom: `1px solid ${colors.borderSubtle}`, backgroundColor: colors.bgTertiary }}>
+          <tr style={{ borderBottom: `1px solid ${colors.borderSubtle}` }}>
             {columns.map((column) => (
-              <th
+              <ResizableColumnHeader
                 key={column.field}
-                style={{
-                  padding: '8px 10px',
-                  textAlign: 'left',
-                  fontSize: font.sizeXs,
-                  fontWeight: font.weightSemibold,
-                  color: colors.textMuted,
-                  width: column.width ? `${column.width}px` : 'auto',
-                  maxWidth: column.width ? `${column.width}px` : undefined,
-                  whiteSpace: 'nowrap',
-                }}
+                column={column}
+                onResizeStart={onColumnResizeStart}
+                compact
               >
                 {column.label}
-              </th>
+              </ResizableColumnHeader>
             ))}
           </tr>
         </thead>
@@ -119,12 +121,14 @@ export const LineItemsTable = ({ items, columns }: LineItemsTableProps) => {
                     style={{
                       width: column.width ? `${column.width}px` : 'auto',
                       maxWidth: column.width ? `${column.width}px` : undefined,
+                      minWidth: column.width ? `${column.width}px` : undefined,
                       padding: '8px 10px',
                       fontSize: font.sizeSm,
                       color: colors.textSecondary,
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
+                      verticalAlign: 'middle',
                     }}
                   >
                     {content}

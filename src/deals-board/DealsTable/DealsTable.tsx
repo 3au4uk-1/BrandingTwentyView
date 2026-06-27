@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import {
   DEFAULT_CHILD_COLUMNS,
@@ -13,9 +13,11 @@ import { useTheme } from '../theme/ThemeContext';
 import { Button } from '../ui/Button';
 import { EmptyState } from '../ui/EmptyState';
 import { Spinner } from '../ui/Spinner';
-import type { DealBoardViewRecord, LineItemRow, OpportunityRow } from '../types';
+import type { ColumnConfig, DealBoardViewRecord, LineItemRow, OpportunityRow } from '../types';
 import { visibleColumns } from '../utils/columns';
+import { useColumnResize } from '../hooks/useColumnResize';
 import { DealRow } from './DealRow';
+import { ResizableColumnHeader } from './ResizableColumnHeader';
 
 type DealsTableProps = {
   activeView?: DealBoardViewRecord;
@@ -26,6 +28,8 @@ type DealsTableProps = {
   totalPages: number;
   onPageChange: (nextPage: number) => void;
   onResetFilters?: () => void;
+  onParentColumnsSave?: (columns: ColumnConfig[]) => void;
+  onChildColumnsSave?: (columns: ColumnConfig[]) => void;
   isLoading?: boolean;
   isViewLoading?: boolean;
   errorMessage?: string;
@@ -40,6 +44,8 @@ export const DealsTable = ({
   totalPages,
   onPageChange,
   onResetFilters,
+  onParentColumnsSave,
+  onChildColumnsSave,
   isLoading = false,
   isViewLoading = false,
   errorMessage,
@@ -50,13 +56,50 @@ export const DealsTable = ({
   const { mode } = useExpandMode();
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  const parentColumns = useMemo(
-    () => visibleColumns(activeView?.parentColumns ?? DEFAULT_PARENT_COLUMNS),
+  const allParentColumns = useMemo(
+    () => activeView?.parentColumns ?? DEFAULT_PARENT_COLUMNS,
     [activeView?.parentColumns],
   );
-  const childColumns = useMemo(
-    () => visibleColumns(activeView?.childColumns ?? DEFAULT_CHILD_COLUMNS),
+  const allChildColumns = useMemo(
+    () => activeView?.childColumns ?? DEFAULT_CHILD_COLUMNS,
     [activeView?.childColumns],
+  );
+  const parentColumns = useMemo(() => visibleColumns(allParentColumns), [allParentColumns]);
+  const childColumns = useMemo(() => visibleColumns(allChildColumns), [allChildColumns]);
+
+  const mergeColumnWidths = useCallback(
+    (allColumns: ColumnConfig[], resizedVisibleColumns: ColumnConfig[]) => {
+      const widthByField = new Map(
+        resizedVisibleColumns.map((column) => [column.field, column.width]),
+      );
+
+      return allColumns.map((column) =>
+        widthByField.has(column.field) ? { ...column, width: widthByField.get(column.field) } : column,
+      );
+    },
+    [],
+  );
+
+  const handleParentColumnsSave = useCallback(
+    (resizedVisibleColumns: ColumnConfig[]) => {
+      onParentColumnsSave?.(mergeColumnWidths(allParentColumns, resizedVisibleColumns));
+    },
+    [allParentColumns, mergeColumnWidths, onParentColumnsSave],
+  );
+  const handleChildColumnsSave = useCallback(
+    (resizedVisibleColumns: ColumnConfig[]) => {
+      onChildColumnsSave?.(mergeColumnWidths(allChildColumns, resizedVisibleColumns));
+    },
+    [allChildColumns, mergeColumnWidths, onChildColumnsSave],
+  );
+
+  const { displayColumns: displayParentColumns, beginResize: beginParentResize } = useColumnResize(
+    parentColumns,
+    handleParentColumnsSave,
+  );
+  const { displayColumns: displayChildColumns, beginResize: beginChildResize } = useColumnResize(
+    childColumns,
+    handleChildColumnsSave,
   );
 
   const companyIds = useMemo(
@@ -155,7 +198,7 @@ export const DealsTable = ({
           }}
         >
           <colgroup>
-            {parentColumns.map((column) => (
+            {displayParentColumns.map((column) => (
               <col
                 key={column.field}
                 style={{
@@ -171,33 +214,25 @@ export const DealsTable = ({
                 backgroundColor: colors.bgSecondary,
               }}
             >
-              {parentColumns.map((column) => (
-                <th
+              {displayParentColumns.map((column) => (
+                <ResizableColumnHeader
                   key={column.field}
-                  style={{
-                    padding: '10px 12px',
-                    textAlign: 'left',
-                    fontSize: font.sizeXs,
-                    fontWeight: font.weightSemibold,
-                    color: colors.textMuted,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
-                    width: column.width ? `${column.width}px` : 'auto',
-                    maxWidth: column.width ? `${column.width}px` : undefined,
-                    whiteSpace: 'nowrap',
-                    ...(column.field === 'name'
+                  column={column}
+                  onResizeStart={beginParentResize}
+                  stickyStyle={
+                    column.field === 'name'
                       ? {
-                          position: 'sticky' as const,
+                          position: 'sticky',
                           left: 0,
                           zIndex: zIndex.sticky + 2,
                           backgroundColor: colors.bgSecondary,
                           boxShadow: colors.stickyShadow,
                         }
-                      : {}),
-                  }}
+                      : undefined
+                  }
                 >
                   {column.label}
-                </th>
+                </ResizableColumnHeader>
               ))}
             </tr>
           </thead>
@@ -206,8 +241,9 @@ export const DealsTable = ({
               <DealRow
                 key={row.id}
                 row={{ ...row, companyName: row.companyName ?? companyNameMap.get(row.companyId ?? '') }}
-                columns={parentColumns}
-                childColumns={childColumns}
+                columns={displayParentColumns}
+                childColumns={displayChildColumns}
+                onChildColumnResizeStart={beginChildResize}
                 lineItems={lineItemsByOpportunity.get(row.id) ?? []}
                 isExpanded={isExpanded(row.id)}
                 isHovered={hoveredRowId === row.id}

@@ -271,6 +271,8 @@ const DealsBoardContent = () => {
         totalPages={totalPages}
         onPageChange={setPage}
         onResetFilters={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
+        onParentColumnsSave={(columns) => saveActiveViewColumns('parent', columns)}
+        onChildColumnsSave={(columns) => saveActiveViewColumns('child', columns)}
         isLoading={opportunitiesQuery.isLoading}
         isViewLoading={viewsQuery.isLoading || viewsQuery.isSeedingDefault}
         errorMessage={loadError instanceof Error ? loadError.message : loadError ? String(loadError) : undefined}

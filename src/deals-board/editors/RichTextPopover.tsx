@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { useUpdateLineItem } from '../hooks/useLineItems';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
+import { AnchorPopover } from '../ui/AnchorPopover';
 import { Button } from '../ui/Button';
 import { Textarea } from '../ui/Input';
 
@@ -19,8 +20,9 @@ const previewText = (value?: string) => {
 
 export const RichTextPopover = ({ itemId, value, field }: RichTextPopoverProps) => {
   const theme = useTheme();
-  const { colors, font, spacing, radius, zIndex } = theme;
+  const { colors, font } = theme;
   const updateMutation = useUpdateLineItem();
+  const anchorRef = useRef<HTMLButtonElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [draftValue, setDraftValue] = useState(value ?? '');
 
@@ -57,8 +59,9 @@ export const RichTextPopover = ({ itemId, value, field }: RichTextPopoverProps) 
   };
 
   return (
-    <div style={{ position: 'relative' }}>
+    <>
       <button
+        ref={anchorRef}
         type="button"
         onClick={open}
         style={{
@@ -79,45 +82,38 @@ export const RichTextPopover = ({ itemId, value, field }: RichTextPopoverProps) 
         {previewText(value)}
       </button>
 
-      {isOpen ? (
+      <AnchorPopover theme={theme} isOpen={isOpen} onClose={close} anchorRef={anchorRef} width={320}>
+        <Textarea
+          theme={theme}
+          autoFocus
+          value={draftValue}
+          onChange={(event) => setDraftValue(event.target.value)}
+          rows={6}
+          style={{ fontSize: font.sizeSm }}
+        />
+
         <div
           style={{
-            position: 'absolute',
-            zIndex: zIndex.dropdown,
-            top: 'calc(100% + 4px)',
-            left: 0,
-            width: '300px',
-            padding: spacing.md,
-            borderRadius: radius.lg,
-            border: `1px solid ${colors.border}`,
-            background: colors.bgElevated,
-            boxShadow: colors.shadowLg,
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: theme.spacing.sm,
+            marginTop: theme.spacing.sm,
           }}
         >
-          <Textarea
+          <Button theme={theme} variant="ghost" size="sm" onClick={close}>
+            Отмена
+          </Button>
+          <Button
             theme={theme}
-            value={draftValue}
-            onChange={(event) => setDraftValue(event.target.value)}
-            rows={6}
-            style={{ fontSize: font.sizeSm }}
-          />
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: spacing.sm, marginTop: spacing.sm }}>
-            <Button theme={theme} variant="ghost" size="sm" onClick={close}>
-              Отмена
-            </Button>
-            <Button
-              theme={theme}
-              variant="primary"
-              size="sm"
-              onClick={() => void save()}
-              disabled={updateMutation.isPending}
-            >
-              Сохранить
-            </Button>
-          </div>
+            variant="primary"
+            size="sm"
+            onClick={() => void save()}
+            disabled={updateMutation.isPending}
+          >
+            Сохранить
+          </Button>
         </div>
-      ) : null}
-    </div>
+      </AnchorPopover>
+    </>
   );
 };
