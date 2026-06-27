@@ -1,6 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 
+import {
+  DEFAULT_CHILD_COLUMNS,
+  DEFAULT_PARENT_COLUMNS,
+} from 'src/constants/column-definitions';
 import { APP_DISPLAY_NAME } from 'src/constants/universal-identifiers';
 
 import { ColumnPicker } from './ColumnPicker';
@@ -10,6 +14,10 @@ import { ExpandModeProvider } from './hooks/useExpandMode';
 import { useDealBoardViews, useUpdateDealBoardView } from './hooks/useDealBoardViews';
 import { useLineItems } from './hooks/useLineItems';
 import { useOpportunities } from './hooks/useOpportunities';
+import { crmFieldNamesFromColumns, needsCompanyRelation } from './metadata/crm-field-names';
+import { mergeColumns } from './metadata/merge-columns';
+import { useObjectFields } from './metadata/useObjectFields';
+import { VIRTUAL_PARENT_FIELD_DESCRIPTORS } from './metadata/virtual-columns';
 import { QuickFiltersBar, type QuickFiltersValue } from './QuickFiltersBar';
 import type { DealBoardViewRecord, LineItemRow, OpportunityRow } from './types';
 import { ThemeProvider, useTheme } from './theme/ThemeContext';
@@ -84,12 +92,59 @@ const DealsBoardContent = () => {
     [activeView?.filters, mergedStages, quickFilters.dateFrom, quickFilters.dateTo, quickFilters.search],
   );
 
+  const parentFieldsQuery = useObjectFields('opportunity');
+  const childFieldsQuery = useObjectFields('dealLineItem');
+
+  const mergedParentColumns = useMemo(
+    () =>
+      mergeColumns(
+        activeView?.parentColumns ?? DEFAULT_PARENT_COLUMNS,
+        parentFieldsQuery.data ?? [],
+        VIRTUAL_PARENT_FIELD_DESCRIPTORS,
+      ),
+    [activeView?.parentColumns, parentFieldsQuery.data],
+  );
+
+  const mergedChildColumns = useMemo(
+    () =>
+      mergeColumns(activeView?.childColumns ?? DEFAULT_CHILD_COLUMNS, childFieldsQuery.data ?? []),
+    [activeView?.childColumns, childFieldsQuery.data],
+  );
+
+  const parentDescriptorByField = useMemo(
+    () =>
+      new Map(
+        [...(parentFieldsQuery.data ?? []), ...VIRTUAL_PARENT_FIELD_DESCRIPTORS].map((descriptor) => [
+          descriptor.field,
+          descriptor,
+        ]),
+      ),
+    [parentFieldsQuery.data],
+  );
+
+  const childDescriptorByField = useMemo(
+    () => new Map((childFieldsQuery.data ?? []).map((descriptor) => [descriptor.field, descriptor])),
+    [childFieldsQuery.data],
+  );
+
+  const visibleParentCrmFields = useMemo(
+    () => crmFieldNamesFromColumns(mergedParentColumns),
+    [mergedParentColumns],
+  );
+
+  const includeCompanyRelation = useMemo(
+    () => needsCompanyRelation(mergedParentColumns),
+    [mergedParentColumns],
+  );
+
   const opportunitiesQuery = useOpportunities({
     viewId: activeView?.id,
     filters: mergedFilters,
     sort: activeView?.sort ?? [],
     page,
     pageSize: PAGE_SIZE,
+    visibleCrmFieldNames: visibleParentCrmFields,
+    includeCompanyRelation,
     enabled: !viewsQuery.isLoading && !viewsQuery.isSeedingDefault && Boolean(activeView),
   });
 
@@ -129,6 +184,10 @@ const DealsBoardContent = () => {
   const visibleTotalCount = stageMatchedOpportunityIds ? visibleRecords.length : totalCount;
 
   const loadError = viewsQuery.error ?? opportunitiesQuery.error ?? null;
+  const metadataFieldsWarning =
+    parentFieldsQuery.isError || childFieldsQuery.isError
+      ? 'Не удалось обновить список полей — используются сохранённые колонки'
+      : undefined;
   const lineItemsWarning =
     lineItemsQuery.error instanceof Error
       ? lineItemsQuery.error.message
@@ -235,17 +294,32 @@ const DealsBoardContent = () => {
             </Button>
             <ColumnPicker
               target="parent"
-              columns={activeView?.parentColumns ?? []}
+              columns={mergedParentColumns}
               onSave={(columns) => saveActiveViewColumns('parent', columns)}
             />
             <ColumnPicker
               target="child"
-              columns={activeView?.childColumns ?? []}
+              columns={mergedChildColumns}
               onSave={(columns) => saveActiveViewColumns('child', columns)}
             />
           </div>
         </div>
       </header>
+
+      {metadataFieldsWarning ? (
+        <div
+          style={{
+            padding: `${spacing.xs} ${spacing.md}`,
+            fontSize: font.sizeSm,
+            color: colors.warning,
+            backgroundColor: colors.warningMuted,
+            borderBottom: `1px solid ${colors.border}`,
+            flexShrink: 0,
+          }}
+        >
+          {metadataFieldsWarning}
+        </div>
+      ) : null}
 
       {lineItemsWarning ? (
         <div
@@ -264,6 +338,10 @@ const DealsBoardContent = () => {
 
       <DealsTable
         activeView={activeView}
+        parentColumns={mergedParentColumns}
+        childColumns={mergedChildColumns}
+        parentDescriptorByField={parentDescriptorByField}
+        childDescriptorByField={childDescriptorByField}
         records={visibleRecords}
         lineItems={lineItems}
         totalCount={visibleTotalCount}

@@ -1,35 +1,27 @@
-import { useMemo, useRef, type ReactNode } from 'react';
+import { useMemo, useRef } from 'react';
 
-import { Chip } from '../Chip';
+import { DynamicFieldCell } from '../cells/DynamicFieldCell';
 import { useContainerWidth } from '../hooks/useContainerWidth';
+import type { FieldDescriptor } from '../metadata/types';
 import { useTheme } from '../theme/ThemeContext';
-import { EMPTY_VALUE } from '../theme/tokens';
 import { getColumnWidth, getTableLayoutStyle, layoutColumnsForContainer } from '../utils/columns';
+import { resolveFieldValue } from '../utils/resolve-field-value';
 
 import type { ColumnConfig, LineItemRow } from '../types';
-import { LinkCell } from '../editors/LinkCell';
-import { NumberCell } from '../editors/NumberCell';
-import { RichTextPopover } from '../editors/RichTextPopover';
-import { StageSelect } from '../editors/StageSelect';
 import { ResizableColumnHeader } from './ResizableColumnHeader';
 
 type LineItemsTableProps = {
   items: LineItemRow[];
   columns: ColumnConfig[];
+  descriptorByField: Map<string, FieldDescriptor>;
   onColumnResizeStart: (event: MouseEvent, field: string, startWidth: number) => void;
   userSized?: boolean;
-};
-
-const formatAmount = (item: LineItemRow) => {
-  if (!item.amount) return EMPTY_VALUE;
-
-  const amount = item.amount.amountMicros / 1_000_000;
-  return `${amount.toLocaleString('ru-RU')} ${item.amount.currencyCode}`;
 };
 
 export const LineItemsTable = ({
   items,
   columns,
+  descriptorByField,
   onColumnResizeStart,
   userSized = false,
 }: LineItemsTableProps) => {
@@ -102,41 +94,6 @@ export const LineItemsTable = ({
                 }}
               >
                 {layoutColumns.map((column) => {
-                  let content: ReactNode = EMPTY_VALUE;
-
-                  if (column.field === 'name') {
-                    content = (
-                      <span style={{ fontWeight: font.weightMedium, color: colors.text }}>{item.name}</span>
-                    );
-                  } else if (column.field === 'stage') {
-                    content = <StageSelect itemId={item.id} value={item.stage} />;
-                  } else if (column.field === 'ssylkaNaMakety') {
-                    content = <LinkCell itemId={item.id} value={item.ssylkaNaMakety} />;
-                  } else if (column.field === 'plenka') {
-                    content = (
-                      <RichTextPopover
-                        itemId={item.id}
-                        field="plenka.markdown"
-                        value={item.plenka?.markdown}
-                      />
-                    );
-                  } else if (column.field === 'kolichestvo') {
-                    content = (
-                      <NumberCell
-                        objectName="dealLineItem"
-                        recordId={item.id}
-                        fieldName="kolichestvo"
-                        value={item.kolichestvo}
-                      />
-                    );
-                  } else if (column.field === 'amount') {
-                    content = <Chip text={formatAmount(item)} color="gray" theme={theme} />;
-                  } else if (column.field === 'kommentariy') {
-                    content = (
-                      <RichTextPopover itemId={item.id} field="kommentariy" value={item.kommentariy} />
-                    );
-                  }
-
                   const width = getColumnWidth(column);
 
                   return (
@@ -156,7 +113,14 @@ export const LineItemsTable = ({
                         boxSizing: 'border-box',
                       }}
                     >
-                      {content}
+                      <DynamicFieldCell
+                        objectName="dealLineItem"
+                        recordId={item.id}
+                        field={column.field}
+                        descriptor={descriptorByField.get(column.field)}
+                        value={resolveFieldValue(item, column.field)}
+                        variant="child"
+                      />
                     </td>
                   );
                 })}

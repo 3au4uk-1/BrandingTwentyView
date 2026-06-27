@@ -40,6 +40,7 @@ export type OpportunityRow = {
   tonyLink?: { primaryLinkUrl?: string };
   bitrixLink?: { primaryLinkUrl?: string };
   oplata?: string | null;
+  [key: string]: unknown;
 };
 
 export type LineItemRow = {
@@ -52,4 +53,5 @@ export type LineItemRow = {
   stage?: LineItemStage | null;
   ssylkaNaMakety?: { primaryLinkUrl?: string; primaryLinkLabel?: string };
   plenka?: { markdown?: string };
+  [key: string]: unknown;
 };

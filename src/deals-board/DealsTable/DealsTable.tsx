@@ -1,14 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import {
-  DEFAULT_CHILD_COLUMNS,
-  DEFAULT_PARENT_COLUMNS,
-} from 'src/constants/column-definitions';
-
 import { fetchCompanyNames } from '../api/companies';
-import { useColumnResize } from '../hooks/useColumnResize';
-import { useContainerWidth } from '../hooks/useContainerWidth';
+import type { FieldDescriptor } from '../metadata/types';
+import { useColumnResize } from '../hooks/useColumnResize';import { useContainerWidth } from '../hooks/useContainerWidth';
 import { useDealExpandState } from '../hooks/useDealExpandState';
 import { useExpandMode } from '../hooks/useExpandMode';
 import { useTheme } from '../theme/ThemeContext';
@@ -22,6 +17,10 @@ import { ResizableColumnHeader } from './ResizableColumnHeader';
 
 type DealsTableProps = {
   activeView?: DealBoardViewRecord;
+  parentColumns: ColumnConfig[];
+  childColumns: ColumnConfig[];
+  parentDescriptorByField: Map<string, FieldDescriptor>;
+  childDescriptorByField: Map<string, FieldDescriptor>;
   records: OpportunityRow[];
   lineItems: LineItemRow[];
   totalCount: number;
@@ -38,6 +37,10 @@ type DealsTableProps = {
 
 export const DealsTable = ({
   activeView,
+  parentColumns: allParentColumns,
+  childColumns: allChildColumns,
+  parentDescriptorByField,
+  childDescriptorByField,
   records,
   lineItems,
   totalCount,
@@ -50,8 +53,7 @@ export const DealsTable = ({
   isLoading = false,
   isViewLoading = false,
   errorMessage,
-}: DealsTableProps) => {
-  const theme = useTheme();
+}: DealsTableProps) => {  const theme = useTheme();
   const { colors, font, spacing, zIndex } = theme;
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
   const { mode } = useExpandMode();
@@ -60,17 +62,8 @@ export const DealsTable = ({
   const [childUserSized, setChildUserSized] = useState(false);
   const containerWidth = useContainerWidth(scrollRef);
 
-  const allParentColumns = useMemo(
-    () => activeView?.parentColumns ?? DEFAULT_PARENT_COLUMNS,
-    [activeView?.parentColumns],
-  );
-  const allChildColumns = useMemo(
-    () => activeView?.childColumns ?? DEFAULT_CHILD_COLUMNS,
-    [activeView?.childColumns],
-  );
   const parentColumns = useMemo(() => visibleColumns(allParentColumns), [allParentColumns]);
   const childColumns = useMemo(() => visibleColumns(allChildColumns), [allChildColumns]);
-
   const parentStructureKey = useMemo(
     () => parentColumns.map((column) => `${column.field}:${column.visible}:${column.order}`).join('|'),
     [parentColumns],
@@ -305,6 +298,8 @@ export const DealsTable = ({
                 row={{ ...row, companyName: row.companyName ?? companyNameMap.get(row.companyId ?? '') }}
                 columns={layoutParentColumns}
                 childColumns={layoutChildColumns}
+                parentDescriptorByField={parentDescriptorByField}
+                childDescriptorByField={childDescriptorByField}
                 onChildColumnResizeStart={beginChildResize}
                 childUserSized={childUserSized}
                 lineItems={lineItemsByOpportunity.get(row.id) ?? []}

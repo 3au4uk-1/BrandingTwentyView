@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 import type { LineItemStage } from 'src/constants/stages';
 
+import { Chip } from '../Chip';
 import { LinkCell } from '../editors/LinkCell';
 import { RichTextPopover } from '../editors/RichTextPopover';
 import { StageSelect } from '../editors/StageSelect';
@@ -11,6 +12,8 @@ import { ChevronRightIcon } from '../ui/Icons';
 import type { LineItemRow } from '../types';
 
 import { DealSummaryChips } from '../DealsTable/DealSummaryChips';
+
+import { formatReadOnlyValue } from './format-read-only-value';
 
 export type FieldOverrideProps = {
   field: string;
@@ -151,6 +154,18 @@ const LinksCell = ({ tonyLink, bitrixLink }: FieldOverrideProps) => {
   );
 };
 
+const AmountChipCell = ({ value }: FieldOverrideProps) => {
+  const theme = useTheme();
+  const amountText = formatReadOnlyValue('CURRENCY', value);
+  return amountText === EMPTY_VALUE ? amountText : <Chip text={amountText} color="gray" theme={theme} />;
+};
+
+const OplataChipCell = ({ value }: FieldOverrideProps) => {
+  const theme = useTheme();
+  const oplataText = typeof value === 'string' ? value : EMPTY_VALUE;
+  return <Chip text={oplataText || EMPTY_VALUE} color={value ? 'green' : 'gray'} theme={theme} />;
+};
+
 export const renderFieldOverride = (props: FieldOverrideProps): ReactNode | null => {
   const { field, recordId, value, variant, lineItems, isExpanded, companyName } = props;
 
@@ -188,6 +203,10 @@ export const renderFieldOverride = (props: FieldOverrideProps): ReactNode | null
       return companyName ?? EMPTY_VALUE;
     case 'links':
       return <LinksCell {...props} />;
+    case 'amount':
+      return <AmountChipCell {...props} />;
+    case 'oplata':
+      return <OplataChipCell {...props} />;
     default:
       return null;
   }
