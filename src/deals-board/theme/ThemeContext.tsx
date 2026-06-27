@@ -1,6 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import { useColorScheme } from 'twenty-sdk/front-component';
 
+import { GlobalThemeStyles } from './GlobalThemeStyles';
 import { getTheme, type ColorScheme, type ThemeTokens } from './tokens';
 
 const ThemeContext = createContext<ThemeTokens | null>(null);
@@ -13,7 +14,12 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
   const colorScheme = useColorScheme() as ColorScheme;
   const theme = getTheme(colorScheme);
 
-  return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={theme}>
+      <GlobalThemeStyles theme={theme} />
+      {children}
+    </ThemeContext.Provider>
+  );
 };
 
 export const useTheme = (): ThemeTokens => {

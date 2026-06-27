@@ -60,7 +60,7 @@ export const Chip = ({ text, color = 'gray', theme }: ChipProps) => {
         alignItems: 'center',
         maxWidth: '100%',
         padding: '2px 8px',
-        borderRadius: theme?.radius.sm ?? '4px',
+        borderRadius: theme?.radius.pill ?? '999px',
         fontSize: theme?.font.sizeXs ?? '11px',
         fontWeight: theme?.font.weightMedium ?? 500,
         fontFamily: theme?.font.family ?? 'inherit',

@@ -58,6 +58,7 @@ export const Button = ({
   return (
     <button
       type="button"
+      data-btn-variant={variant}
       disabled={disabled}
       style={{
         display: 'inline-flex',

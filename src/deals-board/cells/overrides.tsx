@@ -48,28 +48,30 @@ const ParentNameCell = ({
       {canExpand ? (
         <button
           type="button"
+          data-expand-btn
           onClick={() => onToggleExpand?.(recordId)}
           style={{
             border: 'none',
             background: 'transparent',
-            padding: 0,
-            width: '20px',
-            minWidth: '20px',
-            height: '20px',
+            padding: '2px',
+            width: '22px',
+            minWidth: '22px',
+            height: '22px',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: colors.textMuted,
+            color: isExpanded ? colors.accentText : colors.textMuted,
             cursor: 'pointer',
             transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-            transition: 'transform 0.15s ease',
+            transition: 'transform 0.15s ease, color 0.12s ease, background-color 0.12s ease',
+            flexShrink: 0,
           }}
           aria-label={isExpanded ? 'Свернуть позиции' : 'Развернуть позиции'}
         >
-          <ChevronRightIcon size={14} color={colors.textSecondary} />
+          <ChevronRightIcon size={14} color="currentColor" />
         </button>
       ) : (
-        <span style={{ width: '20px', minWidth: '20px' }} />
+        <span style={{ width: '22px', minWidth: '22px' }} />
       )}
       <span
         style={{
@@ -128,19 +130,21 @@ const LinksCell = ({ row, opportunityLinkFields }: FieldOverrideProps) => {
           target="_blank"
           rel="noreferrer"
           title={button.title}
+          data-link-chip
           style={{
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: '24px',
-            height: '24px',
+            width: '26px',
+            height: '26px',
             borderRadius: theme.radius.sm,
             border: `1px solid ${colors.border}`,
-            backgroundColor: colors.bgElevated,
+            backgroundColor: colors.bgTertiary,
             color: colors.textSecondary,
             textDecoration: 'none',
             fontSize: font.sizeXs,
             fontWeight: font.weightSemibold,
+            transition: 'background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease',
           }}
         >
           {button.shortLabel}

@@ -33,14 +33,14 @@ export const LineItemsTable = ({
   const { colorScheme, colors, font, spacing } = theme;
   const tableStyle = getTableLayoutStyle(columns, sumColumnWidths(columns));
 
-  const getRowBackground = (stage: LineItemRow['stage']) =>
-    getChipPalette(getStageColor(stage ?? 'NOVYY') as ChipColor, colorScheme).bg;
+  const getStageAccent = (stage: LineItemRow['stage']) =>
+    getChipPalette(getStageColor(stage ?? 'NOVYY') as ChipColor, colorScheme).text;
 
   if (!items.length) {
     return (
       <div
         style={{
-          padding: `${spacing.sm} ${spacing.md}`,
+          padding: `${spacing.sm} ${spacing.md} ${spacing.sm} 40px`,
           fontSize: font.sizeSm,
           color: colors.textMuted,
         }}
@@ -51,8 +51,13 @@ export const LineItemsTable = ({
   }
 
   return (
-    <div style={{ padding: `${spacing.xs} ${spacing.md} ${spacing.sm} 36px` }}>
-      <div>
+    <div style={{ padding: `${spacing.xs} ${spacing.md} ${spacing.sm} 28px` }}>
+      <div
+        style={{
+          borderLeft: `2px solid ${colors.borderStrong}`,
+          paddingLeft: spacing.md,
+        }}
+      >
         <table
           style={{
             ...tableStyle,
@@ -61,6 +66,7 @@ export const LineItemsTable = ({
             backgroundColor: colors.bgElevated,
             border: `1px solid ${colors.borderSubtle}`,
             borderRadius: theme.radius.md,
+            overflow: 'hidden',
           }}
         >
           <colgroup>
@@ -69,7 +75,7 @@ export const LineItemsTable = ({
             ))}
           </colgroup>
           <thead>
-            <tr style={{ borderBottom: `1px solid ${colors.borderSubtle}` }}>
+            <tr style={{ borderBottom: `1px solid ${colors.borderSubtle}`, backgroundColor: colors.bgTertiary }}>
               {columns.map((column) => (
                 <ResizableColumnHeader
                   key={column.field}
@@ -84,51 +90,52 @@ export const LineItemsTable = ({
           </thead>
           <tbody>
             {items.map((item, rowIndex) => {
-              const rowBackground = getRowBackground(item.stage);
+              const stageAccent = getStageAccent(item.stage);
 
               return (
-              <tr
-                key={item.id}
-                style={{
-                  borderBottom:
-                    rowIndex < items.length - 1 ? `1px solid ${colors.borderSubtle}` : 'none',
-                  backgroundColor: rowBackground,
-                  transition: 'background-color 0.12s ease',
-                }}
-              >
-                {columns.map((column) => {
-                  const width = getColumnWidth(column);
+                <tr
+                  key={item.id}
+                  style={{
+                    borderBottom:
+                      rowIndex < items.length - 1 ? `1px solid ${colors.borderSubtle}` : 'none',
+                    backgroundColor: colors.bgElevated,
+                    transition: 'background-color 0.12s ease',
+                    boxShadow: `inset 3px 0 0 ${stageAccent}`,
+                  }}
+                >
+                  {columns.map((column) => {
+                    const width = getColumnWidth(column);
 
-                  return (
-                    <td
-                      key={column.field}
-                      style={{
-                        width: `${width}px`,
-                        maxWidth: `${width}px`,
-                        minWidth: `${width}px`,
-                        padding: '8px 10px',
-                        fontSize: font.sizeSm,
-                        color: colors.textSecondary,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        verticalAlign: 'middle',
-                        boxSizing: 'border-box',
-                        position: 'relative',
-                      }}
-                    >
-                      <DynamicFieldCell
-                        objectName="dealLineItem"
-                        recordId={item.id}
-                        field={column.field}
-                        descriptor={descriptorByField.get(column.field)}
-                        value={resolveFieldValue(item, column.field)}
-                        variant="child"
-                      />
-                    </td>
-                  );
-                })}
-              </tr>
+                    return (
+                      <td
+                        key={column.field}
+                        style={{
+                          width: `${width}px`,
+                          maxWidth: `${width}px`,
+                          minWidth: `${width}px`,
+                          padding: '6px 10px',
+                          fontSize: font.sizeSm,
+                          color: colors.textSecondary,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          verticalAlign: 'middle',
+                          boxSizing: 'border-box',
+                          position: 'relative',
+                        }}
+                      >
+                        <DynamicFieldCell
+                          objectName="dealLineItem"
+                          recordId={item.id}
+                          field={column.field}
+                          descriptor={descriptorByField.get(column.field)}
+                          value={resolveFieldValue(item, column.field)}
+                          variant="child"
+                        />
+                      </td>
+                    );
+                  })}
+                </tr>
               );
             })}
           </tbody>

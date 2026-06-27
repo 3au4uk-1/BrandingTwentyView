@@ -48,7 +48,7 @@ const DEFAULT_QUICK_FILTERS: QuickFiltersValue = {
 
 const DealsBoardContent = () => {
   const theme = useTheme();
-  const { colors, font, spacing } = theme;
+  const { colors, font, spacing, radius, layout } = theme;
   const rootRef = useRef<HTMLDivElement | null>(null);
   const viewsQuery = useDealBoardViews();
   const updateViewMutation = useUpdateDealBoardView();
@@ -251,6 +251,7 @@ const DealsBoardContent = () => {
       <div
         ref={rootRef}
         id={DEALS_BOARD_ROOT_ID}
+        data-deals-board
         style={{
         position: 'relative',
         height: '100%',
@@ -274,9 +275,10 @@ const DealsBoardContent = () => {
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: spacing.sm,
+            gap: spacing.md,
             padding: `${spacing.sm} ${spacing.md}`,
-            borderBottom: `1px solid ${colors.borderSubtle}`,
+            minHeight: layout.toolbarHeight,
+            flexWrap: 'wrap',
           }}
         >
           <ViewSwitcher
@@ -284,6 +286,16 @@ const DealsBoardContent = () => {
             activeViewId={activeView?.id}
             onSelectView={setActiveViewId}
             onCreateView={() => setIsCreateModalOpen(true)}
+          />
+
+          <div
+            style={{
+              width: '1px',
+              alignSelf: 'stretch',
+              backgroundColor: colors.borderSubtle,
+              flexShrink: 0,
+              minHeight: '28px',
+            }}
           />
 
           <QuickFiltersBar
@@ -301,19 +313,56 @@ const DealsBoardContent = () => {
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: spacing.md,
-            padding: `${spacing.xs} ${spacing.md}`,
-            minHeight: '36px',
+            padding: `6px ${spacing.md}`,
+            borderTop: `1px solid ${colors.borderSubtle}`,
+            minHeight: '32px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: spacing.sm, minWidth: 0 }}>
-            <span style={{ fontSize: font.sizeMd, fontWeight: font.weightSemibold, color: colors.text }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, minWidth: 0 }}>
+            <span
+              style={{
+                fontSize: font.sizeSm,
+                fontWeight: font.weightSemibold,
+                color: colors.text,
+                whiteSpace: 'nowrap',
+              }}
+            >
               {APP_DISPLAY_NAME}
             </span>
             {activeView ? (
-              <span style={{ fontSize: font.sizeSm, color: colors.textMuted, whiteSpace: 'nowrap' }}>
-                {activeView.name}
-                {!opportunitiesQuery.isLoading ? ` · ${visibleTotalCount} сделок` : ''}
-              </span>
+              <>
+                <span style={{ color: colors.textMuted, fontSize: font.sizeXs }}>/</span>
+                <span
+                  style={{
+                    fontSize: font.sizeSm,
+                    color: colors.textSecondary,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {activeView.name}
+                </span>
+                {!opportunitiesQuery.isLoading ? (
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      padding: '1px 7px',
+                      borderRadius: radius.pill,
+                      fontSize: font.sizeXs,
+                      fontWeight: font.weightMedium,
+                      fontFamily: font.mono,
+                      color: colors.textMuted,
+                      backgroundColor: colors.bgTertiary,
+                      border: `1px solid ${colors.borderSubtle}`,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {visibleTotalCount}
+                  </span>
+                ) : null}
+              </>
             ) : null}
           </div>
 

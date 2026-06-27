@@ -53,7 +53,7 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
 
   const segmentStyle = (isActive: boolean) => ({
     border: 'none',
-    padding: '6px 10px',
+    padding: '5px 9px',
     fontSize: font.sizeSm,
     fontFamily: font.family,
     fontWeight: isActive ? font.weightMedium : font.weightNormal,
@@ -61,6 +61,7 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
     color: isActive ? colors.accentText : colors.textSecondary,
     cursor: 'pointer' as const,
     whiteSpace: 'nowrap' as const,
+    transition: 'background-color 0.12s ease, color 0.12s ease',
   });
 
   return (
@@ -89,6 +90,8 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
             <button
               key={preset}
               type="button"
+              data-segment-btn
+              data-active={isActive ? 'true' : 'false'}
               onClick={() => {
                 const range = getPresetRange(preset);
                 onChange({
@@ -111,6 +114,8 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
 
       <button
         type="button"
+        data-segment-btn
+        data-active={value.datePreset === 'custom' ? 'true' : 'false'}
         onClick={() =>
           onChange({
             ...value,
@@ -130,27 +135,30 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
       </button>
 
       {value.datePreset === 'custom' ? (
-        <>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: spacing.xs }}>
           <Input
             theme={theme}
             type="date"
             value={value.dateFrom ?? ''}
             onChange={(event) => onChange({ ...value, dateFrom: event.target.value || undefined })}
-            style={{ width: 'auto', padding: '6px 10px' }}
+            style={{ width: 'auto', padding: '5px 8px', fontSize: font.sizeSm }}
           />
+          <span style={{ color: colors.textMuted, fontSize: font.sizeXs }}>-</span>
           <Input
             theme={theme}
             type="date"
             value={value.dateTo ?? ''}
             onChange={(event) => onChange({ ...value, dateTo: event.target.value || undefined })}
-            style={{ width: 'auto', padding: '6px 10px' }}
+            style={{ width: 'auto', padding: '5px 8px', fontSize: font.sizeSm }}
           />
-        </>
+        </div>
       ) : null}
 
       <div style={{ position: 'relative' }}>
         <button
           type="button"
+          data-segment-btn
+          data-active={selectedStages.length > 0 ? 'true' : 'false'}
           onClick={() => setIsStageFilterOpen((prev) => !prev)}
           style={{
             ...segmentStyle(selectedStages.length > 0),
@@ -160,7 +168,7 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
             color: selectedStages.length ? colors.accentText : colors.textSecondary,
           }}
         >
-          Стадии{selectedStages.length ? `: ${selectedStages.length}` : ''}
+          Стадии{selectedStages.length ? ` · ${selectedStages.length}` : ''}
         </button>
 
         {isStageFilterOpen ? (
@@ -170,7 +178,7 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
               top: 'calc(100% + 6px)',
               left: 0,
               zIndex: zIndex.dropdown,
-              minWidth: '200px',
+              minWidth: '220px',
               border: `1px solid ${colors.border}`,
               borderRadius: radius.lg,
               backgroundColor: colors.bgElevated,
@@ -193,7 +201,7 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
                     fontSize: font.sizeSm,
                     color: colors.text,
                     cursor: 'pointer',
-                    padding: '4px 6px',
+                    padding: '5px 8px',
                     borderRadius: radius.sm,
                     backgroundColor: checked ? colors.accentMuted : 'transparent',
                   }}
@@ -216,8 +224,8 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
         type="search"
         value={value.search}
         onChange={(event) => onChange({ ...value, search: event.target.value })}
-        placeholder="Поиск сделки..."
-        style={{ minWidth: '160px', flex: '1 1 200px', padding: '6px 10px' }}
+        placeholder="Поиск сделок..."
+        style={{ minWidth: '140px', flex: '1 1 180px', maxWidth: '240px', padding: '5px 10px' }}
       />
 
       <Button theme={theme} variant="ghost" size="sm" onClick={onReset}>

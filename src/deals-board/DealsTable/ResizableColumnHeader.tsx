@@ -62,20 +62,20 @@ export const ResizableColumnHeader = ({
       ref={headerRef}
       style={{
         position: 'relative',
-        padding: compact ? '8px 10px' : '10px 12px',
+        padding: compact ? '7px 10px' : '8px 12px',
         textAlign: 'left',
         fontSize: font.sizeXs,
         fontWeight: font.weightSemibold,
         color: colors.textMuted,
-        textTransform: compact ? 'none' : 'uppercase',
-        letterSpacing: compact ? 'normal' : '0.04em',
+        textTransform: 'none',
+        letterSpacing: '0.02em',
         width: `${width}px`,
         maxWidth: `${width}px`,
         minWidth: `${width}px`,
         whiteSpace: 'nowrap',
         userSelect: 'none',
         boxSizing: 'border-box',
-        ...(compact ? { backgroundColor: colors.bgTertiary } : {}),
+        ...(compact ? { backgroundColor: colors.bgTertiary } : { backgroundColor: colors.bgSecondary }),
         ...stickyStyle,
       }}
     >

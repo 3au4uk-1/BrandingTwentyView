@@ -292,6 +292,7 @@ export const DealsTable = ({
               style={{
                 borderBottom: `1px solid ${colors.border}`,
                 backgroundColor: colors.bgSecondary,
+                boxShadow: `0 1px 0 ${colors.borderSubtle}`,
               }}
             >
               {layoutParentColumns.map((column) => (
@@ -345,14 +346,14 @@ export const DealsTable = ({
           justifyContent: 'space-between',
           padding: `${spacing.sm} ${spacing.md}`,
           fontSize: font.sizeSm,
-          color: colors.textSecondary,
+          color: colors.textMuted,
           backgroundColor: colors.bgSecondary,
           borderTop: `1px solid ${colors.border}`,
           flexShrink: 0,
         }}
       >
-        <span>
-          Страница {page + 1} из {totalPages} · Всего: {totalCount}
+        <span style={{ fontFamily: theme.font.mono }}>
+          Страница {page + 1} / {totalPages} · Всего {totalCount}
         </span>
 
         <div style={{ display: 'flex', gap: spacing.sm }}>

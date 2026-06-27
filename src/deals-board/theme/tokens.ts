@@ -10,6 +10,7 @@ export type ThemeTokens = {
     bgHover: string;
     bgActive: string;
     bgInset: string;
+    bgNested: string;
     border: string;
     borderSubtle: string;
     borderStrong: string;
@@ -30,6 +31,7 @@ export type ThemeTokens = {
     shadow: string;
     shadowLg: string;
     stickyShadow: string;
+    rowExpandedAccent: string;
   };
   radius: {
     sm: string;
@@ -46,6 +48,7 @@ export type ThemeTokens = {
   };
   font: {
     family: string;
+    mono: string;
     sizeXs: string;
     sizeSm: string;
     sizeMd: string;
@@ -72,38 +75,41 @@ export const getTheme = (colorScheme: ColorScheme): ThemeTokens => {
     return {
       colorScheme,
       colors: {
-        bg: '#141414',
-        bgSecondary: '#1a1a1a',
-        bgTertiary: '#222222',
-        bgElevated: '#262626',
-        bgHover: '#2a2a2a',
-        bgActive: '#2f3544',
-        bgInset: '#181818',
-        border: '#333333',
-        borderSubtle: '#2a2a2a',
-        borderStrong: '#444444',
-        text: '#f4f4f5',
-        textSecondary: '#d4d4d8',
-        textMuted: '#a1a1aa',
-        textInverse: '#18181b',
-        accent: '#3b82f6',
-        accentHover: '#2563eb',
-        accentMuted: 'rgba(59, 130, 246, 0.18)',
-        accentText: '#93c5fd',
-        success: '#22c55e',
-        successMuted: 'rgba(34, 197, 94, 0.16)',
-        warning: '#f59e0b',
-        warningMuted: 'rgba(245, 158, 11, 0.16)',
-        danger: '#ef4444',
-        dangerMuted: 'rgba(239, 68, 68, 0.16)',
-        shadow: '0 1px 2px rgba(0, 0, 0, 0.35)',
-        shadowLg: '0 12px 32px rgba(0, 0, 0, 0.55)',
-        stickyShadow: '4px 0 8px rgba(0, 0, 0, 0.35)',
+        bg: '#0c0c0e',
+        bgSecondary: '#141416',
+        bgTertiary: '#1a1a1e',
+        bgElevated: '#1e1e22',
+        bgHover: '#232328',
+        bgActive: '#2a2a32',
+        bgInset: '#111114',
+        bgNested: '#16161a',
+        border: '#2e2e34',
+        borderSubtle: '#242428',
+        borderStrong: '#3a3a42',
+        text: '#ececee',
+        textSecondary: '#b4b4bc',
+        textMuted: '#7a7a86',
+        textInverse: '#0c0c0e',
+        accent: '#6b9fff',
+        accentHover: '#5289f0',
+        accentMuted: 'rgba(107, 159, 255, 0.14)',
+        accentText: '#9ec0ff',
+        success: '#4ade80',
+        successMuted: 'rgba(74, 222, 128, 0.12)',
+        warning: '#fbbf24',
+        warningMuted: 'rgba(251, 191, 36, 0.12)',
+        danger: '#f87171',
+        dangerMuted: 'rgba(248, 113, 113, 0.12)',
+        shadow: '0 1px 2px rgba(0, 0, 0, 0.45)',
+        shadowLg: '0 16px 40px rgba(0, 0, 0, 0.55)',
+        stickyShadow: '6px 0 12px rgba(0, 0, 0, 0.35)',
+        rowExpandedAccent: '#6b9fff',
       },
-      radius: { sm: '4px', md: '8px', lg: '12px', pill: '999px' },
+      radius: { sm: '5px', md: '8px', lg: '10px', pill: '999px' },
       spacing: { xs: '4px', sm: '8px', md: '12px', lg: '16px', xl: '24px' },
       font: {
         family: 'inherit',
+        mono: 'ui-monospace, "SF Mono", "Cascadia Code", monospace',
         sizeXs: '11px',
         sizeSm: '12px',
         sizeMd: '13px',
@@ -113,7 +119,7 @@ export const getTheme = (colorScheme: ColorScheme): ThemeTokens => {
         weightSemibold: 600,
         weightBold: 700,
       },
-      layout: { toolbarHeight: '48px', rowHeight: '40px', childRowHeight: '36px' },
+      layout: { toolbarHeight: '44px', rowHeight: '38px', childRowHeight: '34px' },
       zIndex: { sticky: 4, dropdown: 30, modal: 40 },
     };
   }
@@ -122,37 +128,40 @@ export const getTheme = (colorScheme: ColorScheme): ThemeTokens => {
     colorScheme,
     colors: {
       bg: '#ffffff',
-      bgSecondary: '#fafafa',
-      bgTertiary: '#f4f4f5',
+      bgSecondary: '#f8f8f9',
+      bgTertiary: '#f0f0f2',
       bgElevated: '#ffffff',
-      bgHover: '#f4f4f5',
-      bgActive: '#eff6ff',
+      bgHover: '#f4f4f6',
+      bgActive: '#eef2ff',
       bgInset: '#fafafa',
-      border: '#e4e4e7',
-      borderSubtle: '#f0f0f2',
-      borderStrong: '#d4d4d8',
-      text: '#18181b',
-      textSecondary: '#3f3f46',
-      textMuted: '#71717a',
+      bgNested: '#f6f6f8',
+      border: '#e2e2e8',
+      borderSubtle: '#ececf0',
+      borderStrong: '#cacad4',
+      text: '#141418',
+      textSecondary: '#44444c',
+      textMuted: '#71717e',
       textInverse: '#fafafa',
-      accent: '#2563eb',
-      accentHover: '#1d4ed8',
-      accentMuted: 'rgba(37, 99, 235, 0.1)',
-      accentText: '#2563eb',
-      success: '#16a34a',
-      successMuted: 'rgba(22, 163, 74, 0.1)',
-      warning: '#d97706',
-      warningMuted: 'rgba(217, 119, 6, 0.1)',
+      accent: '#3b6fd9',
+      accentHover: '#2f5fc4',
+      accentMuted: 'rgba(59, 111, 217, 0.1)',
+      accentText: '#2f5fc4',
+      success: '#15803d',
+      successMuted: 'rgba(21, 128, 61, 0.08)',
+      warning: '#b45309',
+      warningMuted: 'rgba(180, 83, 9, 0.08)',
       danger: '#dc2626',
-      dangerMuted: 'rgba(220, 38, 38, 0.1)',
-      shadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
-      shadowLg: '0 12px 32px rgba(0, 0, 0, 0.12)',
-      stickyShadow: '4px 0 8px rgba(0, 0, 0, 0.06)',
+      dangerMuted: 'rgba(220, 38, 38, 0.08)',
+      shadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
+      shadowLg: '0 16px 40px rgba(0, 0, 0, 0.1)',
+      stickyShadow: '6px 0 12px rgba(0, 0, 0, 0.05)',
+      rowExpandedAccent: '#3b6fd9',
     },
-    radius: { sm: '4px', md: '8px', lg: '12px', pill: '999px' },
+    radius: { sm: '5px', md: '8px', lg: '10px', pill: '999px' },
     spacing: { xs: '4px', sm: '8px', md: '12px', lg: '16px', xl: '24px' },
     font: {
       family: 'inherit',
+      mono: 'ui-monospace, "SF Mono", "Cascadia Code", monospace',
       sizeXs: '11px',
       sizeSm: '12px',
       sizeMd: '13px',
@@ -162,7 +171,7 @@ export const getTheme = (colorScheme: ColorScheme): ThemeTokens => {
       weightSemibold: 600,
       weightBold: 700,
     },
-    layout: { toolbarHeight: '48px', rowHeight: '40px', childRowHeight: '36px' },
+    layout: { toolbarHeight: '44px', rowHeight: '38px', childRowHeight: '34px' },
     zIndex: { sticky: 4, dropdown: 30, modal: 40 },
   };
 };

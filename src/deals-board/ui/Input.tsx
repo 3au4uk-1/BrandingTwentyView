@@ -25,8 +25,10 @@ const baseFieldStyle = (theme: ThemeTokens) => ({
 
 export const Input = ({ theme, style, ...props }: InputProps) => (
   <input
+    data-field-input
     style={{
       ...baseFieldStyle(theme),
+      transition: 'border-color 0.12s ease, box-shadow 0.12s ease',
       ...style,
     }}
     {...props}
@@ -52,9 +54,11 @@ export const Select = ({
   ...props
 }: InputHTMLAttributes<HTMLSelectElement> & { theme: ThemeTokens; children: React.ReactNode }) => (
   <select
+    data-field-input
     style={{
       ...baseFieldStyle(theme),
       cursor: 'pointer',
+      transition: 'border-color 0.12s ease, box-shadow 0.12s ease',
       ...style,
     }}
     {...props}
