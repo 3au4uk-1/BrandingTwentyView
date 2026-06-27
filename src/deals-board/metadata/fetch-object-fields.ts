@@ -1,44 +1,52 @@
-import { MetadataApiClient, MetadataSchema } from 'twenty-client-sdk/metadata';
-
 import { filterActiveCrmFields, toFieldDescriptor } from './field-registry';
+import { queryMetadataGraphql } from './metadata-graphql-fetch';
 import type { BoardObjectName, FieldDescriptor, RawFieldMetadata } from './types';
 
-let metadataClient: MetadataApiClient | null = null;
+const FETCH_OBJECT_FIELDS_QUERY = `
+  query FetchObjectFields($filter: ObjectFilter, $paging: CursorPaging) {
+    objects(filter: $filter, paging: $paging) {
+      edges {
+        node {
+          nameSingular
+          fieldsList {
+            name
+            label
+            type
+            isActive
+            isSystem
+            isUIReadOnly
+            options
+          }
+        }
+      }
+    }
+  }
+`;
 
-const getMetadataClient = (): MetadataApiClient => {
-  if (!metadataClient) metadataClient = new MetadataApiClient();
-  return metadataClient;
+type FetchObjectFieldsResult = {
+  objects?: {
+    edges?: Array<{
+      node?: {
+        nameSingular?: string;
+        fieldsList?: RawFieldMetadata[];
+      };
+    }>;
+  };
 };
 
 export const fetchObjectFields = async (
   objectNameSingular: BoardObjectName,
 ): Promise<RawFieldMetadata[]> => {
-  const client = getMetadataClient();
-  const result = await client.query({
-    objects: {
-      __args: {
-        filter: { nameSingular: { eq: objectNameSingular } } as MetadataSchema.ObjectFilter,
-        paging: { first: 1 },
-      },
-      edges: {
-        node: {
-          nameSingular: true,
-          fieldsList: {
-            name: true,
-            label: true,
-            type: true,
-            isActive: true,
-            isSystem: true,
-            isUIReadOnly: true,
-            options: true,
-          },
-        },
-      },
+  const result = await queryMetadataGraphql<FetchObjectFieldsResult>(
+    FETCH_OBJECT_FIELDS_QUERY,
+    {
+      filter: { nameSingular: { eq: objectNameSingular } },
+      paging: { first: 1 },
     },
-  });
+  );
 
   const fieldsList = result.objects?.edges?.[0]?.node?.fieldsList ?? [];
-  return filterActiveCrmFields(fieldsList as RawFieldMetadata[]);
+  return filterActiveCrmFields(fieldsList);
 };
 
 export const fetchFieldDescriptors = async (
