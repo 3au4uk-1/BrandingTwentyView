@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ColumnConfig } from '../types';
-import { parseColumns, visibleColumns, sumColumnWidths } from './columns';
+import { parseColumns, visibleColumns, sumColumnWidths, layoutColumnsForContainer } from './columns';
 
 const fallback: ColumnConfig[] = [
   { field: 'name', label: 'Name', order: 0, visible: true },
@@ -57,5 +57,19 @@ describe('sumColumnWidths', () => {
       { field: 'stage', label: 'Stage', order: 1, visible: true },
     ];
     expect(sumColumnWidths(columns)).toBe(320);
+  });
+});
+
+describe('layoutColumnsForContainer', () => {
+  it('expands the fill column to occupy remaining container width', () => {
+    const columns: ColumnConfig[] = [
+      { field: 'name', label: 'Name', order: 0, visible: true, width: 200 },
+      { field: 'stage', label: 'Stage', order: 1, visible: true, width: 100 },
+    ];
+
+    expect(layoutColumnsForContainer(columns, 500, 'name')).toEqual([
+      { field: 'name', label: 'Name', order: 0, visible: true, width: 400 },
+      { field: 'stage', label: 'Stage', order: 1, visible: true, width: 100 },
+    ]);
   });
 });

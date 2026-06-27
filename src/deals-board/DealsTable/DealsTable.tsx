@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   DEFAULT_CHILD_COLUMNS,
@@ -7,6 +7,8 @@ import {
 } from 'src/constants/column-definitions';
 
 import { fetchCompanyNames } from '../api/companies';
+import { useColumnResize } from '../hooks/useColumnResize';
+import { useContainerWidth } from '../hooks/useContainerWidth';
 import { useDealExpandState } from '../hooks/useDealExpandState';
 import { useExpandMode } from '../hooks/useExpandMode';
 import { useTheme } from '../theme/ThemeContext';
@@ -14,8 +16,7 @@ import { Button } from '../ui/Button';
 import { EmptyState } from '../ui/EmptyState';
 import { Spinner } from '../ui/Spinner';
 import type { ColumnConfig, DealBoardViewRecord, LineItemRow, OpportunityRow } from '../types';
-import { visibleColumns, sumColumnWidths } from '../utils/columns';
-import { useColumnResize } from '../hooks/useColumnResize';
+import { getTableLayoutStyle, layoutColumnsForContainer, visibleColumns } from '../utils/columns';
 import { DealRow } from './DealRow';
 import { ResizableColumnHeader } from './ResizableColumnHeader';
 
@@ -55,6 +56,9 @@ export const DealsTable = ({
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
   const { mode } = useExpandMode();
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [parentUserSized, setParentUserSized] = useState(false);
+  const [childUserSized, setChildUserSized] = useState(false);
+  const containerWidth = useContainerWidth(scrollRef);
 
   const allParentColumns = useMemo(
     () => activeView?.parentColumns ?? DEFAULT_PARENT_COLUMNS,
@@ -66,6 +70,23 @@ export const DealsTable = ({
   );
   const parentColumns = useMemo(() => visibleColumns(allParentColumns), [allParentColumns]);
   const childColumns = useMemo(() => visibleColumns(allChildColumns), [allChildColumns]);
+
+  const parentColumnsKey = useMemo(
+    () => parentColumns.map((column) => `${column.field}:${column.visible}:${column.width ?? ''}`).join('|'),
+    [parentColumns],
+  );
+  const childColumnsKey = useMemo(
+    () => childColumns.map((column) => `${column.field}:${column.visible}:${column.width ?? ''}`).join('|'),
+    [childColumns],
+  );
+
+  useEffect(() => {
+    setParentUserSized(false);
+  }, [activeView?.id, parentColumnsKey]);
+
+  useEffect(() => {
+    setChildUserSized(false);
+  }, [activeView?.id, childColumnsKey]);
 
   const mergeColumnWidths = useCallback(
     (allColumns: ColumnConfig[], resizedVisibleColumns: ColumnConfig[]) => {
@@ -96,13 +117,29 @@ export const DealsTable = ({
   const { displayColumns: displayParentColumns, beginResize: beginParentResize } = useColumnResize(
     parentColumns,
     handleParentColumnsSave,
+    () => {
+      setParentUserSized(true);
+    },
   );
   const { displayColumns: displayChildColumns, beginResize: beginChildResize } = useColumnResize(
     childColumns,
     handleChildColumnsSave,
+    () => {
+      setChildUserSized(true);
+    },
   );
 
-  const parentTableWidth = sumColumnWidths(displayParentColumns);
+  const layoutParentColumns = useMemo(() => {
+    if (parentUserSized) return displayParentColumns;
+    return layoutColumnsForContainer(displayParentColumns, containerWidth, 'name');
+  }, [containerWidth, displayParentColumns, parentUserSized]);
+
+  const layoutChildColumns = useMemo(() => {
+    if (childUserSized) return displayChildColumns;
+    return layoutColumnsForContainer(displayChildColumns, containerWidth, 'name');
+  }, [containerWidth, displayChildColumns, childUserSized]);
+
+  const parentTableStyle = getTableLayoutStyle(layoutParentColumns, containerWidth);
 
   const companyIds = useMemo(
     () =>
@@ -192,18 +229,18 @@ export const DealsTable = ({
       >
         <table
           style={{
-            width: `${parentTableWidth}px`,
+            ...parentTableStyle,
             borderCollapse: 'collapse',
             tableLayout: 'fixed',
             backgroundColor: colors.bg,
           }}
         >
           <colgroup>
-            {displayParentColumns.map((column) => (
+            {layoutParentColumns.map((column) => (
               <col
                 key={column.field}
                 style={{
-                  width: column.width ? `${column.width}px` : 'auto',
+                  width: `${column.width}px`,
                 }}
               />
             ))}
@@ -215,7 +252,7 @@ export const DealsTable = ({
                 backgroundColor: colors.bgSecondary,
               }}
             >
-              {displayParentColumns.map((column) => (
+              {layoutParentColumns.map((column) => (
                 <ResizableColumnHeader
                   key={column.field}
                   column={column}
@@ -242,9 +279,10 @@ export const DealsTable = ({
               <DealRow
                 key={row.id}
                 row={{ ...row, companyName: row.companyName ?? companyNameMap.get(row.companyId ?? '') }}
-                columns={displayParentColumns}
-                childColumns={displayChildColumns}
+                columns={layoutParentColumns}
+                childColumns={layoutChildColumns}
                 onChildColumnResizeStart={beginChildResize}
+                childUserSized={childUserSized}
                 lineItems={lineItemsByOpportunity.get(row.id) ?? []}
                 isExpanded={isExpanded(row.id)}
                 isHovered={hoveredRowId === row.id}

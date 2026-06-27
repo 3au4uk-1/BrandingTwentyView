@@ -1,19 +1,30 @@
-import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { DEFAULT_COLUMN_WIDTH, getColumnWidth } from '../utils/columns';
 import type { ColumnConfig } from '../types';
 
 const MIN_COLUMN_WIDTH = 60;
 
+export type ColumnResizeStartEvent = {
+  clientX: number;
+  currentTarget: HTMLDivElement;
+  preventDefault: () => void;
+  stopPropagation: () => void;
+};
+
 export const useColumnResize = (
   columns: ColumnConfig[],
   onSave: (columns: ColumnConfig[]) => void,
+  onUserResize?: () => void,
 ) => {
   const [displayColumns, setDisplayColumns] = useState(columns);
   const isDraggingRef = useRef(false);
   const latestColumnsRef = useRef(columns);
   const onSaveRef = useRef(onSave);
+  const onUserResizeRef = useRef(onUserResize);
 
   onSaveRef.current = onSave;
+  onUserResizeRef.current = onUserResize;
 
   useEffect(() => {
     latestColumnsRef.current = displayColumns;
@@ -26,14 +37,27 @@ export const useColumnResize = (
   }, [columns]);
 
   const beginResize = useCallback(
-    (event: ReactMouseEvent<HTMLDivElement>, field: string, startWidth: number) => {
+    (event: ColumnResizeStartEvent, field: string, startWidth: number) => {
       event.preventDefault();
       event.stopPropagation();
 
+      const headerCell = event.currentTarget.closest('th');
+      const measuredWidth = headerCell?.getBoundingClientRect().width ?? startWidth;
+      const doc = event.currentTarget.ownerDocument;
+      const win = doc.defaultView ?? window;
+
       isDraggingRef.current = true;
-      const dragState = { field, startX: event.clientX, startWidth: startWidth || 120 };
+      onUserResizeRef.current?.();
+
+      const dragState = {
+        field,
+        startX: event.clientX,
+        startWidth: Math.max(MIN_COLUMN_WIDTH, measuredWidth || startWidth || DEFAULT_COLUMN_WIDTH),
+      };
 
       const onMouseMove = (moveEvent: MouseEvent) => {
+        moveEvent.preventDefault();
+
         const nextWidth = Math.max(
           MIN_COLUMN_WIDTH,
           dragState.startWidth + (moveEvent.clientX - dragState.startX),
@@ -48,19 +72,19 @@ export const useColumnResize = (
         });
       };
 
-      const onMouseUp = () => {
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
+      const finishResize = () => {
+        win.removeEventListener('mousemove', onMouseMove, true);
+        win.removeEventListener('mouseup', finishResize, true);
+        doc.body.style.cursor = '';
+        doc.body.style.userSelect = '';
         isDraggingRef.current = false;
         onSaveRef.current(latestColumnsRef.current);
       };
 
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
+      doc.body.style.cursor = 'col-resize';
+      doc.body.style.userSelect = 'none';
+      win.addEventListener('mousemove', onMouseMove, true);
+      win.addEventListener('mouseup', finishResize, true);
     },
     [],
   );
