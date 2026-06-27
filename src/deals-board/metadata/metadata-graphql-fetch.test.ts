@@ -1,61 +1,52 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { getMetadataApiConfig, queryMetadataGraphql } from './metadata-graphql-fetch';
+vi.mock('twenty-client-sdk/rest', () => ({
+  RestApiClient: vi.fn(),
+}));
 
-describe('getMetadataApiConfig', () => {
-  afterEach(() => {
-    delete process.env.TWENTY_API_URL;
-    delete process.env.TWENTY_APP_ACCESS_TOKEN;
-    delete process.env.TWENTY_API_KEY;
-  });
+import { RestApiClient } from 'twenty-client-sdk/rest';
 
-  it('prefers TWENTY_APP_ACCESS_TOKEN over TWENTY_API_KEY', () => {
-    process.env.TWENTY_API_URL = 'https://crm.example.com/';
-    process.env.TWENTY_APP_ACCESS_TOKEN = 'app-token';
-    process.env.TWENTY_API_KEY = 'api-key';
-
-    expect(getMetadataApiConfig()).toEqual({
-      apiUrl: 'https://crm.example.com',
-      accessToken: 'app-token',
-    });
-  });
-
-  it('throws when credentials are missing', () => {
-    process.env.TWENTY_API_URL = 'https://crm.example.com';
-    expect(() => getMetadataApiConfig()).toThrow(/TWENTY_APP_ACCESS_TOKEN/);
-  });
-});
+import { queryMetadataGraphql } from './metadata-graphql-fetch';
 
 describe('queryMetadataGraphql', () => {
   afterEach(() => {
-    vi.unstubAllGlobals();
-    delete process.env.TWENTY_API_URL;
-    delete process.env.TWENTY_APP_ACCESS_TOKEN;
+    vi.clearAllMocks();
   });
 
-  it('posts to /metadata with bearer token', async () => {
-    process.env.TWENTY_API_URL = 'https://crm.example.com';
-    process.env.TWENTY_APP_ACCESS_TOKEN = 'app-token';
-
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: { objects: { edges: [] } } }),
+  it('posts GraphQL query via RestApiClient to /metadata', async () => {
+    const post = vi.fn().mockResolvedValue({
+      data: { objects: { edges: [] } },
     });
-    vi.stubGlobal('fetch', fetchMock);
+    vi.mocked(RestApiClient).mockImplementation(
+      () =>
+        ({
+          post,
+        }) as unknown as RestApiClient,
+    );
 
     await queryMetadataGraphql('query { objects { edges { node { id } } } }', {
-      filter: {},
+      paging: { first: 1 },
     });
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      'https://crm.example.com/metadata',
-      expect.objectContaining({
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer app-token',
-        },
-      }),
+    expect(post).toHaveBeenCalledWith('/metadata', {
+      query: 'query { objects { edges { node { id } } } }',
+      variables: { paging: { first: 1 } },
+    });
+  });
+
+  it('throws when GraphQL returns errors', async () => {
+    const post = vi.fn().mockResolvedValue({
+      errors: [{ message: 'Forbidden' }],
+    });
+    vi.mocked(RestApiClient).mockImplementation(
+      () =>
+        ({
+          post,
+        }) as unknown as RestApiClient,
+    );
+
+    await expect(queryMetadataGraphql('query { objects { edges { node { id } } } }')).rejects.toThrow(
+      'Forbidden',
     );
   });
 });

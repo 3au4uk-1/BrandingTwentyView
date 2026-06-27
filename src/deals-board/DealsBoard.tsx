@@ -184,10 +184,13 @@ const DealsBoardContent = () => {
   const visibleTotalCount = stageMatchedOpportunityIds ? visibleRecords.length : totalCount;
 
   const loadError = viewsQuery.error ?? opportunitiesQuery.error ?? null;
-  const metadataFieldsWarning =
-    parentFieldsQuery.isError || childFieldsQuery.isError
-      ? 'Не удалось обновить список полей — используются сохранённые колонки'
-      : undefined;
+  const metadataFieldsError =
+    parentFieldsQuery.error ?? childFieldsQuery.error ?? null;
+  const metadataFieldsWarning = metadataFieldsError
+    ? `Не удалось обновить список полей — используются сохранённые колонки${
+        metadataFieldsError instanceof Error ? `: ${metadataFieldsError.message}` : ''
+      }`
+    : undefined;
   const lineItemsWarning =
     lineItemsQuery.error instanceof Error
       ? lineItemsQuery.error.message
