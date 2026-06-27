@@ -2,7 +2,6 @@ import { useMemo, useRef, type ReactNode } from 'react';
 
 import { Chip } from '../Chip';
 import { useContainerWidth } from '../hooks/useContainerWidth';
-import type { ColumnResizeStartEvent } from '../hooks/useColumnResize';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
 import { getColumnWidth, getTableLayoutStyle, layoutColumnsForContainer } from '../utils/columns';
@@ -17,7 +16,7 @@ import { ResizableColumnHeader } from './ResizableColumnHeader';
 type LineItemsTableProps = {
   items: LineItemRow[];
   columns: ColumnConfig[];
-  onColumnResizeStart: (event: ColumnResizeStartEvent, field: string, startWidth: number) => void;
+  onColumnResizeStart: (event: MouseEvent, field: string, startWidth: number) => void;
   userSized?: boolean;
 };
 

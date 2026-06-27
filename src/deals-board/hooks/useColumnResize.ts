@@ -1,16 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { DEFAULT_COLUMN_WIDTH, getColumnWidth } from '../utils/columns';
+import { DEFAULT_COLUMN_WIDTH } from '../utils/columns';
 import type { ColumnConfig } from '../types';
 
 const MIN_COLUMN_WIDTH = 60;
-
-export type ColumnResizeStartEvent = {
-  clientX: number;
-  currentTarget: HTMLDivElement;
-  preventDefault: () => void;
-  stopPropagation: () => void;
-};
 
 export const useColumnResize = (
   columns: ColumnConfig[],
@@ -37,14 +30,16 @@ export const useColumnResize = (
   }, [columns]);
 
   const beginResize = useCallback(
-    (event: ColumnResizeStartEvent, field: string, startWidth: number) => {
+    (event: MouseEvent, field: string, startWidth: number) => {
       event.preventDefault();
       event.stopPropagation();
 
-      const headerCell = event.currentTarget.closest('th');
-      const measuredWidth = headerCell?.getBoundingClientRect().width ?? startWidth;
-      const doc = event.currentTarget.ownerDocument;
-      const win = doc.defaultView ?? window;
+      const target = event.currentTarget;
+      const ownerDocument =
+        target && typeof (target as Node).ownerDocument !== 'undefined'
+          ? (target as Node).ownerDocument
+          : document;
+      const win = ownerDocument.defaultView ?? window;
 
       isDraggingRef.current = true;
       onUserResizeRef.current?.();
@@ -52,7 +47,7 @@ export const useColumnResize = (
       const dragState = {
         field,
         startX: event.clientX,
-        startWidth: Math.max(MIN_COLUMN_WIDTH, measuredWidth || startWidth || DEFAULT_COLUMN_WIDTH),
+        startWidth: Math.max(MIN_COLUMN_WIDTH, startWidth || DEFAULT_COLUMN_WIDTH),
       };
 
       const onMouseMove = (moveEvent: MouseEvent) => {
@@ -75,14 +70,14 @@ export const useColumnResize = (
       const finishResize = () => {
         win.removeEventListener('mousemove', onMouseMove, true);
         win.removeEventListener('mouseup', finishResize, true);
-        doc.body.style.cursor = '';
-        doc.body.style.userSelect = '';
+        ownerDocument.body.style.cursor = '';
+        ownerDocument.body.style.userSelect = '';
         isDraggingRef.current = false;
         onSaveRef.current(latestColumnsRef.current);
       };
 
-      doc.body.style.cursor = 'col-resize';
-      doc.body.style.userSelect = 'none';
+      ownerDocument.body.style.cursor = 'col-resize';
+      ownerDocument.body.style.userSelect = 'none';
       win.addEventListener('mousemove', onMouseMove, true);
       win.addEventListener('mouseup', finishResize, true);
     },
