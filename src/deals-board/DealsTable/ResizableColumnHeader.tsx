@@ -27,6 +27,7 @@ export const ResizableColumnHeader = ({
   const theme = useTheme();
   const { colors, font, zIndex } = theme;
   const width = getColumnWidth(column);
+  const headerRef = useRef<HTMLTableCellElement | null>(null);
   const handleRef = useRef<HTMLDivElement | null>(null);
   const onResizeStartRef = useRef(onResizeStart);
 
@@ -37,8 +38,7 @@ export const ResizableColumnHeader = ({
     if (!handle) return;
 
     const onMouseDown = (event: MouseEvent) => {
-      const scaleSource = handle.closest('th');
-      onResizeStartRef.current(event, column.field, width, scaleSource);
+      onResizeStartRef.current(event, column.field, width, headerRef.current);
     };
 
     handle.addEventListener('mousedown', onMouseDown);
@@ -47,6 +47,7 @@ export const ResizableColumnHeader = ({
 
   return (
     <th
+      ref={headerRef}
       style={{
         position: 'relative',
         padding: compact ? '8px 10px' : '10px 12px',

@@ -1,14 +1,23 @@
+const isDomElement = (value: unknown): value is HTMLElement =>
+  Boolean(value) &&
+  typeof value === 'object' &&
+  typeof (value as HTMLElement).parentElement !== 'undefined';
+
 /** Cumulative horizontal scale from CSS transforms on element and its ancestors. */
 export const getElementScaleX = (element: HTMLElement | null | undefined): number => {
-  if (!element || typeof window === 'undefined') return 1;
+  if (!isDomElement(element) || typeof window === 'undefined') return 1;
 
   let scaleX = 1;
   let current: HTMLElement | null = element;
 
   while (current) {
-    const { transform } = window.getComputedStyle(current);
-    if (transform && transform !== 'none') {
-      scaleX *= new DOMMatrixReadOnly(transform).a;
+    try {
+      const { transform } = window.getComputedStyle(current);
+      if (transform && transform !== 'none') {
+        scaleX *= new DOMMatrixReadOnly(transform).a;
+      }
+    } catch {
+      break;
     }
     current = current.parentElement;
   }
@@ -18,7 +27,7 @@ export const getElementScaleX = (element: HTMLElement | null | undefined): numbe
 
 /** Portal target that stays inside shadow roots used by embedded front components. */
 export const getPortalContainer = (anchor: HTMLElement | null | undefined): Element => {
-  if (!anchor || typeof document === 'undefined') return document.body;
+  if (!isDomElement(anchor) || typeof document === 'undefined') return document.body;
 
   const root = anchor.getRootNode();
   if (root instanceof ShadowRoot) {
