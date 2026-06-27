@@ -121,7 +121,14 @@ export const LineItemsTable = ({
                       />
                     );
                   } else if (column.field === 'kolichestvo') {
-                    content = <NumberCell itemId={item.id} value={item.kolichestvo} />;
+                    content = (
+                      <NumberCell
+                        objectName="dealLineItem"
+                        recordId={item.id}
+                        fieldName="kolichestvo"
+                        value={item.kolichestvo}
+                      />
+                    );
                   } else if (column.field === 'amount') {
                     content = <Chip text={formatAmount(item)} color="gray" theme={theme} />;
                   } else if (column.field === 'kommentariy') {
