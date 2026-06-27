@@ -23,6 +23,7 @@ import type { DealBoardViewRecord, LineItemRow, OpportunityRow } from './types';
 import { ThemeProvider, useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
 import { DEALS_BOARD_ROOT_ID } from './utils/dom';
+import { mergeStageFilters } from './utils/filters';
 import { asArray } from './utils/parse-json-field';
 import { ViewSettingsModal } from './ViewSettingsModal';
 import { ViewSwitcher } from './ViewSwitcher';
