@@ -71,22 +71,22 @@ export const DealsTable = ({
   const parentColumns = useMemo(() => visibleColumns(allParentColumns), [allParentColumns]);
   const childColumns = useMemo(() => visibleColumns(allChildColumns), [allChildColumns]);
 
-  const parentColumnsKey = useMemo(
-    () => parentColumns.map((column) => `${column.field}:${column.visible}:${column.width ?? ''}`).join('|'),
+  const parentStructureKey = useMemo(
+    () => parentColumns.map((column) => `${column.field}:${column.visible}:${column.order}`).join('|'),
     [parentColumns],
   );
-  const childColumnsKey = useMemo(
-    () => childColumns.map((column) => `${column.field}:${column.visible}:${column.width ?? ''}`).join('|'),
+  const childStructureKey = useMemo(
+    () => childColumns.map((column) => `${column.field}:${column.visible}:${column.order}`).join('|'),
     [childColumns],
   );
 
   useEffect(() => {
     setParentUserSized(false);
-  }, [activeView?.id, parentColumnsKey]);
+  }, [activeView?.id, parentStructureKey]);
 
   useEffect(() => {
     setChildUserSized(false);
-  }, [activeView?.id, childColumnsKey]);
+  }, [activeView?.id, childStructureKey]);
 
   const mergeColumnWidths = useCallback(
     (allColumns: ColumnConfig[], resizedVisibleColumns: ColumnConfig[]) => {
@@ -114,20 +114,34 @@ export const DealsTable = ({
     [allChildColumns, mergeColumnWidths, onChildColumnsSave],
   );
 
-  const { displayColumns: displayParentColumns, beginResize: beginParentResize } = useColumnResize(
+  const {
+    displayColumns: displayParentColumns,
+    beginResize: beginParentResize,
+    handleResizeMove: handleParentResizeMove,
+    finishResize: finishParentResize,
+    isResizing: isParentResizing,
+  } = useColumnResize(
     parentColumns,
     handleParentColumnsSave,
     () => {
       setParentUserSized(true);
     },
   );
-  const { displayColumns: displayChildColumns, beginResize: beginChildResize } = useColumnResize(
+  const {
+    displayColumns: displayChildColumns,
+    beginResize: beginChildResize,
+    handleResizeMove: handleChildResizeMove,
+    finishResize: finishChildResize,
+    isResizing: isChildResizing,
+  } = useColumnResize(
     childColumns,
     handleChildColumnsSave,
     () => {
       setChildUserSized(true);
     },
   );
+
+  const isResizing = isParentResizing || isChildResizing;
 
   const layoutParentColumns = useMemo(() => {
     if (parentUserSized) return displayParentColumns;
@@ -221,10 +235,20 @@ export const DealsTable = ({
     >
       <div
         ref={scrollRef}
+        onMouseMove={(event) => {
+          if (isParentResizing) handleParentResizeMove(event.clientX);
+          if (isChildResizing) handleChildResizeMove(event.clientX);
+        }}
+        onMouseUp={() => {
+          finishParentResize();
+          finishChildResize();
+        }}
         style={{
           flex: 1,
           minHeight: 0,
           overflow: 'auto',
+          cursor: isResizing ? 'col-resize' : undefined,
+          userSelect: isResizing ? 'none' : undefined,
         }}
       >
         <table
