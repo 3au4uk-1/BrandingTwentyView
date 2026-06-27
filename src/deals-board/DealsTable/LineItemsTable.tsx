@@ -1,4 +1,4 @@
-import type { ReactNode, PointerEvent as ReactPointerEvent } from 'react';
+import type { ReactNode, MouseEvent as ReactMouseEvent } from 'react';
 
 import { Chip } from '../Chip';
 import { useTheme } from '../theme/ThemeContext';
@@ -15,8 +15,8 @@ import { ResizableColumnHeader } from './ResizableColumnHeader';
 type LineItemsTableProps = {
   items: LineItemRow[];
   columns: ColumnConfig[];
-  onColumnResizePointerDown: (
-    event: ReactPointerEvent<HTMLDivElement>,
+  onColumnResizeStart: (
+    event: ReactMouseEvent<HTMLDivElement>,
     field: string,
     startWidth: number,
   ) => void;
@@ -29,7 +29,7 @@ const formatAmount = (item: LineItemRow) => {
   return `${amount.toLocaleString('ru-RU')} ${item.amount.currencyCode}`;
 };
 
-export const LineItemsTable = ({ items, columns, onColumnResizePointerDown }: LineItemsTableProps) => {
+export const LineItemsTable = ({ items, columns, onColumnResizeStart }: LineItemsTableProps) => {
   const theme = useTheme();
   const { colors, font, spacing } = theme;
   const tableWidth = sumColumnWidths(columns);
@@ -74,7 +74,7 @@ export const LineItemsTable = ({ items, columns, onColumnResizePointerDown }: Li
               <ResizableColumnHeader
                 key={column.field}
                 column={column}
-                onResizePointerDown={onColumnResizePointerDown}
+                onResizeStart={onColumnResizeStart}
                 compact
               >
                 {column.label}

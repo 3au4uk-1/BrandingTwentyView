@@ -93,10 +93,14 @@ export const DealsTable = ({
     [allChildColumns, mergeColumnWidths, onChildColumnsSave],
   );
 
-  const { displayColumns: displayParentColumns, handleResizePointerDown: handleParentResizePointerDown } =
-    useColumnResize(parentColumns, handleParentColumnsSave);
-  const { displayColumns: displayChildColumns, handleResizePointerDown: handleChildResizePointerDown } =
-    useColumnResize(childColumns, handleChildColumnsSave);
+  const { displayColumns: displayParentColumns, beginResize: beginParentResize } = useColumnResize(
+    parentColumns,
+    handleParentColumnsSave,
+  );
+  const { displayColumns: displayChildColumns, beginResize: beginChildResize } = useColumnResize(
+    childColumns,
+    handleChildColumnsSave,
+  );
 
   const parentTableWidth = sumColumnWidths(displayParentColumns);
 
@@ -215,7 +219,7 @@ export const DealsTable = ({
                 <ResizableColumnHeader
                   key={column.field}
                   column={column}
-                  onResizePointerDown={handleParentResizePointerDown}
+                  onResizeStart={beginParentResize}
                   stickyStyle={
                     column.field === 'name'
                       ? {
@@ -240,7 +244,7 @@ export const DealsTable = ({
                 row={{ ...row, companyName: row.companyName ?? companyNameMap.get(row.companyId ?? '') }}
                 columns={displayParentColumns}
                 childColumns={displayChildColumns}
-                onChildColumnResizePointerDown={handleChildResizePointerDown}
+                onChildColumnResizeStart={beginChildResize}
                 lineItems={lineItemsByOpportunity.get(row.id) ?? []}
                 isExpanded={isExpanded(row.id)}
                 isHovered={hoveredRowId === row.id}

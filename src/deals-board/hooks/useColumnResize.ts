@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 
 import type { ColumnConfig } from '../types';
 
@@ -25,20 +25,15 @@ export const useColumnResize = (
     latestColumnsRef.current = columns;
   }, [columns]);
 
-  const handleResizePointerDown = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>, field: string, startWidth: number) => {
+  const beginResize = useCallback(
+    (event: ReactMouseEvent<HTMLDivElement>, field: string, startWidth: number) => {
       event.preventDefault();
       event.stopPropagation();
-
-      const handle = event.currentTarget;
-      handle.setPointerCapture(event.pointerId);
 
       isDraggingRef.current = true;
       const dragState = { field, startX: event.clientX, startWidth: startWidth || 120 };
 
-      const onPointerMove = (moveEvent: PointerEvent) => {
-        if (moveEvent.pointerId !== event.pointerId) return;
-
+      const onMouseMove = (moveEvent: MouseEvent) => {
         const nextWidth = Math.max(
           MIN_COLUMN_WIDTH,
           dragState.startWidth + (moveEvent.clientX - dragState.startX),
@@ -53,27 +48,22 @@ export const useColumnResize = (
         });
       };
 
-      const finishResize = (upEvent: PointerEvent) => {
-        if (upEvent.pointerId !== event.pointerId) return;
-
-        handle.removeEventListener('pointermove', onPointerMove);
-        handle.removeEventListener('pointerup', finishResize);
-        handle.removeEventListener('pointercancel', finishResize);
-
-        if (handle.hasPointerCapture(event.pointerId)) {
-          handle.releasePointerCapture(event.pointerId);
-        }
-
+      const onMouseUp = () => {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
         isDraggingRef.current = false;
         onSaveRef.current(latestColumnsRef.current);
       };
 
-      handle.addEventListener('pointermove', onPointerMove);
-      handle.addEventListener('pointerup', finishResize);
-      handle.addEventListener('pointercancel', finishResize);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
     },
     [],
   );
 
-  return { displayColumns, handleResizePointerDown };
+  return { displayColumns, beginResize };
 };

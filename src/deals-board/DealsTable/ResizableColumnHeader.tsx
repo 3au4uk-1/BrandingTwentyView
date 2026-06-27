@@ -1,4 +1,4 @@
-import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
+import type { CSSProperties, MouseEvent as ReactMouseEvent, ReactNode } from 'react';
 
 import { useTheme } from '../theme/ThemeContext';
 import { DEFAULT_COLUMN_WIDTH } from '../utils/columns';
@@ -6,8 +6,8 @@ import type { ColumnConfig } from '../types';
 
 type ResizableColumnHeaderProps = {
   column: ColumnConfig;
-  onResizePointerDown: (
-    event: ReactPointerEvent<HTMLDivElement>,
+  onResizeStart: (
+    event: ReactMouseEvent<HTMLDivElement>,
     field: string,
     startWidth: number,
   ) => void;
@@ -18,7 +18,7 @@ type ResizableColumnHeaderProps = {
 
 export const ResizableColumnHeader = ({
   column,
-  onResizePointerDown,
+  onResizeStart,
   stickyStyle,
   children,
   compact = false,
@@ -55,7 +55,7 @@ export const ResizableColumnHeader = ({
         role="separator"
         aria-orientation="vertical"
         aria-label={`Изменить ширину колонки ${column.label}`}
-        onPointerDown={(event) => onResizePointerDown(event, column.field, width)}
+        onMouseDown={(event) => onResizeStart(event, column.field, width)}
         style={{
           position: 'absolute',
           top: 0,
