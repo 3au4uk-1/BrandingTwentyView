@@ -1,9 +1,9 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 
 import { useUpdateLineItem } from '../hooks/useLineItems';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
-import { AnchorPopover } from '../ui/AnchorPopover';
+import { AnchorPopover, type AnchorPoint } from '../ui/AnchorPopover';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { ExternalLinkIcon, LinkIcon } from '../ui/Icons';
@@ -19,15 +19,18 @@ export const LinkCell = ({ itemId, value }: LinkCellProps) => {
   const updateMutation = useUpdateLineItem();
   const anchorRef = useRef<HTMLButtonElement | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [anchorPoint, setAnchorPoint] = useState<AnchorPoint | null>(null);
   const [draftValue, setDraftValue] = useState(value?.primaryLinkUrl ?? '');
 
-  const openEditor = () => {
+  const openEditor = (event: ReactMouseEvent<HTMLButtonElement>) => {
+    setAnchorPoint({ x: event.clientX, y: event.clientY });
     setDraftValue(value?.primaryLinkUrl ?? '');
     setIsEditing(true);
   };
 
   const closeEditor = () => {
     setIsEditing(false);
+    setAnchorPoint(null);
     setDraftValue(value?.primaryLinkUrl ?? '');
   };
 
@@ -109,6 +112,7 @@ export const LinkCell = ({ itemId, value }: LinkCellProps) => {
         isOpen={isEditing}
         onClose={closeEditor}
         anchorRef={anchorRef}
+        anchorPoint={anchorPoint}
         width={340}
       >
         <Input

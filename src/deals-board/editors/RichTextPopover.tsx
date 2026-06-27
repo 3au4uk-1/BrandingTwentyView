@@ -1,9 +1,9 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 
 import { useUpdateLineItem } from '../hooks/useLineItems';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
-import { AnchorPopover } from '../ui/AnchorPopover';
+import { AnchorPopover, type AnchorPoint } from '../ui/AnchorPopover';
 import { Button } from '../ui/Button';
 import { Textarea } from '../ui/Input';
 
@@ -24,15 +24,18 @@ export const RichTextPopover = ({ itemId, value, field }: RichTextPopoverProps) 
   const updateMutation = useUpdateLineItem();
   const anchorRef = useRef<HTMLButtonElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [anchorPoint, setAnchorPoint] = useState<AnchorPoint | null>(null);
   const [draftValue, setDraftValue] = useState(value ?? '');
 
-  const open = () => {
+  const open = (event: ReactMouseEvent<HTMLButtonElement>) => {
+    setAnchorPoint({ x: event.clientX, y: event.clientY });
     setDraftValue(value ?? '');
     setIsOpen(true);
   };
 
   const close = () => {
     setDraftValue(value ?? '');
+    setAnchorPoint(null);
     setIsOpen(false);
   };
 
@@ -82,7 +85,14 @@ export const RichTextPopover = ({ itemId, value, field }: RichTextPopoverProps) 
         {previewText(value)}
       </button>
 
-      <AnchorPopover theme={theme} isOpen={isOpen} onClose={close} anchorRef={anchorRef} width={320}>
+      <AnchorPopover
+        theme={theme}
+        isOpen={isOpen}
+        onClose={close}
+        anchorRef={anchorRef}
+        anchorPoint={anchorPoint}
+        width={320}
+      >
         <Textarea
           theme={theme}
           autoFocus

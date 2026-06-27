@@ -10,11 +10,17 @@ import { createPortal } from 'react-dom';
 
 import type { ThemeTokens } from '../theme/tokens';
 
+export type AnchorPoint = {
+  x: number;
+  y: number;
+};
+
 type AnchorPopoverProps = {
   theme: ThemeTokens;
   isOpen: boolean;
   onClose: () => void;
   anchorRef: RefObject<HTMLElement | null>;
+  anchorPoint?: AnchorPoint | null;
   children: ReactNode;
   width?: number;
 };
@@ -24,13 +30,59 @@ type PopoverCoords = {
   left: number;
 };
 
+type RectLike = Pick<DOMRect, 'top' | 'left' | 'bottom' | 'right' | 'width' | 'height'>;
+
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+const getViewportSize = () => {
+  const view = typeof window !== 'undefined' ? window : undefined;
+  return {
+    width: view?.innerWidth ?? 1280,
+    height: view?.innerHeight ?? 720,
+  };
+};
+
+const getElementClientRect = (element: HTMLElement, anchorPoint?: AnchorPoint | null): RectLike => {
+  if (typeof element.getBoundingClientRect === 'function') {
+    return element.getBoundingClientRect();
+  }
+
+  const width = element.offsetWidth ?? element.clientWidth ?? 120;
+  const height = element.offsetHeight ?? element.clientHeight ?? 24;
+
+  if (anchorPoint) {
+    return {
+      top: anchorPoint.y,
+      left: anchorPoint.x,
+      bottom: anchorPoint.y + height,
+      right: anchorPoint.x + width,
+      width,
+      height,
+    };
+  }
+
+  return {
+    top: 80,
+    left: 80,
+    bottom: 80 + height,
+    right: 80 + width,
+    width,
+    height,
+  };
+};
+
+const nodeContains = (node: Node | null | undefined, target: Node) => {
+  if (!node) return false;
+  if (typeof node.contains === 'function') return node.contains(target);
+  return false;
+};
 
 export const AnchorPopover = ({
   theme,
   isOpen,
   onClose,
   anchorRef,
+  anchorPoint = null,
   children,
   width = 300,
 }: AnchorPopoverProps) => {
@@ -46,28 +98,30 @@ export const AnchorPopover = ({
       const popover = popoverRef.current;
       if (!anchor) return;
 
-      const rect = anchor.getBoundingClientRect();
+      const rect = getElementClientRect(anchor, anchorPoint);
       const popoverHeight = popover?.offsetHeight ?? 220;
-      const spaceBelow = window.innerHeight - rect.bottom;
+      const viewport = getViewportSize();
+      const spaceBelow = viewport.height - rect.bottom;
       const showAbove = spaceBelow < popoverHeight + 12 && rect.top > popoverHeight + 12;
       const top = showAbove ? rect.top - popoverHeight - 4 : rect.bottom + 4;
-      const left = clamp(rect.left, 8, window.innerWidth - width - 8);
+      const left = clamp(rect.left, 8, viewport.width - width - 8);
 
       setCoords({ top, left });
     };
 
     updatePosition();
-    window.addEventListener('resize', updatePosition);
-    return () => window.removeEventListener('resize', updatePosition);
-  }, [anchorRef, isOpen, width, children]);
+    const view = typeof window !== 'undefined' ? window : undefined;
+    view?.addEventListener('resize', updatePosition);
+    return () => view?.removeEventListener('resize', updatePosition);
+  }, [anchorPoint, anchorRef, isOpen, width, children]);
 
   useEffect(() => {
     if (!isOpen) return;
 
     const handleMouseDown = (event: MouseEvent) => {
       const target = event.target as Node;
-      if (anchorRef.current?.contains(target)) return;
-      if (popoverRef.current?.contains(target)) return;
+      if (nodeContains(anchorRef.current, target)) return;
+      if (nodeContains(popoverRef.current, target)) return;
       onClose();
     };
 
@@ -77,18 +131,21 @@ export const AnchorPopover = ({
 
     const handleScroll = () => onClose();
 
-    document.addEventListener('mousedown', handleMouseDown);
-    document.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('scroll', handleScroll, true);
+    const doc = typeof document !== 'undefined' ? document : undefined;
+    const view = typeof window !== 'undefined' ? window : undefined;
+
+    doc?.addEventListener('mousedown', handleMouseDown);
+    doc?.addEventListener('keydown', handleKeyDown);
+    view?.addEventListener('scroll', handleScroll, true);
 
     return () => {
-      document.removeEventListener('mousedown', handleMouseDown);
-      document.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('scroll', handleScroll, true);
+      doc?.removeEventListener('mousedown', handleMouseDown);
+      doc?.removeEventListener('keydown', handleKeyDown);
+      view?.removeEventListener('scroll', handleScroll, true);
     };
   }, [anchorRef, isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
   return createPortal(
     <div
