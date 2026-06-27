@@ -19,8 +19,8 @@ export type DynamicFieldCellProps = {
   lineItems?: LineItemRow[];
   isExpanded?: boolean;
   companyName?: string;
-  tonyLink?: { primaryLinkUrl?: string };
-  bitrixLink?: { primaryLinkUrl?: string };
+  row?: Record<string, unknown>;
+  opportunityLinkFields?: FieldDescriptor[];
   onToggleExpand?: (id: string) => void;
 };
 
@@ -95,8 +95,8 @@ export const DynamicFieldCell = (props: DynamicFieldCellProps) => {
     lineItems: props.lineItems,
     isExpanded: props.isExpanded,
     companyName: props.companyName,
-    tonyLink: props.tonyLink,
-    bitrixLink: props.bitrixLink,
+    row: props.row,
+    opportunityLinkFields: props.opportunityLinkFields,
     onToggleExpand: props.onToggleExpand,
   });
 

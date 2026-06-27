@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import { getOpportunityLinkButtonLabel } from 'src/constants/opportunity-links';
+
 import type { LineItemStage } from 'src/constants/stages';
 
 import { Chip } from '../Chip';
@@ -9,6 +11,7 @@ import { StageSelect } from '../editors/StageSelect';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
 import { ChevronRightIcon } from '../ui/Icons';
+import type { FieldDescriptor } from '../metadata/types';
 import type { LineItemRow } from '../types';
 
 import { DealSummaryChips } from '../DealsTable/DealSummaryChips';
@@ -23,8 +26,8 @@ export type FieldOverrideProps = {
   lineItems?: LineItemRow[];
   isExpanded?: boolean;
   companyName?: string;
-  tonyLink?: { primaryLinkUrl?: string };
-  bitrixLink?: { primaryLinkUrl?: string };
+  row?: Record<string, unknown>;
+  opportunityLinkFields?: FieldDescriptor[];
   onToggleExpand?: (id: string) => void;
 };
 
@@ -93,20 +96,38 @@ const ChildNameCell = ({ value }: FieldOverrideProps) => {
   );
 };
 
-const LinksCell = ({ tonyLink, bitrixLink }: FieldOverrideProps) => {
+const LinksCell = ({ row, opportunityLinkFields }: FieldOverrideProps) => {
   const theme = useTheme();
   const { colors, font, spacing } = theme;
-  const tonyUrl = tonyLink?.primaryLinkUrl;
-  const bitrixUrl = bitrixLink?.primaryLinkUrl;
+
+  if (!row || !opportunityLinkFields?.length) {
+    return EMPTY_VALUE;
+  }
+
+  const links = opportunityLinkFields
+    .map((field) => {
+      const linkValue = row[field.field] as { primaryLinkUrl?: string } | undefined;
+      const url = linkValue?.primaryLinkUrl?.trim();
+      if (!url) return null;
+
+      const button = getOpportunityLinkButtonLabel(field.field, field.label);
+      return { field: field.field, url, button };
+    })
+    .filter((link): link is NonNullable<typeof link> => link !== null);
+
+  if (!links.length) {
+    return EMPTY_VALUE;
+  }
 
   return (
     <div style={{ display: 'inline-flex', gap: spacing.xs }}>
-      {tonyUrl ? (
+      {links.map(({ field, url, button }) => (
         <a
-          href={tonyUrl}
+          key={field}
+          href={url}
           target="_blank"
           rel="noreferrer"
-          title="Tony"
+          title={button.title}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -122,34 +143,9 @@ const LinksCell = ({ tonyLink, bitrixLink }: FieldOverrideProps) => {
             fontWeight: font.weightSemibold,
           }}
         >
-          T
+          {button.shortLabel}
         </a>
-      ) : null}
-      {bitrixUrl ? (
-        <a
-          href={bitrixUrl}
-          target="_blank"
-          rel="noreferrer"
-          title="Bitrix"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '24px',
-            height: '24px',
-            borderRadius: theme.radius.sm,
-            border: `1px solid ${colors.border}`,
-            backgroundColor: colors.bgElevated,
-            color: colors.textSecondary,
-            textDecoration: 'none',
-            fontSize: font.sizeXs,
-            fontWeight: font.weightSemibold,
-          }}
-        >
-          B
-        </a>
-      ) : null}
-      {!tonyUrl && !bitrixUrl ? EMPTY_VALUE : null}
+      ))}
     </div>
   );
 };

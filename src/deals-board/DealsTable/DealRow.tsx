@@ -17,6 +17,7 @@ type DealRowProps = {
   isHovered: boolean;
   onHoverChange: (hovered: boolean) => void;
   onToggleExpand: (id: string) => void;
+  opportunityLinkFields: FieldDescriptor[];
   onChildColumnResizeStart: (
     event: MouseEvent | PointerEvent,
     field: string,
@@ -37,6 +38,7 @@ export const DealRow = ({
   isHovered,
   onHoverChange,
   onToggleExpand,
+  opportunityLinkFields,
   onChildColumnResizeStart,
 }: DealRowProps) => {
   const theme = useTheme();
@@ -90,8 +92,8 @@ export const DealRow = ({
               lineItems={lineItems}
               isExpanded={isExpanded}
               companyName={row.companyName}
-              tonyLink={row.tonyLink}
-              bitrixLink={row.bitrixLink}
+              row={row}
+              opportunityLinkFields={opportunityLinkFields}
               onToggleExpand={onToggleExpand}
             />
           </td>

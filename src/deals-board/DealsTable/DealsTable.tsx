@@ -27,6 +27,7 @@ type DealsTableProps = {
   childColumns: ColumnConfig[];
   parentDescriptorByField: Map<string, FieldDescriptor>;
   childDescriptorByField: Map<string, FieldDescriptor>;
+  opportunityLinkFields: FieldDescriptor[];
   records: OpportunityRow[];
   lineItems: LineItemRow[];
   totalCount: number;
@@ -47,6 +48,7 @@ export const DealsTable = ({
   childColumns: allChildColumns,
   parentDescriptorByField,
   childDescriptorByField,
+  opportunityLinkFields,
   records,
   lineItems,
   totalCount,
@@ -329,6 +331,7 @@ export const DealsTable = ({
                 isHovered={hoveredRowId === row.id}
                 onHoverChange={(hovered) => setHoveredRowId(hovered ? row.id : null)}
                 onToggleExpand={toggleExpand}
+                opportunityLinkFields={opportunityLinkFields}
               />
             ))}
           </tbody>

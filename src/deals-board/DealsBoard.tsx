@@ -7,6 +7,8 @@ import {
 } from 'src/constants/column-definitions';
 import { APP_DISPLAY_NAME } from 'src/constants/universal-identifiers';
 
+import { resolveOpportunityLinkFieldDescriptors } from 'src/constants/opportunity-links';
+
 import { ColumnPicker } from './ColumnPicker';
 import { DealsTable } from './DealsTable/DealsTable';
 import { ExpandModeToggle } from './ExpandModeToggle';
@@ -140,8 +142,13 @@ const DealsBoardContent = () => {
   );
 
   const visibleParentCrmFields = useMemo(
-    () => crmFieldNamesFromColumns(mergedParentColumns),
-    [mergedParentColumns],
+    () => crmFieldNamesFromColumns(mergedParentColumns, parentFieldsQuery.data ?? []),
+    [mergedParentColumns, parentFieldsQuery.data],
+  );
+
+  const opportunityLinkFields = useMemo(
+    () => resolveOpportunityLinkFieldDescriptors(mergedParentColumns, parentFieldsQuery.data ?? []),
+    [mergedParentColumns, parentFieldsQuery.data],
   );
 
   const includeCompanyRelation = useMemo(
@@ -361,6 +368,7 @@ const DealsBoardContent = () => {
         childColumns={mergedChildColumns}
         parentDescriptorByField={parentDescriptorByField}
         childDescriptorByField={childDescriptorByField}
+        opportunityLinkFields={opportunityLinkFields}
         records={visibleRecords}
         lineItems={lineItems}
         totalCount={visibleTotalCount}
