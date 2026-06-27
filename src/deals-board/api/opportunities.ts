@@ -5,6 +5,7 @@ import { buildOpportunityDateFilter } from '../utils/date-filters';
 import { asArray } from '../utils/parse-json-field';
 import type { DealBoardFilters, DealBoardSort, OpportunityRow } from '../types';
 import { getApiClient } from './client';
+import { enrichOpportunityRowsWithLinkFields } from './opportunity-link-fields-rest';
 
 const FETCH_ALL_PAGE_SIZE = 200;
 
@@ -37,6 +38,7 @@ const fetchOpportunityPage = async (params: {
   sort: DealBoardSort[];
   filters: DealBoardFilters;
   visibleCrmFieldNames: string[];
+  linkFieldNames: readonly string[];
   includeCompanyRelation: boolean;
 }): Promise<{ records: OpportunityRow[]; totalCount: number }> => {
   const client = getApiClient();
@@ -75,7 +77,9 @@ const fetchOpportunityPage = async (params: {
     };
   });
 
-  return { records, totalCount: result.opportunities?.totalCount ?? 0 };
+  const enrichedRecords = await enrichOpportunityRowsWithLinkFields(records, params.linkFieldNames);
+
+  return { records: enrichedRecords, totalCount: result.opportunities?.totalCount ?? 0 };
 };
 
 export const fetchOpportunities = async (params: {
@@ -84,10 +88,12 @@ export const fetchOpportunities = async (params: {
   sort: DealBoardSort[];
   filters: DealBoardFilters;
   visibleCrmFieldNames?: string[];
+  linkFieldNames?: readonly string[];
   includeCompanyRelation?: boolean;
   fetchAll?: boolean;
 }): Promise<{ records: OpportunityRow[]; totalCount: number }> => {
   const visibleCrmFieldNames = params.visibleCrmFieldNames ?? DEFAULT_VISIBLE_CRM_FIELD_NAMES;
+  const linkFieldNames = params.linkFieldNames ?? [];
   const includeCompanyRelation = params.includeCompanyRelation ?? DEFAULT_INCLUDE_COMPANY_RELATION;
 
   if (!params.fetchAll) {
@@ -97,6 +103,7 @@ export const fetchOpportunities = async (params: {
       sort: params.sort,
       filters: params.filters,
       visibleCrmFieldNames,
+      linkFieldNames,
       includeCompanyRelation,
     });
   }
@@ -112,6 +119,7 @@ export const fetchOpportunities = async (params: {
       sort: params.sort,
       filters: params.filters,
       visibleCrmFieldNames,
+      linkFieldNames,
       includeCompanyRelation,
     });
 

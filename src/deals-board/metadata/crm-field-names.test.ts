@@ -33,19 +33,19 @@ describe('crmFieldNamesFromColumns', () => {
     expect(crmFieldNamesFromColumns(columns)).toEqual(['name', 'loadDate']);
   });
 
-  it('includes link fields when the virtual links column is visible', () => {
-    const columns: ColumnConfig[] = [
-      { field: 'name', label: 'Name', order: 0, visible: true },
-      { field: 'links', label: 'Links', order: 1, visible: true },
-    ];
-    expect(crmFieldNamesFromColumns(columns, linkFields)).toEqual(['name', 'tonyLink', 'bitrixLink']);
-  });
-
-  it('does not request missing link fields when metadata has none', () => {
+  it('does not request link fields in GraphQL when metadata has none', () => {
     const columns: ColumnConfig[] = [
       { field: 'name', label: 'Name', order: 0, visible: true },
       { field: 'links', label: 'Links', order: 1, visible: true },
     ];
     expect(crmFieldNamesFromColumns(columns, [])).toEqual(['name']);
+  });
+
+  it('skips visible LINKS columns in GraphQL selection', () => {
+    const columns: ColumnConfig[] = [
+      { field: 'name', label: 'Name', order: 0, visible: true },
+      { field: 'tonyLink', label: 'Tony', order: 1, visible: true },
+    ];
+    expect(crmFieldNamesFromColumns(columns, linkFields)).toEqual(['name']);
   });
 });

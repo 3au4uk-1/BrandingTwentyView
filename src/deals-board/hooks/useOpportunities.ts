@@ -11,9 +11,20 @@ export const opportunitiesQueryKey = (
   filters: DealBoardFilters,
   page: number,
   visibleCrmFieldNames: string[],
+  linkFieldNames: readonly string[],
   includeCompanyRelation: boolean,
   fetchAll: boolean,
-) => ['opportunities', viewId, filters, page, visibleCrmFieldNames, includeCompanyRelation, fetchAll] as const;
+) =>
+  [
+    'opportunities',
+    viewId,
+    filters,
+    page,
+    visibleCrmFieldNames,
+    linkFieldNames,
+    includeCompanyRelation,
+    fetchAll,
+  ] as const;
 
 export const useOpportunities = (params: {
   viewId?: string;
@@ -22,11 +33,13 @@ export const useOpportunities = (params: {
   page: number;
   pageSize?: number;
   visibleCrmFieldNames?: string[];
+  linkFieldNames?: readonly string[];
   includeCompanyRelation?: boolean;
   enabled?: boolean;
 }) => {
   const pageSize = params.pageSize ?? DEFAULT_PAGE_SIZE;
   const visibleCrmFieldNames = params.visibleCrmFieldNames ?? [];
+  const linkFieldNames = params.linkFieldNames ?? [];
   const includeCompanyRelation = params.includeCompanyRelation ?? false;
   const fetchAll = shouldFetchAllOpportunities(params.filters);
 
@@ -36,6 +49,7 @@ export const useOpportunities = (params: {
       params.filters,
       params.page,
       visibleCrmFieldNames,
+      linkFieldNames,
       includeCompanyRelation,
       fetchAll,
     ),
@@ -46,6 +60,7 @@ export const useOpportunities = (params: {
         sort: params.sort,
         filters: params.filters,
         visibleCrmFieldNames,
+        linkFieldNames,
         includeCompanyRelation,
         fetchAll,
       });

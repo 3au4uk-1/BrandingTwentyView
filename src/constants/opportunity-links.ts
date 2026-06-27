@@ -56,11 +56,14 @@ export const getOpportunityLinkButtonLabel = (
   };
 };
 
+const isLinksColumnVisible = (columns: ColumnConfig[]): boolean =>
+  columns.some((column) => column.visible && column.field === 'links');
+
 export const resolveOpportunityLinkFieldNames = (
   columns: ColumnConfig[],
   availableFields: readonly FieldDescriptor[],
 ): string[] => {
-  if (!columns.some((column) => column.visible && column.field === 'links')) {
+  if (!isLinksColumnVisible(columns)) {
     return [];
   }
 
@@ -83,7 +86,12 @@ export const resolveOpportunityLinkFieldNames = (
     return resolved;
   }
 
-  return linkFields.map((field) => field.field).sort();
+  if (linkFields.length > 0) {
+    return linkFields.map((field) => field.field).sort();
+  }
+
+  // Workspace link fields are available via REST even when metadata fieldsList omits them.
+  return ['tonyLink', 'bitrixLink'];
 };
 
 export const resolveOpportunityLinkFieldDescriptors = (
@@ -93,7 +101,33 @@ export const resolveOpportunityLinkFieldDescriptors = (
   const fieldNames = resolveOpportunityLinkFieldNames(columns, availableFields);
   const descriptorByField = new Map(availableFields.map((field) => [field.field, field]));
 
-  return fieldNames
-    .map((fieldName) => descriptorByField.get(fieldName))
-    .filter((field): field is FieldDescriptor => Boolean(field));
+  return fieldNames.map((fieldName) => {
+    const descriptor = descriptorByField.get(fieldName);
+    if (descriptor) return descriptor;
+
+    return {
+      field: fieldName,
+      label: getOpportunityLinkButtonLabel(fieldName).title,
+      source: 'crm' as const,
+      fieldType: 'LINKS',
+      isEditable: false,
+    };
+  });
+};
+
+export const isOpportunityLinkField = (
+  fieldName: string,
+  availableFields: readonly FieldDescriptor[],
+): boolean => {
+  const descriptor = availableFields.find((field) => field.field === fieldName);
+  if (descriptor?.fieldType === 'LINKS') {
+    return true;
+  }
+
+  return (
+    fieldName.endsWith('Link') ||
+    PREFERRED_OPPORTUNITY_LINK_FIELD_NAMES.includes(
+      fieldName as (typeof PREFERRED_OPPORTUNITY_LINK_FIELD_NAMES)[number],
+    )
+  );
 };

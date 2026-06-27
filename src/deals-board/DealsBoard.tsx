@@ -7,7 +7,10 @@ import {
 } from 'src/constants/column-definitions';
 import { APP_DISPLAY_NAME } from 'src/constants/universal-identifiers';
 
-import { resolveOpportunityLinkFieldDescriptors } from 'src/constants/opportunity-links';
+import {
+  resolveOpportunityLinkFieldDescriptors,
+  resolveOpportunityLinkFieldNames,
+} from 'src/constants/opportunity-links';
 
 import { ColumnPicker } from './ColumnPicker';
 import { DealsTable } from './DealsTable/DealsTable';
@@ -146,6 +149,11 @@ const DealsBoardContent = () => {
     [mergedParentColumns, parentFieldsQuery.data],
   );
 
+  const opportunityLinkFieldNames = useMemo(
+    () => resolveOpportunityLinkFieldNames(mergedParentColumns, parentFieldsQuery.data ?? []),
+    [mergedParentColumns, parentFieldsQuery.data],
+  );
+
   const opportunityLinkFields = useMemo(
     () => resolveOpportunityLinkFieldDescriptors(mergedParentColumns, parentFieldsQuery.data ?? []),
     [mergedParentColumns, parentFieldsQuery.data],
@@ -163,8 +171,13 @@ const DealsBoardContent = () => {
     page,
     pageSize: PAGE_SIZE,
     visibleCrmFieldNames: visibleParentCrmFields,
+    linkFieldNames: opportunityLinkFieldNames,
     includeCompanyRelation,
-    enabled: !viewsQuery.isLoading && !viewsQuery.isSeedingDefault && Boolean(activeView),
+    enabled:
+      !viewsQuery.isLoading &&
+      !viewsQuery.isSeedingDefault &&
+      Boolean(activeView) &&
+      !parentFieldsQuery.isLoading,
   });
 
   const records = asArray<OpportunityRow>(opportunitiesQuery.data?.records);
