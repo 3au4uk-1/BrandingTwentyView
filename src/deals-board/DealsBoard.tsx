@@ -70,6 +70,7 @@ const DealsBoardContent = () => {
     setPage(0);
   }, [
     activeView?.id,
+    quickFilters.datePreset,
     quickFilters.dateFrom,
     quickFilters.dateTo,
     quickFilters.search,
@@ -84,12 +85,20 @@ const DealsBoardContent = () => {
   const mergedFilters = useMemo(
     () => ({
       ...(activeView?.filters ?? {}),
+      datePreset: quickFilters.datePreset ?? activeView?.filters?.datePreset,
       dateFrom: quickFilters.dateFrom ?? activeView?.filters?.dateFrom,
       dateTo: quickFilters.dateTo ?? activeView?.filters?.dateTo,
       search: quickFilters.search.trim() || activeView?.filters?.search,
       stages: mergedStages,
     }),
-    [activeView?.filters, mergedStages, quickFilters.dateFrom, quickFilters.dateTo, quickFilters.search],
+    [
+      activeView?.filters,
+      mergedStages,
+      quickFilters.dateFrom,
+      quickFilters.datePreset,
+      quickFilters.dateTo,
+      quickFilters.search,
+    ],
   );
 
   const parentFieldsQuery = useObjectFields('opportunity');
@@ -161,7 +170,7 @@ const DealsBoardContent = () => {
 
   const lineItemsQuery = useLineItems(
     visibleOpportunityIds,
-    undefined,
+    mergedStages,
     !opportunitiesQuery.isLoading,
   );
   const lineItems = asArray<LineItemRow>(lineItemsQuery.data);

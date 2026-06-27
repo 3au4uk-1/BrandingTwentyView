@@ -40,6 +40,10 @@ const parseFilters = (raw: unknown): DealBoardFilters => {
 
   return {
     ...filters,
+    datePreset:
+      typeof (filters as { datePreset?: unknown }).datePreset === 'string'
+        ? ((filters as { datePreset: DealBoardFilters['datePreset'] }).datePreset ?? undefined)
+        : undefined,
     stages: stages.length ? stages : undefined,
   };
 };

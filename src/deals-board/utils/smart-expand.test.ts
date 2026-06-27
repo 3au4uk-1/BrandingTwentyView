@@ -71,4 +71,17 @@ describe('toggleExpandOverride', () => {
     expect(restored.collapsed).toEqual([]);
     expect(computeIsExpanded('deal-1', activeItems, 'smart', restored)).toBe(true);
   });
+
+  it('allows expanding fully completed deals in smart mode', () => {
+    const doneItems = [{ stage: 'GOTOVO' as const }, { stage: 'OTMENA' as const }];
+    expect(computeIsExpanded('deal-1', doneItems, 'smart', EMPTY_EXPAND_OVERRIDES)).toBe(false);
+
+    const expanded = toggleExpandOverride('deal-1', doneItems, 'smart', EMPTY_EXPAND_OVERRIDES);
+    expect(expanded.expanded).toEqual(['deal-1']);
+    expect(computeIsExpanded('deal-1', doneItems, 'smart', expanded)).toBe(true);
+
+    const collapsed = toggleExpandOverride('deal-1', doneItems, 'smart', expanded);
+    expect(collapsed.expanded).toEqual([]);
+    expect(computeIsExpanded('deal-1', doneItems, 'smart', collapsed)).toBe(false);
+  });
 });

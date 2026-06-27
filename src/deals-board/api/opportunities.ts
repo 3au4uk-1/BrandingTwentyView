@@ -1,9 +1,12 @@
 import { OPPORTUNITY_DATE_FILTER_FIELD } from 'src/constants/date-filter-field';
 
 import { buildOpportunityNodeSelection } from '../metadata/build-opportunity-selection';
+import { buildOpportunityDateFilter } from '../utils/date-filters';
 import { asArray } from '../utils/parse-json-field';
 import type { DealBoardFilters, DealBoardSort, OpportunityRow } from '../types';
 import { getApiClient } from './client';
+
+const FETCH_ALL_PAGE_SIZE = 200;
 
 /** Default CRM fields when callers omit dynamic selection (matches prior fixed query). */
 const DEFAULT_VISIBLE_CRM_FIELD_NAMES = ['loadDate', 'stage', 'amount'];
@@ -22,26 +25,26 @@ const OPPORTUNITY_FIELDS = {
 
 const buildOpportunityFilter = (filters: DealBoardFilters) => {
   const and: Record<string, unknown>[] = [];
-  const dateField = OPPORTUNITY_DATE_FILTER_FIELD;
-  if (filters.dateFrom) and.push({ [dateField]: { gte: filters.dateFrom } });
-  if (filters.dateTo) and.push({ [dateField]: { lte: filters.dateTo } });
+  const dateFilter = buildOpportunityDateFilter(filters);
+  if (dateFilter) and.push(dateFilter);
   if (filters.search) and.push({ name: { ilike: `%${filters.search}%` } });
   return and.length ? { and } : undefined;
 };
 
-export const fetchOpportunities = async (params: {
+const fetchOpportunityPage = async (params: {
   limit: number;
   offset: number;
   sort: DealBoardSort[];
   filters: DealBoardFilters;
-  visibleCrmFieldNames?: string[];
-  includeCompanyRelation?: boolean;
+  visibleCrmFieldNames: string[];
+  includeCompanyRelation: boolean;
 }): Promise<{ records: OpportunityRow[]; totalCount: number }> => {
   const client = getApiClient();
   const sort = Array.isArray(params.sort) ? params.sort : [];
-  const visibleCrmFieldNames = params.visibleCrmFieldNames ?? DEFAULT_VISIBLE_CRM_FIELD_NAMES;
-  const includeCompanyRelation = params.includeCompanyRelation ?? DEFAULT_INCLUDE_COMPANY_RELATION;
-  const nodeSelection = buildOpportunityNodeSelection(visibleCrmFieldNames, includeCompanyRelation);
+  const nodeSelection = buildOpportunityNodeSelection(
+    params.visibleCrmFieldNames,
+    params.includeCompanyRelation,
+  );
 
   const orderBy = sort.length
     ? sort.map((s) => ({ [s.field]: s.direction }))
@@ -73,6 +76,51 @@ export const fetchOpportunities = async (params: {
   });
 
   return { records, totalCount: result.opportunities?.totalCount ?? 0 };
+};
+
+export const fetchOpportunities = async (params: {
+  limit: number;
+  offset: number;
+  sort: DealBoardSort[];
+  filters: DealBoardFilters;
+  visibleCrmFieldNames?: string[];
+  includeCompanyRelation?: boolean;
+  fetchAll?: boolean;
+}): Promise<{ records: OpportunityRow[]; totalCount: number }> => {
+  const visibleCrmFieldNames = params.visibleCrmFieldNames ?? DEFAULT_VISIBLE_CRM_FIELD_NAMES;
+  const includeCompanyRelation = params.includeCompanyRelation ?? DEFAULT_INCLUDE_COMPANY_RELATION;
+
+  if (!params.fetchAll) {
+    return fetchOpportunityPage({
+      limit: params.limit,
+      offset: params.offset,
+      sort: params.sort,
+      filters: params.filters,
+      visibleCrmFieldNames,
+      includeCompanyRelation,
+    });
+  }
+
+  const allRecords: OpportunityRow[] = [];
+  let totalCount = 0;
+  let offset = 0;
+
+  do {
+    const page = await fetchOpportunityPage({
+      limit: FETCH_ALL_PAGE_SIZE,
+      offset,
+      sort: params.sort,
+      filters: params.filters,
+      visibleCrmFieldNames,
+      includeCompanyRelation,
+    });
+
+    totalCount = page.totalCount;
+    allRecords.push(...page.records);
+    offset += FETCH_ALL_PAGE_SIZE;
+  } while (allRecords.length < totalCount);
+
+  return { records: allRecords, totalCount };
 };
 
 export const patchOpportunity = async (

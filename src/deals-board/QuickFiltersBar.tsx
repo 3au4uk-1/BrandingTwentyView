@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react';
 
 import { LINE_ITEM_STAGES, type LineItemStage } from 'src/constants/stages';
+import type { DealBoardDatePreset } from 'src/deals-board/types';
 
+import { getPresetRange } from './utils/date-filters';
 import { useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 
-type QuickDatePreset = 'today' | 'week' | 'month' | 'custom' | null;
+type QuickDatePreset = Exclude<DealBoardDatePreset, 'future'> | null;
 type OplataQuickFilter = 'all' | 'filled' | 'empty';
 
 export type QuickFiltersValue = {
@@ -24,41 +26,15 @@ type QuickFiltersBarProps = {
   onReset: () => void;
 };
 
-const toInputDate = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
-const getPresetRange = (preset: Exclude<QuickDatePreset, null>) => {
-  const today = new Date();
-  const start = new Date(today);
-  const end = new Date(today);
-
-  if (preset === 'today') {
-    return { dateFrom: toInputDate(start), dateTo: toInputDate(end) };
-  }
-
-  if (preset === 'week') {
-    const day = today.getDay();
-    const mondayOffset = day === 0 ? -6 : 1 - day;
-    start.setDate(today.getDate() + mondayOffset);
-    end.setDate(start.getDate() + 6);
-    return { dateFrom: toInputDate(start), dateTo: toInputDate(end) };
-  }
-
-  start.setDate(1);
-  end.setMonth(end.getMonth() + 1, 0);
-  return { dateFrom: toInputDate(start), dateTo: toInputDate(end) };
-};
-
 const presetLabel: Record<Exclude<QuickDatePreset, null>, string> = {
   today: 'Сегодня',
+  tomorrow: 'Завтра',
   week: 'Неделя',
   month: 'Месяц',
   custom: 'Диапазон',
 };
+
+const DATE_PRESETS = ['today', 'tomorrow', 'week', 'month'] as const;
 
 export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarProps) => {
   const theme = useTheme();
@@ -107,7 +83,7 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
           backgroundColor: colors.bgElevated,
         }}
       >
-        {(['today', 'week', 'month'] as const).map((preset, index, arr) => {
+        {DATE_PRESETS.map((preset, index, arr) => {
           const isActive = value.datePreset === preset;
           return (
             <button

@@ -9,7 +9,10 @@ export type ColumnConfig = {
   visible: boolean;
 };
 
+export type DealBoardDatePreset = 'today' | 'tomorrow' | 'week' | 'month' | 'future' | 'custom';
+
 export type DealBoardFilters = {
+  datePreset?: DealBoardDatePreset;
   dateFrom?: string;
   dateTo?: string;
   stages?: LineItemStage[];
