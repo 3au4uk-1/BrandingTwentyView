@@ -1,11 +1,9 @@
-import { getStageColor } from 'src/constants/stages';
-
 import { DynamicFieldCell } from '../cells/DynamicFieldCell';
-import { getChipPalette, type ChipColor } from '../Chip';
 import type { FieldDescriptor } from '../metadata/types';
 import { useTheme } from '../theme/ThemeContext';
 import { getColumnWidth, getTableLayoutStyle, sumColumnWidths } from '../utils/columns';
 import { resolveFieldValue } from '../utils/resolve-field-value';
+import { getStageRowStyles } from '../utils/stage-row-styles';
 
 import type { ColumnConfig, LineItemRow } from '../types';
 import { ResizableColumnHeader } from './ResizableColumnHeader';
@@ -32,12 +30,6 @@ export const LineItemsTable = ({
   const theme = useTheme();
   const { colorScheme, colors, font, spacing } = theme;
   const tableStyle = getTableLayoutStyle(columns, sumColumnWidths(columns));
-
-  const getRowBackground = (stage: LineItemRow['stage']) =>
-    getChipPalette(getStageColor(stage ?? 'NOVYY') as ChipColor, colorScheme).bg;
-
-  const getStageAccent = (stage: LineItemRow['stage']) =>
-    getChipPalette(getStageColor(stage ?? 'NOVYY') as ChipColor, colorScheme).text;
 
   if (!items.length) {
     return (
@@ -93,8 +85,7 @@ export const LineItemsTable = ({
           </thead>
           <tbody>
             {items.map((item, rowIndex) => {
-              const rowBackground = getRowBackground(item.stage);
-              const stageAccent = getStageAccent(item.stage);
+              const stageStyles = getStageRowStyles(item.stage, colorScheme);
 
               return (
                 <tr
@@ -102,9 +93,9 @@ export const LineItemsTable = ({
                   style={{
                     borderBottom:
                       rowIndex < items.length - 1 ? `1px solid ${colors.borderSubtle}` : 'none',
-                    backgroundColor: rowBackground,
+                    backgroundColor: stageStyles.backgroundColor,
                     transition: 'background-color 0.12s ease',
-                    boxShadow: `inset 3px 0 0 ${stageAccent}`,
+                    boxShadow: stageStyles.boxShadow,
                   }}
                 >
                   {columns.map((column) => {

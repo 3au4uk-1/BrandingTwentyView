@@ -43,6 +43,7 @@ export type OpportunityRow = {
   tonyLink?: { primaryLinkUrl?: string };
   bitrixLink?: { primaryLinkUrl?: string };
   oplata?: string | null;
+  stage?: string | null;
   [key: string]: unknown;
 };
 
