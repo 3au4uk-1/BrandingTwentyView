@@ -1,4 +1,4 @@
-import type { MouseEvent, ReactNode } from 'react';
+import { useEffect, type MouseEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 import type { ThemeTokens } from '../theme/tokens';
@@ -29,6 +29,18 @@ export const Modal = ({
 }: ModalProps) => {
   const portalHostRef = usePortalHost();
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+
+    const view = typeof window !== 'undefined' ? window : undefined;
+    view?.addEventListener('keydown', handleKeyDown);
+    return () => view?.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const { colors, radius, font, spacing, zIndex } = theme;
@@ -36,33 +48,42 @@ export const Modal = ({
     theme.colorScheme === 'dark' ? 'rgba(0, 0, 0, 0.72)' : 'rgba(24, 24, 27, 0.32)';
 
   const handleBackdropMouseDown = (event: MouseEvent<HTMLDivElement>) => {
-    if (event.target === event.currentTarget) {
-      onClose();
-    }
+    event.preventDefault();
+    onClose();
   };
 
   const modal = (
     <div
       role="presentation"
-      onMouseDown={handleBackdropMouseDown}
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: zIndex.modal,
-        backgroundColor: overlayBg,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: spacing.xl,
         boxSizing: 'border-box',
+        pointerEvents: 'none',
       }}
     >
+      <div
+        aria-hidden="true"
+        onMouseDown={handleBackdropMouseDown}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundColor: overlayBg,
+          pointerEvents: 'auto',
+        }}
+      />
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        onMouseDown={(event) => event.stopPropagation()}
         style={{
+          position: 'relative',
+          zIndex: 1,
           width: '100%',
           maxWidth: '440px',
           border: `1px solid ${colors.border}`,
@@ -71,6 +92,7 @@ export const Modal = ({
           color: colors.text,
           boxShadow: colors.shadowLg,
           overflow: 'hidden',
+          pointerEvents: 'auto',
         }}
       >
         <div style={{ padding: `${spacing.lg} ${spacing.lg} ${spacing.md}` }}>
