@@ -40,7 +40,13 @@ export const useColumnResize = (
   }, [columns]);
 
   const beginResize = useCallback(
-    (event: MouseEvent, field: string, startWidth: number, scaleSource?: HTMLElement | null) => {
+    (
+      event: MouseEvent | PointerEvent,
+      field: string,
+      startWidth: number,
+      scaleSource?: HTMLElement | null,
+      captureTarget?: HTMLElement | null,
+    ) => {
       event.preventDefault();
       event.stopPropagation();
 
@@ -51,9 +57,17 @@ export const useColumnResize = (
         field,
         startX: event.clientX,
         startWidth: Math.max(MIN_COLUMN_WIDTH, startWidth || DEFAULT_COLUMN_WIDTH),
-        scaleX: getElementScaleX(scaleSource ?? (event.currentTarget as HTMLElement | null)),
+        scaleX: getElementScaleX(scaleSource ?? captureTarget ?? null),
       };
       setIsResizing(true);
+
+      if ('pointerId' in event && captureTarget && typeof captureTarget.setPointerCapture === 'function') {
+        try {
+          captureTarget.setPointerCapture(event.pointerId);
+        } catch {
+          // Pointer capture may be unavailable in the worker runtime.
+        }
+      }
     },
     [],
   );
@@ -84,19 +98,11 @@ export const useColumnResize = (
   }, []);
 
   useEffect(() => {
-    if (!isResizing) return;
-
-    const onMove = (event: MouseEvent) => handleResizeMove(event.clientX);
-    const onUp = () => finishResize();
-
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-
     return () => {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
+      activeResizeRef.current = null;
+      isDraggingRef.current = false;
     };
-  }, [finishResize, handleResizeMove, isResizing]);
+  }, []);
 
   return {
     displayColumns,

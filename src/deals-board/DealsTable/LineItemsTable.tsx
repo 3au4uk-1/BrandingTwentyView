@@ -12,10 +12,11 @@ type LineItemsTableProps = {
   columns: ColumnConfig[];
   descriptorByField: Map<string, FieldDescriptor>;
   onColumnResizeStart: (
-    event: MouseEvent,
+    event: MouseEvent | PointerEvent,
     field: string,
     startWidth: number,
     scaleSource?: HTMLElement | null,
+    captureTarget?: HTMLElement | null,
   ) => void;
 };
 

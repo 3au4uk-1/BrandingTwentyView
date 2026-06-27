@@ -7,10 +7,11 @@ import type { ColumnConfig } from '../types';
 type ResizableColumnHeaderProps = {
   column: ColumnConfig;
   onResizeStart: (
-    event: MouseEvent,
+    event: MouseEvent | PointerEvent,
     field: string,
     startWidth: number,
     scaleSource?: HTMLElement | null,
+    captureTarget?: HTMLElement | null,
   ) => void;
   stickyStyle?: CSSProperties;
   children: ReactNode;
@@ -37,9 +38,20 @@ export const ResizableColumnHeader = ({
     const handle = handleRef.current;
     if (!handle) return;
 
-    const onMouseDown = (event: MouseEvent) => {
-      onResizeStartRef.current(event, column.field, width, headerRef.current);
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.button !== 0) return;
+      onResizeStartRef.current(event, column.field, width, headerRef.current, handle);
     };
+
+    const onMouseDown = (event: MouseEvent) => {
+      if (event.button !== 0) return;
+      onResizeStartRef.current(event, column.field, width, headerRef.current, handle);
+    };
+
+    if (typeof window !== 'undefined' && 'PointerEvent' in window) {
+      handle.addEventListener('pointerdown', onPointerDown);
+      return () => handle.removeEventListener('pointerdown', onPointerDown);
+    }
 
     handle.addEventListener('mousedown', onMouseDown);
     return () => handle.removeEventListener('mousedown', onMouseDown);

@@ -22,7 +22,7 @@ import { QuickFiltersBar, type QuickFiltersValue } from './QuickFiltersBar';
 import type { DealBoardViewRecord, LineItemRow, OpportunityRow } from './types';
 import { ThemeProvider, useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
-import { mergeStageFilters } from './utils/filters';
+import { DEALS_BOARD_ROOT_ID } from './utils/dom';
 import { asArray } from './utils/parse-json-field';
 import { ViewSettingsModal } from './ViewSettingsModal';
 import { ViewSwitcher } from './ViewSwitcher';
@@ -225,7 +225,9 @@ const DealsBoardContent = () => {
 
   return (
     <div
+      id={DEALS_BOARD_ROOT_ID}
       style={{
+        position: 'relative',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',

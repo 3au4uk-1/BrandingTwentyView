@@ -122,6 +122,8 @@ export const DealsTable = ({
   const {
     displayColumns: displayParentColumns,
     beginResize: beginParentResize,
+    handleResizeMove: handleParentResizeMove,
+    finishResize: finishParentResize,
     isResizing: isParentResizing,
   } = useColumnResize(
     parentColumns,
@@ -133,6 +135,8 @@ export const DealsTable = ({
   const {
     displayColumns: displayChildColumns,
     beginResize: beginChildResize,
+    handleResizeMove: handleChildResizeMove,
+    finishResize: finishChildResize,
     isResizing: isChildResizing,
   } = useColumnResize(
     childColumns,
@@ -143,6 +147,19 @@ export const DealsTable = ({
   );
 
   const isResizing = isParentResizing || isChildResizing;
+
+  const handlePointerMove = useCallback(
+    (clientX: number) => {
+      if (isParentResizing) handleParentResizeMove(clientX);
+      if (isChildResizing) handleChildResizeMove(clientX);
+    },
+    [handleChildResizeMove, handleParentResizeMove, isChildResizing, isParentResizing],
+  );
+
+  const handlePointerEnd = useCallback(() => {
+    finishParentResize();
+    finishChildResize();
+  }, [finishChildResize, finishParentResize]);
 
   const layoutParentColumns = useMemo(() => {
     if (parentUserSized) return displayParentColumns;
@@ -231,11 +248,22 @@ export const DealsTable = ({
     >
       <div
         ref={scrollRef}
+        onPointerMove={(event) => {
+          if (!isResizing) return;
+          handlePointerMove(event.clientX);
+        }}
+        onPointerUp={handlePointerEnd}
+        onPointerCancel={handlePointerEnd}
+        onMouseMove={(event) => {
+          if (!isResizing) return;
+          handlePointerMove(event.clientX);
+        }}
+        onMouseUp={handlePointerEnd}
+        onMouseLeave={handlePointerEnd}
         style={{
           flex: 1,
           minHeight: 0,
           overflow: 'auto',
-          cursor: isResizing ? 'col-resize' : undefined,
           userSelect: isResizing ? 'none' : undefined,
         }}
       >

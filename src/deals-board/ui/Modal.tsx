@@ -2,6 +2,7 @@ import type { MouseEvent, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 import type { ThemeTokens } from '../theme/tokens';
+import { getModalPortalContainer } from '../utils/dom';
 import { Button } from './Button';
 
 type ModalProps = {
@@ -12,6 +13,8 @@ type ModalProps = {
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
+  /** Where to mount the overlay. Default: document.body. Use "root" for nested cell editors. */
+  portalTarget?: 'body' | 'root' | 'inline';
 };
 
 export const Modal = ({
@@ -22,6 +25,7 @@ export const Modal = ({
   onClose,
   children,
   footer,
+  portalTarget = 'body',
 }: ModalProps) => {
   if (!isOpen) return null;
 
@@ -105,5 +109,14 @@ export const Modal = ({
     </div>
   );
 
-  return createPortal(modal, document.body);
+  if (portalTarget === 'inline') {
+    return modal;
+  }
+
+  if (typeof document !== 'undefined') {
+    const container = portalTarget === 'root' ? getModalPortalContainer() : document.body;
+    return createPortal(modal, container);
+  }
+
+  return modal;
 };

@@ -1,12 +1,12 @@
-import { useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useState, type MouseEvent as ReactMouseEvent } from 'react';
 
 import { useUpdateLineItem } from '../hooks/useLineItems';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
-import { AnchorPopover, type AnchorPoint } from '../ui/AnchorPopover';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { ExternalLinkIcon, LinkIcon } from '../ui/Icons';
+import { Modal } from '../ui/Modal';
 
 type LinkCellProps = {
   itemId: string;
@@ -17,21 +17,17 @@ export const LinkCell = ({ itemId, value }: LinkCellProps) => {
   const theme = useTheme();
   const { colors, font, spacing } = theme;
   const updateMutation = useUpdateLineItem();
-  const anchorRef = useRef<HTMLButtonElement | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [anchorPoint, setAnchorPoint] = useState<AnchorPoint | null>(null);
   const [draftValue, setDraftValue] = useState(value?.primaryLinkUrl ?? '');
 
   const openEditor = (event: ReactMouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
-    setAnchorPoint({ x: event.clientX, y: event.clientY });
     setDraftValue(value?.primaryLinkUrl ?? '');
     setIsEditing(true);
   };
 
   const closeEditor = () => {
     setIsEditing(false);
-    setAnchorPoint(null);
     setDraftValue(value?.primaryLinkUrl ?? '');
   };
 
@@ -84,7 +80,6 @@ export const LinkCell = ({ itemId, value }: LinkCellProps) => {
         ) : null}
 
         <button
-          ref={anchorRef}
           type="button"
           onClick={openEditor}
           onMouseDown={(event) => event.stopPropagation()}
@@ -109,13 +104,28 @@ export const LinkCell = ({ itemId, value }: LinkCellProps) => {
         </button>
       </div>
 
-      <AnchorPopover
+      <Modal
         theme={theme}
         isOpen={isEditing}
+        title="Ссылка на макеты"
         onClose={closeEditor}
-        anchorRef={anchorRef}
-        anchorPoint={anchorPoint}
-        width={340}
+        portalTarget="root"
+        footer={
+          <>
+            <Button theme={theme} variant="ghost" size="sm" onClick={closeEditor}>
+              Отмена
+            </Button>
+            <Button
+              theme={theme}
+              variant="primary"
+              size="sm"
+              onClick={() => void save()}
+              disabled={updateMutation.isPending}
+            >
+              Сохранить
+            </Button>
+          </>
+        }
       >
         <Input
           theme={theme}
@@ -135,22 +145,7 @@ export const LinkCell = ({ itemId, value }: LinkCellProps) => {
           }}
           style={{ width: '100%', padding: '6px 8px', fontSize: font.sizeSm }}
         />
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: spacing.sm,
-            marginTop: spacing.sm,
-          }}
-        >
-          <Button theme={theme} variant="ghost" size="sm" onClick={closeEditor}>
-            Отмена
-          </Button>
-          <Button theme={theme} variant="primary" size="sm" onClick={() => void save()} disabled={updateMutation.isPending}>
-            Сохранить
-          </Button>
-        </div>
-      </AnchorPopover>
+      </Modal>
     </>
   );
 };

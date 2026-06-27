@@ -1,11 +1,11 @@
-import { useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useState, type MouseEvent as ReactMouseEvent } from 'react';
 
 import { useUpdateLineItem } from '../hooks/useLineItems';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
-import { AnchorPopover, type AnchorPoint } from '../ui/AnchorPopover';
 import { Button } from '../ui/Button';
 import { Textarea } from '../ui/Input';
+import { Modal } from '../ui/Modal';
 
 type RichTextPopoverProps = {
   itemId: string;
@@ -18,25 +18,24 @@ const previewText = (value?: string) => {
   return text?.length ? text : EMPTY_VALUE;
 };
 
+const fieldTitle = (field: RichTextPopoverProps['field']) =>
+  field === 'plenka.markdown' ? 'Плёнка' : 'Комментарий';
+
 export const RichTextPopover = ({ itemId, value, field }: RichTextPopoverProps) => {
   const theme = useTheme();
   const { colors, font } = theme;
   const updateMutation = useUpdateLineItem();
-  const anchorRef = useRef<HTMLButtonElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [anchorPoint, setAnchorPoint] = useState<AnchorPoint | null>(null);
   const [draftValue, setDraftValue] = useState(value ?? '');
 
   const open = (event: ReactMouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
-    setAnchorPoint({ x: event.clientX, y: event.clientY });
     setDraftValue(value ?? '');
     setIsOpen(true);
   };
 
   const close = () => {
     setDraftValue(value ?? '');
-    setAnchorPoint(null);
     setIsOpen(false);
   };
 
@@ -65,7 +64,6 @@ export const RichTextPopover = ({ itemId, value, field }: RichTextPopoverProps) 
   return (
     <>
       <button
-        ref={anchorRef}
         type="button"
         onClick={open}
         onMouseDown={(event) => event.stopPropagation()}
@@ -89,13 +87,28 @@ export const RichTextPopover = ({ itemId, value, field }: RichTextPopoverProps) 
         {previewText(value)}
       </button>
 
-      <AnchorPopover
+      <Modal
         theme={theme}
         isOpen={isOpen}
+        title={fieldTitle(field)}
         onClose={close}
-        anchorRef={anchorRef}
-        anchorPoint={anchorPoint}
-        width={320}
+        portalTarget="root"
+        footer={
+          <>
+            <Button theme={theme} variant="ghost" size="sm" onClick={close}>
+              Отмена
+            </Button>
+            <Button
+              theme={theme}
+              variant="primary"
+              size="sm"
+              onClick={() => void save()}
+              disabled={updateMutation.isPending}
+            >
+              Сохранить
+            </Button>
+          </>
+        }
       >
         <Textarea
           theme={theme}
@@ -103,31 +116,9 @@ export const RichTextPopover = ({ itemId, value, field }: RichTextPopoverProps) 
           value={draftValue}
           onChange={(event) => setDraftValue(event.target.value)}
           rows={6}
-          style={{ fontSize: font.sizeSm }}
+          style={{ width: '100%', fontSize: font.sizeSm }}
         />
-
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: theme.spacing.sm,
-            marginTop: theme.spacing.sm,
-          }}
-        >
-          <Button theme={theme} variant="ghost" size="sm" onClick={close}>
-            Отмена
-          </Button>
-          <Button
-            theme={theme}
-            variant="primary"
-            size="sm"
-            onClick={() => void save()}
-            disabled={updateMutation.isPending}
-          >
-            Сохранить
-          </Button>
-        </div>
-      </AnchorPopover>
+      </Modal>
     </>
   );
 };

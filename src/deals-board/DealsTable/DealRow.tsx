@@ -18,10 +18,11 @@ type DealRowProps = {
   onHoverChange: (hovered: boolean) => void;
   onToggleExpand: (id: string) => void;
   onChildColumnResizeStart: (
-    event: MouseEvent,
+    event: MouseEvent | PointerEvent,
     field: string,
     startWidth: number,
     scaleSource?: HTMLElement | null,
+    captureTarget?: HTMLElement | null,
   ) => void;
 };
 
