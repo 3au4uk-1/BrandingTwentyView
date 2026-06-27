@@ -57,12 +57,3 @@ export const getPortalContainer = (anchor: unknown): Element => {
 
   return document.body;
 };
-
-/** Modal portal inside the widget root — visible in the Twenty front component worker. */
-export const getModalPortalContainer = (): Element => {
-  if (typeof document === 'undefined') {
-    throw new Error('document is unavailable');
-  }
-
-  return document.getElementById(DEALS_BOARD_ROOT_ID) ?? document.body;
-};

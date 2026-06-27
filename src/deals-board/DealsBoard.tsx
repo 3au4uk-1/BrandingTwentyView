@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   DEFAULT_CHILD_COLUMNS,
@@ -22,6 +22,7 @@ import { QuickFiltersBar, type QuickFiltersValue } from './QuickFiltersBar';
 import type { DealBoardViewRecord, LineItemRow, OpportunityRow } from './types';
 import { ThemeProvider, useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
+import { PortalHostProvider } from './ui/PortalHostContext';
 import { DEALS_BOARD_ROOT_ID } from './utils/dom';
 import { mergeStageFilters } from './utils/filters';
 import { asArray } from './utils/parse-json-field';
@@ -43,6 +44,7 @@ const DEFAULT_QUICK_FILTERS: QuickFiltersValue = {
 const DealsBoardContent = () => {
   const theme = useTheme();
   const { colors, font, spacing } = theme;
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const viewsQuery = useDealBoardViews();
   const updateViewMutation = useUpdateDealBoardView();
   const [activeViewId, setActiveViewId] = useState<string>();
@@ -225,9 +227,11 @@ const DealsBoardContent = () => {
   };
 
   return (
-    <div
-      id={DEALS_BOARD_ROOT_ID}
-      style={{
+    <PortalHostProvider hostRef={rootRef}>
+      <div
+        ref={rootRef}
+        id={DEALS_BOARD_ROOT_ID}
+        style={{
         position: 'relative',
         height: '100%',
         display: 'flex',
@@ -384,6 +388,7 @@ const DealsBoardContent = () => {
         onSaved={(view) => setActiveViewId(view.id)}
       />
     </div>
+    </PortalHostProvider>
   );
 };
 

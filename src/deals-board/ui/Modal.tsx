@@ -2,7 +2,7 @@ import type { MouseEvent, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 import type { ThemeTokens } from '../theme/tokens';
-import { getModalPortalContainer } from '../utils/dom';
+import { resolvePortalContainer, usePortalHost } from './PortalHostContext';
 import { Button } from './Button';
 
 type ModalProps = {
@@ -27,6 +27,8 @@ export const Modal = ({
   footer,
   portalTarget = 'body',
 }: ModalProps) => {
+  const portalHostRef = usePortalHost();
+
   if (!isOpen) return null;
 
   const { colors, radius, font, spacing, zIndex } = theme;
@@ -113,8 +115,8 @@ export const Modal = ({
     return modal;
   }
 
-  if (typeof document !== 'undefined') {
-    const container = portalTarget === 'root' ? getModalPortalContainer() : document.body;
+  const container = resolvePortalContainer(portalTarget, portalHostRef);
+  if (container) {
     return createPortal(modal, container);
   }
 

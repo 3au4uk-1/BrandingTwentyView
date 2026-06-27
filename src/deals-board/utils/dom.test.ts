@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { getModalPortalContainer, getPortalContainer } from './dom';
+import { resolvePortalContainer } from '../ui/PortalHostContext';
+import { getPortalContainer } from './dom';
 
 describe('getPortalContainer', () => {
   afterEach(() => {
@@ -23,19 +24,26 @@ describe('getPortalContainer', () => {
   });
 });
 
-describe('getModalPortalContainer', () => {
+describe('resolvePortalContainer', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
-  it('prefers the deals-board root element', () => {
-    const body = { tagName: 'BODY' } as unknown as HTMLBodyElement;
-    const root = { tagName: 'DIV' } as unknown as HTMLDivElement;
-    vi.stubGlobal('document', {
-      body,
-      getElementById: (id: string) => (id === 'deals-board-root' ? root : null),
-    });
+  it('uses the portal host ref for root targets', () => {
+    const host = { tagName: 'DIV' } as unknown as HTMLDivElement;
+    const hostRef = { current: host };
 
-    expect(getModalPortalContainer()).toBe(root);
+    expect(resolvePortalContainer('root', hostRef)).toBe(host);
+  });
+
+  it('falls back to null when root host ref is empty', () => {
+    expect(resolvePortalContainer('root', { current: null })).toBeNull();
+  });
+
+  it('uses document.body for body targets when available', () => {
+    const body = { tagName: 'BODY' } as unknown as HTMLBodyElement;
+    vi.stubGlobal('document', { body });
+
+    expect(resolvePortalContainer('body', null)).toBe(body);
   });
 });
