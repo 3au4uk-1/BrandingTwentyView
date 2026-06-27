@@ -4,6 +4,11 @@ import type { DealBoardFilters } from '../types';
 
 export type DatePreset = 'today' | 'tomorrow' | 'week' | 'month' | 'future' | 'custom';
 
+export type LocalDayBounds = {
+  gte: string;
+  lt: string;
+};
+
 export const toInputDate = (date: Date): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -15,6 +20,22 @@ export const addDays = (date: Date, days: number): Date => {
   const next = new Date(date);
   next.setDate(next.getDate() + days);
   return next;
+};
+
+const parseInputDate = (inputDate: string): Date => {
+  const [year, month, day] = inputDate.split('-').map(Number);
+  return new Date(year, month - 1, day, 0, 0, 0, 0);
+};
+
+/** Inclusive local calendar day as ISO datetime bounds for DATE_TIME fields. */
+export const getLocalDayBounds = (inputDate: string): LocalDayBounds => {
+  const start = parseInputDate(inputDate);
+  const endExclusive = addDays(start, 1);
+
+  return {
+    gte: start.toISOString(),
+    lt: endExclusive.toISOString(),
+  };
 };
 
 export const getTodayInputDate = (): string => toInputDate(new Date());
@@ -72,10 +93,25 @@ const buildDateFieldRangeFilter = (
   dateFrom?: string,
   dateTo?: string,
 ): Record<string, unknown> | undefined => {
+  if (!dateFrom && !dateTo) {
+    return undefined;
+  }
+
+  if (dateFrom && dateTo && dateFrom === dateTo) {
+    const bounds = getLocalDayBounds(dateFrom);
+    return {
+      and: [{ [field]: { gte: bounds.gte } }, { [field]: { lt: bounds.lt } }],
+    };
+  }
+
   const conditions: Record<string, unknown>[] = [];
-  if (dateFrom) conditions.push({ [field]: { gte: dateFrom } });
-  if (dateTo) conditions.push({ [field]: { lte: dateTo } });
-  if (!conditions.length) return undefined;
+  if (dateFrom) {
+    conditions.push({ [field]: { gte: getLocalDayBounds(dateFrom).gte } });
+  }
+  if (dateTo) {
+    conditions.push({ [field]: { lt: getLocalDayBounds(dateTo).lt } });
+  }
+
   return conditions.length === 1 ? conditions[0] : { and: conditions };
 };
 
@@ -87,8 +123,9 @@ export const buildOpportunityDateFilter = (
   const { dateFrom, dateTo } = resolveDealBoardDateRange(filters);
 
   if (filters.datePreset === 'future') {
+    const todayBounds = getLocalDayBounds(getTodayInputDate());
     return {
-      [dateField]: { gt: getTodayInputDate() },
+      [dateField]: { gte: todayBounds.lt },
     };
   }
 
