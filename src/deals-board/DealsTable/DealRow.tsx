@@ -6,6 +6,8 @@ import { EMPTY_VALUE } from '../theme/tokens';
 import { ChevronRightIcon } from '../ui/Icons';
 
 import type { ColumnConfig, LineItemRow, OpportunityRow } from '../types';
+import { getColumnWidth } from '../utils/columns';
+import type { ColumnResizeStartEvent } from '../hooks/useColumnResize';
 import { DealSummaryChips } from './DealSummaryChips';
 import { LineItemsTable } from './LineItemsTable';
 
@@ -36,8 +38,9 @@ type DealRowProps = {
   isHovered: boolean;
   onHoverChange: (hovered: boolean) => void;
   onToggleExpand: (id: string) => void;
+  childUserSized: boolean;
   onChildColumnResizeStart: (
-    event: React.MouseEvent<HTMLDivElement>,
+    event: ColumnResizeStartEvent,
     field: string,
     startWidth: number,
   ) => void;
@@ -52,6 +55,7 @@ export const DealRow = ({
   isHovered,
   onHoverChange,
   onToggleExpand,
+  childUserSized,
   onChildColumnResizeStart,
 }: DealRowProps) => {
   const theme = useTheme();
@@ -188,14 +192,16 @@ export const DealRow = ({
             <td
               key={column.field}
               style={{
-                width: column.width ? `${column.width}px` : 'auto',
-                maxWidth: column.width ? `${column.width}px` : undefined,
+                width: `${getColumnWidth(column)}px`,
+                maxWidth: `${getColumnWidth(column)}px`,
+                minWidth: `${getColumnWidth(column)}px`,
                 padding: '10px 12px',
                 fontSize: font.sizeSm,
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 color: colors.textSecondary,
+                boxSizing: 'border-box',
                 ...(column.field === 'name'
                   ? {
                       position: 'sticky' as const,
@@ -225,6 +231,7 @@ export const DealRow = ({
             <LineItemsTable
               items={lineItems}
               columns={childColumns}
+              userSized={childUserSized}
               onColumnResizeStart={onChildColumnResizeStart}
             />
           </td>

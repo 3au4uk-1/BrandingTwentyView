@@ -1,16 +1,13 @@
-import type { CSSProperties, MouseEvent as ReactMouseEvent, ReactNode } from 'react';
+import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 
 import { useTheme } from '../theme/ThemeContext';
-import { DEFAULT_COLUMN_WIDTH } from '../utils/columns';
+import { getColumnWidth } from '../utils/columns';
+import type { ColumnResizeStartEvent } from '../hooks/useColumnResize';
 import type { ColumnConfig } from '../types';
 
 type ResizableColumnHeaderProps = {
   column: ColumnConfig;
-  onResizeStart: (
-    event: ReactMouseEvent<HTMLDivElement>,
-    field: string,
-    startWidth: number,
-  ) => void;
+  onResizeStart: (event: ColumnResizeStartEvent, field: string, startWidth: number) => void;
   stickyStyle?: CSSProperties;
   children: ReactNode;
   compact?: boolean;
@@ -24,8 +21,33 @@ export const ResizableColumnHeader = ({
   compact = false,
 }: ResizableColumnHeaderProps) => {
   const theme = useTheme();
-  const { colors, font } = theme;
-  const width = column.width ?? DEFAULT_COLUMN_WIDTH;
+  const { colors, font, zIndex } = theme;
+  const width = getColumnWidth(column);
+  const handleRef = useRef<HTMLDivElement | null>(null);
+  const onResizeStartRef = useRef(onResizeStart);
+
+  onResizeStartRef.current = onResizeStart;
+
+  useEffect(() => {
+    const handle = handleRef.current;
+    if (!handle) return;
+
+    const onMouseDown = (event: MouseEvent) => {
+      onResizeStartRef.current(
+        {
+          clientX: event.clientX,
+          currentTarget: handle,
+          preventDefault: () => event.preventDefault(),
+          stopPropagation: () => event.stopPropagation(),
+        },
+        column.field,
+        width,
+      );
+    };
+
+    handle.addEventListener('mousedown', onMouseDown);
+    return () => handle.removeEventListener('mousedown', onMouseDown);
+  }, [column.field, width]);
 
   return (
     <th
@@ -52,30 +74,30 @@ export const ResizableColumnHeader = ({
         {children}
       </span>
       <div
+        ref={handleRef}
         role="separator"
         aria-orientation="vertical"
         aria-label={`Изменить ширину колонки ${column.label}`}
-        onMouseDown={(event) => onResizeStart(event, column.field, width)}
         style={{
           position: 'absolute',
           top: 0,
           right: 0,
-          width: '10px',
+          width: '12px',
           height: '100%',
           cursor: 'col-resize',
           touchAction: 'none',
-          zIndex: 1,
+          zIndex: zIndex.dropdown,
         }}
       >
         <div
           style={{
             position: 'absolute',
-            top: '20%',
-            bottom: '20%',
-            right: '4px',
+            top: '18%',
+            bottom: '18%',
+            right: '5px',
             width: '2px',
             backgroundColor: colors.borderStrong,
-            opacity: 0.75,
+            opacity: 0.85,
             pointerEvents: 'none',
           }}
         />
