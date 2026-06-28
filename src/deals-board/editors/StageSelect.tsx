@@ -3,17 +3,23 @@ import { useMemo } from 'react';
 import { LINE_ITEM_STAGES, type LineItemStage } from 'src/constants/stages';
 
 import { useUpdateLineItem } from '../hooks/useLineItems';
+import { useUpdateRecord } from '../hooks/useUpdateRecord';
+import type { BoardObjectName } from '../metadata/types';
 import { useTheme } from '../theme/ThemeContext';
 import { Select } from '../ui/Input';
 
 type StageSelectProps = {
-  itemId: string;
+  objectName: BoardObjectName;
+  recordId: string;
   value?: LineItemStage | null;
 };
 
-export const StageSelect = ({ itemId, value }: StageSelectProps) => {
+export const StageSelect = ({ objectName, recordId, value }: StageSelectProps) => {
   const theme = useTheme();
-  const updateMutation = useUpdateLineItem();
+  const updateLineItemMutation = useUpdateLineItem();
+  const updateOpportunityMutation = useUpdateRecord('opportunity');
+  const updateMutation =
+    objectName === 'dealLineItem' ? updateLineItemMutation : updateOpportunityMutation;
   const selectedValue = useMemo(() => value ?? 'NOVYY', [value]);
 
   const handleChange = async (nextValue: string) => {
@@ -24,7 +30,7 @@ export const StageSelect = ({ itemId, value }: StageSelectProps) => {
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
         await updateMutation.mutateAsync({
-          id: itemId,
+          id: recordId,
           data: { stage: nextValue as LineItemStage },
         });
         return;

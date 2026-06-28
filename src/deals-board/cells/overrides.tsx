@@ -191,7 +191,13 @@ export const renderFieldOverride = (props: FieldOverrideProps): ReactNode | null
     case 'name':
       return variant === 'parent' ? <ParentNameCell {...props} /> : <ChildNameCell {...props} />;
     case 'stage':
-      return <StageSelect itemId={recordId} value={value as LineItemStage | null | undefined} />;
+      return (
+        <StageSelect
+          objectName={variant === 'parent' ? 'opportunity' : 'dealLineItem'}
+          recordId={recordId}
+          value={value as LineItemStage | null | undefined}
+        />
+      );
     case 'ssylkaNaMakety':
       return (
         <LinkCell
