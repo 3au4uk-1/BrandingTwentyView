@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 
 import { getOpportunityLinkButtonLabel } from 'src/constants/opportunity-links';
 
@@ -15,6 +15,8 @@ import type { FieldDescriptor } from '../metadata/types';
 import type { LineItemRow } from '../types';
 
 import { DealSummaryChips } from '../DealsTable/DealSummaryChips';
+
+import { openRecordSidePanel } from '../utils/open-record-side-panel';
 
 import { formatReadOnlyValue } from './format-read-only-value';
 
@@ -42,6 +44,11 @@ const ParentNameCell = ({
   const { colors, font, spacing } = theme;
   const canExpand = (lineItems?.length ?? 0) > 0;
   const name = typeof value === 'string' ? value : '';
+
+  const handleOpenRecord = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    void openRecordSidePanel('opportunity', recordId);
+  };
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, minWidth: 0 }}>
@@ -73,17 +80,28 @@ const ParentNameCell = ({
       ) : (
         <span style={{ width: '22px', minWidth: '22px' }} />
       )}
-      <span
+      <button
+        type="button"
+        onClick={handleOpenRecord}
+        title={name}
         style={{
           minWidth: 0,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           fontWeight: font.weightMedium,
-          color: colors.text,
+          color: colors.accentText,
+          border: 'none',
+          background: 'transparent',
+          padding: 0,
+          cursor: 'pointer',
+          textAlign: 'left',
+          fontFamily: 'inherit',
+          fontSize: 'inherit',
+          whiteSpace: 'nowrap',
         }}
       >
         {name}
-      </span>
+      </button>
     </div>
   );
 };
