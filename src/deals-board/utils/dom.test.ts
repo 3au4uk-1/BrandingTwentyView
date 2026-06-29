@@ -1,7 +1,17 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { resolvePortalContainer } from '../ui/PortalHostContext';
-import { getPortalContainer } from './dom';
+import { getPortalContainer, isMeasurableElement } from './dom';
+
+describe('isMeasurableElement', () => {
+  it('accepts elements with getBoundingClientRect', () => {
+    expect(isMeasurableElement({ getBoundingClientRect: () => ({}) })).toBe(true);
+  });
+
+  it('rejects proxies without measurable DOM methods', () => {
+    expect(isMeasurableElement({})).toBe(false);
+  });
+});
 
 describe('getPortalContainer', () => {
   afterEach(() => {

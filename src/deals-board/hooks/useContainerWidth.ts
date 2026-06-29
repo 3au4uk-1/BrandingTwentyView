@@ -1,5 +1,7 @@
 import { useLayoutEffect, useState, type RefObject } from 'react';
 
+import { DEALS_BOARD_ROOT_ID } from './dom';
+
 const measureElementWidth = (element: HTMLElement): number => {
   const width = element.clientWidth;
   if (width > 0) return Math.floor(width);
@@ -7,8 +9,17 @@ const measureElementWidth = (element: HTMLElement): number => {
   const parentWidth = element.parentElement?.clientWidth ?? 0;
   if (parentWidth > 0) return Math.floor(parentWidth);
 
-  const view = element.ownerDocument?.defaultView ?? window;
-  return Math.floor(view.innerWidth);
+  if (typeof document !== 'undefined') {
+    const root = document.getElementById(DEALS_BOARD_ROOT_ID);
+    if (root && root.clientWidth > 0) return Math.floor(root.clientWidth);
+  }
+
+  const view = element.ownerDocument?.defaultView;
+  if (view && typeof view.innerWidth === 'number' && view.innerWidth > 0) {
+    return Math.floor(view.innerWidth);
+  }
+
+  return 0;
 };
 
 export const useContainerWidth = (containerRef: RefObject<HTMLElement | null>) => {

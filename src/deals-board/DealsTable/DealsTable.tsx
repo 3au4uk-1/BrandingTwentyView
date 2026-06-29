@@ -19,6 +19,7 @@ import {
 } from '../utils/browser-storage';
 import { getTableLayoutStyle, layoutColumnsForContainer, visibleColumns } from '../utils/columns';
 import { DealRow } from './DealRow';
+import { ResizableColumnHeader } from './ResizableColumnHeader';
 
 type DealsTableProps = {
   activeView?: DealBoardViewRecord;
@@ -65,7 +66,7 @@ export const DealsTable = ({
   isViewLoading = false,
   errorMessage,
 }: DealsTableProps) => {  const theme = useTheme();
-  const { colors, font, spacing } = theme;
+  const { colors, font, spacing, zIndex } = theme;
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
   const { mode } = useExpandMode();
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -126,6 +127,10 @@ export const DealsTable = ({
 
   const {
     displayColumns: displayParentColumns,
+    beginResize: beginParentResize,
+    handleResizeMove: handleParentResizeMove,
+    finishResize: finishParentResize,
+    isResizing: isParentResizing,
   } = useColumnResize(
     parentColumns,
     handleParentColumnsSave,
@@ -135,6 +140,10 @@ export const DealsTable = ({
   );
   const {
     displayColumns: displayChildColumns,
+    beginResize: beginChildResize,
+    handleResizeMove: handleChildResizeMove,
+    finishResize: finishChildResize,
+    isResizing: isChildResizing,
   } = useColumnResize(
     childColumns,
     handleChildColumnsSave,
@@ -142,6 +151,21 @@ export const DealsTable = ({
       markColumnsUserSized('child');
     },
   );
+
+  const isResizing = isParentResizing || isChildResizing;
+
+  const handlePointerMove = useCallback(
+    (clientX: number) => {
+      if (isParentResizing) handleParentResizeMove(clientX);
+      if (isChildResizing) handleChildResizeMove(clientX);
+    },
+    [handleChildResizeMove, handleParentResizeMove, isChildResizing, isParentResizing],
+  );
+
+  const handlePointerEnd = useCallback(() => {
+    finishParentResize();
+    finishChildResize();
+  }, [finishChildResize, finishParentResize]);
 
   const layoutParentColumns = useMemo(() => {
     if (parentUserSized) return displayParentColumns;
@@ -231,11 +255,41 @@ export const DealsTable = ({
   const canNext = page < totalPages - 1;
 
   return (
-    <div ref={scrollRef} style={{ flex: '1 1 auto', minWidth: 0 }}>
+    <div
+      style={{
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        ref={scrollRef}
+        onPointerMove={(event) => {
+          if (!isResizing) return;
+          handlePointerMove(event.clientX);
+        }}
+        onPointerUp={handlePointerEnd}
+        onPointerCancel={handlePointerEnd}
+        onMouseMove={(event) => {
+          if (!isResizing) return;
+          handlePointerMove(event.clientX);
+        }}
+        onMouseUp={handlePointerEnd}
+        onMouseLeave={handlePointerEnd}
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflow: 'auto',
+          userSelect: isResizing ? 'none' : undefined,
+        }}
+      >
         <table
           style={{
             ...parentTableStyle,
-            borderCollapse: 'collapse',
+            borderCollapse: 'separate',
+            borderSpacing: 0,
             tableLayout: 'fixed',
             backgroundColor: colors.bg,
           }}
@@ -250,6 +304,36 @@ export const DealsTable = ({
               />
             ))}
           </colgroup>
+          <thead>
+            <tr
+              style={{
+                borderBottom: `1px solid ${colors.border}`,
+                backgroundColor: colors.bgSecondary,
+                boxShadow: `0 1px 0 ${colors.borderSubtle}`,
+              }}
+            >
+              {layoutParentColumns.map((column) => (
+                <ResizableColumnHeader
+                  key={column.field}
+                  column={column}
+                  onResizeStart={beginParentResize}
+                  stickyStyle={
+                    column.field === 'name'
+                      ? {
+                          position: 'sticky',
+                          left: 0,
+                          zIndex: zIndex.sticky + 1,
+                          backgroundColor: colors.bgSecondary,
+                          boxShadow: colors.stickyShadow,
+                        }
+                      : undefined
+                  }
+                >
+                  {column.label}
+                </ResizableColumnHeader>
+              ))}
+            </tr>
+          </thead>
           <tbody>
             {records.map((row) => (
               <DealRow
@@ -259,6 +343,7 @@ export const DealsTable = ({
                 childColumns={displayChildColumns}
                 parentDescriptorByField={parentDescriptorByField}
                 childDescriptorByField={childDescriptorByField}
+                onChildColumnResizeStart={beginChildResize}
                 lineItems={lineItemsByOpportunity.get(row.id) ?? []}
                 isExpanded={isExpanded(row.id)}
                 isHovered={hoveredRowId === row.id}
@@ -269,6 +354,7 @@ export const DealsTable = ({
             ))}
           </tbody>
         </table>
+      </div>
 
       <div
         style={{

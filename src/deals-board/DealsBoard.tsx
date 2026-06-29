@@ -19,6 +19,8 @@ import { ExpandModeProvider } from './hooks/useExpandMode';
 import { useDealBoardViews, useUpdateDealBoardView } from './hooks/useDealBoardViews';
 import { useLineItems } from './hooks/useLineItems';
 import { useOpportunities } from './hooks/useOpportunities';
+import { usePinnedToolbar } from './hooks/usePinnedToolbar';
+import { DEALS_BOARD_TOOLBAR_ID } from './utils/dom';
 import { useDealsBoardRealtimeSync } from './realtime/useDealsBoardRealtimeSync';
 import { crmFieldNamesFromColumns, needsCompanyRelation } from './metadata/crm-field-names';
 import { mergeColumns } from './metadata/merge-columns';
@@ -53,6 +55,7 @@ const DealsBoardContent = () => {
   const theme = useTheme();
   const { colors, font, spacing, radius, layout, zIndex } = theme;
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const { isPinned, toolbarStyle, placeholderHeight } = usePinnedToolbar(0, zIndex.dropdown);
   const viewsQuery = useDealBoardViews();
   const updateViewMutation = useUpdateDealBoardView();
   useDealsBoardRealtimeSync(!viewsQuery.isLoading);
@@ -301,23 +304,26 @@ const DealsBoardContent = () => {
         data-deals-board
         style={{
         position: 'relative',
-        minHeight: '100%',
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'visible',
+        overflow: 'hidden',
         backgroundColor: colors.bg,
         color: colors.text,
         fontFamily: font.family,
         fontSize: font.sizeSm,
       }}
     >
+      {isPinned ? <div style={{ height: placeholderHeight, flexShrink: 0 }} aria-hidden /> : null}
+
       <div
+        id={DEALS_BOARD_TOOLBAR_ID}
         style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: zIndex.dropdown,
           flexShrink: 0,
           backgroundColor: colors.bg,
+          ...(isPinned
+            ? { ...toolbarStyle, boxShadow: colors.shadowLg }
+            : { position: 'sticky', top: 0, zIndex: zIndex.dropdown }),
         }}
       >
       <header

@@ -4,6 +4,12 @@ const hasDomMethod = (value: unknown, method: string): value is Record<string, u
 export const isDomElement = (value: unknown): value is HTMLElement =>
   hasDomMethod(value, 'getBoundingClientRect') || hasDomMethod(value, 'contains');
 
+export const isMeasurableElement = (value: unknown): value is HTMLElement =>
+  hasDomMethod(value, 'getBoundingClientRect');
+
+export const DEALS_BOARD_ROOT_ID = 'deals-board-root';
+export const DEALS_BOARD_TOOLBAR_ID = 'deals-board-toolbar';
+
 /** Cumulative horizontal scale from CSS transforms on element and its ancestors. */
 export const getElementScaleX = (element: HTMLElement | null | undefined): number => {
   if (!element || typeof window === 'undefined' || typeof element.parentElement === 'undefined') {
@@ -27,8 +33,6 @@ export const getElementScaleX = (element: HTMLElement | null | undefined): numbe
 
   return scaleX || 1;
 };
-
-export const DEALS_BOARD_ROOT_ID = 'deals-board-root';
 
 /** Portal target; falls back to document.body when worker refs lack full DOM APIs. */
 export const getPortalContainer = (anchor: unknown): Element => {
