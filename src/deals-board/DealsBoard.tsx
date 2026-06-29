@@ -19,7 +19,6 @@ import { ExpandModeProvider } from './hooks/useExpandMode';
 import { useDealBoardViews, useUpdateDealBoardView } from './hooks/useDealBoardViews';
 import { useLineItems } from './hooks/useLineItems';
 import { useOpportunities } from './hooks/useOpportunities';
-import { usePinnedToolbar } from './hooks/usePinnedToolbar';
 import { useDealsBoardRealtimeSync } from './realtime/useDealsBoardRealtimeSync';
 import { crmFieldNamesFromColumns, needsCompanyRelation } from './metadata/crm-field-names';
 import { mergeColumns } from './metadata/merge-columns';
@@ -54,13 +53,6 @@ const DealsBoardContent = () => {
   const theme = useTheme();
   const { colors, font, spacing, radius, layout, zIndex } = theme;
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const toolbarRef = useRef<HTMLDivElement | null>(null);
-  const { isPinned, toolbarStyle, placeholderHeight } = usePinnedToolbar(
-    rootRef,
-    toolbarRef,
-    0,
-    zIndex.dropdown,
-  );
   const viewsQuery = useDealBoardViews();
   const updateViewMutation = useUpdateDealBoardView();
   useDealsBoardRealtimeSync(!viewsQuery.isLoading);
@@ -319,15 +311,13 @@ const DealsBoardContent = () => {
         fontSize: font.sizeSm,
       }}
     >
-      {isPinned ? <div style={{ height: placeholderHeight, flexShrink: 0 }} aria-hidden /> : null}
-
       <div
-        ref={toolbarRef}
         style={{
-          ...toolbarStyle,
+          position: 'sticky',
+          top: 0,
+          zIndex: zIndex.dropdown,
           flexShrink: 0,
           backgroundColor: colors.bg,
-          ...(isPinned ? { boxShadow: colors.shadowLg } : {}),
         }}
       >
       <header
