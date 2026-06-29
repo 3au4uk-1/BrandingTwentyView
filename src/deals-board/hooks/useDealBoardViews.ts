@@ -34,7 +34,7 @@ const FUTURE_DEALS_VIEW_SEED: Omit<DealBoardViewRecord, 'id'> = {
   visibility: VIEW_VISIBILITY.WORKSPACE,
   parentColumns: DEFAULT_PARENT_COLUMNS,
   childColumns: DEFAULT_CHILD_COLUMNS,
-  filters: { datePreset: 'future' },
+  filters: { datePreset: 'future', showAll: true },
   sort: [{ field: OPPORTUNITY_DATE_FILTER_FIELD, direction: 'AscNullsLast' }],
   isDefault: true,
 };

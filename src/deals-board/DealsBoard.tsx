@@ -166,12 +166,15 @@ const DealsBoardContent = () => {
     [mergedParentColumns],
   );
 
+  const showAllDeals = activeView?.filters?.showAll ?? false;
+
   const opportunitiesQuery = useOpportunities({
     viewId: activeView?.id,
     filters: mergedFilters,
     sort: activeView?.sort ?? [],
-    page,
+    page: showAllDeals ? 0 : page,
     pageSize: PAGE_SIZE,
+    showAll: showAllDeals,
     visibleCrmFieldNames: visibleParentCrmFields,
     linkFieldNames: opportunityLinkFieldNames,
     includeCompanyRelation,
@@ -184,7 +187,7 @@ const DealsBoardContent = () => {
 
   const records = asArray<OpportunityRow>(opportunitiesQuery.data?.records);
   const totalCount = opportunitiesQuery.data?.totalCount ?? 0;
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const totalPages = showAllDeals ? 1 : Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const visibleOpportunityIds = useMemo(() => records.map((record) => record.id), [records]);
 
   useEffect(() => {
@@ -245,6 +248,27 @@ const DealsBoardContent = () => {
         `Не удалось обновить колонки view.${error instanceof Error ? ` ${error.message}` : ''}`,
       );
       throw error;
+    }
+  };
+
+  const handleShowAllChange = async (nextShowAll: boolean) => {
+    if (!activeView) return;
+
+    try {
+      await updateViewMutation.mutateAsync({
+        id: activeView.id,
+        data: {
+          filters: {
+            ...activeView.filters,
+            showAll: nextShowAll,
+          },
+        },
+      });
+      setPage(0);
+    } catch (error) {
+      window.alert(
+        `Не удалось обновить настройку пагинации.${error instanceof Error ? ` ${error.message}` : ''}`,
+      );
     }
   };
 
@@ -442,6 +466,8 @@ const DealsBoardContent = () => {
         onResetFilters={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
         onParentColumnsSave={(columns) => saveActiveViewColumns('parent', columns)}
         onChildColumnsSave={(columns) => saveActiveViewColumns('child', columns)}
+        showAll={showAllDeals}
+        onShowAllChange={(nextShowAll) => void handleShowAllChange(nextShowAll)}
         isLoading={opportunitiesQuery.isLoading}
         isViewLoading={viewsQuery.isLoading || viewsQuery.isSeedingDefault}
         errorMessage={loadError instanceof Error ? loadError.message : loadError ? String(loadError) : undefined}

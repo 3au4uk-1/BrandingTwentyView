@@ -4,6 +4,7 @@ import { OPPORTUNITY_DATE_FILTER_FIELD } from 'src/constants/date-filter-field';
 
 import { fetchOpportunities } from '../api/opportunities';
 import { shouldFetchAllOpportunities } from '../utils/date-filters';
+import { getEffectiveOpportunitySort } from '../utils/sort-opportunities';
 import type { DealBoardFilters, DealBoardSort } from '../types';
 
 const DEFAULT_PAGE_SIZE = 50;
@@ -19,6 +20,7 @@ export const opportunitiesQueryKey = (
   linkFieldNames: readonly string[],
   includeCompanyRelation: boolean,
   fetchAll: boolean,
+  showAll: boolean,
 ) =>
   [
     'opportunities',
@@ -29,6 +31,7 @@ export const opportunitiesQueryKey = (
     linkFieldNames,
     includeCompanyRelation,
     fetchAll,
+    showAll,
   ] as const;
 
 export const useOpportunities = (params: {
@@ -40,16 +43,19 @@ export const useOpportunities = (params: {
   visibleCrmFieldNames?: string[];
   linkFieldNames?: readonly string[];
   includeCompanyRelation?: boolean;
+  showAll?: boolean;
   enabled?: boolean;
 }) => {
   const pageSize = params.pageSize ?? DEFAULT_PAGE_SIZE;
   const visibleCrmFieldNames = params.visibleCrmFieldNames ?? [];
   const linkFieldNames = params.linkFieldNames ?? [];
   const includeCompanyRelation = params.includeCompanyRelation ?? false;
-  const fetchAll = shouldFetchAllOpportunities(
-    params.filters,
+  const showAll = params.showAll ?? false;
+  const effectiveSort = getEffectiveOpportunitySort(
     params.sort.length > 0 ? params.sort : DEFAULT_DATE_SORT,
   );
+  const fetchAll =
+    showAll || shouldFetchAllOpportunities(params.filters, effectiveSort);
 
   return useQuery({
     queryKey: opportunitiesQueryKey(
@@ -60,6 +66,7 @@ export const useOpportunities = (params: {
       linkFieldNames,
       includeCompanyRelation,
       fetchAll,
+      showAll,
     ),
     queryFn: async () => {
       const result = await fetchOpportunities({
@@ -73,7 +80,7 @@ export const useOpportunities = (params: {
         fetchAll,
       });
 
-      if (!fetchAll) {
+      if (showAll || !fetchAll) {
         return result;
       }
 

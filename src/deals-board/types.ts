@@ -18,6 +18,7 @@ export type DealBoardFilters = {
   stages?: LineItemStage[];
   oplata?: string;
   search?: string;
+  showAll?: boolean;
 };
 
 export type DealBoardSort = { field: string; direction: 'AscNullsFirst' | 'DescNullsLast' };

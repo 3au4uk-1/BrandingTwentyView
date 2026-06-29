@@ -37,6 +37,8 @@ type DealsTableProps = {
   onResetFilters?: () => void;
   onParentColumnsSave?: (columns: ColumnConfig[]) => void;
   onChildColumnsSave?: (columns: ColumnConfig[]) => void;
+  showAll?: boolean;
+  onShowAllChange?: (showAll: boolean) => void;
   isLoading?: boolean;
   isViewLoading?: boolean;
   errorMessage?: string;
@@ -58,6 +60,8 @@ export const DealsTable = ({
   onResetFilters,
   onParentColumnsSave,
   onChildColumnsSave,
+  showAll = false,
+  onShowAllChange,
   isLoading = false,
   isViewLoading = false,
   errorMessage,
@@ -365,22 +369,46 @@ export const DealsTable = ({
         }}
       >
         <span style={{ fontFamily: theme.font.mono }}>
-          Страница {page + 1} / {totalPages} · Всего {totalCount}
+          {showAll
+            ? `Всего ${totalCount}`
+            : `Страница ${page + 1} / ${totalPages} · Всего ${totalCount}`}
         </span>
 
-        <div style={{ display: 'flex', gap: spacing.sm }}>
-          <Button theme={theme} variant="secondary" size="sm" onClick={() => onPageChange(Math.max(0, page - 1))} disabled={!canPrev}>
-            Назад
-          </Button>
-          <Button
-            theme={theme}
-            variant="secondary"
-            size="sm"
-            onClick={() => onPageChange(Math.min(totalPages - 1, page + 1))}
-            disabled={!canNext}
+        <div style={{ display: 'flex', alignItems: 'center', gap: spacing.md }}>
+          <label
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: spacing.xs,
+              cursor: onShowAllChange ? 'pointer' : 'default',
+              userSelect: 'none',
+            }}
           >
-            Вперёд
-          </Button>
+            <input
+              type="checkbox"
+              checked={showAll}
+              disabled={!onShowAllChange}
+              onChange={(event) => onShowAllChange?.(event.target.checked)}
+            />
+            <span>Показать все</span>
+          </label>
+
+          {!showAll ? (
+            <div style={{ display: 'flex', gap: spacing.sm }}>
+              <Button theme={theme} variant="secondary" size="sm" onClick={() => onPageChange(Math.max(0, page - 1))} disabled={!canPrev}>
+                Назад
+              </Button>
+              <Button
+                theme={theme}
+                variant="secondary"
+                size="sm"
+                onClick={() => onPageChange(Math.min(totalPages - 1, page + 1))}
+                disabled={!canNext}
+              >
+                Вперёд
+              </Button>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

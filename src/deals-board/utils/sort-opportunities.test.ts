@@ -48,4 +48,17 @@ describe('sortOpportunitiesWithCancelledLast', () => {
 
     expect(records).toBe(input);
   });
+
+  it('sorts cancelled deals last across records fetched in separate batches', () => {
+    const records = sortOpportunitiesWithCancelledLast(
+      [
+        record({ id: '1', name: 'Z active late batch', loadDate: '2026-06-30T12:00:00.000Z', stage: 'NOVYY' }),
+        record({ id: '2', name: 'A cancelled early batch', loadDate: '2026-06-30T08:00:00.000Z', stage: 'OTMENA' }),
+        record({ id: '3', name: 'B active early batch', loadDate: '2026-06-30T08:30:00.000Z', stage: 'NOVYY' }),
+      ],
+      [{ field: 'loadDate', direction: 'AscNullsFirst' }],
+    );
+
+    expect(records.map((row) => row.id)).toEqual(['3', '1', '2']);
+  });
 });

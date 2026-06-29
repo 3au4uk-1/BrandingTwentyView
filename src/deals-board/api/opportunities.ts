@@ -2,7 +2,10 @@ import { OPPORTUNITY_DATE_FILTER_FIELD } from 'src/constants/date-filter-field';
 
 import { buildOpportunityNodeSelection } from '../metadata/build-opportunity-selection';
 import { buildOpportunityDateFilter } from '../utils/date-filters';
-import { sortOpportunitiesWithCancelledLast } from '../utils/sort-opportunities';
+import {
+  getEffectiveOpportunitySort,
+  sortOpportunitiesWithCancelledLast,
+} from '../utils/sort-opportunities';
 import { asArray } from '../utils/parse-json-field';
 import type { DealBoardFilters, DealBoardSort, OpportunityRow } from '../types';
 import { getApiClient } from './client';
@@ -33,7 +36,7 @@ const buildOpportunityFilter = (filters: DealBoardFilters) => {
   return and.length ? { and } : undefined;
 };
 
-const fetchOpportunityPage = async (params: {
+const fetchOpportunityPageRecords = async (params: {
   limit: number;
   offset: number;
   sort: DealBoardSort[];
@@ -79,13 +82,27 @@ const fetchOpportunityPage = async (params: {
   });
 
   const enrichedRecords = await enrichOpportunityRowsWithLinkFields(records, params.linkFieldNames);
-  const effectiveSort = sort.length
-    ? sort
-    : [{ field: OPPORTUNITY_DATE_FILTER_FIELD, direction: 'AscNullsFirst' as const }];
 
   return {
-    records: sortOpportunitiesWithCancelledLast(enrichedRecords, effectiveSort),
+    records: enrichedRecords,
     totalCount: result.opportunities?.totalCount ?? 0,
+  };
+};
+
+const fetchOpportunityPage = async (params: {
+  limit: number;
+  offset: number;
+  sort: DealBoardSort[];
+  filters: DealBoardFilters;
+  visibleCrmFieldNames: string[];
+  linkFieldNames: readonly string[];
+  includeCompanyRelation: boolean;
+}): Promise<{ records: OpportunityRow[]; totalCount: number }> => {
+  const { records, totalCount } = await fetchOpportunityPageRecords(params);
+
+  return {
+    records: sortOpportunitiesWithCancelledLast(records, getEffectiveOpportunitySort(params.sort)),
+    totalCount,
   };
 };
 
@@ -102,6 +119,7 @@ export const fetchOpportunities = async (params: {
   const visibleCrmFieldNames = params.visibleCrmFieldNames ?? DEFAULT_VISIBLE_CRM_FIELD_NAMES;
   const linkFieldNames = params.linkFieldNames ?? [];
   const includeCompanyRelation = params.includeCompanyRelation ?? DEFAULT_INCLUDE_COMPANY_RELATION;
+  const effectiveSort = getEffectiveOpportunitySort(params.sort);
 
   if (!params.fetchAll) {
     return fetchOpportunityPage({
@@ -120,7 +138,7 @@ export const fetchOpportunities = async (params: {
   let offset = 0;
 
   do {
-    const page = await fetchOpportunityPage({
+    const page = await fetchOpportunityPageRecords({
       limit: FETCH_ALL_PAGE_SIZE,
       offset,
       sort: params.sort,
@@ -135,7 +153,10 @@ export const fetchOpportunities = async (params: {
     offset += FETCH_ALL_PAGE_SIZE;
   } while (allRecords.length < totalCount);
 
-  return { records: allRecords, totalCount };
+  return {
+    records: sortOpportunitiesWithCancelledLast(allRecords, effectiveSort),
+    totalCount,
+  };
 };
 
 export const patchOpportunity = async (

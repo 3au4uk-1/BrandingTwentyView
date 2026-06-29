@@ -45,6 +45,7 @@ const parseFilters = (raw: unknown): DealBoardFilters => {
         ? ((filters as { datePreset: DealBoardFilters['datePreset'] }).datePreset ?? undefined)
         : undefined,
     stages: stages.length ? stages : undefined,
+    showAll: (filters as { showAll?: unknown }).showAll === true ? true : undefined,
   };
 };
 
