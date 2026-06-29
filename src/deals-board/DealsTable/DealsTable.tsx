@@ -231,23 +231,7 @@ export const DealsTable = ({
   const canNext = page < totalPages - 1;
 
   return (
-    <div
-      style={{
-        flex: 1,
-        minHeight: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-      }}
-    >
-      <div
-        ref={scrollRef}
-        style={{
-          flex: 1,
-          minHeight: 0,
-          overflow: 'auto',
-        }}
-      >
+    <div ref={scrollRef} style={{ flex: '1 1 auto', minWidth: 0 }}>
         <table
           style={{
             ...parentTableStyle,
@@ -285,7 +269,6 @@ export const DealsTable = ({
             ))}
           </tbody>
         </table>
-      </div>
 
       <div
         style={{

@@ -19,6 +19,7 @@ import { ExpandModeProvider } from './hooks/useExpandMode';
 import { useDealBoardViews, useUpdateDealBoardView } from './hooks/useDealBoardViews';
 import { useLineItems } from './hooks/useLineItems';
 import { useOpportunities } from './hooks/useOpportunities';
+import { usePinnedToolbar } from './hooks/usePinnedToolbar';
 import { useDealsBoardRealtimeSync } from './realtime/useDealsBoardRealtimeSync';
 import { crmFieldNamesFromColumns, needsCompanyRelation } from './metadata/crm-field-names';
 import { mergeColumns } from './metadata/merge-columns';
@@ -51,8 +52,15 @@ const DEFAULT_QUICK_FILTERS: QuickFiltersValue = {
 
 const DealsBoardContent = () => {
   const theme = useTheme();
-  const { colors, font, spacing, radius, layout } = theme;
+  const { colors, font, spacing, radius, layout, zIndex } = theme;
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const toolbarRef = useRef<HTMLDivElement | null>(null);
+  const { isPinned, toolbarStyle, placeholderHeight } = usePinnedToolbar(
+    rootRef,
+    toolbarRef,
+    0,
+    zIndex.dropdown,
+  );
   const viewsQuery = useDealBoardViews();
   const updateViewMutation = useUpdateDealBoardView();
   useDealsBoardRealtimeSync(!viewsQuery.isLoading);
@@ -301,19 +309,29 @@ const DealsBoardContent = () => {
         data-deals-board
         style={{
         position: 'relative',
-        height: '100%',
+        minHeight: '100%',
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden',
+        overflow: 'visible',
         backgroundColor: colors.bg,
         color: colors.text,
         fontFamily: font.family,
         fontSize: font.sizeSm,
       }}
     >
+      {isPinned ? <div style={{ height: placeholderHeight, flexShrink: 0 }} aria-hidden /> : null}
+
+      <div
+        ref={toolbarRef}
+        style={{
+          ...toolbarStyle,
+          flexShrink: 0,
+          backgroundColor: colors.bg,
+          ...(isPinned ? { boxShadow: colors.shadowLg } : {}),
+        }}
+      >
       <header
         style={{
-          flexShrink: 0,
           borderBottom: `1px solid ${colors.border}`,
           backgroundColor: colors.bgSecondary,
         }}
@@ -470,6 +488,7 @@ const DealsBoardContent = () => {
           Позиции сделок не загрузились: {lineItemsWarning}
         </div>
       ) : null}
+      </div>
 
       <DealsTable
         activeView={activeView}
