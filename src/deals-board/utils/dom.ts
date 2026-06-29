@@ -8,7 +8,6 @@ export const isMeasurableElement = (value: unknown): value is HTMLElement =>
   hasDomMethod(value, 'getBoundingClientRect');
 
 export const DEALS_BOARD_ROOT_ID = 'deals-board-root';
-export const DEALS_BOARD_TOOLBAR_ID = 'deals-board-toolbar';
 
 /** Cumulative horizontal scale from CSS transforms on element and its ancestors. */
 export const getElementScaleX = (element: HTMLElement | null | undefined): number => {
