@@ -51,7 +51,7 @@ const DEFAULT_QUICK_FILTERS: QuickFiltersValue = {
 
 const DealsBoardContent = () => {
   const theme = useTheme();
-  const { colors, font, spacing, radius, layout, zIndex } = theme;
+  const { colors, font, spacing, radius, layout } = theme;
   const rootRef = useRef<HTMLDivElement | null>(null);
   const viewsQuery = useDealBoardViews();
   const updateViewMutation = useUpdateDealBoardView();
@@ -304,24 +304,16 @@ const DealsBoardContent = () => {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'auto',
+        overflow: 'hidden',
         backgroundColor: colors.bg,
         color: colors.text,
         fontFamily: font.family,
         fontSize: font.sizeSm,
       }}
     >
-      <div
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: zIndex.dropdown,
-          flexShrink: 0,
-          backgroundColor: colors.bg,
-        }}
-      >
       <header
         style={{
+          flexShrink: 0,
           borderBottom: `1px solid ${colors.border}`,
           backgroundColor: colors.bgSecondary,
         }}
@@ -478,7 +470,6 @@ const DealsBoardContent = () => {
           Позиции сделок не загрузились: {lineItemsWarning}
         </div>
       ) : null}
-      </div>
 
       <DealsTable
         activeView={activeView}

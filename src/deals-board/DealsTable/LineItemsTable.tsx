@@ -6,26 +6,17 @@ import { resolveFieldValue } from '../utils/resolve-field-value';
 import { getStageRowStyles } from '../utils/stage-row-styles';
 
 import type { ColumnConfig, LineItemRow } from '../types';
-import { ResizableColumnHeader } from './ResizableColumnHeader';
 
 type LineItemsTableProps = {
   items: LineItemRow[];
   columns: ColumnConfig[];
   descriptorByField: Map<string, FieldDescriptor>;
-  onColumnResizeStart: (
-    event: MouseEvent | PointerEvent,
-    field: string,
-    startWidth: number,
-    scaleSource?: HTMLElement | null,
-    captureTarget?: HTMLElement | null,
-  ) => void;
 };
 
 export const LineItemsTable = ({
   items,
   columns,
   descriptorByField,
-  onColumnResizeStart,
 }: LineItemsTableProps) => {
   const theme = useTheme();
   const { colorScheme, colors, font, spacing } = theme;
@@ -69,20 +60,6 @@ export const LineItemsTable = ({
               <col key={column.field} style={{ width: `${getColumnWidth(column)}px` }} />
             ))}
           </colgroup>
-          <thead>
-            <tr style={{ borderBottom: `1px solid ${colors.borderSubtle}`, backgroundColor: colors.bgTertiary }}>
-              {columns.map((column) => (
-                <ResizableColumnHeader
-                  key={column.field}
-                  column={column}
-                  onResizeStart={onColumnResizeStart}
-                  compact
-                >
-                  {column.label}
-                </ResizableColumnHeader>
-              ))}
-            </tr>
-          </thead>
           <tbody>
             {items.map((item, rowIndex) => {
               const stageStyles = getStageRowStyles(item.stage, colorScheme);

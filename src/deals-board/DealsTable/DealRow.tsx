@@ -19,13 +19,6 @@ type DealRowProps = {
   onHoverChange: (hovered: boolean) => void;
   onToggleExpand: (id: string) => void;
   opportunityLinkFields: FieldDescriptor[];
-  onChildColumnResizeStart: (
-    event: MouseEvent | PointerEvent,
-    field: string,
-    startWidth: number,
-    scaleSource?: HTMLElement | null,
-    captureTarget?: HTMLElement | null,
-  ) => void;
 };
 
 export const DealRow = ({
@@ -40,7 +33,6 @@ export const DealRow = ({
   onHoverChange,
   onToggleExpand,
   opportunityLinkFields,
-  onChildColumnResizeStart,
 }: DealRowProps) => {
   const theme = useTheme();
   const { colors, font, zIndex, colorScheme } = theme;
@@ -121,7 +113,6 @@ export const DealRow = ({
               items={lineItems}
               columns={childColumns}
               descriptorByField={childDescriptorByField}
-              onColumnResizeStart={onChildColumnResizeStart}
             />
           </td>
         </tr>
