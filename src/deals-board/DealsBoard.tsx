@@ -30,7 +30,7 @@ import { ThemeProvider, useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
 import { PortalHostProvider } from './ui/PortalHostContext';
 import { DEALS_BOARD_ROOT_ID } from './utils/dom';
-import { mergeStageFilters } from './utils/filters';
+import { mergeCompanyFilters, mergeStageFilters } from './utils/filters';
 import { asArray } from './utils/parse-json-field';
 import { filterLineItemsForSearch, normalizeSearchTerm } from './utils/search';
 import { ViewSettingsModal } from './ViewSettingsModal';
@@ -44,13 +44,14 @@ const DEFAULT_QUICK_FILTERS: QuickFiltersValue = {
   dateFrom: undefined,
   dateTo: undefined,
   stages: [],
+  companyIds: [],
   oplata: 'all',
   search: '',
 };
 
 const DealsBoardContent = () => {
   const theme = useTheme();
-  const { colors, font, spacing, radius, layout } = theme;
+  const { colors, font, spacing, radius, layout, zIndex } = theme;
   const rootRef = useRef<HTMLDivElement | null>(null);
   const viewsQuery = useDealBoardViews();
   const updateViewMutation = useUpdateDealBoardView();
@@ -86,11 +87,17 @@ const DealsBoardContent = () => {
     quickFilters.dateTo,
     quickFilters.search,
     (quickFilters.stages ?? []).join(','),
+    (quickFilters.companyIds ?? []).join(','),
   ]);
 
   const mergedStages = useMemo(
     () => mergeStageFilters(activeView?.filters?.stages, quickFilters.stages),
     [activeView?.filters?.stages, quickFilters.stages],
+  );
+
+  const mergedCompanyIds = useMemo(
+    () => mergeCompanyFilters(activeView?.filters?.companyIds, quickFilters.companyIds),
+    [activeView?.filters?.companyIds, quickFilters.companyIds],
   );
 
   const mergedFilters = useMemo(
@@ -101,9 +108,11 @@ const DealsBoardContent = () => {
       dateTo: quickFilters.dateTo ?? activeView?.filters?.dateTo,
       search: quickFilters.search.trim() || activeView?.filters?.search,
       stages: mergedStages,
+      companyIds: mergedCompanyIds,
     }),
     [
       activeView?.filters,
+      mergedCompanyIds,
       mergedStages,
       quickFilters.dateFrom,
       quickFilters.datePreset,
@@ -295,16 +304,24 @@ const DealsBoardContent = () => {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden',
+        overflow: 'auto',
         backgroundColor: colors.bg,
         color: colors.text,
         fontFamily: font.family,
         fontSize: font.sizeSm,
       }}
     >
+      <div
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: zIndex.dropdown,
+          flexShrink: 0,
+          backgroundColor: colors.bg,
+        }}
+      >
       <header
         style={{
-          flexShrink: 0,
           borderBottom: `1px solid ${colors.border}`,
           backgroundColor: colors.bgSecondary,
         }}
@@ -461,6 +478,7 @@ const DealsBoardContent = () => {
           Позиции сделок не загрузились: {lineItemsWarning}
         </div>
       ) : null}
+      </div>
 
       <DealsTable
         activeView={activeView}

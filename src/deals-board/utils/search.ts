@@ -29,6 +29,11 @@ export const buildOpportunityFilter = (
     and.push(buildOpportunitySearchClause(search, lineItemMatchedOpportunityIds));
   }
 
+  const companyIds = filters.companyIds?.filter(Boolean) ?? [];
+  if (companyIds.length > 0) {
+    and.push({ companyId: { in: companyIds } });
+  }
+
   return and.length ? { and } : undefined;
 };
 

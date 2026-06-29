@@ -19,6 +19,7 @@ export type DealBoardFilters = {
   oplata?: string;
   search?: string;
   showAll?: boolean;
+  companyIds?: string[];
 };
 
 export type DealBoardSort = { field: string; direction: 'AscNullsFirst' | 'DescNullsLast' };

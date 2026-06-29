@@ -25,3 +25,26 @@ export const mergeStageFilters = (
   const quickSet = new Set(quickStages);
   return viewStages.filter((stage) => quickSet.has(stage));
 };
+
+export const normalizeCompanyIdList = (value: unknown): string[] => asStringArray(value);
+
+export const mergeCompanyFilters = (
+  fromView?: unknown,
+  fromQuick?: unknown,
+): string[] | undefined => {
+  const viewCompanyIds = normalizeCompanyIdList(fromView);
+  const quickCompanyIds = normalizeCompanyIdList(fromQuick);
+
+  if (!viewCompanyIds.length && !quickCompanyIds.length) {
+    return undefined;
+  }
+  if (!viewCompanyIds.length) {
+    return quickCompanyIds;
+  }
+  if (!quickCompanyIds.length) {
+    return viewCompanyIds;
+  }
+
+  const quickSet = new Set(quickCompanyIds);
+  return viewCompanyIds.filter((id) => quickSet.has(id));
+};

@@ -1,8 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useMemo, useState, useEffect } from 'react';
 
 import { LINE_ITEM_STAGES, type LineItemStage } from 'src/constants/stages';
 import type { DealBoardDatePreset } from 'src/deals-board/types';
 
+import { fetchCompanyNames } from './api/companies';
+import { useCompanies } from './hooks/useCompanies';
 import { getPresetRange } from './utils/date-filters';
 import { useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
@@ -16,6 +19,7 @@ export type QuickFiltersValue = {
   dateFrom?: string;
   dateTo?: string;
   stages: LineItemStage[];
+  companyIds: string[];
   oplata: OplataQuickFilter;
   search: string;
 };
@@ -40,8 +44,37 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
   const theme = useTheme();
   const { colors, radius, font, spacing, zIndex } = theme;
   const [isStageFilterOpen, setIsStageFilterOpen] = useState(false);
+  const [isCompanyFilterOpen, setIsCompanyFilterOpen] = useState(false);
+  const [companySearch, setCompanySearch] = useState('');
+  const [debouncedCompanySearch, setDebouncedCompanySearch] = useState('');
   const selectedStages = value.stages ?? [];
+  const selectedCompanyIds = value.companyIds ?? [];
   const stageOptions = useMemo(() => LINE_ITEM_STAGES, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedCompanySearch(companySearch), 250);
+    return () => window.clearTimeout(timer);
+  }, [companySearch]);
+
+  const companiesQuery = useCompanies(debouncedCompanySearch, isCompanyFilterOpen);
+  const selectedCompanyNamesQuery = useQuery({
+    queryKey: ['companyNames', selectedCompanyIds],
+    queryFn: () => fetchCompanyNames(selectedCompanyIds),
+    enabled: selectedCompanyIds.length > 0,
+    staleTime: 60_000,
+  });
+
+  const companyOptions = useMemo(() => {
+    const byId = new Map((companiesQuery.data ?? []).map((company) => [company.id, company]));
+    for (const id of selectedCompanyIds) {
+      if (byId.has(id)) continue;
+      const name = selectedCompanyNamesQuery.data?.get(id);
+      if (name) {
+        byId.set(id, { id, name });
+      }
+    }
+    return [...byId.values()].sort((left, right) => left.name.localeCompare(right.name, 'ru'));
+  }, [companiesQuery.data, selectedCompanyIds, selectedCompanyNamesQuery.data]);
 
   const toggleStage = (stage: LineItemStage) => {
     const nextStages = selectedStages.includes(stage)
@@ -49,6 +82,14 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
       : [...selectedStages, stage];
 
     onChange({ ...value, stages: nextStages });
+  };
+
+  const toggleCompany = (companyId: string) => {
+    const nextCompanyIds = selectedCompanyIds.includes(companyId)
+      ? selectedCompanyIds.filter((id) => id !== companyId)
+      : [...selectedCompanyIds, companyId];
+
+    onChange({ ...value, companyIds: nextCompanyIds });
   };
 
   const segmentStyle = (isActive: boolean) => ({
@@ -215,6 +256,119 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
                 </label>
               );
             })}
+          </div>
+        ) : null}
+      </div>
+
+      <div style={{ position: 'relative' }}>
+        <button
+          type="button"
+          data-segment-btn
+          data-active={selectedCompanyIds.length > 0 ? 'true' : 'false'}
+          onClick={() => {
+            setIsCompanyFilterOpen((prev) => !prev);
+            if (isCompanyFilterOpen) {
+              setCompanySearch('');
+            }
+          }}
+          style={{
+            ...segmentStyle(selectedCompanyIds.length > 0),
+            border: `1px solid ${colors.border}`,
+            borderRadius: radius.md,
+            backgroundColor: selectedCompanyIds.length ? colors.accentMuted : colors.bgElevated,
+            color: selectedCompanyIds.length ? colors.accentText : colors.textSecondary,
+          }}
+        >
+          Компании{selectedCompanyIds.length ? ` · ${selectedCompanyIds.length}` : ''}
+        </button>
+
+        {isCompanyFilterOpen ? (
+          <div
+            style={{
+              position: 'absolute',
+              top: 'calc(100% + 6px)',
+              left: 0,
+              zIndex: zIndex.dropdown,
+              minWidth: '260px',
+              maxWidth: '320px',
+              border: `1px solid ${colors.border}`,
+              borderRadius: radius.lg,
+              backgroundColor: colors.bgElevated,
+              boxShadow: colors.shadowLg,
+              padding: spacing.sm,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: spacing.sm,
+            }}
+          >
+            <Input
+              theme={theme}
+              type="search"
+              value={companySearch}
+              onChange={(event) => setCompanySearch(event.target.value)}
+              placeholder="Найти компанию..."
+              style={{ width: '100%', padding: '5px 10px', fontSize: font.sizeSm }}
+            />
+
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: spacing.xs,
+                maxHeight: '240px',
+                overflowY: 'auto',
+              }}
+            >
+              {companiesQuery.isLoading ? (
+                <span style={{ fontSize: font.sizeSm, color: colors.textMuted, padding: '4px 8px' }}>
+                  Загрузка...
+                </span>
+              ) : companyOptions.length === 0 ? (
+                <span style={{ fontSize: font.sizeSm, color: colors.textMuted, padding: '4px 8px' }}>
+                  Компании не найдены
+                </span>
+              ) : (
+                companyOptions.map((company) => {
+                  const checked = selectedCompanyIds.includes(company.id);
+                  return (
+                    <label
+                      key={company.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: spacing.sm,
+                        fontSize: font.sizeSm,
+                        color: colors.text,
+                        cursor: 'pointer',
+                        padding: '5px 8px',
+                        borderRadius: radius.sm,
+                        backgroundColor: checked ? colors.accentMuted : 'transparent',
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleCompany(company.id)}
+                      />
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {company.name}
+                      </span>
+                    </label>
+                  );
+                })
+              )}
+            </div>
+
+            {selectedCompanyIds.length > 0 ? (
+              <Button
+                theme={theme}
+                variant="ghost"
+                size="sm"
+                onClick={() => onChange({ ...value, companyIds: [] })}
+              >
+                Сбросить компании
+              </Button>
+            ) : null}
           </div>
         ) : null}
       </div>

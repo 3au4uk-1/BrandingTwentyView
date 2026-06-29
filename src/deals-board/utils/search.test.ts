@@ -37,6 +37,12 @@ describe('buildOpportunityFilter', () => {
       ],
     });
   });
+
+  it('adds company filter when company ids are selected', () => {
+    expect(buildOpportunityFilter({ companyIds: ['company-1', 'company-2'] })).toEqual({
+      and: [{ companyId: { in: ['company-1', 'company-2'] } }],
+    });
+  });
 });
 
 describe('opportunityMatchesSearch', () => {

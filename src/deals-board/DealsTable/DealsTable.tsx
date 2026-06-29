@@ -288,7 +288,8 @@ export const DealsTable = ({
         <table
           style={{
             ...parentTableStyle,
-            borderCollapse: 'collapse',
+            borderCollapse: 'separate',
+            borderSpacing: 0,
             tableLayout: 'fixed',
             backgroundColor: colors.bg,
           }}
@@ -303,7 +304,14 @@ export const DealsTable = ({
               />
             ))}
           </colgroup>
-          <thead style={{ position: 'sticky', top: 0, zIndex: zIndex.sticky + 1 }}>
+          <thead
+            style={{
+              position: 'sticky',
+              top: 0,
+              zIndex: zIndex.sticky + 1,
+              backgroundColor: colors.bgSecondary,
+            }}
+          >
             <tr
               style={{
                 borderBottom: `1px solid ${colors.border}`,
