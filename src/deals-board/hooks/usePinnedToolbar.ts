@@ -6,20 +6,24 @@ type PinnedToolbarState = {
   placeholderHeight: number;
 };
 
-const getScrollableAncestors = (element: HTMLElement): Array<Window | Element> => {
-  const view = element.ownerDocument?.defaultView ?? window;
-  const targets: Array<Window | Element> = [view];
-  let current: HTMLElement | null = element.parentElement;
+const addPassiveListener = (
+  target: Window | Document | Element | null | undefined,
+  type: string,
+  listener: () => void,
+  options?: boolean | AddEventListenerOptions,
+) => {
+  if (!target || typeof target.addEventListener !== 'function') return;
+  target.addEventListener(type, listener, options);
+};
 
-  while (current) {
-    const { overflowY } = view.getComputedStyle(current);
-    if (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') {
-      targets.push(current);
-    }
-    current = current.parentElement;
-  }
-
-  return targets;
+const removePassiveListener = (
+  target: Window | Document | Element | null | undefined,
+  type: string,
+  listener: () => void,
+  options?: boolean | EventListenerOptions,
+) => {
+  if (!target || typeof target.removeEventListener !== 'function') return;
+  target.removeEventListener(type, listener, options);
 };
 
 export const usePinnedToolbar = (
@@ -37,9 +41,10 @@ export const usePinnedToolbar = (
   useLayoutEffect(() => {
     const root = rootRef.current;
     const toolbar = toolbarRef.current;
-    if (!root || !toolbar) return;
+    const document = root?.ownerDocument;
+    if (!root || !toolbar || !document) return;
 
-    const view = root.ownerDocument?.defaultView ?? window;
+    const view = document.defaultView;
 
     const update = () => {
       const rootRect = root.getBoundingClientRect();
@@ -64,9 +69,9 @@ export const usePinnedToolbar = (
       });
     };
 
-    const scrollTargets = getScrollableAncestors(root);
-    scrollTargets.forEach((target) => target.addEventListener('scroll', update, { passive: true }));
-    view.addEventListener('resize', update);
+    addPassiveListener(document, 'scroll', update, { passive: true, capture: true });
+    addPassiveListener(view, 'scroll', update, { passive: true });
+    addPassiveListener(view, 'resize', update);
 
     const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(update) : undefined;
     observer?.observe(root);
@@ -75,8 +80,9 @@ export const usePinnedToolbar = (
     update();
 
     return () => {
-      scrollTargets.forEach((target) => target.removeEventListener('scroll', update));
-      view.removeEventListener('resize', update);
+      removePassiveListener(document, 'scroll', update, { capture: true });
+      removePassiveListener(view, 'scroll', update);
+      removePassiveListener(view, 'resize', update);
       observer?.disconnect();
     };
   }, [pinTop, rootRef, toolbarRef, zIndex]);
