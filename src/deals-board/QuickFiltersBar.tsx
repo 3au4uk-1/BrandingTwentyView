@@ -52,8 +52,8 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
   const stageOptions = useMemo(() => LINE_ITEM_STAGES, []);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setDebouncedCompanySearch(companySearch), 250);
-    return () => window.clearTimeout(timer);
+    const timer = setTimeout(() => setDebouncedCompanySearch(companySearch), 250);
+    return () => clearTimeout(timer);
   }, [companySearch]);
 
   const companiesQuery = useCompanies(debouncedCompanySearch, isCompanyFilterOpen);
