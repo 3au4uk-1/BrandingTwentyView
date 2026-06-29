@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildDealLineItemsFilter, buildDealLineItemsQuery } from './line-items';
+import { buildDealLineItemsFilter, buildDealLineItemsQuery, buildDealLineItemsSearchFilter } from './line-items';
 
 describe('buildDealLineItemsFilter', () => {
   it('serializes opportunity ids as JSON array for in filter', () => {
@@ -19,6 +19,18 @@ describe('buildDealLineItemsFilter', () => {
 
     expect(filter).toBe(
       'and(opportunityId[in]:["id-1"],stage[in]:["NOVYY","V_RABOTE"])',
+    );
+  });
+});
+
+describe('buildDealLineItemsSearchFilter', () => {
+  it('uses ilike with wildcards for line item name', () => {
+    expect(buildDealLineItemsSearchFilter('баннер')).toBe('name[ilike]:"%баннер%"');
+  });
+
+  it('combines search with stage filter', () => {
+    expect(buildDealLineItemsSearchFilter('баннер', ['NOVYY'])).toBe(
+      'and(name[ilike]:"%баннер%",stage[in]:["NOVYY"])',
     );
   });
 });

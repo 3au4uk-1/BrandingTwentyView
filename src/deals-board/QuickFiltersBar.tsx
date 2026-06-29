@@ -224,7 +224,7 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
         type="search"
         value={value.search}
         onChange={(event) => onChange({ ...value, search: event.target.value })}
-        placeholder="Поиск сделок..."
+        placeholder="Поиск сделок и позиций..."
         style={{ minWidth: '140px', flex: '1 1 180px', maxWidth: '240px', padding: '5px 10px' }}
       />
 

@@ -1,7 +1,8 @@
 import { OPPORTUNITY_DATE_FILTER_FIELD } from 'src/constants/date-filter-field';
 
 import { buildOpportunityNodeSelection } from '../metadata/build-opportunity-selection';
-import { buildOpportunityDateFilter } from '../utils/date-filters';
+import { buildOpportunityFilter, normalizeSearchTerm } from '../utils/search';
+import { fetchLineItemOpportunityIdsBySearch } from './line-items';
 import {
   getEffectiveOpportunitySort,
   sortOpportunitiesWithCancelledLast,
@@ -28,19 +29,12 @@ const OPPORTUNITY_FIELDS = {
   loadDate: true,
 } as const;
 
-const buildOpportunityFilter = (filters: DealBoardFilters) => {
-  const and: Record<string, unknown>[] = [];
-  const dateFilter = buildOpportunityDateFilter(filters);
-  if (dateFilter) and.push(dateFilter);
-  if (filters.search) and.push({ name: { ilike: `%${filters.search}%` } });
-  return and.length ? { and } : undefined;
-};
-
 const fetchOpportunityPageRecords = async (params: {
   limit: number;
   offset: number;
   sort: DealBoardSort[];
   filters: DealBoardFilters;
+  lineItemMatchedOpportunityIds?: string[];
   visibleCrmFieldNames: string[];
   linkFieldNames: readonly string[];
   includeCompanyRelation: boolean;
@@ -62,7 +56,7 @@ const fetchOpportunityPageRecords = async (params: {
         first: params.limit,
         offset: params.offset,
         orderBy,
-        filter: buildOpportunityFilter(params.filters),
+        filter: buildOpportunityFilter(params.filters, params.lineItemMatchedOpportunityIds),
       },
       edges: { node: nodeSelection as typeof OPPORTUNITY_FIELDS },
       totalCount: true,
@@ -94,6 +88,7 @@ const fetchOpportunityPage = async (params: {
   offset: number;
   sort: DealBoardSort[];
   filters: DealBoardFilters;
+  lineItemMatchedOpportunityIds?: string[];
   visibleCrmFieldNames: string[];
   linkFieldNames: readonly string[];
   includeCompanyRelation: boolean;
@@ -120,6 +115,10 @@ export const fetchOpportunities = async (params: {
   const linkFieldNames = params.linkFieldNames ?? [];
   const includeCompanyRelation = params.includeCompanyRelation ?? DEFAULT_INCLUDE_COMPANY_RELATION;
   const effectiveSort = getEffectiveOpportunitySort(params.sort);
+  const searchTerm = normalizeSearchTerm(params.filters.search);
+  const lineItemMatchedOpportunityIds = searchTerm
+    ? await fetchLineItemOpportunityIdsBySearch(searchTerm, params.filters.stages)
+    : undefined;
 
   if (!params.fetchAll) {
     return fetchOpportunityPage({
@@ -127,6 +126,7 @@ export const fetchOpportunities = async (params: {
       offset: params.offset,
       sort: params.sort,
       filters: params.filters,
+      lineItemMatchedOpportunityIds,
       visibleCrmFieldNames,
       linkFieldNames,
       includeCompanyRelation,
@@ -143,6 +143,7 @@ export const fetchOpportunities = async (params: {
       offset,
       sort: params.sort,
       filters: params.filters,
+      lineItemMatchedOpportunityIds,
       visibleCrmFieldNames,
       linkFieldNames,
       includeCompanyRelation,

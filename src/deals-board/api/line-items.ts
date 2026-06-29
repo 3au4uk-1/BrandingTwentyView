@@ -22,6 +22,26 @@ export const buildDealLineItemsFilter = (
   return `and(${opportunityFilter},stage[in]:${JSON.stringify(stageFilter)})`;
 };
 
+export const buildDealLineItemsSearchFilter = (search: string, stageFilter?: string[]): string => {
+  const pattern = `%${search.trim()}%`;
+  const nameFilter = `name[ilike]:${JSON.stringify(pattern)}`;
+  if (!stageFilter?.length) return nameFilter;
+  return `and(${nameFilter},stage[in]:${JSON.stringify(stageFilter)})`;
+};
+
+export const buildDealLineItemsSearchQuery = (
+  search: string,
+  stageFilter?: string[],
+  after?: string,
+): Record<string, string | number> => {
+  const query: Record<string, string | number> = {
+    limit: PAGE_LIMIT,
+    filter: buildDealLineItemsSearchFilter(search, stageFilter),
+  };
+  if (after) query.after = after;
+  return query;
+};
+
 export const buildDealLineItemsQuery = (
   opportunityIds: string[],
   stageFilter?: string[],
@@ -120,6 +140,47 @@ export const fetchLineItemsByOpportunityIds = async (
   );
 
   return chunkResults.flat();
+};
+
+const fetchLineItemOpportunityIdsPage = async (
+  client: RestApiClient,
+  search: string,
+  stageFilter?: string[],
+  after?: string,
+): Promise<{ opportunityIds: string[]; nextCursor?: string }> => {
+  const response = await client.get<unknown>('/rest/dealLineItems', {
+    query: buildDealLineItemsSearchQuery(search, stageFilter, after),
+  });
+
+  const items = normalizeLineItemRows(
+    normalizeRestListResponse<unknown>(response, 'dealLineItems'),
+  );
+  const opportunityIds = [...new Set(items.map((item) => item.opportunityId))];
+  const pageInfo = extractRestPageInfo(response);
+  const nextCursor =
+    pageInfo.hasNextPage && pageInfo.endCursor ? String(pageInfo.endCursor) : undefined;
+
+  return { opportunityIds, nextCursor };
+};
+
+export const fetchLineItemOpportunityIdsBySearch = async (
+  search: string,
+  stageFilter?: string[],
+): Promise<string[]> => {
+  const term = search.trim();
+  if (!term) return [];
+
+  const client = getRestClient();
+  const allIds = new Set<string>();
+  let after: string | undefined;
+
+  do {
+    const page = await fetchLineItemOpportunityIdsPage(client, term, stageFilter, after);
+    page.opportunityIds.forEach((id) => allIds.add(id));
+    after = page.nextCursor;
+  } while (after);
+
+  return [...allIds];
 };
 
 export const updateLineItem = async (

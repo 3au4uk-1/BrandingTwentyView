@@ -32,6 +32,7 @@ import { PortalHostProvider } from './ui/PortalHostContext';
 import { DEALS_BOARD_ROOT_ID } from './utils/dom';
 import { mergeStageFilters } from './utils/filters';
 import { asArray } from './utils/parse-json-field';
+import { filterLineItemsForSearch, normalizeSearchTerm } from './utils/search';
 import { ViewSettingsModal } from './ViewSettingsModal';
 import { ViewSwitcher } from './ViewSwitcher';
 
@@ -202,6 +203,17 @@ const DealsBoardContent = () => {
     !opportunitiesQuery.isLoading,
   );
   const lineItems = asArray<LineItemRow>(lineItemsQuery.data);
+
+  const recordsById = useMemo(
+    () => new Map(records.map((record) => [record.id, record])),
+    [records],
+  );
+
+  const visibleLineItems = useMemo(() => {
+    const search = normalizeSearchTerm(mergedFilters.search);
+    if (!search) return lineItems;
+    return filterLineItemsForSearch(lineItems, search, recordsById);
+  }, [lineItems, mergedFilters.search, recordsById]);
 
   const stageMatchedOpportunityIds = useMemo(() => {
     if (!mergedStages?.length) {
@@ -458,7 +470,7 @@ const DealsBoardContent = () => {
         childDescriptorByField={childDescriptorByField}
         opportunityLinkFields={opportunityLinkFields}
         records={visibleRecords}
-        lineItems={lineItems}
+        lineItems={visibleLineItems}
         totalCount={visibleTotalCount}
         page={page}
         totalPages={totalPages}
