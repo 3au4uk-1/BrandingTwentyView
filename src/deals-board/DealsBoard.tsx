@@ -19,6 +19,7 @@ import { ExpandModeProvider } from './hooks/useExpandMode';
 import { useDealBoardViews, useUpdateDealBoardView } from './hooks/useDealBoardViews';
 import { useLineItems } from './hooks/useLineItems';
 import { useOpportunities } from './hooks/useOpportunities';
+import { useHostHeightLock } from './hooks/useHostHeightLock';
 import { useDealsBoardRealtimeSync } from './realtime/useDealsBoardRealtimeSync';
 import { crmFieldNamesFromColumns, needsCompanyRelation } from './metadata/crm-field-names';
 import { mergeColumns } from './metadata/merge-columns';
@@ -51,8 +52,9 @@ const DEFAULT_QUICK_FILTERS: QuickFiltersValue = {
 
 const DealsBoardContent = () => {
   const theme = useTheme();
-  const { colors, font, spacing, radius, layout, zIndex } = theme;
+  const { colors, font, spacing, radius, layout } = theme;
   const rootRef = useRef<HTMLDivElement | null>(null);
+  useHostHeightLock(rootRef);
   const viewsQuery = useDealBoardViews();
   const updateViewMutation = useUpdateDealBoardView();
   useDealsBoardRealtimeSync(!viewsQuery.isLoading);
@@ -302,8 +304,10 @@ const DealsBoardContent = () => {
         style={{
         position: 'relative',
         height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
+        maxHeight: '100%',
+        minHeight: 0,
+        display: 'grid',
+        gridTemplateRows: 'auto 1fr',
         overflow: 'hidden',
         backgroundColor: colors.bg,
         color: colors.text,
@@ -311,15 +315,7 @@ const DealsBoardContent = () => {
         fontSize: font.sizeSm,
       }}
     >
-      <div
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: zIndex.dropdown,
-          flexShrink: 0,
-          backgroundColor: colors.bg,
-        }}
-      >
+      <div data-deals-board-toolbar>
       <header
         style={{
           borderBottom: `1px solid ${colors.border}`,
@@ -480,6 +476,15 @@ const DealsBoardContent = () => {
       ) : null}
       </div>
 
+      <div
+        data-deals-board-body
+        style={{
+          minHeight: 0,
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
       <DealsTable
         activeView={activeView}
         parentColumns={mergedParentColumns}
@@ -502,6 +507,7 @@ const DealsBoardContent = () => {
         isViewLoading={viewsQuery.isLoading || viewsQuery.isSeedingDefault}
         errorMessage={loadError instanceof Error ? loadError.message : loadError ? String(loadError) : undefined}
       />
+      </div>
 
       <ViewSettingsModal
         isOpen={isCreateModalOpen}

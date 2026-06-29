@@ -9,6 +9,24 @@ export const GlobalThemeStyles = ({ theme }: GlobalThemeStylesProps) => {
 
   return (
     <style>{`
+      [data-deals-board] {
+        box-sizing: border-box;
+        height: 100%;
+        max-height: 100%;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      [data-deals-board-toolbar] {
+        min-height: 0;
+        background-color: ${colors.bg};
+      }
+
+      [data-deals-board-body] {
+        min-height: 0;
+        overflow: hidden;
+      }
+
       [data-deals-board] button:not(:disabled):active {
         transform: scale(0.98);
       }
