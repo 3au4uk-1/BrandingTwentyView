@@ -1,6 +1,6 @@
 import { useLayoutEffect, useState, type RefObject } from 'react';
 
-import { DEALS_BOARD_ROOT_ID } from './dom';
+import { DEALS_BOARD_ROOT_ID } from '../utils/dom';
 
 const measureElementWidth = (element: HTMLElement): number => {
   const width = element.clientWidth;
