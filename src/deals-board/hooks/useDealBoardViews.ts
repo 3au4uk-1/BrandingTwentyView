@@ -26,7 +26,7 @@ const DEFAULT_VIEW_SEED: Omit<DealBoardViewRecord, 'id'> = {
   childColumns: DEFAULT_CHILD_COLUMNS,
   filters: {},
   sort: [],
-  isDefault: true,
+  isDefault: false,
 };
 
 const FUTURE_DEALS_VIEW_SEED: Omit<DealBoardViewRecord, 'id'> = {
@@ -36,13 +36,38 @@ const FUTURE_DEALS_VIEW_SEED: Omit<DealBoardViewRecord, 'id'> = {
   childColumns: DEFAULT_CHILD_COLUMNS,
   filters: { datePreset: 'future' },
   sort: [{ field: OPPORTUNITY_DATE_FILTER_FIELD, direction: 'AscNullsLast' }],
-  isDefault: false,
+  isDefault: true,
+};
+
+const isFutureDealsDefault = (views: DealBoardViewRecord[]): boolean => {
+  const futureView = views.find((view) => view.name === FUTURE_DEALS_VIEW_NAME);
+  if (!futureView?.isDefault) return false;
+
+  return !views.some((view) => view.id !== futureView.id && view.isDefault);
+};
+
+const promoteFutureDealsViewAsDefault = async (
+  views: DealBoardViewRecord[],
+): Promise<void> => {
+  const futureView = views.find((view) => view.name === FUTURE_DEALS_VIEW_NAME);
+  if (!futureView) return;
+
+  await Promise.all(
+    views
+      .filter((view) => view.isDefault && view.id !== futureView.id)
+      .map((view) => updateDealBoardView(view.id, { isDefault: false })),
+  );
+
+  if (!futureView.isDefault) {
+    await updateDealBoardView(futureView.id, { isDefault: true });
+  }
 };
 
 export const useDealBoardViews = () => {
   const queryClient = useQueryClient();
   const hasSeedAttemptedRef = useRef(false);
   const hasFutureSeedAttemptedRef = useRef(false);
+  const hasDefaultMigrationAttemptedRef = useRef(false);
   const seedDefaultViewMutation = useMutation({
     mutationFn: async () => {
       await createDealBoardView(DEFAULT_VIEW_SEED);
@@ -57,12 +82,26 @@ export const useDealBoardViews = () => {
   });
 
   const ensureFutureViewMutation = useMutation({
-    mutationFn: () => createDealBoardView(FUTURE_DEALS_VIEW_SEED),
+    mutationFn: async () => {
+      const views = await fetchDealBoardViews();
+      await promoteFutureDealsViewAsDefault(views);
+      await createDealBoardView(FUTURE_DEALS_VIEW_SEED);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: dealBoardViewsQueryKey() });
     },
     onError: () => {
       hasFutureSeedAttemptedRef.current = false;
+    },
+  });
+
+  const promoteFutureDefaultMutation = useMutation({
+    mutationFn: promoteFutureDealsViewAsDefault,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: dealBoardViewsQueryKey() });
+    },
+    onError: () => {
+      hasDefaultMigrationAttemptedRef.current = false;
     },
   });
 
@@ -103,9 +142,35 @@ export const useDealBoardViews = () => {
     viewCount,
   ]);
 
+  useEffect(() => {
+    if (
+      !query.isSuccess ||
+      viewCount === 0 ||
+      !hasFutureView ||
+      hasDefaultMigrationAttemptedRef.current ||
+      promoteFutureDefaultMutation.isPending ||
+      isFutureDealsDefault(query.data ?? [])
+    ) {
+      return;
+    }
+
+    hasDefaultMigrationAttemptedRef.current = true;
+    promoteFutureDefaultMutation.mutate(query.data ?? []);
+  }, [
+    hasFutureView,
+    promoteFutureDefaultMutation.isPending,
+    promoteFutureDefaultMutation.mutate,
+    query.data,
+    query.isSuccess,
+    viewCount,
+  ]);
+
   return {
     ...query,
-    isSeedingDefault: seedDefaultViewMutation.isPending || ensureFutureViewMutation.isPending,
+    isSeedingDefault:
+      seedDefaultViewMutation.isPending ||
+      ensureFutureViewMutation.isPending ||
+      promoteFutureDefaultMutation.isPending,
   };
 };
 

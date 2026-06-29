@@ -19,6 +19,7 @@ import { ExpandModeProvider } from './hooks/useExpandMode';
 import { useDealBoardViews, useUpdateDealBoardView } from './hooks/useDealBoardViews';
 import { useLineItems } from './hooks/useLineItems';
 import { useOpportunities } from './hooks/useOpportunities';
+import { useDealsBoardRealtimeSync } from './realtime/useDealsBoardRealtimeSync';
 import { crmFieldNamesFromColumns, needsCompanyRelation } from './metadata/crm-field-names';
 import { mergeColumns } from './metadata/merge-columns';
 import { useObjectFields } from './metadata/useObjectFields';
@@ -52,6 +53,7 @@ const DealsBoardContent = () => {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const viewsQuery = useDealBoardViews();
   const updateViewMutation = useUpdateDealBoardView();
+  useDealsBoardRealtimeSync(!viewsQuery.isLoading);
   const [activeViewId, setActiveViewId] = useState<string>();
   const [page, setPage] = useState(0);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);

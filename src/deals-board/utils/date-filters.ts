@@ -1,6 +1,7 @@
 import { OPPORTUNITY_DATE_FILTER_FIELD } from 'src/constants/date-filter-field';
 
-import type { DealBoardFilters } from '../types';
+import type { DealBoardFilters, DealBoardSort } from '../types';
+import { sortsByDateField } from './sort-opportunities';
 
 export type DatePreset = 'today' | 'tomorrow' | 'week' | 'month' | 'future' | 'custom';
 
@@ -154,7 +155,11 @@ export const buildOpportunityDateFilter = (
   };
 };
 
-export const shouldFetchAllOpportunities = (filters: DealBoardFilters): boolean =>
+export const shouldFetchAllOpportunities = (
+  filters: DealBoardFilters,
+  sort?: DealBoardSort[],
+): boolean =>
+  (sort ? sortsByDateField(sort) : false) ||
   filters.datePreset === 'today' ||
   filters.datePreset === 'tomorrow' ||
   (Boolean(filters.dateFrom) &&

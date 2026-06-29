@@ -2,6 +2,7 @@ import { OPPORTUNITY_DATE_FILTER_FIELD } from 'src/constants/date-filter-field';
 
 import { buildOpportunityNodeSelection } from '../metadata/build-opportunity-selection';
 import { buildOpportunityDateFilter } from '../utils/date-filters';
+import { sortOpportunitiesWithCancelledLast } from '../utils/sort-opportunities';
 import { asArray } from '../utils/parse-json-field';
 import type { DealBoardFilters, DealBoardSort, OpportunityRow } from '../types';
 import { getApiClient } from './client';
@@ -78,8 +79,14 @@ const fetchOpportunityPage = async (params: {
   });
 
   const enrichedRecords = await enrichOpportunityRowsWithLinkFields(records, params.linkFieldNames);
+  const effectiveSort = sort.length
+    ? sort
+    : [{ field: OPPORTUNITY_DATE_FILTER_FIELD, direction: 'AscNullsFirst' as const }];
 
-  return { records: enrichedRecords, totalCount: result.opportunities?.totalCount ?? 0 };
+  return {
+    records: sortOpportunitiesWithCancelledLast(enrichedRecords, effectiveSort),
+    totalCount: result.opportunities?.totalCount ?? 0,
+  };
 };
 
 export const fetchOpportunities = async (params: {

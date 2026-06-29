@@ -19,7 +19,9 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.1",
-    "@tanstack/react-virtual": "^3.14.4"
+    "@tanstack/react-virtual": "^3.14.4",
+    "graphql": "^16.8.1",
+    "graphql-sse": "^2.6.0"
   },
   "devDependencies": {
     "@types/node": "^24.7.2",

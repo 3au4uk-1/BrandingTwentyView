@@ -137,6 +137,21 @@ describe('shouldFetchAllOpportunities', () => {
     ).toBe(true);
     expect(shouldFetchAllOpportunities({ datePreset: 'week' })).toBe(false);
   });
+
+  it('loads all records when sorting by date', () => {
+    expect(
+      shouldFetchAllOpportunities(
+        { datePreset: 'week' },
+        [{ field: 'loadDate', direction: 'AscNullsFirst' }],
+      ),
+    ).toBe(true);
+    expect(
+      shouldFetchAllOpportunities(
+        { datePreset: 'week' },
+        [{ field: 'name', direction: 'AscNullsFirst' }],
+      ),
+    ).toBe(false);
+  });
 });
 
 describe('toInputDate', () => {

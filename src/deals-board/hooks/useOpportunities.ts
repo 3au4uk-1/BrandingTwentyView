@@ -1,10 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { OPPORTUNITY_DATE_FILTER_FIELD } from 'src/constants/date-filter-field';
+
 import { fetchOpportunities } from '../api/opportunities';
 import { shouldFetchAllOpportunities } from '../utils/date-filters';
 import type { DealBoardFilters, DealBoardSort } from '../types';
 
 const DEFAULT_PAGE_SIZE = 50;
+const DEFAULT_DATE_SORT: DealBoardSort[] = [
+  { field: OPPORTUNITY_DATE_FILTER_FIELD, direction: 'AscNullsFirst' },
+];
 
 export const opportunitiesQueryKey = (
   viewId: string | undefined,
@@ -41,7 +46,10 @@ export const useOpportunities = (params: {
   const visibleCrmFieldNames = params.visibleCrmFieldNames ?? [];
   const linkFieldNames = params.linkFieldNames ?? [];
   const includeCompanyRelation = params.includeCompanyRelation ?? false;
-  const fetchAll = shouldFetchAllOpportunities(params.filters);
+  const fetchAll = shouldFetchAllOpportunities(
+    params.filters,
+    params.sort.length > 0 ? params.sort : DEFAULT_DATE_SORT,
+  );
 
   return useQuery({
     queryKey: opportunitiesQueryKey(
