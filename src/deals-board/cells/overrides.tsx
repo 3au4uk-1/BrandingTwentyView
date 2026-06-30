@@ -6,6 +6,7 @@ import type { LineItemStage } from 'src/constants/stages';
 
 import { Chip } from '../Chip';
 import { DealStageSelect } from '../editors/DealStageSelect';
+import { DatePickerModal } from '../editors/DatePickerModal';
 import { LinkCell } from '../editors/LinkCell';
 import { RichTextPopover } from '../editors/RichTextPopover';
 import { StageSelect } from '../editors/StageSelect';
@@ -250,6 +251,18 @@ export const renderFieldOverride = (props: FieldOverrideProps): ReactNode | null
           recordId={recordId}
           fieldName="vremyaGotovnostiPechati"
           value={typeof value === 'string' ? value : null}
+        />
+      );
+    case 'loadDate':
+      if (variant !== 'parent') return null;
+
+      return (
+        <DatePickerModal
+          objectName="opportunity"
+          recordId={recordId}
+          fieldName="loadDate"
+          value={typeof value === 'string' ? value : null}
+          emphasized
         />
       );
     case 'summary':

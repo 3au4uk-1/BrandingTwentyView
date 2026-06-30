@@ -329,7 +329,19 @@ export const DealsTable = ({
                       : undefined
                   }
                 >
-                  {column.label}
+                  {column.field === 'loadDate' ? (
+                    <span
+                      style={{
+                        fontWeight: theme.font.weightBold,
+                        color: colors.text,
+                        fontSize: theme.font.sizeMd,
+                      }}
+                    >
+                      {column.label}
+                    </span>
+                  ) : (
+                    column.label
+                  )}
                 </ResizableColumnHeader>
               ))}
             </tr>
