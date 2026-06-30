@@ -39,7 +39,7 @@ const fetchOpportunityPageRecords = async (params: {
   visibleCrmFieldNames: string[];
   linkFieldNames: readonly string[];
   includeCompanyRelation: boolean;
-}): Promise<{ records: OpportunityRow[]; totalCount: number }> => {
+}): Promise<{ records: OpportunityRow[]; totalCount: number; fetchedCount: number }> => {
   const client = getApiClient();
   const sort = Array.isArray(params.sort) ? params.sort : [];
   const nodeSelection = buildOpportunityNodeSelection(
@@ -64,9 +64,11 @@ const fetchOpportunityPageRecords = async (params: {
     },
   });
 
-  const records = asArray<{
+  const edges = asArray<{
     node: OpportunityRow & { company?: { id?: string; name?: string }; closeDate?: string };
-  }>(result.opportunities?.edges)
+  }>(result.opportunities?.edges);
+
+  const records = edges
     .map((e) => e.node)
     .filter((node) => opportunityMatchesDateFilter(node, params.filters))
     .map((node) => ({
@@ -80,6 +82,7 @@ const fetchOpportunityPageRecords = async (params: {
   return {
     records: enrichedRecords,
     totalCount: result.opportunities?.totalCount ?? 0,
+    fetchedCount: edges.length,
   };
 };
 
@@ -134,10 +137,10 @@ export const fetchOpportunities = async (params: {
   }
 
   const allRecords: OpportunityRow[] = [];
-  let totalCount = 0;
+  let serverTotalCount = 0;
   let offset = 0;
 
-  do {
+  while (offset < serverTotalCount || offset === 0) {
     const page = await fetchOpportunityPageRecords({
       limit: FETCH_ALL_PAGE_SIZE,
       offset,
@@ -149,10 +152,14 @@ export const fetchOpportunities = async (params: {
       includeCompanyRelation,
     });
 
-    totalCount = page.totalCount;
+    serverTotalCount = page.totalCount;
     allRecords.push(...page.records);
-    offset += FETCH_ALL_PAGE_SIZE;
-  } while (allRecords.length < totalCount);
+    offset += page.fetchedCount;
+
+    if (page.fetchedCount === 0) {
+      break;
+    }
+  }
 
   return {
     records: sortOpportunitiesWithCancelledLast(allRecords, effectiveSort),
