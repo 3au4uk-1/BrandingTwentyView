@@ -46,6 +46,7 @@ export type OpportunityRow = {
   bitrixLink?: { primaryLinkUrl?: string };
   oplata?: string | null;
   stage?: string | null;
+  stageZakreplen?: boolean | null;
   [key: string]: unknown;
 };
 

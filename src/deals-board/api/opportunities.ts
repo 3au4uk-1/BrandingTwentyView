@@ -15,7 +15,7 @@ import { enrichOpportunityRowsWithLinkFields } from './opportunity-link-fields-r
 const FETCH_ALL_PAGE_SIZE = 200;
 
 /** Default CRM fields when callers omit dynamic selection (matches prior fixed query). */
-const DEFAULT_VISIBLE_CRM_FIELD_NAMES = ['loadDate', 'stage', 'amount'];
+const DEFAULT_VISIBLE_CRM_FIELD_NAMES = ['loadDate', 'stage', 'stageZakreplen', 'amount'];
 const DEFAULT_INCLUDE_COMPANY_RELATION = true;
 
 /** Minimal shape retained for GraphQL node selection typing. */

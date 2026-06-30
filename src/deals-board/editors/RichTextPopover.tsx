@@ -7,10 +7,12 @@ import { Button } from '../ui/Button';
 import { Textarea } from '../ui/Input';
 import { Modal } from '../ui/Modal';
 
+type RichTextField = 'plenka.markdown' | 'kommentariy' | 'kommentariyDlyaPechati';
+
 type RichTextPopoverProps = {
   itemId: string;
   value?: string;
-  field: 'plenka.markdown' | 'kommentariy';
+  field: RichTextField;
 };
 
 const previewText = (value?: string) => {
@@ -18,8 +20,11 @@ const previewText = (value?: string) => {
   return text?.length ? text : EMPTY_VALUE;
 };
 
-const fieldTitle = (field: RichTextPopoverProps['field']) =>
-  field === 'plenka.markdown' ? 'Плёнка' : 'Комментарий';
+const fieldTitle = (field: RichTextField) => {
+  if (field === 'plenka.markdown') return 'Плёнка';
+  if (field === 'kommentariyDlyaPechati') return 'Комментарий для печати';
+  return 'Комментарий';
+};
 
 export const RichTextPopover = ({ itemId, value, field }: RichTextPopoverProps) => {
   const theme = useTheme();
@@ -45,6 +50,11 @@ export const RichTextPopover = ({ itemId, value, field }: RichTextPopoverProps) 
         await updateMutation.mutateAsync({
           id: itemId,
           data: { plenka: { markdown: draftValue } },
+        });
+      } else if (field === 'kommentariyDlyaPechati') {
+        await updateMutation.mutateAsync({
+          id: itemId,
+          data: { kommentariyDlyaPechati: draftValue },
         });
       } else {
         await updateMutation.mutateAsync({

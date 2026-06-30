@@ -7,6 +7,7 @@ import {
   updateLineItem,
 } from '../api/line-items';
 import type { LineItemRow } from '../types';
+import { syncDealStage } from '../utils/sync-deal-stage';
 
 export const lineItemsQueryKey = (
   opportunityIds: string[],
@@ -85,8 +86,24 @@ export const useUpdateLineItem = () => {
       }
     },
 
-    onSettled: () => {
+    onSettled: async (_data, _error, { id }) => {
+      let opportunityId: string | undefined;
+
+      for (const [, items] of queryClient.getQueriesData<LineItemRow[]>({
+        queryKey: ['lineItems'],
+      })) {
+        const match = items?.find((item) => item.id === id);
+        if (match) {
+          opportunityId = match.opportunityId;
+          break;
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: ['lineItems'] });
+
+      if (opportunityId) {
+        await syncDealStage(queryClient, opportunityId);
+      }
     },
   });
 };

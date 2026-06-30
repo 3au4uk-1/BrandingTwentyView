@@ -1,9 +1,13 @@
 import { Chip, type ChipColor } from '../Chip';
 import { useTheme } from '../theme/ThemeContext';
 
-import { getStageColor, getStageLabel } from 'src/constants/stages';
+import {
+  getStageColor,
+  getStageLabel,
+  LINE_ITEM_STAGE_ORDER,
+  type LineItemStage,
+} from 'src/constants/stages';
 
-import { buildStageSummary } from '../utils/summary';
 import type { LineItemRow } from '../types';
 
 type DealSummaryChipsProps = {
@@ -16,14 +20,22 @@ export const DealSummaryChips = ({ items }: DealSummaryChipsProps) => {
 
   for (const item of items) {
     const key = item.stage ?? 'NOVYY';
+    if (key === 'OTMENA') continue;
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
 
-  const stageChips = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  const stageChips = [...counts.entries()].sort(
+    ([left], [right]) =>
+      LINE_ITEM_STAGE_ORDER.indexOf(left as LineItemStage) -
+      LINE_ITEM_STAGE_ORDER.indexOf(right as LineItemStage),
+  );
+
+  if (stageChips.length === 0) {
+    return null;
+  }
 
   return (
     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-      <Chip text={buildStageSummary(items)} color="gray" theme={theme} />
       {stageChips.map(([stage, count]) => (
         <Chip
           key={stage}

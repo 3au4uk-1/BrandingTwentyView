@@ -5,9 +5,11 @@ import { getOpportunityLinkButtonLabel } from 'src/constants/opportunity-links';
 import type { LineItemStage } from 'src/constants/stages';
 
 import { Chip } from '../Chip';
+import { DealStageSelect } from '../editors/DealStageSelect';
 import { LinkCell } from '../editors/LinkCell';
 import { RichTextPopover } from '../editors/RichTextPopover';
 import { StageSelect } from '../editors/StageSelect';
+import { TimePickerModal } from '../editors/TimePickerModal';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
 import { ChevronRightIcon } from '../ui/Icons';
@@ -191,9 +193,21 @@ export const renderFieldOverride = (props: FieldOverrideProps): ReactNode | null
     case 'name':
       return variant === 'parent' ? <ParentNameCell {...props} /> : <ChildNameCell {...props} />;
     case 'stage':
+      if (variant === 'parent') {
+        return (
+          <DealStageSelect
+            recordId={recordId}
+            value={value as string | null | undefined}
+            stageZakreplen={
+              typeof props.row?.stageZakreplen === 'boolean' ? props.row.stageZakreplen : null
+            }
+          />
+        );
+      }
+
       return (
         <StageSelect
-          objectName={variant === 'parent' ? 'opportunity' : 'dealLineItem'}
+          objectName="dealLineItem"
           recordId={recordId}
           value={value as LineItemStage | null | undefined}
         />
@@ -219,6 +233,23 @@ export const renderFieldOverride = (props: FieldOverrideProps): ReactNode | null
           itemId={recordId}
           field="kommentariy"
           value={typeof value === 'string' ? value : undefined}
+        />
+      );
+    case 'kommentariyDlyaPechati':
+      return (
+        <RichTextPopover
+          itemId={recordId}
+          field="kommentariyDlyaPechati"
+          value={typeof value === 'string' ? value : undefined}
+        />
+      );
+    case 'vremyaGotovnostiPechati':
+      return (
+        <TimePickerModal
+          objectName="dealLineItem"
+          recordId={recordId}
+          fieldName="vremyaGotovnostiPechati"
+          value={typeof value === 'string' ? value : null}
         />
       );
     case 'summary':

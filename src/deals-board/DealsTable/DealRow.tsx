@@ -46,7 +46,7 @@ export const DealRow = ({
   const { colors, font, zIndex, colorScheme } = theme;
   const canExpand = lineItems.length > 0;
   const stageValue = typeof row.stage === 'string' ? row.stage : null;
-  const stageStyles = getStageRowStyles(stageValue, colorScheme);
+  const stageStyles = getStageRowStyles(stageValue, colorScheme, 'parent');
   const rowBg = stageStyles.backgroundColor;
 
   return (
