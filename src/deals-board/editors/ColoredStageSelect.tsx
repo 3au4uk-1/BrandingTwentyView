@@ -19,8 +19,13 @@ type ColoredStageSelectProps = {
   style?: CSSProperties;
 };
 
-const getStagePalette = (color: string, theme: ThemeTokens) =>
-  getChipPalette((color as ChipColor) || 'gray', theme.colorScheme);
+const SELECT_SURFACE = {
+  background: '#18181b',
+  border: '#3f3f46',
+} as const;
+
+const getStageAccent = (color: string) =>
+  getChipPalette((color as ChipColor) || 'gray', 'dark').text;
 
 export const ColoredStageSelect = ({
   theme,
@@ -31,7 +36,7 @@ export const ColoredStageSelect = ({
   style,
 }: ColoredStageSelectProps) => {
   const selectedStage = stages.find((stage) => stage.value === value);
-  const selectedPalette = getStagePalette(selectedStage?.color ?? 'gray', theme);
+  const selectedAccent = getStageAccent(selectedStage?.color ?? 'gray');
 
   return (
     <Select
@@ -45,28 +50,25 @@ export const ColoredStageSelect = ({
         fontSize: theme.font.sizeSm,
         padding: '4px 8px',
         fontWeight: theme.font.weightMedium,
-        backgroundColor: selectedPalette.bg,
-        color: selectedPalette.text,
-        borderColor: selectedPalette.text,
+        colorScheme: 'dark',
+        backgroundColor: SELECT_SURFACE.background,
+        color: selectedAccent,
+        borderColor: SELECT_SURFACE.border,
         ...style,
       }}
     >
-      {stages.map((stage) => {
-        const palette = getStagePalette(stage.color, theme);
-
-        return (
-          <option
-            key={stage.value}
-            value={stage.value}
-            style={{
-              backgroundColor: palette.bg,
-              color: palette.text,
-            }}
-          >
-            {stage.label}
-          </option>
-        );
-      })}
+      {stages.map((stage) => (
+        <option
+          key={stage.value}
+          value={stage.value}
+          style={{
+            backgroundColor: SELECT_SURFACE.background,
+            color: getStageAccent(stage.color),
+          }}
+        >
+          {stage.label}
+        </option>
+      ))}
     </Select>
   );
 };

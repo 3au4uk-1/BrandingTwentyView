@@ -1,4 +1,4 @@
-import { useRef, type ChangeEvent, type CSSProperties } from 'react';
+import type { MouseEvent } from 'react';
 
 import { useUpdateRecord } from '../hooks/useUpdateRecord';
 import type { BoardObjectName } from '../metadata/types';
@@ -27,19 +27,6 @@ const formatDisplayDate = (value?: string | null): string | null => {
   return `${day}.${month}.${year}`;
 };
 
-const hiddenPickerStyle: CSSProperties = {
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  width: 0,
-  height: 0,
-  opacity: 0,
-  border: 'none',
-  padding: 0,
-  margin: 0,
-  pointerEvents: 'none',
-};
-
 export const DatePickerModal = ({
   objectName,
   recordId,
@@ -49,64 +36,51 @@ export const DatePickerModal = ({
   const theme = useTheme();
   const { colors, font } = theme;
   const updateMutation = useUpdateRecord(objectName);
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  const open = () => {
-    const input = inputRef.current;
-    if (!input) return;
+  const open = (event: MouseEvent<HTMLButtonElement>) => {
+    openNativePicker({
+      type: 'date',
+      value: toInputDate(value),
+      anchor: event.currentTarget,
+      onPick: (pickedValue) => {
+        void (async () => {
+          const trimmed = pickedValue.trim();
+          const nextValue = trimmed || null;
 
-    input.value = toInputDate(value);
-    requestAnimationFrame(() => {
-      openNativePicker(input);
+          try {
+            await updateMutation.mutateAsync({
+              id: recordId,
+              data: { [fieldName]: nextValue },
+            });
+          } catch (error) {
+            window.alert(
+              `Не удалось сохранить значение.${error instanceof Error ? ` ${error.message}` : ''}`,
+            );
+          }
+        })();
+      },
     });
-  };
-
-  const handleChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const trimmed = event.target.value.trim();
-    const nextValue = trimmed || null;
-
-    try {
-      await updateMutation.mutateAsync({
-        id: recordId,
-        data: { [fieldName]: nextValue },
-      });
-    } catch (error) {
-      window.alert(
-        `Не удалось сохранить значение.${error instanceof Error ? ` ${error.message}` : ''}`,
-      );
-    }
   };
 
   const displayValue = formatDisplayDate(value);
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={open}
-        disabled={updateMutation.isPending}
-        style={{
-          border: 'none',
-          background: 'transparent',
-          padding: 0,
-          margin: 0,
-          cursor: 'pointer',
-          color: colors.text,
-          fontSize: font.sizeSm,
-          fontWeight: font.weightMedium,
-        }}
-      >
-        {displayValue || EMPTY_VALUE}
-      </button>
-
-      <input
-        ref={inputRef}
-        type="date"
-        tabIndex={-1}
-        aria-hidden="true"
-        onChange={(event) => void handleChange(event)}
-        style={hiddenPickerStyle}
-      />
-    </>
+    <button
+      type="button"
+      onClick={open}
+      disabled={updateMutation.isPending}
+      style={{
+        border: 'none',
+        background: 'transparent',
+        padding: 0,
+        margin: 0,
+        cursor: 'pointer',
+        color: colors.text,
+        fontSize: font.sizeSm,
+        fontWeight: font.weightMedium,
+      }}
+    >
+      {displayValue || EMPTY_VALUE}
+    </button>
   );
 };
