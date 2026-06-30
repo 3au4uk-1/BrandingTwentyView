@@ -7,6 +7,7 @@ import {
   resolveDealBoardDateRange,
   shouldFetchAllOpportunities,
   toInputDate,
+  toLocalInputDate,
 } from './date-filters';
 
 describe('getPresetRange', () => {
@@ -152,5 +153,31 @@ describe('shouldFetchAllOpportunities', () => {
 describe('toInputDate', () => {
   it('formats local calendar dates', () => {
     expect(toInputDate(new Date(2026, 0, 5))).toBe('2026-01-05');
+  });
+});
+
+describe('toLocalInputDate', () => {
+  it('returns plain YYYY-MM-DD values unchanged', () => {
+    expect(toLocalInputDate('2026-07-03')).toBe('2026-07-03');
+  });
+
+  it('maps UTC datetime to the local calendar day', () => {
+    const previousTz = process.env.TZ;
+    process.env.TZ = 'Europe/Moscow';
+
+    try {
+      expect(toLocalInputDate('2026-07-02T21:00:00.000Z')).toBe('2026-07-03');
+    } finally {
+      if (previousTz === undefined) {
+        delete process.env.TZ;
+      } else {
+        process.env.TZ = previousTz;
+      }
+    }
+  });
+
+  it('returns null for empty or invalid values', () => {
+    expect(toLocalInputDate('')).toBeNull();
+    expect(toLocalInputDate('not-a-date')).toBeNull();
   });
 });

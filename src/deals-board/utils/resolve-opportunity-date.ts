@@ -4,7 +4,7 @@ import {
   getLocalDayBounds,
   getTodayInputDate,
   resolveDealBoardDateRange,
-  toInputDate,
+  toLocalInputDate,
 } from './date-filters';
 
 export const OPPORTUNITY_EVENT_DATE_FIELD = 'closeDate';
@@ -25,14 +25,7 @@ export const getOpportunityEffectiveDate = (
   return null;
 };
 
-const toCalendarDay = (value: string): string | null => {
-  const parsed = new Date(value);
-  if (!Number.isNaN(parsed.getTime())) {
-    return toInputDate(parsed);
-  }
-
-  return value.length >= 10 ? value.slice(0, 10) : null;
-};
+const toCalendarDay = (value: string): string | null => toLocalInputDate(value);
 
 export const opportunityMatchesDateFilter = (
   record: Pick<OpportunityRow, 'loadDate' | 'closeDate'>,

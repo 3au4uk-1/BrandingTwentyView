@@ -18,6 +18,24 @@ export const toInputDate = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
+/** Calendar day YYYY-MM-DD in the user's local timezone (matches Twenty CRM date fields). */
+export const toLocalInputDate = (value: string): string | null => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  const parsed = new Date(trimmed);
+  if (!Number.isNaN(parsed.getTime())) {
+    return toInputDate(parsed);
+  }
+
+  const datePart = trimmed.slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? datePart : null;
+};
+
 export const addDays = (date: Date, days: number): Date => {
   const next = new Date(date);
   next.setDate(next.getDate() + days);

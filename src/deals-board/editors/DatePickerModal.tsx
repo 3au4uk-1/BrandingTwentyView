@@ -4,6 +4,7 @@ import { useUpdateRecord } from '../hooks/useUpdateRecord';
 import type { BoardObjectName } from '../metadata/types';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
+import { toLocalInputDate } from '../utils/date-filters';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { SimpleDateCalendar } from './SimpleDateCalendar';
@@ -16,14 +17,8 @@ type DatePickerModalProps = {
   emphasized?: boolean;
 };
 
-const toInputDate = (value?: string | null): string => {
-  if (!value) return '';
-  const datePart = value.slice(0, 10);
-  return /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? datePart : '';
-};
-
 const formatDisplayDate = (value?: string | null, hideYear = false): string | null => {
-  const inputDate = toInputDate(value);
+  const inputDate = value ? toLocalInputDate(value) : null;
   if (!inputDate) return null;
 
   const [year, month, day] = inputDate.split('-');
@@ -119,7 +114,7 @@ export const DatePickerModal = ({
       >
         <SimpleDateCalendar
           theme={theme}
-          value={toInputDate(value)}
+          value={value ? (toLocalInputDate(value) ?? '') : ''}
           onSelect={(isoDate) => void save(isoDate)}
         />
       </Modal>

@@ -1,7 +1,7 @@
 import { OPPORTUNITY_DATE_FILTER_FIELD } from 'src/constants/date-filter-field';
 
 import type { DealBoardSort, OpportunityRow } from '../types';
-import { toInputDate } from './date-filters';
+import { toLocalInputDate } from './date-filters';
 import { getOpportunityEffectiveDate } from './resolve-opportunity-date';
 import { isCancelledOpportunity } from './smart-expand';
 
@@ -34,16 +34,8 @@ const resolveOpportunityDateValue = (
   return null;
 };
 
-const dayKey = (value: string | null): string | null => {
-  if (!value) return null;
-
-  const parsed = new Date(value);
-  if (!Number.isNaN(parsed.getTime())) {
-    return toInputDate(parsed);
-  }
-
-  return value.length >= 10 ? value.slice(0, 10) : value;
-};
+const dayKey = (value: string | null): string | null =>
+  value ? toLocalInputDate(value) : null;
 
 export const sortOpportunitiesWithCancelledLast = (
   records: OpportunityRow[],

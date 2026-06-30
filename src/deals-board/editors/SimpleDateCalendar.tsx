@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import type { ThemeTokens } from '../theme/tokens';
+import { toLocalInputDate } from '../utils/date-filters';
 import { Button } from '../ui/Button';
 
 type SimpleDateCalendarProps = {
@@ -17,18 +18,15 @@ const toIsoDate = (year: number, month: number, day: number) =>
   `${year}-${pad2(month + 1)}-${pad2(day)}`;
 
 const parseIsoDate = (value?: string): Date | null => {
-  if (!value) return null;
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.slice(0, 10));
-  if (!match) return null;
+  const inputDate = value ? toLocalInputDate(value) : null;
+  if (!inputDate) return null;
 
-  const year = Number(match[1]);
-  const month = Number(match[2]) - 1;
-  const day = Number(match[3]);
-  const date = new Date(year, month, day);
+  const [year, month, day] = inputDate.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
 
   if (
     date.getFullYear() !== year ||
-    date.getMonth() !== month ||
+    date.getMonth() !== month - 1 ||
     date.getDate() !== day
   ) {
     return null;
