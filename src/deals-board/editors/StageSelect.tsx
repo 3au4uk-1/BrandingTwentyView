@@ -6,7 +6,7 @@ import { useUpdateLineItem } from '../hooks/useLineItems';
 import { useUpdateRecord } from '../hooks/useUpdateRecord';
 import type { BoardObjectName } from '../metadata/types';
 import { useTheme } from '../theme/ThemeContext';
-import { Select } from '../ui/Input';
+import { ColoredStageSelect } from './ColoredStageSelect';
 
 type StageSelectProps = {
   objectName: BoardObjectName;
@@ -45,23 +45,13 @@ export const StageSelect = ({ objectName, recordId, value }: StageSelectProps) =
   };
 
   return (
-    <Select
+    <ColoredStageSelect
       theme={theme}
+      stages={LINE_ITEM_STAGES}
       value={selectedValue}
-      onChange={(event) => void handleChange(event.target.value)}
+      onChange={(nextValue) => void handleChange(nextValue)}
       disabled={updateMutation.isPending}
-      style={{
-        width: '100%',
-        minWidth: 0,
-        fontSize: theme.font.sizeSm,
-        padding: '4px 8px',
-      }}
-    >
-      {LINE_ITEM_STAGES.map((stage) => (
-        <option key={stage.value} value={stage.value}>
-          {stage.label}
-        </option>
-      ))}
-    </Select>
+      style={{ width: '100%' }}
+    />
   );
 };

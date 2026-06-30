@@ -25,8 +25,9 @@ describe('computeDealStage', () => {
     expect(computeDealStage([item('V_PECHATI')])).toBe('V_RABOTE');
   });
 
-  it('never returns OTCHET_STAS', () => {
+  it('never returns manual-only stages', () => {
     const result = computeDealStage([item('GOTOVO')]);
     expect(result).not.toBe('OTCHET_STAS');
+    expect(result).not.toBe('DUBL');
   });
 });

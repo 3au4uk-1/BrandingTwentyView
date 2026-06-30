@@ -13,6 +13,7 @@ export const OPPORTUNITY_STAGES = [
   { value: 'V_RABOTE', label: 'В работе', color: 'purple' },
   { value: 'GOTOVO', label: 'Готово', color: 'green' },
   { value: 'OTCHET_STAS', label: 'Отчёт Стас', color: 'orange' },
+  { value: 'DUBL', label: 'ДУБЛЬ', color: 'yellow' },
   { value: 'OTMENA', label: 'Отмена', color: 'red' },
 ] as const;
 
