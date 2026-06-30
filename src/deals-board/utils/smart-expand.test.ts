@@ -37,6 +37,12 @@ describe('shouldAutoExpandDeal', () => {
 
     expect(shouldAutoExpandDeal(items, 'smart', 'OTMENA')).toBe(false);
   });
+
+  it('does not auto-expand duplicate opportunities', () => {
+    const items = [{ stage: 'V_RABOTE' as const }];
+
+    expect(shouldAutoExpandDeal(items, 'smart', 'DUBL')).toBe(false);
+  });
 });
 
 describe('computeIsExpanded', () => {
@@ -49,6 +55,12 @@ describe('computeIsExpanded', () => {
   it('keeps cancelled opportunities collapsed in smart mode', () => {
     expect(
       computeIsExpanded('deal-1', activeItems, 'smart', EMPTY_EXPAND_OVERRIDES, 'OTMENA'),
+    ).toBe(false);
+  });
+
+  it('keeps duplicate opportunities collapsed in smart mode', () => {
+    expect(
+      computeIsExpanded('deal-1', activeItems, 'smart', EMPTY_EXPAND_OVERRIDES, 'DUBL'),
     ).toBe(false);
   });
 
@@ -112,5 +124,22 @@ describe('toggleExpandOverride', () => {
     );
     expect(expanded.expanded).toEqual(['deal-1']);
     expect(computeIsExpanded('deal-1', activeItems, 'smart', expanded, 'OTMENA')).toBe(true);
+  });
+
+  it('allows manually expanding duplicate opportunities in smart mode', () => {
+    const activeItems = [{ stage: 'V_RABOTE' as const }];
+    expect(
+      computeIsExpanded('deal-1', activeItems, 'smart', EMPTY_EXPAND_OVERRIDES, 'DUBL'),
+    ).toBe(false);
+
+    const expanded = toggleExpandOverride(
+      'deal-1',
+      activeItems,
+      'smart',
+      EMPTY_EXPAND_OVERRIDES,
+      'DUBL',
+    );
+    expect(expanded.expanded).toEqual(['deal-1']);
+    expect(computeIsExpanded('deal-1', activeItems, 'smart', expanded, 'DUBL')).toBe(true);
   });
 });
