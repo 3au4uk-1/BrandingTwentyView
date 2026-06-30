@@ -7,12 +7,13 @@ import {
 } from './stages';
 
 describe('OPPORTUNITY_STAGES', () => {
-  it('has exactly five deal stages', () => {
+  it('has exactly six deal stages', () => {
     expect(OPPORTUNITY_STAGES.map((s) => s.value)).toEqual([
       'NOVYY',
       'V_RABOTE',
       'GOTOVO',
       'OTCHET_STAS',
+      'DUBL',
       'OTMENA',
     ]);
   });
@@ -21,7 +22,15 @@ describe('OPPORTUNITY_STAGES', () => {
     expect(getOpportunityStageLabel('OTCHET_STAS')).toBe('Отчёт Стас');
   });
 
+  it('resolves ДУБЛЬ label', () => {
+    expect(getOpportunityStageLabel('DUBL')).toBe('ДУБЛЬ');
+  });
+
   it('assigns color to OTCHET_STAS', () => {
     expect(getOpportunityStageColor('OTCHET_STAS')).not.toBe('gray');
+  });
+
+  it('assigns color to DUBL', () => {
+    expect(getOpportunityStageColor('DUBL')).toBe('yellow');
   });
 });
