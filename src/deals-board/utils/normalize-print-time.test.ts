@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { normalizePrintTime } from './normalize-print-time';
+import { normalizePrintTime, snapMinuteToTen } from './normalize-print-time';
 
 describe('normalizePrintTime', () => {
   it('converts 1200 to 12:00', () => {
@@ -13,5 +13,16 @@ describe('normalizePrintTime', () => {
 
   it('returns empty for blank', () => {
     expect(normalizePrintTime('')).toBe('');
+  });
+});
+
+describe('snapMinuteToTen', () => {
+  it('keeps tens unchanged', () => {
+    expect(snapMinuteToTen('30')).toBe('30');
+  });
+
+  it('rounds to nearest ten', () => {
+    expect(snapMinuteToTen('14')).toBe('10');
+    expect(snapMinuteToTen('15')).toBe('20');
   });
 });
