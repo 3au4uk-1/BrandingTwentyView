@@ -1,4 +1,4 @@
-import { getStageColor } from 'src/constants/stages';
+import { getOpportunityStageColor, getStageColor } from 'src/constants/stages';
 
 import { getChipPalette, type ChipColor } from '../Chip';
 import type { ColorScheme } from '../theme/tokens';
@@ -6,8 +6,13 @@ import type { ColorScheme } from '../theme/tokens';
 export const getStageRowStyles = (
   stage: string | null | undefined,
   colorScheme: ColorScheme,
+  variant: 'parent' | 'child' = 'child',
 ) => {
-  const palette = getChipPalette(getStageColor(stage ?? 'NOVYY') as ChipColor, colorScheme);
+  const color =
+    variant === 'parent'
+      ? getOpportunityStageColor(stage ?? 'NOVYY')
+      : getStageColor(stage ?? 'NOVYY');
+  const palette = getChipPalette(color as ChipColor, colorScheme);
 
   return {
     backgroundColor: palette.bg,

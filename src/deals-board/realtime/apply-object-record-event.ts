@@ -1,6 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 
 import type { LineItemRow, OpportunityRow } from '../types';
+import { syncDealStage } from '../utils/sync-deal-stage';
 import { WATCHED_OBJECT_NAMES } from './constants';
 import type { ObjectRecordEvent } from './types';
 
@@ -58,6 +59,20 @@ const patchLineItemInCache = (
   return didPatch;
 };
 
+const findLineItemOpportunityId = (
+  queryClient: QueryClient,
+  recordId: string,
+): string | undefined => {
+  for (const [, items] of queryClient.getQueriesData<LineItemRow[]>({
+    queryKey: ['lineItems'],
+  })) {
+    const match = items?.find((item) => item.id === recordId);
+    if (match?.opportunityId) return match.opportunityId;
+  }
+
+  return undefined;
+};
+
 const invalidateObjectQueries = (queryClient: QueryClient, objectNameSingular: string): void => {
   if (objectNameSingular === 'opportunity') {
     queryClient.invalidateQueries({ queryKey: ['opportunities'] });
@@ -87,7 +102,20 @@ export const applyObjectRecordEvent = (
         ? patchOpportunityInCache(queryClient, event.recordId, patch)
         : patchLineItemInCache(queryClient, event.recordId, patch);
 
-    if (didPatch) return;
+    if (didPatch) {
+      if (event.objectNameSingular === 'dealLineItem') {
+        const opportunityId =
+          typeof patch.opportunityId === 'string'
+            ? patch.opportunityId
+            : findLineItemOpportunityId(queryClient, event.recordId);
+
+        if (opportunityId) {
+          void syncDealStage(queryClient, opportunityId);
+        }
+      }
+
+      return;
+    }
   }
 
   invalidateObjectQueries(queryClient, event.objectNameSingular);
