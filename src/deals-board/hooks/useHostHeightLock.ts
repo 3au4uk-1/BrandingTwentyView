@@ -1,14 +1,30 @@
 import { useLayoutEffect, type RefObject } from 'react';
 
-const applyHostHeight = (root: HTMLElement) => {
-  const parent = root.parentElement;
-  if (!parent) return;
+import {
+  readClientHeight,
+  readParentElement,
+  resolveBoundedHostHeight,
+  type DomLikeElement,
+} from '../utils/host-height';
 
-  const height = parent.clientHeight;
+const applyHostHeight = (root: HTMLElement) => {
+  const height = resolveBoundedHostHeight(root as DomLikeElement);
   if (height <= 0) return;
 
   root.style.height = `${height}px`;
   root.style.maxHeight = `${height}px`;
+};
+
+const collectAncestors = (root: HTMLElement): HTMLElement[] => {
+  const ancestors: HTMLElement[] = [];
+  let current = readParentElement(root);
+
+  while (current) {
+    ancestors.push(current as HTMLElement);
+    current = readParentElement(current);
+  }
+
+  return ancestors;
 };
 
 export const useHostHeightLock = (rootRef: RefObject<HTMLElement | null>) => {
@@ -21,7 +37,9 @@ export const useHostHeightLock = (rootRef: RefObject<HTMLElement | null>) => {
 
     const scheduleApply = () => {
       applyHostHeight(root);
-      if (root.parentElement && root.parentElement.clientHeight <= 0 && attempts < 12) {
+
+      const height = resolveBoundedHostHeight(root as DomLikeElement);
+      if (height <= 0 && attempts < 24) {
         attempts += 1;
         frameId = requestAnimationFrame(scheduleApply);
       }
@@ -29,10 +47,15 @@ export const useHostHeightLock = (rootRef: RefObject<HTMLElement | null>) => {
 
     scheduleApply();
 
-    const parent = root.parentElement;
+    const ancestors = collectAncestors(root);
     const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(scheduleApply) : undefined;
-    if (parent) observer?.observe(parent);
+
     observer?.observe(root);
+    for (const ancestor of ancestors) {
+      if (readClientHeight(ancestor) > 0) {
+        observer?.observe(ancestor);
+      }
+    }
 
     const view = root.ownerDocument?.defaultView;
     if (view && typeof view.addEventListener === 'function') {

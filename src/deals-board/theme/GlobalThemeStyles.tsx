@@ -25,6 +25,8 @@ export const GlobalThemeStyles = ({ theme }: GlobalThemeStylesProps) => {
       [data-deals-board-body] {
         min-height: 0;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
       }
 
       [data-deals-board] button:not(:disabled):active {
