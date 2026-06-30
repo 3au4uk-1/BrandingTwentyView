@@ -2,6 +2,7 @@ import { OPPORTUNITY_DATE_FILTER_FIELD } from 'src/constants/date-filter-field';
 
 import { buildOpportunityNodeSelection } from '../metadata/build-opportunity-selection';
 import { buildOpportunityFilter, normalizeSearchTerm } from '../utils/search';
+import { opportunityMatchesDateFilter } from '../utils/resolve-opportunity-date';
 import { fetchLineItemOpportunityIdsBySearch } from './line-items';
 import {
   getEffectiveOpportunitySort,
@@ -65,15 +66,14 @@ const fetchOpportunityPageRecords = async (params: {
 
   const records = asArray<{
     node: OpportunityRow & { company?: { id?: string; name?: string }; closeDate?: string };
-  }>(result.opportunities?.edges).map((e) => {
-    const node = e.node;
-
-    return {
+  }>(result.opportunities?.edges)
+    .map((e) => e.node)
+    .filter((node) => opportunityMatchesDateFilter(node, params.filters))
+    .map((node) => ({
       ...node,
       companyName: node.company?.name,
       loadDate: node.loadDate ?? node.closeDate,
-    };
-  });
+    }));
 
   const enrichedRecords = await enrichOpportunityRowsWithLinkFields(records, params.linkFieldNames);
 
@@ -156,7 +156,7 @@ export const fetchOpportunities = async (params: {
 
   return {
     records: sortOpportunitiesWithCancelledLast(allRecords, effectiveSort),
-    totalCount,
+    totalCount: allRecords.length,
   };
 };
 

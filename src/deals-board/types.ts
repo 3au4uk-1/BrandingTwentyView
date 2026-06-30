@@ -39,6 +39,7 @@ export type OpportunityRow = {
   id: string;
   name: string;
   loadDate?: string;
+  closeDate?: string;
   companyId?: string;
   companyName?: string;
   amount?: { amountMicros: number; currencyCode: string };

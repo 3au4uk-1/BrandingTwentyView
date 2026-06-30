@@ -30,7 +30,9 @@ describe('buildOpportunityFilter', () => {
       buildOpportunityFilter({ datePreset: 'future', search: 'test' }, ['opp-1']),
     ).toEqual({
       and: [
-        { loadDate: expect.any(Object) },
+        {
+          or: [{ loadDate: expect.any(Object) }, { closeDate: expect.any(Object) }],
+        },
         {
           or: [{ name: { ilike: '%test%' } }, { id: { in: ['opp-1'] } }],
         },

@@ -1,6 +1,7 @@
 import { OPPORTUNITY_DATE_FILTER_FIELD } from 'src/constants/date-filter-field';
 
 import type { DealBoardFilters, DealBoardSort } from '../types';
+import { OPPORTUNITY_EVENT_DATE_FIELD } from './resolve-opportunity-date';
 import { sortsByDateField } from './sort-opportunities';
 
 export type DatePreset = 'today' | 'tomorrow' | 'week' | 'month' | 'future' | 'custom';
@@ -116,7 +117,7 @@ const buildDateFieldRangeFilter = (
   return conditions.length === 1 ? conditions[0] : { and: conditions };
 };
 
-/** Matches opportunities by loadDate, falling back to closeDate when loadDate is empty. */
+/** Matches opportunities by loadDate or closeDate (event date) in range; client refines with effective date. */
 export const buildOpportunityDateFilter = (
   filters: DealBoardFilters,
 ): Record<string, unknown> | undefined => {
@@ -126,7 +127,10 @@ export const buildOpportunityDateFilter = (
   if (filters.datePreset === 'future') {
     const todayBounds = getLocalDayBounds(getTodayInputDate());
     return {
-      [dateField]: { gte: todayBounds.lt },
+      or: [
+        { [dateField]: { gte: todayBounds.lt } },
+        { [OPPORTUNITY_EVENT_DATE_FIELD]: { gte: todayBounds.lt } },
+      ],
     };
   }
 
@@ -135,7 +139,7 @@ export const buildOpportunityDateFilter = (
   }
 
   const loadDateFilter = buildDateFieldRangeFilter(dateField, dateFrom, dateTo);
-  const closeDateFilter = buildDateFieldRangeFilter('closeDate', dateFrom, dateTo);
+  const closeDateFilter = buildDateFieldRangeFilter(OPPORTUNITY_EVENT_DATE_FIELD, dateFrom, dateTo);
 
   if (!loadDateFilter) {
     return closeDateFilter;
@@ -146,12 +150,7 @@ export const buildOpportunityDateFilter = (
   }
 
   return {
-    or: [
-      loadDateFilter,
-      {
-        and: [{ [dateField]: { is: 'NULL' } }, closeDateFilter],
-      },
-    ],
+    or: [loadDateFilter, closeDateFilter],
   };
 };
 
@@ -159,10 +158,4 @@ export const shouldFetchAllOpportunities = (
   filters: DealBoardFilters,
   sort?: DealBoardSort[],
 ): boolean =>
-  (sort ? sortsByDateField(sort) : false) ||
-  filters.datePreset === 'today' ||
-  filters.datePreset === 'tomorrow' ||
-  (Boolean(filters.dateFrom) &&
-    Boolean(filters.dateTo) &&
-    filters.dateFrom === filters.dateTo &&
-    !filters.datePreset);
+  (sort ? sortsByDateField(sort) : false) || Boolean(buildOpportunityDateFilter(filters));

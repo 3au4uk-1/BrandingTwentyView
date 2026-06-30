@@ -50,13 +50,16 @@ describe('buildOpportunityDateFilter', () => {
     vi.setSystemTime(new Date(2026, 5, 27, 12, 0, 0));
 
     expect(buildOpportunityDateFilter({ datePreset: 'future' })).toEqual({
-      loadDate: { gte: getLocalDayBounds('2026-06-28').gte },
+      or: [
+        { loadDate: { gte: getLocalDayBounds('2026-06-28').gte } },
+        { closeDate: { gte: getLocalDayBounds('2026-06-28').gte } },
+      ],
     });
 
     vi.useRealTimers();
   });
 
-  it('matches loadDate and closeDate fallback for a single day', () => {
+  it('matches loadDate or closeDate for a single day', () => {
     const bounds = getLocalDayBounds('2026-06-27');
 
     expect(
@@ -70,12 +73,7 @@ describe('buildOpportunityDateFilter', () => {
           and: [{ loadDate: { gte: bounds.gte } }, { loadDate: { lt: bounds.lt } }],
         },
         {
-          and: [
-            { loadDate: { is: 'NULL' } },
-            {
-              and: [{ closeDate: { gte: bounds.gte } }, { closeDate: { lt: bounds.lt } }],
-            },
-          ],
+          and: [{ closeDate: { gte: bounds.gte } }, { closeDate: { lt: bounds.lt } }],
         },
       ],
     });
@@ -97,13 +95,8 @@ describe('buildOpportunityDateFilter', () => {
         },
         {
           and: [
-            { loadDate: { is: 'NULL' } },
-            {
-              and: [
-                { closeDate: { gte: getLocalDayBounds('2026-06-23').gte } },
-                { closeDate: { lt: getLocalDayBounds('2026-06-29').lt } },
-              ],
-            },
+            { closeDate: { gte: getLocalDayBounds('2026-06-23').gte } },
+            { closeDate: { lt: getLocalDayBounds('2026-06-29').lt } },
           ],
         },
       ],
@@ -126,16 +119,18 @@ describe('resolveDealBoardDateRange', () => {
 });
 
 describe('shouldFetchAllOpportunities', () => {
-  it('loads all records for single-day presets', () => {
+  it('loads all records for active date filters', () => {
     expect(shouldFetchAllOpportunities({ datePreset: 'today' })).toBe(true);
     expect(shouldFetchAllOpportunities({ datePreset: 'tomorrow' })).toBe(true);
+    expect(shouldFetchAllOpportunities({ datePreset: 'week' })).toBe(true);
+    expect(shouldFetchAllOpportunities({ datePreset: 'month' })).toBe(true);
+    expect(shouldFetchAllOpportunities({ datePreset: 'future' })).toBe(true);
     expect(
       shouldFetchAllOpportunities({
         dateFrom: '2026-06-27',
         dateTo: '2026-06-27',
       }),
     ).toBe(true);
-    expect(shouldFetchAllOpportunities({ datePreset: 'week' })).toBe(false);
   });
 
   it('loads all records when sorting by date', () => {
@@ -150,7 +145,7 @@ describe('shouldFetchAllOpportunities', () => {
         { datePreset: 'week' },
         [{ field: 'name', direction: 'AscNullsFirst' }],
       ),
-    ).toBe(false);
+    ).toBe(true);
   });
 });
 

@@ -2,6 +2,7 @@ import { OPPORTUNITY_DATE_FILTER_FIELD } from 'src/constants/date-filter-field';
 
 import type { DealBoardSort, OpportunityRow } from '../types';
 import { toInputDate } from './date-filters';
+import { getOpportunityEffectiveDate } from './resolve-opportunity-date';
 import { isCancelledOpportunity } from './smart-expand';
 
 const DATE_SORT_FIELDS = new Set([OPPORTUNITY_DATE_FILTER_FIELD, 'closeDate']);
@@ -21,14 +22,13 @@ const resolveOpportunityDateValue = (
   record: OpportunityRow,
   field: string,
 ): string | null => {
+  if (field === OPPORTUNITY_DATE_FILTER_FIELD) {
+    return getOpportunityEffectiveDate(record);
+  }
+
   const primary = record[field];
   if (typeof primary === 'string' && primary.length > 0) {
     return primary;
-  }
-
-  const fallback = record.closeDate;
-  if (field === OPPORTUNITY_DATE_FILTER_FIELD && typeof fallback === 'string' && fallback.length > 0) {
-    return fallback;
   }
 
   return null;

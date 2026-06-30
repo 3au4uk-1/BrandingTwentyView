@@ -34,5 +34,7 @@ export const buildOpportunityNodeSelection = (
     selection[field] = true;
   }
 
+  selection.closeDate = true;
+
   return selection;
 };
