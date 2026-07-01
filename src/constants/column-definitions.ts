@@ -11,10 +11,11 @@ export const DEFAULT_PARENT_COLUMNS: ColumnConfig[] = [
 
 export const DEFAULT_CHILD_COLUMNS: ColumnConfig[] = [
   { field: 'name', label: 'Позиция', order: 0, visible: true, width: 240 },
-  { field: 'stage', label: 'Стадия', order: 1, visible: true, width: 120 },
-  { field: 'ssylkaNaMakety', label: 'Макеты', order: 2, visible: true, width: 100 },
-  { field: 'plenka', label: 'Плёнка', order: 3, visible: true, width: 80 },
-  { field: 'kolichestvo', label: 'Кол-во', order: 4, visible: true, width: 70 },
-  { field: 'amount', label: 'Сумма', order: 5, visible: true, width: 100 },
-  { field: 'kommentariy', label: 'Комментарий', order: 6, visible: false, width: 120 },
+  { field: 'tip', label: 'Тип', order: 1, visible: true, width: 110 },
+  { field: 'stage', label: 'Стадия', order: 2, visible: true, width: 120 },
+  { field: 'ssylkaNaMakety', label: 'Макеты', order: 3, visible: true, width: 100 },
+  { field: 'plenka', label: 'Плёнка', order: 4, visible: true, width: 80 },
+  { field: 'kolichestvo', label: 'Кол-во', order: 5, visible: true, width: 70 },
+  { field: 'amount', label: 'Сумма', order: 6, visible: true, width: 100 },
+  { field: 'kommentariy', label: 'Комментарий', order: 7, visible: false, width: 120 },
 ];

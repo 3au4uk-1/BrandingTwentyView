@@ -1,4 +1,5 @@
 import type { LineItemStage } from 'src/constants/stages';
+import type { LineItemType } from 'src/constants/line-item-types';
 
 import { asStringArray } from './parse-json-field';
 
@@ -24,6 +25,30 @@ export const mergeStageFilters = (
 
   const quickSet = new Set(quickStages);
   return viewStages.filter((stage) => quickSet.has(stage));
+};
+
+export const normalizeTypeList = (value: unknown): LineItemType[] =>
+  asStringArray(value) as LineItemType[];
+
+export const mergeTypeFilters = (
+  fromView?: unknown,
+  fromQuick?: unknown,
+): LineItemType[] | undefined => {
+  const viewTypes = normalizeTypeList(fromView);
+  const quickTypes = normalizeTypeList(fromQuick);
+
+  if (!viewTypes.length && !quickTypes.length) {
+    return undefined;
+  }
+  if (!viewTypes.length) {
+    return quickTypes;
+  }
+  if (!quickTypes.length) {
+    return viewTypes;
+  }
+
+  const quickSet = new Set(quickTypes);
+  return viewTypes.filter((type) => quickSet.has(type));
 };
 
 export const normalizeCompanyIdList = (value: unknown): string[] => asStringArray(value);

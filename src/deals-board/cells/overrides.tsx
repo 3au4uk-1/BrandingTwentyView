@@ -2,6 +2,7 @@ import type { MouseEvent, ReactNode } from 'react';
 
 import { getOpportunityLinkButtonLabel } from 'src/constants/opportunity-links';
 
+import type { LineItemType } from 'src/constants/line-item-types';
 import type { LineItemStage } from 'src/constants/stages';
 
 import { Chip } from '../Chip';
@@ -10,6 +11,7 @@ import { DatePickerModal } from '../editors/DatePickerModal';
 import { LinkCell } from '../editors/LinkCell';
 import { RichTextPopover } from '../editors/RichTextPopover';
 import { StageSelect } from '../editors/StageSelect';
+import { TypeSelect } from '../editors/TypeSelect';
 import { TimePickerModal } from '../editors/TimePickerModal';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
@@ -193,6 +195,15 @@ export const renderFieldOverride = (props: FieldOverrideProps): ReactNode | null
   switch (field) {
     case 'name':
       return variant === 'parent' ? <ParentNameCell {...props} /> : <ChildNameCell {...props} />;
+    case 'tip':
+      if (variant !== 'child') return null;
+
+      return (
+        <TypeSelect
+          recordId={recordId}
+          value={value as LineItemType | null | undefined}
+        />
+      );
     case 'stage':
       if (variant === 'parent') {
         return (

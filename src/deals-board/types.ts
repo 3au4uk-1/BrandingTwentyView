@@ -1,3 +1,4 @@
+import type { LineItemType } from 'src/constants/line-item-types';
 import type { LineItemStage } from 'src/constants/stages';
 import type { ViewVisibility } from 'src/constants/view-visibility';
 
@@ -16,6 +17,7 @@ export type DealBoardFilters = {
   dateFrom?: string;
   dateTo?: string;
   stages?: LineItemStage[];
+  types?: LineItemType[];
   oplata?: string;
   search?: string;
   showAll?: boolean;
@@ -58,6 +60,7 @@ export type LineItemRow = {
   kolichestvo?: number;
   amount?: { amountMicros: number; currencyCode: string };
   kommentariy?: string;
+  tip?: LineItemType | null;
   stage?: LineItemStage | null;
   ssylkaNaMakety?: { primaryLinkUrl?: string; primaryLinkLabel?: string };
   plenka?: { markdown?: string };

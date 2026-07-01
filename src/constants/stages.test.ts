@@ -9,13 +9,12 @@ import {
 } from './stages';
 
 describe('LINE_ITEM_STAGES', () => {
-  it('includes banner and contractor stages', () => {
-    expect(LINE_ITEM_STAGES.map((stage) => stage.value)).toContain('BANNERA');
+  it('includes contractor stage', () => {
     expect(LINE_ITEM_STAGES.map((stage) => stage.value)).toContain('PODRYAD');
+    expect(LINE_ITEM_STAGES.map((stage) => stage.value)).not.toContain('BANNERA');
   });
 
-  it('resolves new stage labels', () => {
-    expect(getStageLabel('BANNERA')).toBe('Баннера');
+  it('resolves contractor stage label', () => {
     expect(getStageLabel('PODRYAD')).toBe('Подряд');
   });
 });

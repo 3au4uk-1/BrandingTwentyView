@@ -8,35 +8,58 @@ let restClient: RestApiClient | null = null;
 const PAGE_LIMIT = 200;
 const OPPORTUNITY_ID_CHUNK_SIZE = 25;
 
+export type LineItemQueryFilters = {
+  stages?: string[];
+  types?: string[];
+};
+
 const getRestClient = (): RestApiClient => {
   if (!restClient) restClient = new RestApiClient();
   return restClient;
 };
 
-export const buildDealLineItemsFilter = (
-  opportunityIds: string[],
-  stageFilter?: string[],
+const appendLineItemFilters = (
+  baseFilter: string,
+  filters?: LineItemQueryFilters,
 ): string => {
-  const opportunityFilter = `opportunityId[in]:${JSON.stringify(opportunityIds)}`;
-  if (!stageFilter?.length) return opportunityFilter;
-  return `and(${opportunityFilter},stage[in]:${JSON.stringify(stageFilter)})`;
+  const parts: string[] = [];
+
+  if (filters?.stages?.length) {
+    parts.push(`stage[in]:${JSON.stringify(filters.stages)}`);
+  }
+  if (filters?.types?.length) {
+    parts.push(`tip[in]:${JSON.stringify(filters.types)}`);
+  }
+
+  if (!parts.length) return baseFilter;
+  return `and(${baseFilter},${parts.join(',')})`;
 };
 
-export const buildDealLineItemsSearchFilter = (search: string, stageFilter?: string[]): string => {
+export const buildDealLineItemsFilter = (
+  opportunityIds: string[],
+  filters?: LineItemQueryFilters,
+): string => {
+  const opportunityFilter = `opportunityId[in]:${JSON.stringify(opportunityIds)}`;
+  return appendLineItemFilters(opportunityFilter, filters);
+};
+
+export const buildDealLineItemsSearchFilter = (
+  search: string,
+  filters?: LineItemQueryFilters,
+): string => {
   const pattern = `%${search.trim()}%`;
   const nameFilter = `name[ilike]:${JSON.stringify(pattern)}`;
-  if (!stageFilter?.length) return nameFilter;
-  return `and(${nameFilter},stage[in]:${JSON.stringify(stageFilter)})`;
+  return appendLineItemFilters(nameFilter, filters);
 };
 
 export const buildDealLineItemsSearchQuery = (
   search: string,
-  stageFilter?: string[],
+  filters?: LineItemQueryFilters,
   after?: string,
 ): Record<string, string | number> => {
   const query: Record<string, string | number> = {
     limit: PAGE_LIMIT,
-    filter: buildDealLineItemsSearchFilter(search, stageFilter),
+    filter: buildDealLineItemsSearchFilter(search, filters),
   };
   if (after) query.after = after;
   return query;
@@ -44,12 +67,12 @@ export const buildDealLineItemsSearchQuery = (
 
 export const buildDealLineItemsQuery = (
   opportunityIds: string[],
-  stageFilter?: string[],
+  filters?: LineItemQueryFilters,
   after?: string,
 ): Record<string, string | number> => {
   const query: Record<string, string | number> = {
     limit: PAGE_LIMIT,
-    filter: buildDealLineItemsFilter(opportunityIds, stageFilter),
+    filter: buildDealLineItemsFilter(opportunityIds, filters),
   };
   if (after) query.after = after;
   return query;
@@ -93,11 +116,11 @@ const normalizeLineItemRows = (items: unknown[]): LineItemRow[] =>
 const fetchLineItemsPage = async (
   client: RestApiClient,
   opportunityIds: string[],
-  stageFilter?: string[],
+  filters?: LineItemQueryFilters,
   after?: string,
 ): Promise<{ items: LineItemRow[]; nextCursor?: string }> => {
   const response = await client.get<unknown>('/rest/dealLineItems', {
-    query: buildDealLineItemsQuery(opportunityIds, stageFilter, after),
+    query: buildDealLineItemsQuery(opportunityIds, filters, after),
   });
 
   const items = normalizeLineItemRows(
@@ -113,13 +136,13 @@ const fetchLineItemsPage = async (
 const fetchLineItemsForOpportunityChunk = async (
   client: RestApiClient,
   opportunityIds: string[],
-  stageFilter?: string[],
+  filters?: LineItemQueryFilters,
 ): Promise<LineItemRow[]> => {
   const allItems: LineItemRow[] = [];
   let after: string | undefined;
 
   do {
-    const page = await fetchLineItemsPage(client, opportunityIds, stageFilter, after);
+    const page = await fetchLineItemsPage(client, opportunityIds, filters, after);
     allItems.push(...page.items);
     after = page.nextCursor;
   } while (after);
@@ -129,14 +152,14 @@ const fetchLineItemsForOpportunityChunk = async (
 
 export const fetchLineItemsByOpportunityIds = async (
   opportunityIds: string[],
-  stageFilter?: string[],
+  filters?: LineItemQueryFilters,
 ): Promise<LineItemRow[]> => {
   if (opportunityIds.length === 0) return [];
 
   const client = getRestClient();
   const chunks = chunkOpportunityIds(opportunityIds, OPPORTUNITY_ID_CHUNK_SIZE);
   const chunkResults = await Promise.all(
-    chunks.map((chunk) => fetchLineItemsForOpportunityChunk(client, chunk, stageFilter)),
+    chunks.map((chunk) => fetchLineItemsForOpportunityChunk(client, chunk, filters)),
   );
 
   return chunkResults.flat();
@@ -145,11 +168,11 @@ export const fetchLineItemsByOpportunityIds = async (
 const fetchLineItemOpportunityIdsPage = async (
   client: RestApiClient,
   search: string,
-  stageFilter?: string[],
+  filters?: LineItemQueryFilters,
   after?: string,
 ): Promise<{ opportunityIds: string[]; nextCursor?: string }> => {
   const response = await client.get<unknown>('/rest/dealLineItems', {
-    query: buildDealLineItemsSearchQuery(search, stageFilter, after),
+    query: buildDealLineItemsSearchQuery(search, filters, after),
   });
 
   const items = normalizeLineItemRows(
@@ -165,7 +188,7 @@ const fetchLineItemOpportunityIdsPage = async (
 
 export const fetchLineItemOpportunityIdsBySearch = async (
   search: string,
-  stageFilter?: string[],
+  filters?: LineItemQueryFilters,
 ): Promise<string[]> => {
   const term = search.trim();
   if (!term) return [];
@@ -175,7 +198,7 @@ export const fetchLineItemOpportunityIdsBySearch = async (
   let after: string | undefined;
 
   do {
-    const page = await fetchLineItemOpportunityIdsPage(client, term, stageFilter, after);
+    const page = await fetchLineItemOpportunityIdsPage(client, term, filters, after);
     page.opportunityIds.forEach((id) => allIds.add(id));
     after = page.nextCursor;
   } while (after);

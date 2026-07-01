@@ -15,10 +15,29 @@ describe('buildDealLineItemsFilter', () => {
   });
 
   it('combines stage filter with and()', () => {
-    const filter = buildDealLineItemsFilter(['id-1'], ['NOVYY', 'V_RABOTE']);
+    const filter = buildDealLineItemsFilter(['id-1'], { stages: ['NOVYY', 'V_RABOTE'] });
 
     expect(filter).toBe(
       'and(opportunityId[in]:["id-1"],stage[in]:["NOVYY","V_RABOTE"])',
+    );
+  });
+
+  it('combines type filter with and()', () => {
+    const filter = buildDealLineItemsFilter(['id-1'], { types: ['BANNERA', 'PLENKA'] });
+
+    expect(filter).toBe(
+      'and(opportunityId[in]:["id-1"],tip[in]:["BANNERA","PLENKA"])',
+    );
+  });
+
+  it('combines stage and type filters with and()', () => {
+    const filter = buildDealLineItemsFilter(['id-1'], {
+      stages: ['V_RABOTE'],
+      types: ['PLENKA'],
+    });
+
+    expect(filter).toBe(
+      'and(opportunityId[in]:["id-1"],stage[in]:["V_RABOTE"],tip[in]:["PLENKA"])',
     );
   });
 });
@@ -29,8 +48,14 @@ describe('buildDealLineItemsSearchFilter', () => {
   });
 
   it('combines search with stage filter', () => {
-    expect(buildDealLineItemsSearchFilter('баннер', ['NOVYY'])).toBe(
+    expect(buildDealLineItemsSearchFilter('баннер', { stages: ['NOVYY'] })).toBe(
       'and(name[ilike]:"%баннер%",stage[in]:["NOVYY"])',
+    );
+  });
+
+  it('combines search with type filter', () => {
+    expect(buildDealLineItemsSearchFilter('баннер', { types: ['BANNERA'] })).toBe(
+      'and(name[ilike]:"%баннер%",tip[in]:["BANNERA"])',
     );
   });
 });

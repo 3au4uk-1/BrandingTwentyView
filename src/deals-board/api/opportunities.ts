@@ -119,8 +119,12 @@ export const fetchOpportunities = async (params: {
   const includeCompanyRelation = params.includeCompanyRelation ?? DEFAULT_INCLUDE_COMPANY_RELATION;
   const effectiveSort = getEffectiveOpportunitySort(params.sort);
   const searchTerm = normalizeSearchTerm(params.filters.search);
+  const lineItemSearchFilters =
+    params.filters.stages?.length || params.filters.types?.length
+      ? { stages: params.filters.stages, types: params.filters.types }
+      : undefined;
   const lineItemMatchedOpportunityIds = searchTerm
-    ? await fetchLineItemOpportunityIdsBySearch(searchTerm, params.filters.stages)
+    ? await fetchLineItemOpportunityIdsBySearch(searchTerm, lineItemSearchFilters)
     : undefined;
 
   if (!params.fetchAll) {

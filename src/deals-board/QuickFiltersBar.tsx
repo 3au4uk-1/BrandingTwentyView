@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState, useEffect } from 'react';
 
 import { LINE_ITEM_STAGES, type LineItemStage } from 'src/constants/stages';
+import { LINE_ITEM_TYPES, type LineItemType } from 'src/constants/line-item-types';
 import type { DealBoardDatePreset } from 'src/deals-board/types';
 
 import { fetchCompanyNames } from './api/companies';
@@ -19,6 +20,7 @@ export type QuickFiltersValue = {
   dateFrom?: string;
   dateTo?: string;
   stages: LineItemStage[];
+  types: LineItemType[];
   companyIds: string[];
   oplata: OplataQuickFilter;
   search: string;
@@ -44,12 +46,15 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
   const theme = useTheme();
   const { colors, radius, font, spacing, zIndex } = theme;
   const [isStageFilterOpen, setIsStageFilterOpen] = useState(false);
+  const [isTypeFilterOpen, setIsTypeFilterOpen] = useState(false);
   const [isCompanyFilterOpen, setIsCompanyFilterOpen] = useState(false);
   const [companySearch, setCompanySearch] = useState('');
   const [debouncedCompanySearch, setDebouncedCompanySearch] = useState('');
   const selectedStages = value.stages ?? [];
+  const selectedTypes = value.types ?? [];
   const selectedCompanyIds = value.companyIds ?? [];
   const stageOptions = useMemo(() => LINE_ITEM_STAGES, []);
+  const typeOptions = useMemo(() => LINE_ITEM_TYPES, []);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedCompanySearch(companySearch), 250);
@@ -82,6 +87,14 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
       : [...selectedStages, stage];
 
     onChange({ ...value, stages: nextStages });
+  };
+
+  const toggleType = (type: LineItemType) => {
+    const nextTypes = selectedTypes.includes(type)
+      ? selectedTypes.filter((item) => item !== type)
+      : [...selectedTypes, type];
+
+    onChange({ ...value, types: nextTypes });
   };
 
   const toggleCompany = (companyId: string) => {
@@ -253,6 +266,71 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
                     onChange={() => toggleStage(stage.value)}
                   />
                   <span>{stage.label}</span>
+                </label>
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
+
+      <div style={{ position: 'relative' }}>
+        <button
+          type="button"
+          data-segment-btn
+          data-active={selectedTypes.length > 0 ? 'true' : 'false'}
+          onClick={() => setIsTypeFilterOpen((prev) => !prev)}
+          style={{
+            ...segmentStyle(selectedTypes.length > 0),
+            border: `1px solid ${colors.border}`,
+            borderRadius: radius.md,
+            backgroundColor: selectedTypes.length ? colors.accentMuted : colors.bgElevated,
+            color: selectedTypes.length ? colors.accentText : colors.textSecondary,
+          }}
+        >
+          Тип{selectedTypes.length ? ` · ${selectedTypes.length}` : ''}
+        </button>
+
+        {isTypeFilterOpen ? (
+          <div
+            style={{
+              position: 'absolute',
+              top: 'calc(100% + 6px)',
+              left: 0,
+              zIndex: zIndex.dropdown,
+              minWidth: '200px',
+              border: `1px solid ${colors.border}`,
+              borderRadius: radius.lg,
+              backgroundColor: colors.bgElevated,
+              boxShadow: colors.shadowLg,
+              padding: spacing.sm,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: spacing.xs,
+            }}
+          >
+            {typeOptions.map((type) => {
+              const checked = selectedTypes.includes(type.value);
+              return (
+                <label
+                  key={type.value}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing.sm,
+                    fontSize: font.sizeSm,
+                    color: colors.text,
+                    cursor: 'pointer',
+                    padding: '5px 8px',
+                    borderRadius: radius.sm,
+                    backgroundColor: checked ? colors.accentMuted : 'transparent',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleType(type.value)}
+                  />
+                  <span>{type.label}</span>
                 </label>
               );
             })}

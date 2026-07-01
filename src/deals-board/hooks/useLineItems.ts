@@ -1,9 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { LineItemStage } from 'src/constants/stages';
-
 import {
   fetchLineItemsByOpportunityIds,
+  type LineItemQueryFilters,
   updateLineItem,
 } from '../api/line-items';
 import type { LineItemRow } from '../types';
@@ -11,21 +10,21 @@ import { syncDealStage } from '../utils/sync-deal-stage';
 
 export const lineItemsQueryKey = (
   opportunityIds: string[],
-  stageFilter?: string[],
-) => ['lineItems', opportunityIds, stageFilter] as const;
+  filters?: LineItemQueryFilters,
+) => ['lineItems', opportunityIds, filters] as const;
 
 const sortIds = (ids: string[]) => [...ids].sort();
 
 export const useLineItems = (
   opportunityIds: string[],
-  stageFilter?: LineItemStage[],
+  filters?: LineItemQueryFilters,
   enabled = true,
 ) => {
   const sortedIds = sortIds(opportunityIds);
 
   return useQuery({
-    queryKey: lineItemsQueryKey(sortedIds, stageFilter),
-    queryFn: () => fetchLineItemsByOpportunityIds(sortedIds, stageFilter),
+    queryKey: lineItemsQueryKey(sortedIds, filters),
+    queryFn: () => fetchLineItemsByOpportunityIds(sortedIds, filters),
     enabled: enabled && sortedIds.length > 0,
   });
 };

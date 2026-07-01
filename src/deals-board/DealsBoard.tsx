@@ -31,7 +31,7 @@ import { ThemeProvider, useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
 import { PortalHostProvider } from './ui/PortalHostContext';
 import { DEALS_BOARD_ROOT_ID } from './utils/dom';
-import { mergeCompanyFilters, mergeStageFilters } from './utils/filters';
+import { mergeCompanyFilters, mergeStageFilters, mergeTypeFilters } from './utils/filters';
 import { asArray } from './utils/parse-json-field';
 import { filterLineItemsForSearch, normalizeSearchTerm } from './utils/search';
 import { ViewSettingsModal } from './ViewSettingsModal';
@@ -45,6 +45,7 @@ const DEFAULT_QUICK_FILTERS: QuickFiltersValue = {
   dateFrom: undefined,
   dateTo: undefined,
   stages: [],
+  types: [],
   companyIds: [],
   oplata: 'all',
   search: '',
@@ -89,12 +90,18 @@ const DealsBoardContent = () => {
     quickFilters.dateTo,
     quickFilters.search,
     (quickFilters.stages ?? []).join(','),
+    (quickFilters.types ?? []).join(','),
     (quickFilters.companyIds ?? []).join(','),
   ]);
 
   const mergedStages = useMemo(
     () => mergeStageFilters(activeView?.filters?.stages, quickFilters.stages),
     [activeView?.filters?.stages, quickFilters.stages],
+  );
+
+  const mergedTypes = useMemo(
+    () => mergeTypeFilters(activeView?.filters?.types, quickFilters.types),
+    [activeView?.filters?.types, quickFilters.types],
   );
 
   const mergedCompanyIds = useMemo(
@@ -110,12 +117,14 @@ const DealsBoardContent = () => {
       dateTo: quickFilters.dateTo ?? activeView?.filters?.dateTo,
       search: quickFilters.search.trim() || activeView?.filters?.search,
       stages: mergedStages,
+      types: mergedTypes,
       companyIds: mergedCompanyIds,
     }),
     [
       activeView?.filters,
       mergedCompanyIds,
       mergedStages,
+      mergedTypes,
       quickFilters.dateFrom,
       quickFilters.datePreset,
       quickFilters.dateTo,
@@ -208,9 +217,17 @@ const DealsBoardContent = () => {
     }
   }, [page, totalPages]);
 
+  const lineItemQueryFilters = useMemo(
+    () =>
+      mergedStages?.length || mergedTypes?.length
+        ? { stages: mergedStages, types: mergedTypes }
+        : undefined,
+    [mergedStages, mergedTypes],
+  );
+
   const lineItemsQuery = useLineItems(
     visibleOpportunityIds,
-    mergedStages,
+    lineItemQueryFilters,
     !opportunitiesQuery.isLoading,
   );
   const lineItems = asArray<LineItemRow>(lineItemsQuery.data);
@@ -226,22 +243,22 @@ const DealsBoardContent = () => {
     return filterLineItemsForSearch(lineItems, search, recordsById);
   }, [lineItems, mergedFilters.search, recordsById]);
 
-  const stageMatchedOpportunityIds = useMemo(() => {
-    if (!mergedStages?.length) {
+  const lineItemMatchedOpportunityIds = useMemo(() => {
+    if (!mergedStages?.length && !mergedTypes?.length) {
       return undefined;
     }
     return new Set(lineItems.map((item) => item.opportunityId));
-  }, [lineItems, mergedStages]);
+  }, [lineItems, mergedStages, mergedTypes]);
 
   const visibleRecords = useMemo(() => {
-    if (!stageMatchedOpportunityIds) {
+    if (!lineItemMatchedOpportunityIds) {
       return records;
     }
 
-    return records.filter((record) => stageMatchedOpportunityIds.has(record.id));
-  }, [records, stageMatchedOpportunityIds]);
+    return records.filter((record) => lineItemMatchedOpportunityIds.has(record.id));
+  }, [records, lineItemMatchedOpportunityIds]);
 
-  const visibleTotalCount = stageMatchedOpportunityIds ? visibleRecords.length : totalCount;
+  const visibleTotalCount = lineItemMatchedOpportunityIds ? visibleRecords.length : totalCount;
 
   const loadError = viewsQuery.error ?? opportunitiesQuery.error ?? null;
   const metadataFieldsError =
