@@ -5,17 +5,13 @@ import {
   OPPORTUNITY_STAGES,
   getOpportunityStageColor,
   getOpportunityStageLabel,
-  getStageLabel,
 } from './stages';
 
 describe('LINE_ITEM_STAGES', () => {
-  it('includes contractor stage', () => {
-    expect(LINE_ITEM_STAGES.map((stage) => stage.value)).toContain('PODRYAD');
-    expect(LINE_ITEM_STAGES.map((stage) => stage.value)).not.toContain('BANNERA');
-  });
-
-  it('resolves contractor stage label', () => {
-    expect(getStageLabel('PODRYAD')).toBe('Подряд');
+  it('does not include banner or contractor values', () => {
+    const values = LINE_ITEM_STAGES.map((stage) => stage.value);
+    expect(values).not.toContain('BANNERA');
+    expect(values).not.toContain('PODRYAD');
   });
 });
 
