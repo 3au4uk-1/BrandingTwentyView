@@ -34,6 +34,18 @@ describe('getPresetRange', () => {
 
     vi.useRealTimers();
   });
+
+  it('returns two days ahead for dayAfterTomorrow', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 27, 12, 0, 0));
+
+    expect(getPresetRange('dayAfterTomorrow')).toEqual({
+      dateFrom: '2026-06-29',
+      dateTo: '2026-06-29',
+    });
+
+    vi.useRealTimers();
+  });
 });
 
 describe('getLocalDayBounds', () => {
@@ -123,6 +135,7 @@ describe('shouldFetchAllOpportunities', () => {
   it('loads all records for active date filters', () => {
     expect(shouldFetchAllOpportunities({ datePreset: 'today' })).toBe(true);
     expect(shouldFetchAllOpportunities({ datePreset: 'tomorrow' })).toBe(true);
+    expect(shouldFetchAllOpportunities({ datePreset: 'dayAfterTomorrow' })).toBe(true);
     expect(shouldFetchAllOpportunities({ datePreset: 'week' })).toBe(true);
     expect(shouldFetchAllOpportunities({ datePreset: 'month' })).toBe(true);
     expect(shouldFetchAllOpportunities({ datePreset: 'future' })).toBe(true);

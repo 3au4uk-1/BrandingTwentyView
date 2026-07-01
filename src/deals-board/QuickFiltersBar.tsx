@@ -35,12 +35,13 @@ type QuickFiltersBarProps = {
 const presetLabel: Record<Exclude<QuickDatePreset, null>, string> = {
   today: 'Сегодня',
   tomorrow: 'Завтра',
+  dayAfterTomorrow: 'Послезавтра',
   week: 'Неделя',
   month: 'Месяц',
   custom: 'Диапазон',
 };
 
-const DATE_PRESETS = ['today', 'tomorrow', 'week', 'month'] as const;
+const DATE_PRESETS = ['today', 'tomorrow', 'dayAfterTomorrow', 'week', 'month'] as const;
 
 export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarProps) => {
   const theme = useTheme();

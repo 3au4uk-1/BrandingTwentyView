@@ -4,7 +4,14 @@ import type { DealBoardFilters, DealBoardSort } from '../types';
 import { OPPORTUNITY_EVENT_DATE_FIELD } from './resolve-opportunity-date';
 import { sortsByDateField } from './sort-opportunities';
 
-export type DatePreset = 'today' | 'tomorrow' | 'week' | 'month' | 'future' | 'custom';
+export type DatePreset =
+  | 'today'
+  | 'tomorrow'
+  | 'dayAfterTomorrow'
+  | 'week'
+  | 'month'
+  | 'future'
+  | 'custom';
 
 export type LocalDayBounds = {
   gte: string;
@@ -75,6 +82,14 @@ export const getPresetRange = (preset: Exclude<DatePreset, 'future' | 'custom'>)
   if (preset === 'tomorrow') {
     const tomorrow = addDays(today, 1);
     return { dateFrom: toInputDate(tomorrow), dateTo: toInputDate(tomorrow) };
+  }
+
+  if (preset === 'dayAfterTomorrow') {
+    const dayAfterTomorrow = addDays(today, 2);
+    return {
+      dateFrom: toInputDate(dayAfterTomorrow),
+      dateTo: toInputDate(dayAfterTomorrow),
+    };
   }
 
   if (preset === 'week') {
