@@ -1,10 +1,24 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  LINE_ITEM_STAGES,
   OPPORTUNITY_STAGES,
   getOpportunityStageColor,
   getOpportunityStageLabel,
+  getStageLabel,
 } from './stages';
+
+describe('LINE_ITEM_STAGES', () => {
+  it('includes banner and contractor stages', () => {
+    expect(LINE_ITEM_STAGES.map((stage) => stage.value)).toContain('BANNERA');
+    expect(LINE_ITEM_STAGES.map((stage) => stage.value)).toContain('PODRYAD');
+  });
+
+  it('resolves new stage labels', () => {
+    expect(getStageLabel('BANNERA')).toBe('Баннера');
+    expect(getStageLabel('PODRYAD')).toBe('Подряд');
+  });
+});
 
 describe('OPPORTUNITY_STAGES', () => {
   it('has exactly six deal stages', () => {
