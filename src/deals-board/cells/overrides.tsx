@@ -15,7 +15,7 @@ import { TypeSelect } from '../editors/TypeSelect';
 import { TimePickerModal } from '../editors/TimePickerModal';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
-import { ChevronRightIcon } from '../ui/Icons';
+import { ChevronRightIcon, ExternalLinkIcon } from '../ui/Icons';
 import type { FieldDescriptor } from '../metadata/types';
 import type { LineItemRow } from '../types';
 
@@ -85,20 +85,17 @@ const ParentNameCell = ({
       ) : (
         <span style={{ width: '22px', minWidth: '22px' }} />
       )}
-      <button
-        type="button"
-        onClick={handleOpenRecord}
+      <span
         title={name}
         style={{
           minWidth: 0,
+          flex: 1,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           fontWeight: font.weightMedium,
-          color: colors.accentText,
-          border: 'none',
-          background: 'transparent',
-          padding: 0,
-          cursor: 'pointer',
+          color: colors.text,
+          userSelect: 'text',
+          cursor: 'text',
           textAlign: 'left',
           fontFamily: 'inherit',
           fontSize: 'inherit',
@@ -106,6 +103,28 @@ const ParentNameCell = ({
         }}
       >
         {name}
+      </span>
+      <button
+        type="button"
+        onClick={handleOpenRecord}
+        title="Открыть карточку"
+        aria-label="Открыть карточку сделки"
+        style={{
+          border: 'none',
+          background: 'transparent',
+          padding: '2px',
+          width: '22px',
+          minWidth: '22px',
+          height: '22px',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: colors.accentText,
+          cursor: 'pointer',
+          flexShrink: 0,
+        }}
+      >
+        <ExternalLinkIcon size={12} color="currentColor" />
       </button>
     </div>
   );
