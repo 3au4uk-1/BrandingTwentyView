@@ -13,6 +13,14 @@ describe('LINE_ITEM_STAGES', () => {
     expect(values).not.toContain('BANNERA');
     expect(values).not.toContain('PODRYAD');
   });
+
+  it('maps stage colors', () => {
+    expect(LINE_ITEM_STAGES.find((stage) => stage.value === 'NOVYY')?.color).toBe('white');
+    expect(LINE_ITEM_STAGES.find((stage) => stage.value === 'V_RABOTE')?.color).toBe('orange');
+    expect(LINE_ITEM_STAGES.find((stage) => stage.value === 'V_PECHATI')?.color).toBe('yellow');
+    expect(LINE_ITEM_STAGES.find((stage) => stage.value === 'OKLEYKA')?.color).toBe('blue');
+    expect(LINE_ITEM_STAGES.find((stage) => stage.value === 'RESTAVRACIYA')?.color).toBe('purple');
+  });
 });
 
 describe('OPPORTUNITY_STAGES', () => {
@@ -36,7 +44,7 @@ describe('OPPORTUNITY_STAGES', () => {
   });
 
   it('assigns color to OTCHET_STAS', () => {
-    expect(getOpportunityStageColor('OTCHET_STAS')).not.toBe('gray');
+    expect(getOpportunityStageColor('OTCHET_STAS')).toBe('greenDark');
   });
 
   it('assigns color to DUBL', () => {

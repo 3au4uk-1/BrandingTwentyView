@@ -14,6 +14,6 @@ describe('getStageRowStyles', () => {
   it('falls back to NOVYY when stage is missing', () => {
     const styles = getStageRowStyles(undefined, 'light');
 
-    expect(styles.accentColor).toBe('#2563eb');
+    expect(styles.accentColor).toBe('#3f3f46');
   });
 });

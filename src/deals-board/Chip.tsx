@@ -1,6 +1,16 @@
 import type { ColorScheme, ThemeTokens } from './theme/tokens';
 
-export type ChipColor = 'gray' | 'blue' | 'green' | 'yellow' | 'orange' | 'purple' | 'pink' | 'red';
+export type ChipColor =
+  | 'gray'
+  | 'white'
+  | 'blue'
+  | 'green'
+  | 'greenDark'
+  | 'yellow'
+  | 'orange'
+  | 'purple'
+  | 'pink'
+  | 'red';
 
 export const getChipPalette = (color: ChipColor, scheme: ColorScheme) =>
   CHIP_PALETTE[color]?.[scheme] ?? CHIP_PALETTE.gray[scheme];
@@ -13,6 +23,10 @@ const CHIP_PALETTE: Record<
     light: { bg: 'rgba(113, 113, 122, 0.12)', text: '#52525b' },
     dark: { bg: 'rgba(161, 161, 170, 0.16)', text: '#d4d4d8' },
   },
+  white: {
+    light: { bg: 'rgba(0, 0, 0, 0.06)', text: '#3f3f46' },
+    dark: { bg: 'rgba(255, 255, 255, 0.14)', text: '#fafafa' },
+  },
   blue: {
     light: { bg: 'rgba(37, 99, 235, 0.1)', text: '#2563eb' },
     dark: { bg: 'rgba(59, 130, 246, 0.18)', text: '#93c5fd' },
@@ -20,6 +34,10 @@ const CHIP_PALETTE: Record<
   green: {
     light: { bg: 'rgba(22, 163, 74, 0.1)', text: '#16a34a' },
     dark: { bg: 'rgba(34, 197, 94, 0.16)', text: '#86efac' },
+  },
+  greenDark: {
+    light: { bg: 'rgba(4, 120, 87, 0.14)', text: '#047857' },
+    dark: { bg: 'rgba(6, 78, 59, 0.45)', text: '#059669' },
   },
   yellow: {
     light: { bg: 'rgba(217, 119, 6, 0.1)', text: '#b45309' },

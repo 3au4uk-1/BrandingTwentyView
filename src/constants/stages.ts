@@ -1,18 +1,18 @@
 export const LINE_ITEM_STAGES = [
-  { value: 'NOVYY', label: 'Новый', color: 'blue' },
-  { value: 'V_RABOTE', label: 'В работе', color: 'purple' },
-  { value: 'V_PECHATI', label: 'В печати', color: 'orange' },
-  { value: 'OKLEYKA', label: 'Оклейка', color: 'yellow' },
+  { value: 'NOVYY', label: 'Новый', color: 'white' },
+  { value: 'V_RABOTE', label: 'В работе', color: 'orange' },
+  { value: 'V_PECHATI', label: 'В печати', color: 'yellow' },
+  { value: 'OKLEYKA', label: 'Оклейка', color: 'blue' },
   { value: 'GOTOVO', label: 'Готово', color: 'green' },
-  { value: 'RESTAVRACIYA', label: 'Реставрация', color: 'pink' },
+  { value: 'RESTAVRACIYA', label: 'Реставрация', color: 'purple' },
   { value: 'OTMENA', label: 'Отмена', color: 'red' },
 ] as const;
 
 export const OPPORTUNITY_STAGES = [
-  { value: 'NOVYY', label: 'Новый', color: 'blue' },
-  { value: 'V_RABOTE', label: 'В работе', color: 'purple' },
+  { value: 'NOVYY', label: 'Новый', color: 'white' },
+  { value: 'V_RABOTE', label: 'В работе', color: 'orange' },
   { value: 'GOTOVO', label: 'Готово', color: 'green' },
-  { value: 'OTCHET_STAS', label: 'Отчёт Стас', color: 'orange' },
+  { value: 'OTCHET_STAS', label: 'Отчёт Стас', color: 'greenDark' },
   { value: 'DUBL', label: 'ДУБЛЬ', color: 'yellow' },
   { value: 'OTMENA', label: 'Отмена', color: 'red' },
 ] as const;
