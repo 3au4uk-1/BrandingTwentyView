@@ -39,12 +39,14 @@ const fetchOpportunityPageRecords = async (params: {
   visibleCrmFieldNames: string[];
   linkFieldNames: readonly string[];
   includeCompanyRelation: boolean;
+  fieldTypesByName?: Readonly<Record<string, string>>;
 }): Promise<{ records: OpportunityRow[]; totalCount: number; fetchedCount: number }> => {
   const client = getApiClient();
   const sort = Array.isArray(params.sort) ? params.sort : [];
   const nodeSelection = buildOpportunityNodeSelection(
     params.visibleCrmFieldNames,
     params.includeCompanyRelation,
+    params.fieldTypesByName,
   );
 
   const orderBy = sort.length
@@ -95,6 +97,7 @@ const fetchOpportunityPage = async (params: {
   visibleCrmFieldNames: string[];
   linkFieldNames: readonly string[];
   includeCompanyRelation: boolean;
+  fieldTypesByName?: Readonly<Record<string, string>>;
 }): Promise<{ records: OpportunityRow[]; totalCount: number }> => {
   const { records, totalCount } = await fetchOpportunityPageRecords(params);
 
@@ -112,11 +115,13 @@ export const fetchOpportunities = async (params: {
   visibleCrmFieldNames?: string[];
   linkFieldNames?: readonly string[];
   includeCompanyRelation?: boolean;
+  fieldTypesByName?: Readonly<Record<string, string>>;
   fetchAll?: boolean;
 }): Promise<{ records: OpportunityRow[]; totalCount: number }> => {
   const visibleCrmFieldNames = params.visibleCrmFieldNames ?? DEFAULT_VISIBLE_CRM_FIELD_NAMES;
   const linkFieldNames = params.linkFieldNames ?? [];
   const includeCompanyRelation = params.includeCompanyRelation ?? DEFAULT_INCLUDE_COMPANY_RELATION;
+  const fieldTypesByName = params.fieldTypesByName ?? { amount: 'CURRENCY' };
   const effectiveSort = getEffectiveOpportunitySort(params.sort);
   const searchTerm = normalizeSearchTerm(params.filters.search);
   const lineItemSearchFilters =
@@ -137,6 +142,7 @@ export const fetchOpportunities = async (params: {
       visibleCrmFieldNames,
       linkFieldNames,
       includeCompanyRelation,
+      fieldTypesByName,
     });
   }
 
@@ -154,6 +160,7 @@ export const fetchOpportunities = async (params: {
       visibleCrmFieldNames,
       linkFieldNames,
       includeCompanyRelation,
+      fieldTypesByName,
     });
 
     serverTotalCount = page.totalCount;

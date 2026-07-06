@@ -19,6 +19,7 @@ export const opportunitiesQueryKey = (
   visibleCrmFieldNames: string[],
   linkFieldNames: readonly string[],
   includeCompanyRelation: boolean,
+  fieldTypesByName: Readonly<Record<string, string>>,
   fetchAll: boolean,
   showAll: boolean,
 ) =>
@@ -30,6 +31,7 @@ export const opportunitiesQueryKey = (
     visibleCrmFieldNames,
     linkFieldNames,
     includeCompanyRelation,
+    fieldTypesByName,
     fetchAll,
     showAll,
   ] as const;
@@ -43,6 +45,7 @@ export const useOpportunities = (params: {
   visibleCrmFieldNames?: string[];
   linkFieldNames?: readonly string[];
   includeCompanyRelation?: boolean;
+  fieldTypesByName?: Readonly<Record<string, string>>;
   showAll?: boolean;
   enabled?: boolean;
 }) => {
@@ -50,6 +53,7 @@ export const useOpportunities = (params: {
   const visibleCrmFieldNames = params.visibleCrmFieldNames ?? [];
   const linkFieldNames = params.linkFieldNames ?? [];
   const includeCompanyRelation = params.includeCompanyRelation ?? false;
+  const fieldTypesByName = params.fieldTypesByName ?? {};
   const showAll = params.showAll ?? false;
   const effectiveSort = getEffectiveOpportunitySort(
     params.sort.length > 0 ? params.sort : DEFAULT_DATE_SORT,
@@ -65,6 +69,7 @@ export const useOpportunities = (params: {
       visibleCrmFieldNames,
       linkFieldNames,
       includeCompanyRelation,
+      fieldTypesByName,
       fetchAll,
       showAll,
     ),
@@ -77,6 +82,7 @@ export const useOpportunities = (params: {
         visibleCrmFieldNames,
         linkFieldNames,
         includeCompanyRelation,
+        fieldTypesByName,
         fetchAll,
       });
 

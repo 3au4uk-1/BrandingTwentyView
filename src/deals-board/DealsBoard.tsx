@@ -21,7 +21,7 @@ import { useLineItems } from './hooks/useLineItems';
 import { useOpportunities } from './hooks/useOpportunities';
 import { useHostHeightLock } from './hooks/useHostHeightLock';
 import { useDealsBoardRealtimeSync } from './realtime/useDealsBoardRealtimeSync';
-import { crmFieldNamesFromColumns, needsCompanyRelation } from './metadata/crm-field-names';
+import { crmFieldNamesFromColumns, fieldTypesByNameFromDescriptors, needsCompanyRelation } from './metadata/crm-field-names';
 import { mergeColumns } from './metadata/merge-columns';
 import { useObjectFields } from './metadata/useObjectFields';
 import { VIRTUAL_PARENT_FIELD_DESCRIPTORS } from './metadata/virtual-columns';
@@ -187,6 +187,11 @@ const DealsBoardContent = () => {
     [mergedParentColumns],
   );
 
+  const parentFieldTypesByName = useMemo(
+    () => fieldTypesByNameFromDescriptors(parentFieldsQuery.data ?? []),
+    [parentFieldsQuery.data],
+  );
+
   const showAllDeals = activeView?.filters?.showAll ?? false;
 
   const opportunitiesQuery = useOpportunities({
@@ -199,6 +204,7 @@ const DealsBoardContent = () => {
     visibleCrmFieldNames: visibleParentCrmFields,
     linkFieldNames: opportunityLinkFieldNames,
     includeCompanyRelation,
+    fieldTypesByName: parentFieldTypesByName,
     enabled:
       !viewsQuery.isLoading &&
       !viewsQuery.isSeedingDefault &&

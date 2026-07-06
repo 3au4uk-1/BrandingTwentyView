@@ -1,7 +1,15 @@
 import { isOpportunityLinkField } from 'src/constants/opportunity-links';
 
-import type { ColumnConfig } from '../types';
 import type { FieldDescriptor } from './types';
+
+export const fieldTypesByNameFromDescriptors = (
+  descriptors: readonly FieldDescriptor[],
+): Record<string, string> =>
+  Object.fromEntries(
+    descriptors
+      .filter((descriptor) => descriptor.fieldType)
+      .map((descriptor) => [descriptor.field, descriptor.fieldType as string]),
+  );
 
 const VIRTUAL_FIELDS = new Set(['summary', 'companyName', 'links']);
 

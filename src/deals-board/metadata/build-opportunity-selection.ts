@@ -1,5 +1,10 @@
 const LINK_FIELD_NAMES = new Set(['tonyLink', 'bitrixLink', 'ssylkaNaMakety']);
 
+const CURRENCY_SELECTION = { amountMicros: true, currencyCode: true };
+const LINKS_SELECTION = { primaryLinkUrl: true, primaryLinkLabel: true };
+const RELATION_SELECTION = { id: true, name: true };
+const RICH_TEXT_SELECTION = { markdown: true };
+
 const shouldIncludeCompanyRelation = (
   visibleCrmFieldNames: string[],
   includeCompanyRelation: boolean,
@@ -7,9 +12,31 @@ const shouldIncludeCompanyRelation = (
   includeCompanyRelation ||
   visibleCrmFieldNames.some((field) => field === 'companyName' || field === 'company');
 
+export const selectionForFieldType = (
+  field: string,
+  fieldType?: string,
+): Record<string, unknown> | true => {
+  switch (fieldType) {
+    case 'CURRENCY':
+      return CURRENCY_SELECTION;
+    case 'LINKS':
+      return LINKS_SELECTION;
+    case 'RELATION':
+      return RELATION_SELECTION;
+    case 'RICH_TEXT':
+      return RICH_TEXT_SELECTION;
+    default:
+      if (LINK_FIELD_NAMES.has(field) || field.endsWith('Link')) {
+        return LINKS_SELECTION;
+      }
+      return true;
+  }
+};
+
 export const buildOpportunityNodeSelection = (
   visibleCrmFieldNames: string[],
   includeCompanyRelation = false,
+  fieldTypesByName: Readonly<Record<string, string>> = {},
 ): Record<string, unknown> => {
   const selection: Record<string, unknown> = {
     id: true,
@@ -18,20 +45,12 @@ export const buildOpportunityNodeSelection = (
   };
 
   if (shouldIncludeCompanyRelation(visibleCrmFieldNames, includeCompanyRelation)) {
-    selection.company = { id: true, name: true };
+    selection.company = RELATION_SELECTION;
   }
 
   for (const field of visibleCrmFieldNames) {
     if (field === 'company' || field === 'companyName') continue;
-    if (field === 'amount') {
-      selection.amount = { amountMicros: true, currencyCode: true };
-      continue;
-    }
-    if (LINK_FIELD_NAMES.has(field) || field.endsWith('Link')) {
-      selection[field] = { primaryLinkUrl: true, primaryLinkLabel: true };
-      continue;
-    }
-    selection[field] = true;
+    selection[field] = selectionForFieldType(field, fieldTypesByName[field]);
   }
 
   selection.closeDate = true;

@@ -19,7 +19,7 @@ describe('applyObjectRecordEvent', () => {
   it('patches an opportunity row when it is already in cache', () => {
     const queryClient = new QueryClient();
     const filters = {};
-    const queryKey = opportunitiesQueryKey(undefined, filters, 0, [], [], false, false);
+    const queryKey = opportunitiesQueryKey(undefined, filters, 0, [], [], false, {}, false, false);
     const records: OpportunityRow[] = [{ id: 'opp-1', name: 'Deal A', stage: 'NEW' }];
 
     queryClient.setQueryData(queryKey, { records, totalCount: 1 });
