@@ -48,4 +48,21 @@ describe('crmFieldNamesFromColumns', () => {
     ];
     expect(crmFieldNamesFromColumns(columns, linkFields)).toEqual(['name']);
   });
+
+  it('skips REST-only custom fields in GraphQL selection', () => {
+    const columns: ColumnConfig[] = [
+      { field: 'name', label: 'Name', order: 0, visible: true },
+      { field: 'summaPostupleniy', label: 'Сумма поступлений', order: 1, visible: true },
+    ];
+    const availableFields: FieldDescriptor[] = [
+      {
+        field: 'summaPostupleniy',
+        label: 'Сумма поступлений',
+        source: 'crm',
+        fieldType: 'CURRENCY',
+        isEditable: false,
+      },
+    ];
+    expect(crmFieldNamesFromColumns(columns, availableFields)).toEqual(['name']);
+  });
 });

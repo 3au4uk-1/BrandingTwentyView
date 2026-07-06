@@ -17,7 +17,7 @@ export const opportunitiesQueryKey = (
   filters: DealBoardFilters,
   page: number,
   visibleCrmFieldNames: string[],
-  linkFieldNames: readonly string[],
+  restFieldNames: readonly string[],
   includeCompanyRelation: boolean,
   fieldTypesByName: Readonly<Record<string, string>>,
   fetchAll: boolean,
@@ -29,7 +29,7 @@ export const opportunitiesQueryKey = (
     filters,
     page,
     visibleCrmFieldNames,
-    linkFieldNames,
+    restFieldNames,
     includeCompanyRelation,
     fieldTypesByName,
     fetchAll,
@@ -43,7 +43,7 @@ export const useOpportunities = (params: {
   page: number;
   pageSize?: number;
   visibleCrmFieldNames?: string[];
-  linkFieldNames?: readonly string[];
+  restFieldNames?: readonly string[];
   includeCompanyRelation?: boolean;
   fieldTypesByName?: Readonly<Record<string, string>>;
   showAll?: boolean;
@@ -51,7 +51,7 @@ export const useOpportunities = (params: {
 }) => {
   const pageSize = params.pageSize ?? DEFAULT_PAGE_SIZE;
   const visibleCrmFieldNames = params.visibleCrmFieldNames ?? [];
-  const linkFieldNames = params.linkFieldNames ?? [];
+  const restFieldNames = params.restFieldNames ?? [];
   const includeCompanyRelation = params.includeCompanyRelation ?? false;
   const fieldTypesByName = params.fieldTypesByName ?? {};
   const showAll = params.showAll ?? false;
@@ -67,7 +67,7 @@ export const useOpportunities = (params: {
       params.filters,
       params.page,
       visibleCrmFieldNames,
-      linkFieldNames,
+      restFieldNames,
       includeCompanyRelation,
       fieldTypesByName,
       fetchAll,
@@ -80,7 +80,7 @@ export const useOpportunities = (params: {
         sort: params.sort,
         filters: params.filters,
         visibleCrmFieldNames,
-        linkFieldNames,
+        restFieldNames,
         includeCompanyRelation,
         fieldTypesByName,
         fetchAll,

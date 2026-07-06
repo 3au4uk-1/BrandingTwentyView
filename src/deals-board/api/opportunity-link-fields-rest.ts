@@ -5,6 +5,10 @@ import { normalizeRestListResponse } from './rest-list';
 
 let restClient: RestApiClient | null = null;
 
+export const resetOpportunityRestClientForTests = (): void => {
+  restClient = null;
+};
+
 const ID_CHUNK_SIZE = 50;
 
 const getRestClient = (): RestApiClient => {
@@ -20,12 +24,12 @@ const chunkIds = (ids: string[], chunkSize: number): string[][] => {
   return chunks;
 };
 
-const pickLinkFields = (
+const pickRestFields = (
   source: Record<string, unknown>,
-  linkFieldNames: readonly string[],
+  restFieldNames: readonly string[],
 ): Record<string, unknown> => {
   const patch: Record<string, unknown> = {};
-  for (const field of linkFieldNames) {
+  for (const field of restFieldNames) {
     if (source[field] !== undefined) {
       patch[field] = source[field];
     }
@@ -33,16 +37,16 @@ const pickLinkFields = (
   return patch;
 };
 
-export const enrichOpportunityRowsWithLinkFields = async (
+export const enrichOpportunityRowsWithRestFields = async (
   records: OpportunityRow[],
-  linkFieldNames: readonly string[],
+  restFieldNames: readonly string[],
 ): Promise<OpportunityRow[]> => {
-  if (!records.length || !linkFieldNames.length) {
+  if (!records.length || !restFieldNames.length) {
     return records;
   }
 
   const client = getRestClient();
-  const linkDataById = new Map<string, Record<string, unknown>>();
+  const restDataById = new Map<string, Record<string, unknown>>();
 
   for (const chunk of chunkIds(
     records.map((record) => record.id),
@@ -57,16 +61,19 @@ export const enrichOpportunityRowsWithLinkFields = async (
 
     for (const item of normalizeRestListResponse<Record<string, unknown>>(response, 'opportunities')) {
       if (typeof item.id === 'string') {
-        linkDataById.set(item.id, item);
+        restDataById.set(item.id, item);
       }
     }
   }
 
   return records.map((record) => {
-    const restRecord = linkDataById.get(record.id);
+    const restRecord = restDataById.get(record.id);
     if (!restRecord) return record;
 
-    const patch = pickLinkFields(restRecord, linkFieldNames);
+    const patch = pickRestFields(restRecord, restFieldNames);
     return Object.keys(patch).length ? { ...record, ...patch } : record;
   });
 };
+
+/** @deprecated Use enrichOpportunityRowsWithRestFields */
+export const enrichOpportunityRowsWithLinkFields = enrichOpportunityRowsWithRestFields;

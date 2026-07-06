@@ -11,7 +11,7 @@ import {
 import { asArray } from '../utils/parse-json-field';
 import type { DealBoardFilters, DealBoardSort, OpportunityRow } from '../types';
 import { getApiClient } from './client';
-import { enrichOpportunityRowsWithLinkFields } from './opportunity-link-fields-rest';
+import { enrichOpportunityRowsWithRestFields } from './opportunity-link-fields-rest';
 
 const FETCH_ALL_PAGE_SIZE = 200;
 
@@ -37,7 +37,7 @@ const fetchOpportunityPageRecords = async (params: {
   filters: DealBoardFilters;
   lineItemMatchedOpportunityIds?: string[];
   visibleCrmFieldNames: string[];
-  linkFieldNames: readonly string[];
+  restFieldNames: readonly string[];
   includeCompanyRelation: boolean;
   fieldTypesByName?: Readonly<Record<string, string>>;
 }): Promise<{ records: OpportunityRow[]; totalCount: number; fetchedCount: number }> => {
@@ -79,7 +79,7 @@ const fetchOpportunityPageRecords = async (params: {
       loadDate: node.loadDate ?? node.closeDate,
     }));
 
-  const enrichedRecords = await enrichOpportunityRowsWithLinkFields(records, params.linkFieldNames);
+  const enrichedRecords = await enrichOpportunityRowsWithRestFields(records, params.restFieldNames);
 
   return {
     records: enrichedRecords,
@@ -95,7 +95,7 @@ const fetchOpportunityPage = async (params: {
   filters: DealBoardFilters;
   lineItemMatchedOpportunityIds?: string[];
   visibleCrmFieldNames: string[];
-  linkFieldNames: readonly string[];
+  restFieldNames: readonly string[];
   includeCompanyRelation: boolean;
   fieldTypesByName?: Readonly<Record<string, string>>;
 }): Promise<{ records: OpportunityRow[]; totalCount: number }> => {
@@ -113,13 +113,13 @@ export const fetchOpportunities = async (params: {
   sort: DealBoardSort[];
   filters: DealBoardFilters;
   visibleCrmFieldNames?: string[];
-  linkFieldNames?: readonly string[];
+  restFieldNames?: readonly string[];
   includeCompanyRelation?: boolean;
   fieldTypesByName?: Readonly<Record<string, string>>;
   fetchAll?: boolean;
 }): Promise<{ records: OpportunityRow[]; totalCount: number }> => {
   const visibleCrmFieldNames = params.visibleCrmFieldNames ?? DEFAULT_VISIBLE_CRM_FIELD_NAMES;
-  const linkFieldNames = params.linkFieldNames ?? [];
+  const restFieldNames = params.restFieldNames ?? [];
   const includeCompanyRelation = params.includeCompanyRelation ?? DEFAULT_INCLUDE_COMPANY_RELATION;
   const fieldTypesByName = params.fieldTypesByName ?? { amount: 'CURRENCY' };
   const effectiveSort = getEffectiveOpportunitySort(params.sort);
@@ -140,7 +140,7 @@ export const fetchOpportunities = async (params: {
       filters: params.filters,
       lineItemMatchedOpportunityIds,
       visibleCrmFieldNames,
-      linkFieldNames,
+      restFieldNames,
       includeCompanyRelation,
       fieldTypesByName,
     });
@@ -158,7 +158,7 @@ export const fetchOpportunities = async (params: {
       filters: params.filters,
       lineItemMatchedOpportunityIds,
       visibleCrmFieldNames,
-      linkFieldNames,
+      restFieldNames,
       includeCompanyRelation,
       fieldTypesByName,
     });

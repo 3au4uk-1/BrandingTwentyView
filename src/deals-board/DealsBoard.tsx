@@ -11,6 +11,7 @@ import {
   resolveOpportunityLinkFieldDescriptors,
   resolveOpportunityLinkFieldNames,
 } from 'src/constants/opportunity-links';
+import { resolveOpportunityRestFieldNames } from 'src/constants/opportunity-rest-fields';
 
 import { ColumnPicker } from './ColumnPicker';
 import { DealsTable } from './DealsTable/DealsTable';
@@ -172,6 +173,11 @@ const DealsBoardContent = () => {
     [mergedParentColumns, parentFieldsQuery.data],
   );
 
+  const opportunityRestFieldNames = useMemo(
+    () => resolveOpportunityRestFieldNames(mergedParentColumns, parentFieldsQuery.data ?? []),
+    [mergedParentColumns, parentFieldsQuery.data],
+  );
+
   const opportunityLinkFieldNames = useMemo(
     () => resolveOpportunityLinkFieldNames(mergedParentColumns, parentFieldsQuery.data ?? []),
     [mergedParentColumns, parentFieldsQuery.data],
@@ -202,7 +208,7 @@ const DealsBoardContent = () => {
     pageSize: PAGE_SIZE,
     showAll: showAllDeals,
     visibleCrmFieldNames: visibleParentCrmFields,
-    linkFieldNames: opportunityLinkFieldNames,
+    restFieldNames: opportunityRestFieldNames,
     includeCompanyRelation,
     fieldTypesByName: parentFieldTypesByName,
     enabled:

@@ -6,11 +6,15 @@ vi.mock('twenty-client-sdk/rest', () => ({
 
 import { RestApiClient } from 'twenty-client-sdk/rest';
 
-import { enrichOpportunityRowsWithLinkFields } from './opportunity-link-fields-rest';
+import {
+  enrichOpportunityRowsWithRestFields,
+  resetOpportunityRestClientForTests,
+} from './opportunity-link-fields-rest';
 
-describe('enrichOpportunityRowsWithLinkFields', () => {
+describe('enrichOpportunityRowsWithRestFields', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetOpportunityRestClientForTests();
   });
 
   it('merges Tony and Bitrix links from REST into GraphQL rows', async () => {
@@ -33,7 +37,7 @@ describe('enrichOpportunityRowsWithLinkFields', () => {
         }) as unknown as RestApiClient,
     );
 
-    const records = await enrichOpportunityRowsWithLinkFields(
+    const records = await enrichOpportunityRowsWithRestFields(
       [{ id: 'opp-1', name: 'Deal 1' }],
       ['tonyLink', 'bitrixLink'],
     );
@@ -52,9 +56,38 @@ describe('enrichOpportunityRowsWithLinkFields', () => {
     });
   });
 
-  it('returns rows unchanged when no link fields are requested', async () => {
+  it('merges custom REST-only fields into GraphQL rows', async () => {
+    const get = vi.fn().mockResolvedValue({
+      data: {
+        opportunities: [
+          {
+            id: 'opp-1',
+            summaPostupleniy: { amountMicros: 1_500_000_000, currencyCode: 'RUB' },
+          },
+        ],
+      },
+    });
+
+    vi.mocked(RestApiClient).mockImplementation(
+      () =>
+        ({
+          get,
+        }) as unknown as RestApiClient,
+    );
+
+    const records = await enrichOpportunityRowsWithRestFields(
+      [{ id: 'opp-1', name: 'Deal 1' }],
+      ['summaPostupleniy'],
+    );
+
+    expect(records[0]).toMatchObject({
+      summaPostupleniy: { amountMicros: 1_500_000_000, currencyCode: 'RUB' },
+    });
+  });
+
+  it('returns rows unchanged when no REST fields are requested', async () => {
     const records = [{ id: 'opp-1', name: 'Deal 1' }];
-    await expect(enrichOpportunityRowsWithLinkFields(records, [])).resolves.toBe(records);
+    await expect(enrichOpportunityRowsWithRestFields(records, [])).resolves.toBe(records);
     expect(RestApiClient).not.toHaveBeenCalled();
   });
 });
