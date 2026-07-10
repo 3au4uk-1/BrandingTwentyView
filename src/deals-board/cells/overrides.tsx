@@ -6,6 +6,9 @@ import type { LineItemType } from 'src/constants/line-item-types';
 import type { LineItemStage } from 'src/constants/stages';
 
 import { Chip } from '../Chip';
+import { LineItemListMenu } from '../LineItemListMenu';
+import { useLineItemListStatus } from '../hooks/useLineItemListStatus';
+import { isCrmparserConfigured } from '../api/crmparser';
 import { DealStageSelect } from '../editors/DealStageSelect';
 import { DatePickerModal } from '../editors/DatePickerModal';
 import { LinkCell } from '../editors/LinkCell';
@@ -130,13 +133,39 @@ const ParentNameCell = ({
   );
 };
 
-const ChildNameCell = ({ value }: FieldOverrideProps) => {
+const ChildNameCell = ({ value, recordId }: FieldOverrideProps) => {
   const theme = useTheme();
   const { colors, font } = theme;
   const name = typeof value === 'string' ? value : '';
+  const { data: listStatus } = useLineItemListStatus(recordId);
+  const showListMenu = isCrmparserConfigured();
 
   return (
-    <span style={{ fontWeight: font.weightMedium, color: colors.text }}>{name}</span>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+      <span
+        title={name}
+        style={{
+          minWidth: 0,
+          flex: 1,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          fontWeight: font.weightMedium,
+          color: colors.text,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {name}
+      </span>
+      {listStatus?.restorationMatch ? (
+        <Chip text="реставрация · 0 ₽" color="yellow" theme={theme} />
+      ) : null}
+      {listStatus?.blacklisted ? <Chip text="блеклист" color="red" theme={theme} /> : null}
+      {listStatus?.podryadMatch ? <Chip text="подряд" color="blue" theme={theme} /> : null}
+      {listStatus?.bannerMatch ? <Chip text="баннер" color="green" theme={theme} /> : null}
+      {showListMenu && recordId ? (
+        <LineItemListMenu lineItemId={recordId} listStatus={listStatus} />
+      ) : null}
+    </div>
   );
 };
 

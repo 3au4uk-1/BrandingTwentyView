@@ -9,6 +9,6 @@ export default defineConfig({
     }),
   ],
   test: {
-    include: ['src/deals-board/**/*.test.ts', 'src/constants/**/*.test.ts'],
+    include: ['src/deals-board/**/*.test.ts', 'src/constants/**/*.test.ts', 'src/logic-functions/**/*.test.ts'],
   },
 });

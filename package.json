@@ -1,6 +1,6 @@
 {
   "name": "deals-board",
-  "version": "0.2.73",
+  "version": "0.2.74",
   "license": "MIT",
   "engines": {
     "node": "^24.5.0",
