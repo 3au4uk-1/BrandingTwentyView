@@ -18,7 +18,12 @@ import {
   writeColumnUserSized,
   type ColumnResizeTarget,
 } from '../utils/browser-storage';
-import { getTableLayoutStyle, layoutColumnsForContainer, visibleColumns } from '../utils/columns';
+import {
+  getColumnWidth,
+  getTableLayoutStyle,
+  layoutColumnsForContainer,
+  visibleColumns,
+} from '../utils/columns';
 import { DealRow } from './DealRow';
 import { ResizableColumnHeader } from './ResizableColumnHeader';
 
@@ -154,6 +159,15 @@ export const DealsTable = ({
       markColumnsUserSized('child');
     },
   );
+  const safeDisplayChildColumns = useMemo(
+    () =>
+      displayChildColumns.map((column) =>
+        column.field === 'name' && getColumnWidth(column) < 184
+          ? { ...column, width: 184 }
+          : column,
+      ),
+    [displayChildColumns],
+  );
 
   const isResizing = isParentResizing || isChildResizing;
 
@@ -264,7 +278,7 @@ export const DealsTable = ({
         minHeight: 0,
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden',
+        overflow: 'visible',
       }}
     >
       <div
@@ -355,7 +369,7 @@ export const DealsTable = ({
                 key={row.id}
                 row={{ ...row, companyName: row.companyName ?? companyNameMap.get(row.companyId ?? '') }}
                 columns={layoutParentColumns}
-                childColumns={displayChildColumns}
+                childColumns={safeDisplayChildColumns}
                 parentDescriptorByField={parentDescriptorByField}
                 childDescriptorByField={childDescriptorByField}
                 onChildColumnResizeStart={beginChildResize}

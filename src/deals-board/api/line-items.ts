@@ -1,6 +1,7 @@
 import { RestApiClient } from 'twenty-client-sdk/rest';
 
 import type { LineItemRow } from '../types';
+import { getApiClient } from './client';
 import { extractRestPageInfo, normalizeRestListResponse } from './rest-list';
 
 let restClient: RestApiClient | null = null;
@@ -18,6 +19,10 @@ export type CreateLineItemInput = {
   opportunityId: string;
   stage: 'NOVYY';
   kolichestvo: number;
+  amount: {
+    amountMicros: number;
+    currencyCode: 'RUB';
+  };
 };
 
 export const buildCreateLineItemInput = (opportunityId: string): CreateLineItemInput => ({
@@ -25,6 +30,10 @@ export const buildCreateLineItemInput = (opportunityId: string): CreateLineItemI
   opportunityId,
   stage: 'NOVYY',
   kolichestvo: 1,
+  amount: {
+    amountMicros: 0,
+    currencyCode: 'RUB',
+  },
 });
 
 export const isDefaultLineItemHiddenByFilters = (
@@ -133,8 +142,10 @@ const normalizeLineItemRows = (items: unknown[]): LineItemRow[] =>
     .map(normalizeLineItemRow)
     .filter((item): item is LineItemRow => item !== null);
 
+type LineItemsRestClient = Pick<RestApiClient, 'get'>;
+
 const fetchLineItemsPage = async (
-  client: RestApiClient,
+  client: LineItemsRestClient,
   opportunityIds: string[],
   filters?: LineItemQueryFilters,
   after?: string,
@@ -154,7 +165,7 @@ const fetchLineItemsPage = async (
 };
 
 const fetchLineItemsForOpportunityChunk = async (
-  client: RestApiClient,
+  client: LineItemsRestClient,
   opportunityIds: string[],
   filters?: LineItemQueryFilters,
 ): Promise<LineItemRow[]> => {
@@ -170,6 +181,40 @@ const fetchLineItemsForOpportunityChunk = async (
   return allItems;
 };
 
+const isRetryableBatchError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
+  const status = (error as { status?: unknown }).status;
+  return typeof status === 'number' && status >= 500;
+};
+
+export const fetchLineItemsForOpportunityIdsWithClient = async (
+  client: LineItemsRestClient,
+  opportunityIds: string[],
+  filters?: LineItemQueryFilters,
+): Promise<LineItemRow[]> => {
+  try {
+    return await fetchLineItemsForOpportunityChunk(client, opportunityIds, filters);
+  } catch (error) {
+    if (opportunityIds.length <= 1 || !isRetryableBatchError(error)) {
+      throw error;
+    }
+
+    const middle = Math.ceil(opportunityIds.length / 2);
+    const left = await fetchLineItemsForOpportunityIdsWithClient(
+      client,
+      opportunityIds.slice(0, middle),
+      filters,
+    );
+    const right = await fetchLineItemsForOpportunityIdsWithClient(
+      client,
+      opportunityIds.slice(middle),
+      filters,
+    );
+
+    return [...left, ...right];
+  }
+};
+
 export const fetchLineItemsByOpportunityIds = async (
   opportunityIds: string[],
   filters?: LineItemQueryFilters,
@@ -179,7 +224,9 @@ export const fetchLineItemsByOpportunityIds = async (
   const client = getRestClient();
   const chunks = chunkOpportunityIds(opportunityIds, OPPORTUNITY_ID_CHUNK_SIZE);
   const chunkResults = await Promise.all(
-    chunks.map((chunk) => fetchLineItemsForOpportunityChunk(client, chunk, filters)),
+    chunks.map((chunk) =>
+      fetchLineItemsForOpportunityIdsWithClient(client, chunk, filters),
+    ),
   );
 
   return chunkResults.flat();
@@ -234,17 +281,22 @@ export const updateLineItem = async (
   await client.patch(`/rest/dealLineItems/${id}`, data);
 };
 
-type LineItemPostClient = {
-  post: (path: string, body?: unknown) => Promise<unknown>;
-};
+type LineItemMutationClient = Pick<ReturnType<typeof getApiClient>, 'mutation'>;
 
 export const createLineItemWithClient = async (
-  client: LineItemPostClient,
+  client: LineItemMutationClient,
   opportunityId: string,
 ): Promise<void> => {
-  await client.post('/rest/dealLineItems', buildCreateLineItemInput(opportunityId));
+  await client.mutation({
+    createDealLineItem: {
+      __args: {
+        data: buildCreateLineItemInput(opportunityId),
+      },
+      id: true,
+    },
+  });
 };
 
 export const createLineItem = async (opportunityId: string): Promise<void> => {
-  await createLineItemWithClient(getRestClient(), opportunityId);
+  await createLineItemWithClient(getApiClient(), opportunityId);
 };

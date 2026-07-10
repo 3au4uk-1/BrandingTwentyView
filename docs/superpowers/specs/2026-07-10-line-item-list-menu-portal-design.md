@@ -13,48 +13,39 @@ The search/filter toolbar scrolls away when the Twenty widget root cannot
 resolve a bounded height. In that state, the host page scrolls the entire app
 instead of keeping scrolling inside `DealsTable`.
 
-## Overlay design
+## Menu design
 
-Twenty front components run through Remote DOM. Portals mounted into
-`document.body` are outside the connected remote root and are not rendered by
-the host. Render the menu through the existing `PortalHostProvider` into
-`#deals-board-root`.
+Twenty front components run through Remote DOM. Production verification showed
+that worker refs do not expose reliable layout measurements (`offsetTop`,
+`clientHeight`, `getBoundingClientRect`) and React portals do not provide a
+stable overlay target.
 
-Use worker-safe `offsetTop`, `offsetLeft`, `scrollTop`, and `scrollLeft`
-properties to calculate the anchor position relative to the app root. Do not
-depend on `getBoundingClientRect`. Position the menu absolutely below and
-right-aligned with the button, flip above when needed, and clamp it to the app
-root.
+Keep the settings control inside the line-item cell. Clicking the gear reveals
+four compact inline buttons. This uses normal document flow, so it needs no
+portal, coordinates, fixed positioning, or overflow escape.
 
 ## Scrolling design
 
-Keep the existing structural split: the toolbar is the `auto` grid row and the
-table body is the `1fr` row containing the only `overflow: auto` scrollport.
-Harden `useHostHeightLock` for Remote DOM refs by falling back from
-`root.ownerDocument.defaultView` to global `window`.
-
-Once the root has a bounded pixel height, only table rows scroll and the
-toolbar remains visible without `position: sticky`.
+Let the Twenty host page own vertical scrolling. The board root and body use
+automatic height with visible overflow. Pin the toolbar using CSS
+`position: sticky; top: 0`, which Remote DOM can serialize without runtime
+measurements. The table keeps horizontal overflow for wide columns.
 
 ## Interaction
 
-- Toggle the menu from the existing settings button.
-- Close it on outside pointer interaction, `Escape`, window resize, or table
-  scroll.
+- Toggle the compact action group from the existing settings button.
 - Preserve the existing list actions, loading state, active state, and error
   message.
 - Prevent menu interactions from triggering table-row interactions.
 
 ## Scope
 
-Change `AnchorPopover`, its worker-safe positioning utility, host-height
-resolution, and focused tests. Keep table overflow, sticky columns, and the
-toolbar/table grid structure intact.
+Remove the unsupported popover and host-height measurement utilities. Keep
+sticky columns and horizontal table scrolling intact.
 
 ## Verification
 
-- Unit tests cover root-relative offsets, scroll compensation, placement,
-  flipping, and clamping.
-- Host-height tests cover the global viewport fallback and no-viewport case.
+- Unit tests cover readable UTF-8 labels and compact action identifiers.
 - Unit tests and the Twenty application build run successfully.
-- Manual verification confirms the menu appears above table and sticky UI.
+- Manual verification confirms inline actions remain visible and the toolbar
+  stays pinned during host-page scrolling.

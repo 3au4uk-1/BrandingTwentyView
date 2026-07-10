@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
@@ -7,22 +7,9 @@ import {
   type ListName,
 } from './api/crmparser';
 import { lineItemListStatusQueryKey } from './hooks/useLineItemListStatus';
+import { LINE_ITEM_LIST_ACTIONS } from './line-item-list-actions';
 import { useTheme } from './theme/ThemeContext';
-import { AnchorPopover } from './ui/AnchorPopover';
 import { SettingsIcon } from './ui/Icons';
-
-type ListAction = {
-  list: ListName;
-  label: string;
-  isActive: (status: LineItemListStatus | null | undefined) => boolean;
-};
-
-const LIST_ACTIONS: ListAction[] = [
-  { list: 'blacklist', label: '? ????????', isActive: (s) => Boolean(s?.blacklisted) },
-  { list: 'restoration', label: '? ???????????', isActive: (s) => Boolean(s?.restorationMatch) },
-  { list: 'podryad', label: '? ??????', isActive: (s) => Boolean(s?.podryadMatch) },
-  { list: 'banner', label: '? ??????', isActive: (s) => Boolean(s?.bannerMatch) },
-];
 
 type LineItemListMenuProps = {
   lineItemId: string;
@@ -33,19 +20,9 @@ export const LineItemListMenu = ({ lineItemId, listStatus }: LineItemListMenuPro
   const theme = useTheme();
   const { colors, radius, font, spacing } = theme;
   const queryClient = useQueryClient();
-  const buttonRef = useRef<HTMLButtonElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [busyList, setBusyList] = useState<ListName | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const close = () => setIsOpen(false);
-
-    window.addEventListener('resize', close);
-    return () => window.removeEventListener('resize', close);
-  }, [isOpen]);
 
   const handleAction = async (list: ListName) => {
     setBusyList(list);
@@ -56,27 +33,39 @@ export const LineItemListMenu = ({ lineItemId, listStatus }: LineItemListMenuPro
       await queryClient.invalidateQueries({ queryKey: ['lineItems'] });
       setIsOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '?? ??????? ????????? ??????');
+      setError(err instanceof Error ? err.message : 'Не удалось применить список');
     } finally {
       setBusyList(null);
     }
   };
 
   return (
-    <>
+    <div
+      onClick={(event) => event.stopPropagation()}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        gap: 2,
+        flexShrink: 0,
+      }}
+    >
       <button
-        ref={buttonRef}
         type="button"
-        data-list-menu-btn="0.2.78"
+        data-list-menu-btn="0.2.79"
         onClick={(event) => {
           event.stopPropagation();
+          setError(null);
           setIsOpen((open) => !open);
         }}
-        title="?????? ????????"
-        aria-label="?????? ????????"
+        title="Списки фильтров"
+        aria-label="Списки фильтров"
+        aria-expanded={isOpen}
+        aria-controls={isOpen ? `line-item-lists-${lineItemId}` : undefined}
         style={{
           border: 'none',
-          background: 'transparent',
+          background: isOpen ? colors.accentMuted : 'transparent',
+          borderRadius: radius.sm,
           padding: '2px',
           width: '22px',
           minWidth: '22px',
@@ -91,63 +80,69 @@ export const LineItemListMenu = ({ lineItemId, listStatus }: LineItemListMenuPro
         <SettingsIcon size={14} color="currentColor" />
       </button>
 
-      <AnchorPopover
-        theme={theme}
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        anchorRef={buttonRef}
-        width={196}
-      >
+      {isOpen ? (
         <div
-          role="menu"
-          onClick={(event) => event.stopPropagation()}
+          id={`line-item-lists-${lineItemId}`}
+          role="group"
+          aria-label="Добавить позицию в список"
           style={{
-            display: 'grid',
+            display: 'inline-flex',
+            alignItems: 'center',
             gap: 2,
           }}
         >
-          {LIST_ACTIONS.map(({ list, label, isActive }) => {
+          {LINE_ITEM_LIST_ACTIONS.map(({ list, label, shortLabel, isActive }) => {
             const active = isActive(listStatus);
             const disabled = active || busyList !== null;
             return (
               <button
                 key={list}
                 type="button"
-                role="menuitem"
                 disabled={disabled}
+                title={active ? `${label} — уже добавлено` : label}
+                aria-label={label}
                 onClick={() => void handleAction(list)}
                 style={{
-                  display: 'block',
-                  width: '100%',
-                  border: 'none',
-                  background: 'transparent',
-                  textAlign: 'left',
-                  padding: `${spacing.xs} ${spacing.sm}`,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '26px',
+                  minWidth: '26px',
+                  height: '22px',
+                  border: `1px solid ${active ? colors.accent : colors.border}`,
+                  background: active ? colors.accentMuted : colors.bgSecondary,
+                  padding: 0,
                   borderRadius: radius.sm,
-                  color: active ? colors.textMuted : colors.text,
-                  fontSize: font.sizeSm,
+                  color: active ? colors.accentText : colors.textSecondary,
+                  fontSize: font.sizeXs,
+                  fontWeight: font.weightSemibold,
                   cursor: disabled ? 'default' : 'pointer',
                   opacity: disabled ? 0.6 : 1,
                 }}
               >
-                {active ? `? ${label}` : busyList === list ? `${label}?` : label}
+                {busyList === list ? '…' : active ? '✓' : shortLabel}
               </button>
             );
           })}
-          {error ? (
-            <p
-              style={{
-                margin: `${spacing.xs} 0 0`,
-                padding: `0 ${spacing.sm}`,
-                color: colors.danger,
-                fontSize: font.sizeXs,
-              }}
-            >
-              {error}
-            </p>
-          ) : null}
         </div>
-      </AnchorPopover>
-    </>
+      ) : null}
+
+      {error ? (
+        <span
+          role="alert"
+          aria-live="polite"
+          title={error}
+          aria-label={error}
+          style={{
+            color: colors.danger,
+            fontSize: font.sizeSm,
+            fontWeight: font.weightBold,
+            padding: `0 ${spacing.xs}`,
+          }}
+        >
+          !
+        </span>
+      ) : null}
+    </div>
   );
 };

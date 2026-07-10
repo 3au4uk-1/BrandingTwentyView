@@ -20,7 +20,6 @@ import { ExpandModeProvider } from './hooks/useExpandMode';
 import { useDealBoardViews, useUpdateDealBoardView } from './hooks/useDealBoardViews';
 import { useLineItems } from './hooks/useLineItems';
 import { useOpportunities } from './hooks/useOpportunities';
-import { useHostHeightLock } from './hooks/useHostHeightLock';
 import { useDealsBoardRealtimeSync } from './realtime/useDealsBoardRealtimeSync';
 import { crmFieldNamesFromColumns, fieldTypesByNameFromDescriptors, needsCompanyRelation } from './metadata/crm-field-names';
 import { mergeColumns } from './metadata/merge-columns';
@@ -56,7 +55,6 @@ const DealsBoardContent = () => {
   const theme = useTheme();
   const { colors, font, spacing, radius, layout } = theme;
   const rootRef = useRef<HTMLDivElement | null>(null);
-  useHostHeightLock(rootRef);
   const viewsQuery = useDealBoardViews();
   const updateViewMutation = useUpdateDealBoardView();
   useDealsBoardRealtimeSync(!viewsQuery.isLoading);
@@ -331,20 +329,27 @@ const DealsBoardContent = () => {
         id={DEALS_BOARD_ROOT_ID}
         data-deals-board
         style={{
-        position: 'relative',
-        height: '100%',
-        maxHeight: '100%',
-        minHeight: 0,
-        display: 'grid',
-        gridTemplateRows: 'auto 1fr',
-        overflow: 'hidden',
-        backgroundColor: colors.bg,
-        color: colors.text,
-        fontFamily: font.family,
-        fontSize: font.sizeSm,
-      }}
-    >
-      <div data-deals-board-toolbar>
+          position: 'relative',
+          height: 'auto',
+          maxHeight: 'none',
+          minHeight: 0,
+          display: 'block',
+          overflow: 'visible',
+          backgroundColor: colors.bg,
+          color: colors.text,
+          fontFamily: font.family,
+          fontSize: font.sizeSm,
+        }}
+      >
+      <div
+        data-deals-board-toolbar
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: theme.zIndex.dropdown,
+          backgroundColor: colors.bg,
+        }}
+      >
       <header
         style={{
           borderBottom: `1px solid ${colors.border}`,
@@ -509,9 +514,8 @@ const DealsBoardContent = () => {
         data-deals-board-body
         style={{
           minHeight: 0,
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
+          overflow: 'visible',
+          display: 'block',
         }}
       >
       <DealsTable

@@ -6,6 +6,7 @@ import {
   buildDealLineItemsQuery,
   buildDealLineItemsSearchFilter,
   createLineItemWithClient,
+  fetchLineItemsForOpportunityIdsWithClient,
   isDefaultLineItemHiddenByFilters,
 } from './line-items';
 
@@ -16,20 +17,114 @@ describe('buildCreateLineItemInput', () => {
       opportunityId: 'deal-1',
       stage: 'NOVYY',
       kolichestvo: 1,
+      amount: {
+        amountMicros: 0,
+        currencyCode: 'RUB',
+      },
     });
   });
 
-  it('posts the default position to the deal line items endpoint', async () => {
-    const post = vi.fn().mockResolvedValue(undefined);
+  it('creates the default position through the proven GraphQL mutation', async () => {
+    const mutation = vi.fn().mockResolvedValue({ createDealLineItem: { id: 'item-1' } });
 
-    await createLineItemWithClient({ post }, 'deal-1');
+    await createLineItemWithClient({ mutation } as never, 'deal-1');
 
-    expect(post).toHaveBeenCalledWith('/rest/dealLineItems', {
-      name: 'Новая позиция',
-      opportunityId: 'deal-1',
-      stage: 'NOVYY',
-      kolichestvo: 1,
+    expect(mutation).toHaveBeenCalledWith({
+      createDealLineItem: {
+        __args: {
+          data: {
+            name: 'Новая позиция',
+            opportunityId: 'deal-1',
+            stage: 'NOVYY',
+            kolichestvo: 1,
+            amount: {
+              amountMicros: 0,
+              currencyCode: 'RUB',
+            },
+          },
+        },
+        id: true,
+      },
     });
+  });
+});
+
+describe('fetchLineItemsForOpportunityIdsWithClient', () => {
+  it('splits a failed server batch until smaller requests succeed', async () => {
+    const get = vi.fn().mockImplementation(
+      (_path: string, options: { query: { filter: string } }) => {
+        const filter = options.query.filter;
+        if (filter.includes('deal-1') && filter.includes('deal-2')) {
+          return Promise.reject({ status: 500 });
+        }
+
+        const opportunityId = filter.includes('deal-1') ? 'deal-1' : 'deal-2';
+        return Promise.resolve({
+          data: [{ id: `item-${opportunityId}`, name: 'Position', opportunityId }],
+        });
+      },
+    );
+
+    const items = await fetchLineItemsForOpportunityIdsWithClient(
+      { get } as never,
+      ['deal-1', 'deal-2'],
+    );
+
+    expect(items.map((item) => item.opportunityId)).toEqual(['deal-1', 'deal-2']);
+    expect(get).toHaveBeenCalledTimes(3);
+  });
+
+  it('recursively preserves order and filters for a 25-id batch', async () => {
+    const opportunityIds = Array.from({ length: 25 }, (_, index) => `deal-${index + 1}`);
+    const get = vi.fn().mockImplementation(
+      (_path: string, options: { query: { filter: string } }) => {
+        const ids = options.query.filter.match(/deal-\d+/g) ?? [];
+        if (ids.length > 5) {
+          return Promise.reject({ status: 500 });
+        }
+
+        expect(options.query.filter).toContain('stage[in]:["NOVYY"]');
+        return Promise.resolve({
+          data: ids.map((opportunityId) => ({
+            id: `item-${opportunityId}`,
+            name: 'Position',
+            opportunityId,
+          })),
+        });
+      },
+    );
+
+    const items = await fetchLineItemsForOpportunityIdsWithClient(
+      { get } as never,
+      opportunityIds,
+      { stages: ['NOVYY'] },
+    );
+
+    expect(items.map((item) => item.opportunityId)).toEqual(opportunityIds);
+    expect(get.mock.calls.length).toBeGreaterThan(3);
+  });
+
+  it('does not retry a failed singleton request', async () => {
+    const error = { status: 500 };
+    const get = vi.fn().mockRejectedValue(error);
+
+    await expect(
+      fetchLineItemsForOpportunityIdsWithClient({ get } as never, ['deal-1']),
+    ).rejects.toBe(error);
+    expect(get).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes non-server errors through without splitting', async () => {
+    const error = { status: 400 };
+    const get = vi.fn().mockRejectedValue(error);
+
+    await expect(
+      fetchLineItemsForOpportunityIdsWithClient(
+        { get } as never,
+        ['deal-1', 'deal-2'],
+      ),
+    ).rejects.toBe(error);
+    expect(get).toHaveBeenCalledTimes(1);
   });
 });
 

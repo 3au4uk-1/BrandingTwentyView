@@ -5,28 +5,30 @@ type GlobalThemeStylesProps = {
 };
 
 export const GlobalThemeStyles = ({ theme }: GlobalThemeStylesProps) => {
-  const { colors, radius } = theme;
+  const { colors, radius, zIndex } = theme;
 
   return (
     <style>{`
       [data-deals-board] {
         box-sizing: border-box;
-        height: 100%;
-        max-height: 100%;
+        height: auto;
+        max-height: none;
         min-height: 0;
-        overflow: hidden;
+        overflow: visible;
       }
 
       [data-deals-board-toolbar] {
         min-height: 0;
         background-color: ${colors.bg};
+        position: sticky;
+        top: 0;
+        z-index: ${zIndex.dropdown};
       }
 
       [data-deals-board-body] {
         min-height: 0;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
+        overflow: visible;
+        display: block;
       }
 
       [data-deals-board] button:not(:disabled):active {
