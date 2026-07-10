@@ -8,6 +8,7 @@ import {
 } from './api/crmparser';
 import { lineItemListStatusQueryKey } from './hooks/useLineItemListStatus';
 import { useTheme } from './theme/ThemeContext';
+import { AnchorPopover } from './ui/AnchorPopover';
 import { SettingsIcon } from './ui/Icons';
 
 type ListAction = {
@@ -30,9 +31,9 @@ type LineItemListMenuProps = {
 
 export const LineItemListMenu = ({ lineItemId, listStatus }: LineItemListMenuProps) => {
   const theme = useTheme();
-  const { colors, radius, font, spacing, zIndex } = theme;
+  const { colors, radius, font, spacing } = theme;
   const queryClient = useQueryClient();
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [busyList, setBusyList] = useState<ListName | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -40,14 +41,10 @@ export const LineItemListMenu = ({ lineItemId, listStatus }: LineItemListMenuPro
   useEffect(() => {
     if (!isOpen) return;
 
-    const onMouseDown = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
+    const close = () => setIsOpen(false);
 
-    window.addEventListener('mousedown', onMouseDown);
-    return () => window.removeEventListener('mousedown', onMouseDown);
+    window.addEventListener('resize', close);
+    return () => window.removeEventListener('resize', close);
   }, [isOpen]);
 
   const handleAction = async (list: ListName) => {
@@ -66,10 +63,11 @@ export const LineItemListMenu = ({ lineItemId, listStatus }: LineItemListMenuPro
   };
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', flexShrink: 0 }}>
+    <>
       <button
+        ref={buttonRef}
         type="button"
-        data-list-menu-btn="0.2.76"
+        data-list-menu-btn="0.2.77"
         onClick={(event) => {
           event.stopPropagation();
           setIsOpen((open) => !open);
@@ -93,21 +91,19 @@ export const LineItemListMenu = ({ lineItemId, listStatus }: LineItemListMenuPro
         <SettingsIcon size={14} color="currentColor" />
       </button>
 
-      {isOpen ? (
+      <AnchorPopover
+        theme={theme}
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        anchorRef={buttonRef}
+        width={196}
+      >
         <div
           role="menu"
           onClick={(event) => event.stopPropagation()}
           style={{
-            position: 'absolute',
-            top: 'calc(100% + 4px)',
-            right: 0,
-            minWidth: '180px',
-            background: colors.surface,
-            border: `1px solid ${colors.border}`,
-            borderRadius: radius.md,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-            zIndex: zIndex.dropdown,
-            padding: spacing.xs,
+            display: 'grid',
+            gap: 2,
           }}
         >
           {LIST_ACTIONS.map(({ list, label, isActive }) => {
@@ -151,7 +147,7 @@ export const LineItemListMenu = ({ lineItemId, listStatus }: LineItemListMenuPro
             </p>
           ) : null}
         </div>
-      ) : null}
-    </div>
+      </AnchorPopover>
+    </>
   );
 };
