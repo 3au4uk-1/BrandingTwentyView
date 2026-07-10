@@ -44,13 +44,11 @@ export type FieldOverrideProps = {
 const ParentNameCell = ({
   recordId,
   value,
-  lineItems,
   isExpanded,
   onToggleExpand,
 }: FieldOverrideProps) => {
   const theme = useTheme();
   const { colors, font, spacing } = theme;
-  const canExpand = (lineItems?.length ?? 0) > 0;
   const name = typeof value === 'string' ? value : '';
 
   const handleOpenRecord = (event: MouseEvent<HTMLButtonElement>) => {
@@ -60,34 +58,30 @@ const ParentNameCell = ({
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, minWidth: 0 }}>
-      {canExpand ? (
-        <button
-          type="button"
-          data-expand-btn
-          onClick={() => onToggleExpand?.(recordId)}
-          style={{
-            border: 'none',
-            background: 'transparent',
-            padding: '2px',
-            width: '22px',
-            minWidth: '22px',
-            height: '22px',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: isExpanded ? colors.accentText : colors.textMuted,
-            cursor: 'pointer',
-            transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-            transition: 'transform 0.15s ease, color 0.12s ease, background-color 0.12s ease',
-            flexShrink: 0,
-          }}
-          aria-label={isExpanded ? 'Свернуть позиции' : 'Развернуть позиции'}
-        >
-          <ChevronRightIcon size={14} color="currentColor" />
-        </button>
-      ) : (
-        <span style={{ width: '22px', minWidth: '22px' }} />
-      )}
+      <button
+        type="button"
+        data-expand-btn
+        onClick={() => onToggleExpand?.(recordId)}
+        style={{
+          border: 'none',
+          background: 'transparent',
+          padding: '2px',
+          width: '22px',
+          minWidth: '22px',
+          height: '22px',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: isExpanded ? colors.accentText : colors.textMuted,
+          cursor: 'pointer',
+          transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+          transition: 'transform 0.15s ease, color 0.12s ease, background-color 0.12s ease',
+          flexShrink: 0,
+        }}
+        aria-label={isExpanded ? 'Свернуть позиции' : 'Развернуть позиции'}
+      >
+        <ChevronRightIcon size={14} color="currentColor" />
+      </button>
       <span
         title={name}
         style={{

@@ -523,6 +523,7 @@ const DealsBoardContent = () => {
         opportunityLinkFields={opportunityLinkFields}
         records={visibleRecords}
         lineItems={visibleLineItems}
+        lineItemFilters={lineItemQueryFilters}
         totalCount={visibleTotalCount}
         page={page}
         totalPages={totalPages}

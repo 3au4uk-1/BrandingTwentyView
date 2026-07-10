@@ -53,9 +53,13 @@ const isScrollContainer = (element: unknown): boolean => {
  * Prefers the nearest scroll ancestor (host ScrollWrapper), then a fixed-height parent,
  * then viewport minus cumulative offsetTop.
  */
-export const resolveBoundedHostHeight = (root: DomLikeElement): number => {
+export const resolveBoundedHostHeight = (
+  root: DomLikeElement,
+  fallbackViewportHeight = 0,
+): number => {
   const view = root.ownerDocument?.defaultView;
-  const viewportHeight = readNumber(view?.innerHeight);
+  const viewportHeight =
+    readNumber(view?.innerHeight) || readNumber(fallbackViewportHeight);
 
   let scrollContainer: DomLikeElement | null = null;
   let largestBounded = 0;

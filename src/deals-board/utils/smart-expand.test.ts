@@ -76,6 +76,12 @@ describe('computeIsExpanded', () => {
     const overrides = { collapsed: [], expanded: ['deal-1'] };
     expect(computeIsExpanded('deal-1', activeItems, 'collapsed', overrides)).toBe(true);
   });
+
+  it('allows an empty deal to be manually expanded', () => {
+    const overrides = { collapsed: [], expanded: ['deal-1'] };
+
+    expect(computeIsExpanded('deal-1', [], 'smart', overrides)).toBe(true);
+  });
 });
 
 describe('toggleExpandOverride', () => {
@@ -141,5 +147,17 @@ describe('toggleExpandOverride', () => {
     );
     expect(expanded.expanded).toEqual(['deal-1']);
     expect(computeIsExpanded('deal-1', activeItems, 'smart', expanded, 'DUBL')).toBe(true);
+  });
+
+  it('remembers manual expansion for a deal without positions', () => {
+    const expanded = toggleExpandOverride(
+      'deal-1',
+      [],
+      'smart',
+      EMPTY_EXPAND_OVERRIDES,
+    );
+
+    expect(expanded.expanded).toEqual(['deal-1']);
+    expect(computeIsExpanded('deal-1', [], 'smart', expanded)).toBe(true);
   });
 });

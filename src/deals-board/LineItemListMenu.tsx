@@ -67,7 +67,7 @@ export const LineItemListMenu = ({ lineItemId, listStatus }: LineItemListMenuPro
       <button
         ref={buttonRef}
         type="button"
-        data-list-menu-btn="0.2.77"
+        data-list-menu-btn="0.2.78"
         onClick={(event) => {
           event.stopPropagation();
           setIsOpen((open) => !open);

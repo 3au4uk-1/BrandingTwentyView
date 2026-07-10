@@ -42,8 +42,24 @@ describe('resolveBoundedHostHeight', () => {
     expect(resolveBoundedHostHeight(root)).toBe(768);
   });
 
+  it('uses an explicit viewport fallback for Remote DOM refs', () => {
+    const root: DomLikeElement = {
+      clientHeight: 0,
+      scrollHeight: 0,
+      offsetTop: 0,
+      parentElement: null,
+    };
+
+    expect(resolveBoundedHostHeight(root, 900)).toBe(888);
+  });
+
   it('returns zero when no usable height can be resolved', () => {
-    const root = makeElement(0);
+    const root: DomLikeElement = {
+      clientHeight: 0,
+      scrollHeight: 0,
+      offsetTop: 0,
+      parentElement: null,
+    };
 
     expect(resolveBoundedHostHeight(root)).toBe(0);
   });

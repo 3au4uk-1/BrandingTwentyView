@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
+  createLineItem,
   fetchLineItemsByOpportunityIds,
   type LineItemQueryFilters,
   updateLineItem,
@@ -26,6 +27,20 @@ export const useLineItems = (
     queryKey: lineItemsQueryKey(sortedIds, filters),
     queryFn: () => fetchLineItemsByOpportunityIds(sortedIds, filters),
     enabled: enabled && sortedIds.length > 0,
+  });
+};
+
+export const useCreateLineItem = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (opportunityId: string) => createLineItem(opportunityId),
+    onSuccess: (_data, opportunityId) => {
+      void Promise.allSettled([
+        queryClient.invalidateQueries({ queryKey: ['lineItems'] }),
+        syncDealStage(queryClient, opportunityId),
+      ]);
+    },
   });
 };
 

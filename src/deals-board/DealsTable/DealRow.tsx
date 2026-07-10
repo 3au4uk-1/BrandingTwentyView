@@ -1,4 +1,5 @@
 import { DynamicFieldCell } from '../cells/DynamicFieldCell';
+import type { LineItemQueryFilters } from '../api/line-items';
 import type { FieldDescriptor } from '../metadata/types';
 import { useTheme } from '../theme/ThemeContext';
 import type { ColumnConfig, LineItemRow, OpportunityRow } from '../types';
@@ -19,6 +20,7 @@ type DealRowProps = {
   onHoverChange: (hovered: boolean) => void;
   onToggleExpand: (id: string) => void;
   opportunityLinkFields: FieldDescriptor[];
+  filters?: LineItemQueryFilters;
   onChildColumnResizeStart: (
     event: MouseEvent | PointerEvent,
     field: string,
@@ -40,11 +42,11 @@ export const DealRow = ({
   onHoverChange,
   onToggleExpand,
   opportunityLinkFields,
+  filters,
   onChildColumnResizeStart,
 }: DealRowProps) => {
   const theme = useTheme();
   const { colors, font, zIndex, colorScheme } = theme;
-  const canExpand = lineItems.length > 0;
   const stageValue = typeof row.stage === 'string' ? row.stage : null;
   const stageStyles = getStageRowStyles(stageValue, colorScheme, 'parent');
   const rowBg = stageStyles.backgroundColor;
@@ -106,7 +108,7 @@ export const DealRow = ({
           </td>
         ))}
       </tr>
-      {canExpand && isExpanded ? (
+      {isExpanded ? (
         <tr>
           <td
             colSpan={columns.length}
@@ -118,9 +120,11 @@ export const DealRow = ({
             }}
           >
             <LineItemsTable
+              opportunityId={row.id}
               items={lineItems}
               columns={childColumns}
               descriptorByField={childDescriptorByField}
+              filters={filters}
               onColumnResizeStart={onChildColumnResizeStart}
             />
           </td>

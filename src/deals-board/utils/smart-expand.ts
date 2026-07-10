@@ -53,7 +53,7 @@ export const computeIsExpanded = (
   opportunityStage?: string | null,
 ): boolean => {
   if (items.length === 0) {
-    return false;
+    return overrides.expanded.includes(opportunityId);
   }
 
   if (mode === 'smart') {
@@ -103,6 +103,16 @@ export const toggleExpandOverride = (
   opportunityStage?: string | null,
 ): ExpandOverrides => {
   const isExpanded = computeIsExpanded(opportunityId, items, mode, overrides, opportunityStage);
+
+  if (items.length === 0) {
+    return {
+      ...overrides,
+      expanded: isExpanded
+        ? overrides.expanded.filter((id) => id !== opportunityId)
+        : [...new Set([...overrides.expanded, opportunityId])],
+    };
+  }
+
   const allDone = items.length > 0 && !hasActiveLineItems(items);
   const treatAsComplete = allDone || isSmartCollapsedOpportunity(opportunityStage);
 

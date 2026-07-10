@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { fetchCompanyNames } from '../api/companies';
+import type { LineItemQueryFilters } from '../api/line-items';
 import type { FieldDescriptor } from '../metadata/types';
 import { useColumnResize } from '../hooks/useColumnResize';
 import { useContainerWidth } from '../hooks/useContainerWidth';
@@ -30,6 +31,7 @@ type DealsTableProps = {
   opportunityLinkFields: FieldDescriptor[];
   records: OpportunityRow[];
   lineItems: LineItemRow[];
+  lineItemFilters?: LineItemQueryFilters;
   totalCount: number;
   page: number;
   totalPages: number;
@@ -53,6 +55,7 @@ export const DealsTable = ({
   opportunityLinkFields,
   records,
   lineItems,
+  lineItemFilters,
   totalCount,
   page,
   totalPages,
@@ -362,6 +365,7 @@ export const DealsTable = ({
                 onHoverChange={(hovered) => setHoveredRowId(hovered ? row.id : null)}
                 onToggleExpand={toggleExpand}
                 opportunityLinkFields={opportunityLinkFields}
+                filters={lineItemFilters}
               />
             ))}
           </tbody>

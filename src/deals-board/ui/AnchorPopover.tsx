@@ -9,7 +9,12 @@ import {
 import { createPortal } from 'react-dom';
 
 import type { ThemeTokens } from '../theme/tokens';
-import { getPortalContainer } from '../utils/dom';
+import {
+  resolveAnchoredOverlayPosition,
+  resolveAnchorRectWithinRoot,
+  type OverlayElementLike,
+} from '../utils/anchored-overlay';
+import { resolvePortalContainer, usePortalHost } from './PortalHostContext';
 
 export type AnchorPoint = {
   x: number;
@@ -31,47 +36,6 @@ type PopoverCoords = {
   left: number;
 };
 
-type RectLike = Pick<DOMRect, 'top' | 'left' | 'bottom' | 'right' | 'width' | 'height'>;
-
-const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
-
-const getViewportSize = () => {
-  const view = typeof window !== 'undefined' ? window : undefined;
-  return {
-    width: view?.innerWidth ?? 1280,
-    height: view?.innerHeight ?? 720,
-  };
-};
-
-const getElementClientRect = (element: HTMLElement, anchorPoint?: AnchorPoint | null): RectLike => {
-  if (typeof element.getBoundingClientRect === 'function') {
-    return element.getBoundingClientRect();
-  }
-
-  const width = element.offsetWidth ?? element.clientWidth ?? 120;
-  const height = element.offsetHeight ?? element.clientHeight ?? 24;
-
-  if (anchorPoint) {
-    return {
-      top: anchorPoint.y,
-      left: anchorPoint.x,
-      bottom: anchorPoint.y + height,
-      right: anchorPoint.x + width,
-      width,
-      height,
-    };
-  }
-
-  return {
-    top: 80,
-    left: 80,
-    bottom: 80 + height,
-    right: 80 + width,
-    width,
-    height,
-  };
-};
-
 const nodeContains = (node: Node | null | undefined, target: Node) => {
   if (!node) return false;
   if (typeof node.contains === 'function') return node.contains(target);
@@ -88,6 +52,7 @@ export const AnchorPopover = ({
   width = 300,
 }: AnchorPopoverProps) => {
   const { colors, radius, spacing, zIndex } = theme;
+  const portalHostRef = usePortalHost();
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const openedAtRef = useRef(0);
   const [coords, setCoords] = useState<PopoverCoords>({ top: 0, left: 0 });
@@ -98,29 +63,54 @@ export const AnchorPopover = ({
   }, [isOpen]);
 
   useLayoutEffect(() => {
-    if (!isOpen || !anchorRef.current) return;
+    if (!isOpen || !anchorRef.current || !portalHostRef?.current) return;
 
     const updatePosition = () => {
       const anchor = anchorRef.current;
       const popover = popoverRef.current;
-      if (!anchor) return;
+      const root = portalHostRef.current;
+      if (!anchor || !root) return;
 
-      const rect = getElementClientRect(anchor, anchorPoint);
-      const popoverHeight = popover?.offsetHeight ?? 220;
-      const viewport = getViewportSize();
-      const spaceBelow = viewport.height - rect.bottom;
-      const showAbove = spaceBelow < popoverHeight + 12 && rect.top > popoverHeight + 12;
-      const top = showAbove ? rect.top - popoverHeight - 4 : rect.bottom + 4;
-      const left = clamp(rect.left, 8, viewport.width - width - 8);
+      const rootLike = root as unknown as OverlayElementLike;
+      const anchorRect = anchorPoint
+        ? {
+            top: anchorPoint.y,
+            left: anchorPoint.x,
+            bottom: anchorPoint.y,
+            right: anchorPoint.x,
+            width: 0,
+            height: 0,
+          }
+        : resolveAnchorRectWithinRoot(
+            anchor as unknown as OverlayElementLike,
+            rootLike,
+          );
+      const view = typeof window !== 'undefined' ? window : undefined;
+      const rootWidth =
+        typeof rootLike.clientWidth === 'number' && rootLike.clientWidth > 0
+          ? rootLike.clientWidth
+          : view?.innerWidth ?? 1280;
+      const rootHeight =
+        typeof rootLike.clientHeight === 'number' && rootLike.clientHeight > 0
+          ? rootLike.clientHeight
+          : view?.innerHeight ?? 720;
 
-      setCoords({ top, left });
+      setCoords(
+        resolveAnchoredOverlayPosition({
+          anchorRect,
+          overlayWidth: width,
+          overlayHeight: popover?.offsetHeight ?? 220,
+          containerWidth: rootWidth,
+          containerHeight: rootHeight,
+        }),
+      );
     };
 
     updatePosition();
     const view = typeof window !== 'undefined' ? window : undefined;
     view?.addEventListener('resize', updatePosition);
     return () => view?.removeEventListener('resize', updatePosition);
-  }, [anchorPoint, anchorRef, isOpen, width, children]);
+  }, [anchorPoint, anchorRef, isOpen, portalHostRef, width, children]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -157,16 +147,19 @@ export const AnchorPopover = ({
 
   if (!isOpen || typeof document === 'undefined') return null;
 
-  const portalContainer = getPortalContainer(anchorRef.current);
+  const portalContainer = resolvePortalContainer('root', portalHostRef);
+
+  if (!portalContainer) return null;
 
   return createPortal(
     <div
       ref={popoverRef}
       style={{
-        position: 'fixed',
+        position: 'absolute',
         top: coords.top,
         left: coords.left,
         width,
+        boxSizing: 'border-box',
         zIndex: zIndex.modal,
         padding: spacing.md,
         borderRadius: radius.lg,

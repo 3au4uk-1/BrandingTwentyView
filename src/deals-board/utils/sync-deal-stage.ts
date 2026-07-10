@@ -1,29 +1,13 @@
 import type { QueryClient } from '@tanstack/react-query';
 
+import { fetchLineItemsByOpportunityIds } from '../api/line-items';
 import { patchOpportunity } from '../api/opportunities';
-import type { LineItemRow, OpportunityRow } from '../types';
+import type { OpportunityRow } from '../types';
 import { computeDealStage } from './compute-deal-stage';
 
 type OpportunitiesPage = {
   records: OpportunityRow[];
   totalCount: number;
-};
-
-export const findLineItemsForOpportunity = (
-  queryClient: QueryClient,
-  opportunityId: string,
-): LineItemRow[] => {
-  const results: LineItemRow[] = [];
-
-  for (const [, items] of queryClient.getQueriesData<LineItemRow[]>({
-    queryKey: ['lineItems'],
-  })) {
-    if (items) {
-      results.push(...items.filter((item) => item.opportunityId === opportunityId));
-    }
-  }
-
-  return results;
 };
 
 export const findOpportunityInCache = (
@@ -47,7 +31,7 @@ export const syncDealStage = async (
   const opportunity = findOpportunityInCache(queryClient, opportunityId);
   if (!opportunity || opportunity.stageZakreplen === true) return;
 
-  const lineItems = findLineItemsForOpportunity(queryClient, opportunityId);
+  const lineItems = await fetchLineItemsByOpportunityIds([opportunityId]);
   const nextStage = computeDealStage(lineItems);
   if (nextStage === opportunity.stage) return;
 

@@ -13,6 +13,26 @@ export type LineItemQueryFilters = {
   types?: string[];
 };
 
+export type CreateLineItemInput = {
+  name: string;
+  opportunityId: string;
+  stage: 'NOVYY';
+  kolichestvo: number;
+};
+
+export const buildCreateLineItemInput = (opportunityId: string): CreateLineItemInput => ({
+  name: 'Новая позиция',
+  opportunityId,
+  stage: 'NOVYY',
+  kolichestvo: 1,
+});
+
+export const isDefaultLineItemHiddenByFilters = (
+  filters?: LineItemQueryFilters,
+): boolean =>
+  Boolean(filters?.stages?.length && !filters.stages.includes('NOVYY')) ||
+  Boolean(filters?.types?.length);
+
 const getRestClient = (): RestApiClient => {
   if (!restClient) restClient = new RestApiClient();
   return restClient;
@@ -212,4 +232,19 @@ export const updateLineItem = async (
 ): Promise<void> => {
   const client = getRestClient();
   await client.patch(`/rest/dealLineItems/${id}`, data);
+};
+
+type LineItemPostClient = {
+  post: (path: string, body?: unknown) => Promise<unknown>;
+};
+
+export const createLineItemWithClient = async (
+  client: LineItemPostClient,
+  opportunityId: string,
+): Promise<void> => {
+  await client.post('/rest/dealLineItems', buildCreateLineItemInput(opportunityId));
+};
+
+export const createLineItem = async (opportunityId: string): Promise<void> => {
+  await createLineItemWithClient(getRestClient(), opportunityId);
 };

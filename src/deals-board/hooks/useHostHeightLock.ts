@@ -7,8 +7,11 @@ import {
   type DomLikeElement,
 } from '../utils/host-height';
 
-const applyHostHeight = (root: HTMLElement) => {
-  const height = resolveBoundedHostHeight(root as DomLikeElement);
+const applyHostHeight = (root: HTMLElement, viewportHeight: number) => {
+  const height = resolveBoundedHostHeight(
+    root as DomLikeElement,
+    viewportHeight,
+  );
   if (height <= 0) return;
 
   root.style.height = `${height}px`;
@@ -34,11 +37,23 @@ export const useHostHeightLock = (rootRef: RefObject<HTMLElement | null>) => {
 
     let frameId = 0;
     let attempts = 0;
+    const ownerView = root.ownerDocument?.defaultView;
+    const globalView = typeof window !== 'undefined' ? window : undefined;
+    const view =
+      ownerView && typeof ownerView.addEventListener === 'function'
+        ? ownerView
+        : globalView;
 
     const scheduleApply = () => {
-      applyHostHeight(root);
-
-      const height = resolveBoundedHostHeight(root as DomLikeElement);
+      const viewportHeight =
+        typeof view?.innerHeight === 'number' ? view.innerHeight : 0;
+      const height = resolveBoundedHostHeight(
+        root as DomLikeElement,
+        viewportHeight,
+      );
+      if (height > 0) {
+        applyHostHeight(root, viewportHeight);
+      }
       if (height <= 0 && attempts < 24) {
         attempts += 1;
         frameId = requestAnimationFrame(scheduleApply);
@@ -57,7 +72,6 @@ export const useHostHeightLock = (rootRef: RefObject<HTMLElement | null>) => {
       }
     }
 
-    const view = root.ownerDocument?.defaultView;
     if (view && typeof view.addEventListener === 'function') {
       view.addEventListener('resize', scheduleApply);
     }

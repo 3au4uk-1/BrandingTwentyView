@@ -1,6 +1,46 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { buildDealLineItemsFilter, buildDealLineItemsQuery, buildDealLineItemsSearchFilter } from './line-items';
+import {
+  buildCreateLineItemInput,
+  buildDealLineItemsFilter,
+  buildDealLineItemsQuery,
+  buildDealLineItemsSearchFilter,
+  createLineItemWithClient,
+  isDefaultLineItemHiddenByFilters,
+} from './line-items';
+
+describe('buildCreateLineItemInput', () => {
+  it('creates a compact default position linked to its deal', () => {
+    expect(buildCreateLineItemInput('deal-1')).toEqual({
+      name: 'Новая позиция',
+      opportunityId: 'deal-1',
+      stage: 'NOVYY',
+      kolichestvo: 1,
+    });
+  });
+
+  it('posts the default position to the deal line items endpoint', async () => {
+    const post = vi.fn().mockResolvedValue(undefined);
+
+    await createLineItemWithClient({ post }, 'deal-1');
+
+    expect(post).toHaveBeenCalledWith('/rest/dealLineItems', {
+      name: 'Новая позиция',
+      opportunityId: 'deal-1',
+      stage: 'NOVYY',
+      kolichestvo: 1,
+    });
+  });
+});
+
+describe('isDefaultLineItemHiddenByFilters', () => {
+  it('detects stage and type filters that hide the default position', () => {
+    expect(isDefaultLineItemHiddenByFilters()).toBe(false);
+    expect(isDefaultLineItemHiddenByFilters({ stages: ['NOVYY'] })).toBe(false);
+    expect(isDefaultLineItemHiddenByFilters({ stages: ['GOTOVO'] })).toBe(true);
+    expect(isDefaultLineItemHiddenByFilters({ types: ['BANNERA'] })).toBe(true);
+  });
+});
 
 describe('buildDealLineItemsFilter', () => {
   it('serializes opportunity ids as JSON array for in filter', () => {
