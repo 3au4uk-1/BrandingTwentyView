@@ -1,4 +1,4 @@
-import { useEffect, type MouseEvent, type ReactNode } from 'react';
+import { useEffect, type PointerEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 import type { ThemeTokens } from '../theme/tokens';
@@ -13,8 +13,13 @@ type BottomSheetProps = {
   children: ReactNode;
   /** Fraction of viewport height for sheet panel. Default 0.85 */
   heightFraction?: number;
-  /** Where to mount the overlay. Default: document.body (viewport-fixed). */
-  portalTarget?: 'body' | 'root';
+  /**
+   * Where to mount the overlay.
+   * - inline: render in place (best for Twenty Remote DOM mobile UI)
+   * - root: portal into the board host
+   * - body: document.body
+   */
+  portalTarget?: 'body' | 'root' | 'inline';
 };
 
 export const BottomSheet = ({
@@ -24,7 +29,7 @@ export const BottomSheet = ({
   onClose,
   children,
   heightFraction = 0.85,
-  portalTarget = 'body',
+  portalTarget = 'root',
 }: BottomSheetProps) => {
   const portalHostRef = usePortalHost();
   const { colors, radius, font, spacing, zIndex } = theme;
@@ -45,7 +50,8 @@ export const BottomSheet = ({
 
   if (!isOpen) return null;
 
-  const handleBackdropClose = (event: MouseEvent<HTMLDivElement>) => {
+  const handleBackdropPointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget) return;
     event.preventDefault();
     onClose();
   };
@@ -53,6 +59,7 @@ export const BottomSheet = ({
   const sheet = (
     <div
       role="presentation"
+      data-bottom-sheet-overlay
       style={{
         position: 'fixed',
         inset: 0,
@@ -60,24 +67,23 @@ export const BottomSheet = ({
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'flex-end',
-        pointerEvents: 'none',
+        pointerEvents: 'auto',
       }}
     >
       <div
         aria-hidden="true"
-        onMouseDown={handleBackdropClose}
-        onClick={handleBackdropClose}
+        onPointerUp={handleBackdropPointerUp}
         style={{
           position: 'absolute',
           inset: 0,
           backgroundColor: overlayBg,
-          pointerEvents: 'auto',
         }}
       />
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        onPointerUp={(event) => event.stopPropagation()}
         style={{
           position: 'relative',
           zIndex: 1,
@@ -92,7 +98,6 @@ export const BottomSheet = ({
           backgroundColor: colors.bgElevated,
           color: colors.text,
           boxShadow: colors.shadowLg,
-          pointerEvents: 'auto',
           overflow: 'hidden',
           flexShrink: 0,
         }}
@@ -116,6 +121,10 @@ export const BottomSheet = ({
       </div>
     </div>
   );
+
+  if (portalTarget === 'inline') {
+    return sheet;
+  }
 
   const container = resolvePortalContainer(portalTarget, portalHostRef);
   if (container) return createPortal(sheet, container);

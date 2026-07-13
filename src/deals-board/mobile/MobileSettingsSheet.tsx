@@ -30,7 +30,7 @@ export const MobileSettingsSheet = ({
   const { spacing, font, colors } = theme;
 
   return (
-    <BottomSheet theme={theme} isOpen={isOpen} title="Настройки" onClose={onClose}>
+    <BottomSheet theme={theme} isOpen={isOpen} title="Настройки" onClose={onClose} portalTarget="inline">
       <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.lg }}>
         <div>
           <div style={{ fontSize: font.sizeXs, color: colors.textMuted, marginBottom: spacing.xs }}>

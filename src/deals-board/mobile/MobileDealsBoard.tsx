@@ -81,19 +81,41 @@ export const MobileDealsBoard = (props: MobileDealsBoardProps) => {
   const [settingsSheetOpen, setSettingsSheetOpen] = useState(false);
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
 
+  const openViewSheet = () => {
+    setSettingsSheetOpen(false);
+    setFiltersSheetOpen(false);
+    setViewSheetOpen(true);
+  };
+
+  const openSettingsSheet = () => {
+    setViewSheetOpen(false);
+    setFiltersSheetOpen(false);
+    setSettingsSheetOpen(true);
+  };
+
+  const openFiltersSheet = () => {
+    setViewSheetOpen(false);
+    setSettingsSheetOpen(false);
+    setFiltersSheetOpen(true);
+  };
+
   const activeFilterCount = countActiveQuickFilters(quickFilters);
   const hasMore = !showAll && !maxRecordsReached && page < totalPages - 1;
 
   return (
-    <div data-mobile-deals-board data-layout="mobile" style={{ backgroundColor: theme.colors.bg }}>
+    <div
+      data-mobile-deals-board
+      data-layout="mobile"
+      style={{ backgroundColor: theme.colors.bg, position: 'relative' }}
+    >
       <MobileToolbar
         activeView={activeView}
         totalCount={totalCount}
         search={quickFilters.search}
         onSearchChange={(search) => onQuickFiltersChange({ ...quickFilters, search })}
-        onOpenViewSheet={() => setViewSheetOpen(true)}
-        onOpenSettingsSheet={() => setSettingsSheetOpen(true)}
-        onOpenFiltersSheet={() => setFiltersSheetOpen(true)}
+        onOpenViewSheet={openViewSheet}
+        onOpenSettingsSheet={openSettingsSheet}
+        onOpenFiltersSheet={openFiltersSheet}
         activeFilterCount={activeFilterCount}
       />
 

@@ -22,7 +22,7 @@ export const MobileFiltersSheet = ({
   const { spacing } = theme;
 
   return (
-    <BottomSheet theme={theme} isOpen={isOpen} title="Фильтры" onClose={onClose}>
+    <BottomSheet theme={theme} isOpen={isOpen} title="Фильтры" onClose={onClose} portalTarget="inline">
       <QuickFiltersBar value={value} onChange={onChange} onReset={onReset} />
       <div style={{ display: 'flex', gap: spacing.sm, marginTop: spacing.md }}>
         <Button

@@ -7,6 +7,7 @@ import { Button } from '../ui/Button';
 import { ChevronDownIcon, SettingsIcon } from '../ui/Icons';
 import { Input } from '../ui/Input';
 import type { DealBoardViewRecord } from '../types';
+import { createTapHandler } from './touch-action';
 
 type MobileToolbarProps = {
   activeView?: DealBoardViewRecord;
@@ -48,7 +49,7 @@ export const MobileToolbar = ({
   activeFilterCount,
 }: MobileToolbarProps) => {
   const theme = useTheme();
-  const { colors, font, spacing, radius, layout } = theme;
+  const { colors, font, spacing, radius, layout, zIndex } = theme;
   const [searchExpanded, setSearchExpanded] = useState(Boolean(search));
 
   return (
@@ -57,7 +58,7 @@ export const MobileToolbar = ({
       style={{
         position: 'sticky',
         top: 0,
-        zIndex: theme.zIndex.dropdown,
+        zIndex: zIndex.dropdown,
         display: 'flex',
         flexDirection: 'column',
         gap: spacing.sm,
@@ -65,12 +66,15 @@ export const MobileToolbar = ({
         minHeight: layout.toolbarHeight,
         borderBottom: `1px solid ${colors.border}`,
         backgroundColor: colors.bgSecondary,
+        isolation: 'isolate',
+        pointerEvents: 'auto',
+        touchAction: 'manipulation',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xs }}>
         <button
           type="button"
-          onClick={onOpenViewSheet}
+          onPointerUp={createTapHandler(onOpenViewSheet)}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -116,9 +120,9 @@ export const MobileToolbar = ({
           theme={theme}
           variant={activeFilterCount > 0 ? 'secondary' : 'ghost'}
           size="sm"
-          onClick={onOpenFiltersSheet}
+          onPointerUp={createTapHandler(onOpenFiltersSheet)}
           aria-label={activeFilterCount > 0 ? `Фильтры: ${activeFilterCount}` : 'Фильтры'}
-          style={{ minWidth: 44, minHeight: 44, position: 'relative' }}
+          style={{ minWidth: 44, minHeight: 44, position: 'relative', touchAction: 'manipulation' }}
         >
           <FilterIcon color={activeFilterCount > 0 ? colors.accentText : colors.textMuted} />
         </Button>
@@ -127,9 +131,9 @@ export const MobileToolbar = ({
           theme={theme}
           variant="ghost"
           size="sm"
-          onClick={() => setSearchExpanded((value) => !value)}
+          onPointerUp={createTapHandler(() => setSearchExpanded((value) => !value))}
           aria-label="Поиск"
-          style={{ minWidth: 44, minHeight: 44 }}
+          style={{ minWidth: 44, minHeight: 44, touchAction: 'manipulation' }}
         >
           <SearchIcon color={search ? colors.accentText : colors.textMuted} />
         </Button>
@@ -138,9 +142,9 @@ export const MobileToolbar = ({
           theme={theme}
           variant="ghost"
           size="sm"
-          onClick={onOpenSettingsSheet}
+          onPointerUp={createTapHandler(onOpenSettingsSheet)}
           aria-label="Настройки"
-          style={{ minWidth: 44, minHeight: 44 }}
+          style={{ minWidth: 44, minHeight: 44, touchAction: 'manipulation' }}
         >
           <SettingsIcon size={18} color={colors.textMuted} />
         </Button>

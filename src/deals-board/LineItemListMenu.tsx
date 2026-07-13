@@ -115,6 +115,7 @@ export const LineItemListMenu = ({
           isOpen={isOpen}
           title="Списки"
           onClose={() => setIsOpen(false)}
+          portalTarget="inline"
         >
           {renderSheetActions()}
         </BottomSheet>
