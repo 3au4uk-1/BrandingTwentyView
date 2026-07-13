@@ -14,6 +14,7 @@ import {
 import { resolveOpportunityRestFieldNames } from 'src/constants/opportunity-rest-fields';
 
 import { useShouldUseMobileLayout } from './hooks/useShouldUseMobileLayout';
+import { useHostHeightLock } from './hooks/useHostHeightLock';
 import { ColumnPicker } from './ColumnPicker';
 import { MobileDealsBoard } from './mobile/MobileDealsBoard';
 import { DealsTable } from './DealsTable/DealsTable';
@@ -62,6 +63,7 @@ const DealsBoardContent = () => {
   const { colors, font, spacing, radius, layout } = theme;
   const rootRef = useRef<HTMLDivElement | null>(null);
   const mobileLayoutActive = useShouldUseMobileLayout(rootRef);
+  useHostHeightLock(rootRef, !mobileLayoutActive);
   const [accumulatedRecords, setAccumulatedRecords] = useState<OpportunityRow[]>([]);
   const viewsQuery = useDealBoardViews();
   const updateViewMutation = useUpdateDealBoardView();
@@ -392,19 +394,23 @@ const DealsBoardContent = () => {
         id={DEALS_BOARD_ROOT_ID}
         data-deals-board
         data-mobile-layout={mobileLayoutActive ? '' : undefined}
+        data-desktop-layout={mobileLayoutActive ? undefined : ''}
         style={{
           position: 'relative',
-          height: 'auto',
-          maxHeight: 'none',
+          height: mobileLayoutActive ? 'auto' : '100%',
+          maxHeight: mobileLayoutActive ? 'none' : '100%',
           minHeight: 0,
-          display: 'block',
-          overflow: 'visible',
+          display: mobileLayoutActive ? 'block' : 'grid',
+          gridTemplateRows: mobileLayoutActive ? undefined : 'auto 1fr',
+          overflow: mobileLayoutActive ? 'visible' : 'hidden',
           backgroundColor: colors.bg,
           color: colors.text,
           fontFamily: font.family,
           fontSize: font.sizeSm,
         }}
       >
+      {mobileLayoutActive ? (
+        <>
       {metadataFieldsWarning ? (
         <div
           style={{
@@ -435,7 +441,6 @@ const DealsBoardContent = () => {
         </div>
       ) : null}
 
-      {mobileLayoutActive ? (
         <MobileDealsBoard
           activeView={activeView}
           views={views}
@@ -470,6 +475,7 @@ const DealsBoardContent = () => {
             loadError instanceof Error ? loadError.message : loadError ? String(loadError) : undefined
           }
         />
+        </>
       ) : (
         <>
           <div data-deals-board-toolbar>
@@ -601,9 +607,47 @@ const DealsBoardContent = () => {
                 </div>
               </div>
             </header>
+
+            {metadataFieldsWarning ? (
+              <div
+                style={{
+                  padding: `${spacing.xs} ${spacing.md}`,
+                  fontSize: font.sizeSm,
+                  color: colors.warning,
+                  backgroundColor: colors.warningMuted,
+                  borderBottom: `1px solid ${colors.border}`,
+                  flexShrink: 0,
+                }}
+              >
+                {metadataFieldsWarning}
+              </div>
+            ) : null}
+
+            {lineItemsWarning ? (
+              <div
+                style={{
+                  padding: `${spacing.xs} ${spacing.md}`,
+                  fontSize: font.sizeSm,
+                  color: colors.warning,
+                  backgroundColor: colors.warningMuted,
+                  borderBottom: `1px solid ${colors.border}`,
+                  flexShrink: 0,
+                }}
+              >
+                Позиции сделок не загрузились: {lineItemsWarning}
+              </div>
+            ) : null}
           </div>
 
-          <div data-deals-board-body>
+          <div
+            data-deals-board-body
+            style={{
+              minHeight: 0,
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
             <DealsTable
               activeView={activeView}
               parentColumns={mergedParentColumns}

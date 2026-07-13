@@ -9,7 +9,15 @@ export const GlobalThemeStyles = ({ theme }: GlobalThemeStylesProps) => {
 
   return (
     <style>{`
-      [data-deals-board] {
+      [data-deals-board][data-desktop-layout] {
+        box-sizing: border-box;
+        height: 100%;
+        max-height: 100%;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      [data-deals-board][data-mobile-layout] {
         box-sizing: border-box;
         height: auto;
         max-height: none;
@@ -20,14 +28,16 @@ export const GlobalThemeStyles = ({ theme }: GlobalThemeStylesProps) => {
       [data-deals-board-toolbar] {
         min-height: 0;
         background-color: ${colors.bg};
-        position: -webkit-sticky;
-        position: sticky;
-        top: 0;
-        z-index: ${zIndex.dropdown};
-        box-shadow: 0 1px 0 ${colors.border};
       }
 
-      [data-deals-board-body] {
+      [data-deals-board][data-desktop-layout] [data-deals-board-body] {
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      [data-deals-board][data-mobile-layout] [data-deals-board-body] {
         min-height: 0;
         overflow: visible;
         display: block;

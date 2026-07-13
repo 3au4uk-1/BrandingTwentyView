@@ -274,9 +274,11 @@ export const DealsTable = ({
   return (
     <div
       style={{
+        flex: 1,
         minHeight: 0,
-        display: 'block',
-        overflow: 'visible',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
       }}
     >
       <div
@@ -294,9 +296,9 @@ export const DealsTable = ({
         onMouseUp={handlePointerEnd}
         onMouseLeave={handlePointerEnd}
         style={{
+          flex: 1,
           minHeight: 0,
-          overflowX: 'auto',
-          overflowY: 'visible',
+          overflow: 'auto',
           userSelect: isResizing ? 'none' : undefined,
         }}
       >
