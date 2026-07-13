@@ -1,5 +1,10 @@
 import { RestApiClient } from 'twenty-client-sdk/rest';
 
+import {
+  DEFAULT_MANUAL_LINE_ITEM_NAME,
+  LINE_ITEM_ORIGIN,
+} from 'src/constants/line-item-origin';
+
 import type { LineItemRow } from '../types';
 import { extractRestPageInfo, normalizeRestListResponse } from './rest-list';
 
@@ -25,7 +30,7 @@ export type CreateLineItemInput = {
 };
 
 export const buildCreateLineItemInput = (opportunityId: string): CreateLineItemInput => ({
-  name: 'Новая позиция',
+  name: DEFAULT_MANUAL_LINE_ITEM_NAME,
   opportunityId,
   stage: 'NOVYY',
   kolichestvo: 1,
@@ -295,15 +300,38 @@ export const updateLineItem = async (
   await client.patch(`/rest/dealLineItems/${id}`, data);
 };
 
-type LineItemPostClient = Pick<RestApiClient, 'post'>;
+type LineItemCreateClient = Pick<RestApiClient, 'post' | 'patch'>;
 
-export const createLineItemWithClient = async (
-  client: LineItemPostClient,
-  opportunityId: string,
-): Promise<void> => {
-  await client.post('/rest/dealLineItems', buildCreateLineItemInput(opportunityId));
+const extractCreatedLineItemId = (response: unknown): string => {
+  if (!response || typeof response !== 'object') {
+    throw new Error('Created line item response missing id');
+  }
+
+  const id = (response as { id?: unknown }).id;
+  if (typeof id !== 'string') {
+    throw new Error('Created line item response missing id');
+  }
+
+  return id;
 };
 
-export const createLineItem = async (opportunityId: string): Promise<void> => {
-  await createLineItemWithClient(getRestClient(), opportunityId);
+export const createLineItemWithClient = async (
+  client: LineItemCreateClient,
+  opportunityId: string,
+): Promise<string> => {
+  const response = await client.post<unknown>(
+    '/rest/dealLineItems',
+    buildCreateLineItemInput(opportunityId),
+  );
+  const id = extractCreatedLineItemId(response);
+
+  await client.patch(`/rest/dealLineItems/${id}`, {
+    istochnik: LINE_ITEM_ORIGIN.TWENTY_MANUAL,
+  });
+
+  return id;
+};
+
+export const createLineItem = async (opportunityId: string): Promise<string> => {
+  return createLineItemWithClient(getRestClient(), opportunityId);
 };

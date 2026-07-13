@@ -7,6 +7,10 @@ import {
   updateLineItem,
 } from '../api/line-items';
 import type { LineItemRow } from '../types';
+import {
+  defaultManualLineItemBaseline,
+  setManualLineItemBaseline,
+} from '../utils/manual-line-item-baselines';
 import { syncDealStage } from '../utils/sync-deal-stage';
 
 export const lineItemsQueryKey = (
@@ -35,7 +39,13 @@ export const useCreateLineItem = () => {
 
   return useMutation({
     mutationFn: (opportunityId: string) => createLineItem(opportunityId),
-    onSuccess: (_data, opportunityId) => {
+    onSuccess: (lineItemId, opportunityId) => {
+      setManualLineItemBaseline(
+        queryClient,
+        lineItemId,
+        defaultManualLineItemBaseline(),
+      );
+
       void Promise.allSettled([
         queryClient.invalidateQueries({ queryKey: ['lineItems'] }),
         syncDealStage(queryClient, opportunityId),

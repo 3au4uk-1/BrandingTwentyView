@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  DEFAULT_MANUAL_LINE_ITEM_NAME,
+  LINE_ITEM_ORIGIN,
+} from 'src/constants/line-item-origin';
+
+import {
   buildCreateLineItemInput,
   buildDealLineItemsFilter,
   buildDealLineItemsQuery,
@@ -14,7 +19,7 @@ import {
 describe('buildCreateLineItemInput', () => {
   it('creates a compact default position linked to its deal', () => {
     expect(buildCreateLineItemInput('deal-1')).toEqual({
-      name: 'Новая позиция',
+      name: DEFAULT_MANUAL_LINE_ITEM_NAME,
       opportunityId: 'deal-1',
       stage: 'NOVYY',
       kolichestvo: 1,
@@ -27,11 +32,13 @@ describe('buildCreateLineItemInput', () => {
 
   it('creates the default position through REST with amount', async () => {
     const post = vi.fn().mockResolvedValue({ id: 'item-1' });
+    const patch = vi.fn().mockResolvedValue(undefined);
 
-    await createLineItemWithClient({ post } as never, 'deal-1');
+    const id = await createLineItemWithClient({ post, patch } as never, 'deal-1');
 
+    expect(id).toBe('item-1');
     expect(post).toHaveBeenCalledWith('/rest/dealLineItems', {
-      name: 'Новая позиция',
+      name: DEFAULT_MANUAL_LINE_ITEM_NAME,
       opportunityId: 'deal-1',
       stage: 'NOVYY',
       kolichestvo: 1,
@@ -39,6 +46,9 @@ describe('buildCreateLineItemInput', () => {
         amountMicros: 0,
         currencyCode: 'RUB',
       },
+    });
+    expect(patch).toHaveBeenCalledWith('/rest/dealLineItems/item-1', {
+      istochnik: LINE_ITEM_ORIGIN.TWENTY_MANUAL,
     });
   });
 });
