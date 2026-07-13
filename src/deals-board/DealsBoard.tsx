@@ -36,6 +36,7 @@ import { Button } from './ui/Button';
 import { PortalHostProvider } from './ui/PortalHostContext';
 import { DEALS_BOARD_ROOT_ID } from './utils/dom';
 import { mergeCompanyFilters, mergeStageFilters, mergeTypeFilters } from './utils/filters';
+import { resolveActiveDealBoardView } from './utils/resolve-active-view';
 import {
   DESKTOP_PAGE_SIZE,
   MOBILE_MAX_RECORDS,
@@ -79,20 +80,21 @@ const DealsBoardContent = () => {
   const [quickFilters, setQuickFilters] = useState<QuickFiltersValue>(DEFAULT_QUICK_FILTERS);
   const views = asArray<DealBoardViewRecord>(viewsQuery.data);
 
-  const activeView = useMemo(() => {
-    if (!views.length) return undefined;
-    if (activeViewId) {
-      const selected = views.find((view) => view.id === activeViewId);
-      if (selected) return selected;
-    }
-    return views.find((view) => view.isDefault) ?? views[0];
-  }, [activeViewId, views]);
+  const activeView = useMemo(
+    () =>
+      resolveActiveDealBoardView({
+        views,
+        activeViewId,
+        mobileLayoutActive,
+      }),
+    [activeViewId, mobileLayoutActive, views],
+  );
 
   useEffect(() => {
-    if (!activeViewId && activeView?.id) {
+    if (!activeViewId && activeView?.id && !mobileLayoutActive) {
       setActiveViewId(activeView.id);
     }
-  }, [activeView?.id, activeViewId]);
+  }, [activeView?.id, activeViewId, mobileLayoutActive]);
 
   useEffect(() => {
     setPage(0);

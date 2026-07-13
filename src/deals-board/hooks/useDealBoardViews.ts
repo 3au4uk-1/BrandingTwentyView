@@ -6,6 +6,7 @@ import {
   DEFAULT_PARENT_COLUMNS,
 } from 'src/constants/column-definitions';
 import { OPPORTUNITY_DATE_FILTER_FIELD } from 'src/constants/date-filter-field';
+import { MOBILE_VIEW_NAME } from 'src/constants/mobile-view';
 import { VIEW_VISIBILITY } from 'src/constants/view-visibility';
 
 import {
@@ -39,6 +40,16 @@ const FUTURE_DEALS_VIEW_SEED: Omit<DealBoardViewRecord, 'id'> = {
   isDefault: true,
 };
 
+const MOBILE_VIEW_SEED: Omit<DealBoardViewRecord, 'id'> = {
+  name: MOBILE_VIEW_NAME,
+  visibility: VIEW_VISIBILITY.WORKSPACE,
+  parentColumns: DEFAULT_PARENT_COLUMNS,
+  childColumns: DEFAULT_CHILD_COLUMNS,
+  filters: {},
+  sort: [],
+  isDefault: false,
+};
+
 const isFutureDealsDefault = (views: DealBoardViewRecord[]): boolean => {
   const futureView = views.find((view) => view.name === FUTURE_DEALS_VIEW_NAME);
   if (!futureView?.isDefault) return false;
@@ -67,11 +78,13 @@ export const useDealBoardViews = () => {
   const queryClient = useQueryClient();
   const hasSeedAttemptedRef = useRef(false);
   const hasFutureSeedAttemptedRef = useRef(false);
+  const hasMobileSeedAttemptedRef = useRef(false);
   const hasDefaultMigrationAttemptedRef = useRef(false);
   const seedDefaultViewMutation = useMutation({
     mutationFn: async () => {
       await createDealBoardView(DEFAULT_VIEW_SEED);
       await createDealBoardView(FUTURE_DEALS_VIEW_SEED);
+      await createDealBoardView(MOBILE_VIEW_SEED);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: dealBoardViewsQueryKey() });
@@ -95,6 +108,18 @@ export const useDealBoardViews = () => {
     },
   });
 
+  const ensureMobileViewMutation = useMutation({
+    mutationFn: async () => {
+      await createDealBoardView(MOBILE_VIEW_SEED);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: dealBoardViewsQueryKey() });
+    },
+    onError: () => {
+      hasMobileSeedAttemptedRef.current = false;
+    },
+  });
+
   const promoteFutureDefaultMutation = useMutation({
     mutationFn: promoteFutureDealsViewAsDefault,
     onSuccess: () => {
@@ -111,6 +136,7 @@ export const useDealBoardViews = () => {
   });
   const viewCount = query.data?.length ?? 0;
   const hasFutureView = query.data?.some((view) => view.name === FUTURE_DEALS_VIEW_NAME) ?? false;
+  const hasMobileView = query.data?.some((view) => view.name === MOBILE_VIEW_NAME) ?? false;
 
   useEffect(() => {
     if (!query.isSuccess || viewCount > 0 || hasSeedAttemptedRef.current) {
@@ -146,6 +172,27 @@ export const useDealBoardViews = () => {
     if (
       !query.isSuccess ||
       viewCount === 0 ||
+      hasMobileView ||
+      hasMobileSeedAttemptedRef.current ||
+      ensureMobileViewMutation.isPending
+    ) {
+      return;
+    }
+
+    hasMobileSeedAttemptedRef.current = true;
+    ensureMobileViewMutation.mutate();
+  }, [
+    ensureMobileViewMutation.isPending,
+    ensureMobileViewMutation.mutate,
+    hasMobileView,
+    query.isSuccess,
+    viewCount,
+  ]);
+
+  useEffect(() => {
+    if (
+      !query.isSuccess ||
+      viewCount === 0 ||
       !hasFutureView ||
       hasDefaultMigrationAttemptedRef.current ||
       promoteFutureDefaultMutation.isPending ||
@@ -170,6 +217,7 @@ export const useDealBoardViews = () => {
     isSeedingDefault:
       seedDefaultViewMutation.isPending ||
       ensureFutureViewMutation.isPending ||
+      ensureMobileViewMutation.isPending ||
       promoteFutureDefaultMutation.isPending,
   };
 };
