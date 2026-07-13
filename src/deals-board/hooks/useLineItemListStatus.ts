@@ -15,4 +15,5 @@ export const useLineItemListStatus = (lineItemId: string | undefined) =>
     queryFn: () => fetchLineItemListStatus(lineItemId!),
     enabled: Boolean(lineItemId) && isCrmparserConfigured(),
     staleTime: 30_000,
+    retry: false,
   });

@@ -1,7 +1,6 @@
 import { RestApiClient } from 'twenty-client-sdk/rest';
 
 import type { LineItemRow } from '../types';
-import { getApiClient } from './client';
 import { extractRestPageInfo, normalizeRestListResponse } from './rest-list';
 
 let restClient: RestApiClient | null = null;
@@ -41,6 +40,25 @@ export const isDefaultLineItemHiddenByFilters = (
 ): boolean =>
   Boolean(filters?.stages?.length && !filters.stages.includes('NOVYY')) ||
   Boolean(filters?.types?.length);
+
+export const filterLineItemsByQueryFilters = (
+  items: LineItemRow[],
+  filters?: LineItemQueryFilters,
+): LineItemRow[] => {
+  const stages = filters?.stages;
+  const types = filters?.types;
+  if (!stages?.length && !types?.length) return items;
+
+  return items.filter((item) => {
+    if (stages?.length && (!item.stage || !stages.includes(item.stage))) {
+      return false;
+    }
+    if (types?.length && (!item.tip || !types.includes(item.tip))) {
+      return false;
+    }
+    return true;
+  });
+};
 
 const getRestClient = (): RestApiClient => {
   if (!restClient) restClient = new RestApiClient();
@@ -147,11 +165,10 @@ type LineItemsRestClient = Pick<RestApiClient, 'get'>;
 const fetchLineItemsPage = async (
   client: LineItemsRestClient,
   opportunityIds: string[],
-  filters?: LineItemQueryFilters,
   after?: string,
 ): Promise<{ items: LineItemRow[]; nextCursor?: string }> => {
   const response = await client.get<unknown>('/rest/dealLineItems', {
-    query: buildDealLineItemsQuery(opportunityIds, filters, after),
+    query: buildDealLineItemsQuery(opportunityIds, undefined, after),
   });
 
   const items = normalizeLineItemRows(
@@ -167,13 +184,12 @@ const fetchLineItemsPage = async (
 const fetchLineItemsForOpportunityChunk = async (
   client: LineItemsRestClient,
   opportunityIds: string[],
-  filters?: LineItemQueryFilters,
 ): Promise<LineItemRow[]> => {
   const allItems: LineItemRow[] = [];
   let after: string | undefined;
 
   do {
-    const page = await fetchLineItemsPage(client, opportunityIds, filters, after);
+    const page = await fetchLineItemsPage(client, opportunityIds, after);
     allItems.push(...page.items);
     after = page.nextCursor;
   } while (after);
@@ -190,10 +206,9 @@ const isRetryableBatchError = (error: unknown): boolean => {
 export const fetchLineItemsForOpportunityIdsWithClient = async (
   client: LineItemsRestClient,
   opportunityIds: string[],
-  filters?: LineItemQueryFilters,
 ): Promise<LineItemRow[]> => {
   try {
-    return await fetchLineItemsForOpportunityChunk(client, opportunityIds, filters);
+    return await fetchLineItemsForOpportunityChunk(client, opportunityIds);
   } catch (error) {
     if (opportunityIds.length <= 1 || !isRetryableBatchError(error)) {
       throw error;
@@ -203,12 +218,10 @@ export const fetchLineItemsForOpportunityIdsWithClient = async (
     const left = await fetchLineItemsForOpportunityIdsWithClient(
       client,
       opportunityIds.slice(0, middle),
-      filters,
     );
     const right = await fetchLineItemsForOpportunityIdsWithClient(
       client,
       opportunityIds.slice(middle),
-      filters,
     );
 
     return [...left, ...right];
@@ -224,26 +237,27 @@ export const fetchLineItemsByOpportunityIds = async (
   const client = getRestClient();
   const chunks = chunkOpportunityIds(opportunityIds, OPPORTUNITY_ID_CHUNK_SIZE);
   const chunkResults = await Promise.all(
-    chunks.map((chunk) =>
-      fetchLineItemsForOpportunityIdsWithClient(client, chunk, filters),
-    ),
+    chunks.map((chunk) => fetchLineItemsForOpportunityIdsWithClient(client, chunk)),
   );
 
-  return chunkResults.flat();
+  return filterLineItemsByQueryFilters(chunkResults.flat(), filters);
 };
 
 const fetchLineItemOpportunityIdsPage = async (
   client: RestApiClient,
   search: string,
-  filters?: LineItemQueryFilters,
+  filters: LineItemQueryFilters | undefined,
   after?: string,
 ): Promise<{ opportunityIds: string[]; nextCursor?: string }> => {
   const response = await client.get<unknown>('/rest/dealLineItems', {
-    query: buildDealLineItemsSearchQuery(search, filters, after),
+    query: buildDealLineItemsSearchQuery(search, undefined, after),
   });
 
-  const items = normalizeLineItemRows(
-    normalizeRestListResponse<unknown>(response, 'dealLineItems'),
+  const items = filterLineItemsByQueryFilters(
+    normalizeLineItemRows(
+      normalizeRestListResponse<unknown>(response, 'dealLineItems'),
+    ),
+    filters,
   );
   const opportunityIds = [...new Set(items.map((item) => item.opportunityId))];
   const pageInfo = extractRestPageInfo(response);
@@ -281,22 +295,15 @@ export const updateLineItem = async (
   await client.patch(`/rest/dealLineItems/${id}`, data);
 };
 
-type LineItemMutationClient = Pick<ReturnType<typeof getApiClient>, 'mutation'>;
+type LineItemPostClient = Pick<RestApiClient, 'post'>;
 
 export const createLineItemWithClient = async (
-  client: LineItemMutationClient,
+  client: LineItemPostClient,
   opportunityId: string,
 ): Promise<void> => {
-  await client.mutation({
-    createDealLineItem: {
-      __args: {
-        data: buildCreateLineItemInput(opportunityId),
-      },
-      id: true,
-    },
-  });
+  await client.post('/rest/dealLineItems', buildCreateLineItemInput(opportunityId));
 };
 
 export const createLineItem = async (opportunityId: string): Promise<void> => {
-  await createLineItemWithClient(getApiClient(), opportunityId);
+  await createLineItemWithClient(getRestClient(), opportunityId);
 };

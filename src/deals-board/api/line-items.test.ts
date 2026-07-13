@@ -7,6 +7,7 @@ import {
   buildDealLineItemsSearchFilter,
   createLineItemWithClient,
   fetchLineItemsForOpportunityIdsWithClient,
+  filterLineItemsByQueryFilters,
   isDefaultLineItemHiddenByFilters,
 } from './line-items';
 
@@ -24,26 +25,19 @@ describe('buildCreateLineItemInput', () => {
     });
   });
 
-  it('creates the default position through the proven GraphQL mutation', async () => {
-    const mutation = vi.fn().mockResolvedValue({ createDealLineItem: { id: 'item-1' } });
+  it('creates the default position through REST with amount', async () => {
+    const post = vi.fn().mockResolvedValue({ id: 'item-1' });
 
-    await createLineItemWithClient({ mutation } as never, 'deal-1');
+    await createLineItemWithClient({ post } as never, 'deal-1');
 
-    expect(mutation).toHaveBeenCalledWith({
-      createDealLineItem: {
-        __args: {
-          data: {
-            name: 'Новая позиция',
-            opportunityId: 'deal-1',
-            stage: 'NOVYY',
-            kolichestvo: 1,
-            amount: {
-              amountMicros: 0,
-              currencyCode: 'RUB',
-            },
-          },
-        },
-        id: true,
+    expect(post).toHaveBeenCalledWith('/rest/dealLineItems', {
+      name: 'Новая позиция',
+      opportunityId: 'deal-1',
+      stage: 'NOVYY',
+      kolichestvo: 1,
+      amount: {
+        amountMicros: 0,
+        currencyCode: 'RUB',
       },
     });
   });
@@ -74,7 +68,7 @@ describe('fetchLineItemsForOpportunityIdsWithClient', () => {
     expect(get).toHaveBeenCalledTimes(3);
   });
 
-  it('recursively preserves order and filters for a 25-id batch', async () => {
+  it('recursively preserves order for a 25-id batch without REST stage filters', async () => {
     const opportunityIds = Array.from({ length: 25 }, (_, index) => `deal-${index + 1}`);
     const get = vi.fn().mockImplementation(
       (_path: string, options: { query: { filter: string } }) => {
@@ -83,20 +77,20 @@ describe('fetchLineItemsForOpportunityIdsWithClient', () => {
           return Promise.reject({ status: 500 });
         }
 
-        expect(options.query.filter).toContain('stage[in]:["NOVYY"]');
+        expect(options.query.filter).not.toContain('stage[in]');
         return Promise.resolve({
           data: ids.map((opportunityId) => ({
             id: `item-${opportunityId}`,
             name: 'Position',
             opportunityId,
+            stage: 'NOVYY',
           })),
         });
       },
     );
 
-    const items = await fetchLineItemsForOpportunityIdsWithClient(
-      { get } as never,
-      opportunityIds,
+    const items = filterLineItemsByQueryFilters(
+      await fetchLineItemsForOpportunityIdsWithClient({ get } as never, opportunityIds),
       { stages: ['NOVYY'] },
     );
 
@@ -134,6 +128,18 @@ describe('isDefaultLineItemHiddenByFilters', () => {
     expect(isDefaultLineItemHiddenByFilters({ stages: ['NOVYY'] })).toBe(false);
     expect(isDefaultLineItemHiddenByFilters({ stages: ['GOTOVO'] })).toBe(true);
     expect(isDefaultLineItemHiddenByFilters({ types: ['BANNERA'] })).toBe(true);
+  });
+});
+
+describe('filterLineItemsByQueryFilters', () => {
+  const items = [
+    { id: '1', name: 'A', opportunityId: 'deal-1', stage: 'NOVYY', tip: 'BANNERA' },
+    { id: '2', name: 'B', opportunityId: 'deal-1', stage: 'GOTOVO', tip: 'PLENKA' },
+  ] as const;
+
+  it('filters by stage and type on the client', () => {
+    expect(filterLineItemsByQueryFilters([...items], { stages: ['NOVYY'] })).toEqual([items[0]]);
+    expect(filterLineItemsByQueryFilters([...items], { types: ['PLENKA'] })).toEqual([items[1]]);
   });
 });
 

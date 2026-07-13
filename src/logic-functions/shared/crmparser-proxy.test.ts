@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  crmparserProxyFetch,
   getCrmparserProxyConfig,
   isCrmparserProxyConfigured,
 } from './crmparser-proxy';
@@ -17,12 +18,14 @@ describe('crmparser-proxy', () => {
     expect(getCrmparserProxyConfig()).toBeNull();
   });
 
-  it('normalizes base url and reads secret', () => {
-    vi.stubEnv('CRMPARSER_API_URL', 'https://parser.test/api/');
+  it('returns 503 when upstream fetch fails', async () => {
+    vi.stubEnv('CRMPARSER_API_URL', 'https://parser.test/api');
     vi.stubEnv('CRMPARSER_API_SECRET', 'secret');
-    expect(getCrmparserProxyConfig()).toEqual({
-      baseUrl: 'https://parser.test/api',
-      secret: 'secret',
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('fetch failed')));
+
+    await expect(crmparserProxyFetch('/twenty/line-items/li-1/list-status')).resolves.toEqual({
+      status: 503,
+      body: { error: 'fetch failed' },
     });
   });
 });

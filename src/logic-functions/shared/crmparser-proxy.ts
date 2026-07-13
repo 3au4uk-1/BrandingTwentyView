@@ -28,26 +28,35 @@ export const crmparserProxyFetch = async (
     return { status: 503, body: { error: 'Crmparser API not configured in app settings' } };
   }
 
-  const response = await fetch(`${config.baseUrl}${path}`, {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${config.secret}`,
-      'Content-Type': 'application/json',
-      ...init?.headers,
-    },
-  });
+  try {
+    const response = await fetch(`${config.baseUrl}${path}`, {
+      ...init,
+      headers: {
+        Authorization: `Bearer ${config.secret}`,
+        'Content-Type': 'application/json',
+        ...init?.headers,
+      },
+    });
 
-  const text = await response.text();
-  let body: unknown = null;
-  if (text) {
-    try {
-      body = JSON.parse(text);
-    } catch {
-      body = { error: text };
+    const text = await response.text();
+    let body: unknown = null;
+    if (text) {
+      try {
+        body = JSON.parse(text);
+      } catch {
+        body = { error: text };
+      }
     }
-  }
 
-  return { status: response.status, body };
+    return { status: response.status, body };
+  } catch (error) {
+    return {
+      status: 503,
+      body: {
+        error: error instanceof Error ? error.message : 'Crmparser proxy fetch failed',
+      },
+    };
+  }
 };
 
 export const jsonProxyResponse = (status: number, body: unknown): Response =>

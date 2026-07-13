@@ -54,9 +54,13 @@ export async function fetchLineItemListStatus(
   lineItemId: string,
 ): Promise<LineItemListStatus | null> {
   if (!isCrmparserConfigured()) return null;
-  return logicFunctionFetch<LineItemListStatus>(
-    `/crmparser/line-items/${encodeURIComponent(lineItemId)}/list-status`,
-  );
+  try {
+    return await logicFunctionFetch<LineItemListStatus>(
+      `/crmparser/line-items/${encodeURIComponent(lineItemId)}/list-status`,
+    );
+  } catch {
+    return null;
+  }
 }
 
 export async function addLineItemToList(lineItemId: string, list: ListName) {

@@ -24,6 +24,25 @@ describe('crmparser proxy client', () => {
     await expect(fetchLineItemListStatus('li-1')).resolves.toBeNull();
   });
 
+  it('returns null list status when proxy request fails', async () => {
+    globalThis.process = {
+      env: {
+        TWENTY_FUNCTIONS_URL: 'https://twenty.test/functions',
+        TWENTY_APP_ACCESS_TOKEN: 'app-token',
+      },
+    } as NodeJS.Process;
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        json: async () => ({ error: 'Crmparser proxy fetch failed' }),
+      }),
+    );
+
+    await expect(fetchLineItemListStatus('li-42')).resolves.toBeNull();
+  });
+
   it('calls logic function route with app access token', async () => {
     globalThis.process = {
       env: {
