@@ -1,5 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query';
 
+import { archiveManualLineItem } from '../api/crmparser';
 import type { LineItemRow, OpportunityRow } from '../types';
 import { syncDealStage } from '../utils/sync-deal-stage';
 import { WATCHED_OBJECT_NAMES } from './constants';
@@ -89,6 +90,14 @@ export const applyObjectRecordEvent = (
   event: ObjectRecordEvent,
 ): void => {
   if (!isWatchedObject(event.objectNameSingular)) return;
+
+  if (event.action === 'DELETED' && event.objectNameSingular === 'dealLineItem') {
+    if (queryClient.getQueryData(['manualLineItemsSynced', event.recordId])) {
+      void archiveManualLineItem(event.recordId).catch(() => undefined);
+    }
+    invalidateObjectQueries(queryClient, 'dealLineItem');
+    return;
+  }
 
   const patch = event.properties.after;
   const canPatch =

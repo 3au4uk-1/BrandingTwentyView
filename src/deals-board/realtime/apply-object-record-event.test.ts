@@ -1,11 +1,16 @@
 import { QueryClient } from '@tanstack/react-query';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { archiveManualLineItem } from '../api/crmparser';
 import { opportunitiesQueryKey } from '../hooks/useOpportunities';
 import { lineItemsQueryKey } from '../hooks/useLineItems';
 import type { LineItemRow, OpportunityRow } from '../types';
 import { applyObjectRecordEvent } from './apply-object-record-event';
 import type { ObjectRecordEvent } from './types';
+
+vi.mock('../api/crmparser', () => ({
+  archiveManualLineItem: vi.fn(),
+}));
 
 const baseEvent = (overrides: Partial<ObjectRecordEvent>): ObjectRecordEvent => ({
   action: 'UPDATED',
@@ -16,6 +21,10 @@ const baseEvent = (overrides: Partial<ObjectRecordEvent>): ObjectRecordEvent => 
 });
 
 describe('applyObjectRecordEvent', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('patches an opportunity row when it is already in cache', () => {
     const queryClient = new QueryClient();
     const filters = {};
@@ -85,5 +94,27 @@ describe('applyObjectRecordEvent', () => {
     );
 
     expect(invalidateSpy).not.toHaveBeenCalled();
+  });
+
+  it('archives a synced manual line item on delete', async () => {
+    const queryClient = new QueryClient();
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+    vi.mocked(archiveManualLineItem).mockResolvedValue({ success: true });
+
+    queryClient.setQueryData(['manualLineItemsSynced', 'li-1'], true);
+
+    applyObjectRecordEvent(
+      queryClient,
+      baseEvent({
+        action: 'DELETED',
+        objectNameSingular: 'dealLineItem',
+        recordId: 'li-1',
+      }),
+    );
+
+    await vi.waitFor(() => {
+      expect(archiveManualLineItem).toHaveBeenCalledWith('li-1');
+    });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['lineItems'] });
   });
 });
