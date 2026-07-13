@@ -42,6 +42,7 @@ export type FieldOverrideProps = {
   opportunityLinkFields?: FieldDescriptor[];
   onToggleExpand?: (id: string) => void;
   listMenuPresentation?: 'inline' | 'sheet';
+  touchFriendly?: boolean;
 };
 
 const ParentNameCell = ({
@@ -49,6 +50,7 @@ const ParentNameCell = ({
   value,
   isExpanded,
   onToggleExpand,
+  touchFriendly = false,
 }: FieldOverrideProps) => {
   const theme = useTheme();
   const { colors, font, spacing } = theme;
@@ -68,10 +70,11 @@ const ParentNameCell = ({
         style={{
           border: 'none',
           background: 'transparent',
-          padding: '2px',
-          width: '22px',
-          minWidth: '22px',
-          height: '22px',
+          padding: touchFriendly ? '10px' : '2px',
+          width: touchFriendly ? '44px' : '22px',
+          minWidth: touchFriendly ? '44px' : '22px',
+          height: touchFriendly ? '44px' : '22px',
+          minHeight: touchFriendly ? '44px' : '22px',
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -80,6 +83,7 @@ const ParentNameCell = ({
           transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
           transition: 'transform 0.15s ease, color 0.12s ease, background-color 0.12s ease',
           flexShrink: 0,
+          touchAction: touchFriendly ? 'manipulation' : undefined,
         }}
         aria-label={isExpanded ? 'Свернуть позиции' : 'Развернуть позиции'}
       >

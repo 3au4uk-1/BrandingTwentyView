@@ -69,7 +69,7 @@ export const MobileViewSwitcherSheet = ({
   };
 
   return (
-    <BottomSheet theme={theme} isOpen={isOpen} title="Views" onClose={onClose}>
+    <BottomSheet theme={theme} isOpen={isOpen} title="Представления" onClose={onClose}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>
         {workspace.length > 0 ? (
           <div>

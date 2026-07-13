@@ -23,6 +23,7 @@ export type DynamicFieldCellProps = {
   opportunityLinkFields?: FieldDescriptor[];
   onToggleExpand?: (id: string) => void;
   listMenuPresentation?: 'inline' | 'sheet';
+  touchFriendly?: boolean;
 };
 
 const renderEditableCell = ({
@@ -100,6 +101,7 @@ export const DynamicFieldCell = (props: DynamicFieldCellProps) => {
     opportunityLinkFields: props.opportunityLinkFields,
     onToggleExpand: props.onToggleExpand,
     listMenuPresentation: props.listMenuPresentation,
+    touchFriendly: props.touchFriendly,
   });
 
   if (override !== null) {

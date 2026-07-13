@@ -13,6 +13,8 @@ type BottomSheetProps = {
   children: ReactNode;
   /** Fraction of viewport height for sheet panel. Default 0.85 */
   heightFraction?: number;
+  /** Where to mount the overlay. Default: document.body (viewport-fixed). */
+  portalTarget?: 'body' | 'root';
 };
 
 export const BottomSheet = ({
@@ -22,6 +24,7 @@ export const BottomSheet = ({
   onClose,
   children,
   heightFraction = 0.85,
+  portalTarget = 'body',
 }: BottomSheetProps) => {
   const portalHostRef = usePortalHost();
   const { colors, radius, font, spacing, zIndex } = theme;
@@ -42,7 +45,7 @@ export const BottomSheet = ({
 
   if (!isOpen) return null;
 
-  const handleBackdropMouseDown = (event: MouseEvent<HTMLDivElement>) => {
+  const handleBackdropClose = (event: MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
     onClose();
   };
@@ -51,7 +54,7 @@ export const BottomSheet = ({
     <div
       role="presentation"
       style={{
-        position: 'absolute',
+        position: 'fixed',
         inset: 0,
         zIndex: zIndex.modal,
         display: 'flex',
@@ -62,7 +65,8 @@ export const BottomSheet = ({
     >
       <div
         aria-hidden="true"
-        onMouseDown={handleBackdropMouseDown}
+        onMouseDown={handleBackdropClose}
+        onClick={handleBackdropClose}
         style={{
           position: 'absolute',
           inset: 0,
@@ -79,7 +83,8 @@ export const BottomSheet = ({
           zIndex: 1,
           display: 'flex',
           flexDirection: 'column',
-          maxHeight: `${Math.round(heightFraction * 100)}%`,
+          width: '100%',
+          maxHeight: `${Math.round(heightFraction * 100)}dvh`,
           borderTopLeftRadius: radius.lg,
           borderTopRightRadius: radius.lg,
           border: `1px solid ${colors.border}`,
@@ -89,6 +94,7 @@ export const BottomSheet = ({
           boxShadow: colors.shadowLg,
           pointerEvents: 'auto',
           overflow: 'hidden',
+          flexShrink: 0,
         }}
       >
         <div
@@ -111,7 +117,7 @@ export const BottomSheet = ({
     </div>
   );
 
-  const container = resolvePortalContainer('root', portalHostRef);
+  const container = resolvePortalContainer(portalTarget, portalHostRef);
   if (container) return createPortal(sheet, container);
   return sheet;
 };

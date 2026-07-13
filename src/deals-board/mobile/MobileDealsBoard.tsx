@@ -85,7 +85,7 @@ export const MobileDealsBoard = (props: MobileDealsBoardProps) => {
   const hasMore = !showAll && !maxRecordsReached && page < totalPages - 1;
 
   return (
-    <div data-mobile-deals-board data-layout="mobile">
+    <div data-mobile-deals-board data-layout="mobile" style={{ backgroundColor: theme.colors.bg }}>
       <MobileToolbar
         activeView={activeView}
         totalCount={totalCount}
@@ -93,19 +93,9 @@ export const MobileDealsBoard = (props: MobileDealsBoardProps) => {
         onSearchChange={(search) => onQuickFiltersChange({ ...quickFilters, search })}
         onOpenViewSheet={() => setViewSheetOpen(true)}
         onOpenSettingsSheet={() => setSettingsSheetOpen(true)}
+        onOpenFiltersSheet={() => setFiltersSheetOpen(true)}
+        activeFilterCount={activeFilterCount}
       />
-
-      <div style={{ padding: `${spacing.xs} ${spacing.md}` }}>
-        <Button
-          theme={theme}
-          variant={activeFilterCount > 0 ? 'secondary' : 'ghost'}
-          size="sm"
-          onClick={() => setFiltersSheetOpen(true)}
-          style={{ minHeight: 44 }}
-        >
-          {activeFilterCount > 0 ? `Фильтры · ${activeFilterCount}` : 'Фильтры'}
-        </Button>
-      </div>
 
       {errorMessage ? (
         <div role="alert" style={{ padding: spacing.md, color: theme.colors.danger }}>
@@ -126,7 +116,7 @@ export const MobileDealsBoard = (props: MobileDealsBoardProps) => {
           }
         />
       ) : (
-        <div style={{ padding: `0 ${spacing.md} ${spacing.md}` }}>
+        <div style={{ padding: `${spacing.sm} ${spacing.md} ${spacing.lg}` }}>
           {records.map((row) => (
             <MobileDealCard
               key={row.id}

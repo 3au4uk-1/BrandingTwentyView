@@ -4,7 +4,7 @@ import { APP_DISPLAY_NAME } from 'src/constants/universal-identifiers';
 
 import { useTheme } from '../theme/ThemeContext';
 import { Button } from '../ui/Button';
-import { ChevronDownIcon } from '../ui/Icons';
+import { ChevronDownIcon, SettingsIcon } from '../ui/Icons';
 import { Input } from '../ui/Input';
 import type { DealBoardViewRecord } from '../types';
 
@@ -15,7 +15,27 @@ type MobileToolbarProps = {
   onSearchChange: (value: string) => void;
   onOpenViewSheet: () => void;
   onOpenSettingsSheet: () => void;
+  onOpenFiltersSheet: () => void;
+  activeFilterCount: number;
 };
+
+const SearchIcon = ({ size = 18, color = 'currentColor' }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <circle cx="11" cy="11" r="7" stroke={color} strokeWidth="1.8" />
+    <path d="M20 20L16.5 16.5" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+  </svg>
+);
+
+const FilterIcon = ({ size = 18, color = 'currentColor' }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M4 6H20M7 12H17M10 18H14"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+  </svg>
+);
 
 export const MobileToolbar = ({
   activeView,
@@ -24,6 +44,8 @@ export const MobileToolbar = ({
   onSearchChange,
   onOpenViewSheet,
   onOpenSettingsSheet,
+  onOpenFiltersSheet,
+  activeFilterCount,
 }: MobileToolbarProps) => {
   const theme = useTheme();
   const { colors, font, spacing, radius, layout } = theme;
@@ -45,7 +67,7 @@ export const MobileToolbar = ({
         backgroundColor: colors.bgSecondary,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xs }}>
         <button
           type="button"
           onClick={onOpenViewSheet}
@@ -63,6 +85,7 @@ export const MobileToolbar = ({
             cursor: 'pointer',
             fontFamily: font.family,
             color: colors.text,
+            touchAction: 'manipulation',
           }}
         >
           <span style={{ fontSize: font.sizeXs, color: colors.textMuted, flexShrink: 0 }}>
@@ -88,6 +111,18 @@ export const MobileToolbar = ({
           ) : null}
           <ChevronDownIcon size={14} color={colors.textMuted} />
         </button>
+
+        <Button
+          theme={theme}
+          variant={activeFilterCount > 0 ? 'secondary' : 'ghost'}
+          size="sm"
+          onClick={onOpenFiltersSheet}
+          aria-label={activeFilterCount > 0 ? `Фильтры: ${activeFilterCount}` : 'Фильтры'}
+          style={{ minWidth: 44, minHeight: 44, position: 'relative' }}
+        >
+          <FilterIcon color={activeFilterCount > 0 ? colors.accentText : colors.textMuted} />
+        </Button>
+
         <Button
           theme={theme}
           variant="ghost"
@@ -96,8 +131,9 @@ export const MobileToolbar = ({
           aria-label="Поиск"
           style={{ minWidth: 44, minHeight: 44 }}
         >
-          🔍
+          <SearchIcon color={search ? colors.accentText : colors.textMuted} />
         </Button>
+
         <Button
           theme={theme}
           variant="ghost"
@@ -106,9 +142,10 @@ export const MobileToolbar = ({
           aria-label="Настройки"
           style={{ minWidth: 44, minHeight: 44 }}
         >
-          ≡
+          <SettingsIcon size={18} color={colors.textMuted} />
         </Button>
       </div>
+
       {searchExpanded ? (
         <Input
           theme={theme}
