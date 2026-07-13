@@ -5,7 +5,12 @@ import {
   DEFAULT_CHILD_COLUMNS,
   DEFAULT_PARENT_COLUMNS,
 } from 'src/constants/column-definitions';
-import { OPPORTUNITY_DATE_FILTER_FIELD } from 'src/constants/date-filter-field';
+import {
+  FUTURE_DEALS_VIEW_FILTERS,
+  FUTURE_DEALS_VIEW_NAME,
+  FUTURE_DEALS_VIEW_SORT,
+  hasFutureDealsViewMechanics,
+} from 'src/constants/future-deals-view';
 import { MOBILE_VIEW_NAME } from 'src/constants/mobile-view';
 import { VIEW_VISIBILITY } from 'src/constants/view-visibility';
 
@@ -17,8 +22,6 @@ import {
 import type { DealBoardViewRecord } from '../types';
 
 export const dealBoardViewsQueryKey = () => ['dealBoardViews'] as const;
-
-const FUTURE_DEALS_VIEW_NAME = 'Будущие сделки';
 
 const DEFAULT_VIEW_SEED: Omit<DealBoardViewRecord, 'id'> = {
   name: 'Базовый обзор',
@@ -35,8 +38,8 @@ const FUTURE_DEALS_VIEW_SEED: Omit<DealBoardViewRecord, 'id'> = {
   visibility: VIEW_VISIBILITY.WORKSPACE,
   parentColumns: DEFAULT_PARENT_COLUMNS,
   childColumns: DEFAULT_CHILD_COLUMNS,
-  filters: { datePreset: 'future', showAll: true },
-  sort: [{ field: OPPORTUNITY_DATE_FILTER_FIELD, direction: 'AscNullsLast' }],
+  filters: FUTURE_DEALS_VIEW_FILTERS,
+  sort: FUTURE_DEALS_VIEW_SORT,
   isDefault: true,
 };
 
@@ -45,8 +48,8 @@ const MOBILE_VIEW_SEED: Omit<DealBoardViewRecord, 'id'> = {
   visibility: VIEW_VISIBILITY.WORKSPACE,
   parentColumns: DEFAULT_PARENT_COLUMNS,
   childColumns: DEFAULT_CHILD_COLUMNS,
-  filters: {},
-  sort: [],
+  filters: FUTURE_DEALS_VIEW_FILTERS,
+  sort: FUTURE_DEALS_VIEW_SORT,
   isDefault: false,
 };
 
@@ -74,11 +77,24 @@ const promoteFutureDealsViewAsDefault = async (
   }
 };
 
+const alignMobileViewWithFutureDeals = async (
+  views: DealBoardViewRecord[],
+): Promise<void> => {
+  const mobileView = views.find((view) => view.name === MOBILE_VIEW_NAME);
+  if (!mobileView || hasFutureDealsViewMechanics(mobileView)) return;
+
+  await updateDealBoardView(mobileView.id, {
+    filters: FUTURE_DEALS_VIEW_FILTERS,
+    sort: FUTURE_DEALS_VIEW_SORT,
+  });
+};
+
 export const useDealBoardViews = () => {
   const queryClient = useQueryClient();
   const hasSeedAttemptedRef = useRef(false);
   const hasFutureSeedAttemptedRef = useRef(false);
   const hasMobileSeedAttemptedRef = useRef(false);
+  const hasMobileAlignAttemptedRef = useRef(false);
   const hasDefaultMigrationAttemptedRef = useRef(false);
   const seedDefaultViewMutation = useMutation({
     mutationFn: async () => {
@@ -120,6 +136,16 @@ export const useDealBoardViews = () => {
     },
   });
 
+  const alignMobileViewMutation = useMutation({
+    mutationFn: alignMobileViewWithFutureDeals,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: dealBoardViewsQueryKey() });
+    },
+    onError: () => {
+      hasMobileAlignAttemptedRef.current = false;
+    },
+  });
+
   const promoteFutureDefaultMutation = useMutation({
     mutationFn: promoteFutureDealsViewAsDefault,
     onSuccess: () => {
@@ -137,6 +163,9 @@ export const useDealBoardViews = () => {
   const viewCount = query.data?.length ?? 0;
   const hasFutureView = query.data?.some((view) => view.name === FUTURE_DEALS_VIEW_NAME) ?? false;
   const hasMobileView = query.data?.some((view) => view.name === MOBILE_VIEW_NAME) ?? false;
+  const mobileView = query.data?.find((view) => view.name === MOBILE_VIEW_NAME);
+  const isMobileViewAligned =
+    !mobileView || hasFutureDealsViewMechanics(mobileView);
 
   useEffect(() => {
     if (!query.isSuccess || viewCount > 0 || hasSeedAttemptedRef.current) {
@@ -193,6 +222,30 @@ export const useDealBoardViews = () => {
     if (
       !query.isSuccess ||
       viewCount === 0 ||
+      !hasMobileView ||
+      isMobileViewAligned ||
+      hasMobileAlignAttemptedRef.current ||
+      alignMobileViewMutation.isPending
+    ) {
+      return;
+    }
+
+    hasMobileAlignAttemptedRef.current = true;
+    alignMobileViewMutation.mutate(query.data ?? []);
+  }, [
+    alignMobileViewMutation.isPending,
+    alignMobileViewMutation.mutate,
+    hasMobileView,
+    isMobileViewAligned,
+    query.data,
+    query.isSuccess,
+    viewCount,
+  ]);
+
+  useEffect(() => {
+    if (
+      !query.isSuccess ||
+      viewCount === 0 ||
       !hasFutureView ||
       hasDefaultMigrationAttemptedRef.current ||
       promoteFutureDefaultMutation.isPending ||
@@ -218,6 +271,7 @@ export const useDealBoardViews = () => {
       seedDefaultViewMutation.isPending ||
       ensureFutureViewMutation.isPending ||
       ensureMobileViewMutation.isPending ||
+      alignMobileViewMutation.isPending ||
       promoteFutureDefaultMutation.isPending,
   };
 };
