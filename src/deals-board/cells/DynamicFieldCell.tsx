@@ -22,6 +22,7 @@ export type DynamicFieldCellProps = {
   row?: Record<string, unknown>;
   opportunityLinkFields?: FieldDescriptor[];
   onToggleExpand?: (id: string) => void;
+  listMenuPresentation?: 'inline' | 'sheet';
 };
 
 const renderEditableCell = ({
@@ -98,6 +99,7 @@ export const DynamicFieldCell = (props: DynamicFieldCellProps) => {
     row: props.row,
     opportunityLinkFields: props.opportunityLinkFields,
     onToggleExpand: props.onToggleExpand,
+    listMenuPresentation: props.listMenuPresentation,
   });
 
   if (override !== null) {

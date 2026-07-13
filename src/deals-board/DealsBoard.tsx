@@ -13,7 +13,9 @@ import {
 } from 'src/constants/opportunity-links';
 import { resolveOpportunityRestFieldNames } from 'src/constants/opportunity-rest-fields';
 
+import { useLayoutMode } from './hooks/useLayoutMode';
 import { ColumnPicker } from './ColumnPicker';
+import { MobileDealsBoard } from './mobile/MobileDealsBoard';
 import { DealsTable } from './DealsTable/DealsTable';
 import { ExpandModeToggle } from './ExpandModeToggle';
 import { ExpandModeProvider } from './hooks/useExpandMode';
@@ -55,6 +57,8 @@ const DealsBoardContent = () => {
   const theme = useTheme();
   const { colors, font, spacing, radius, layout } = theme;
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const layoutMode = useLayoutMode(rootRef);
+  const [accumulatedRecords, setAccumulatedRecords] = useState<OpportunityRow[]>([]);
   const viewsQuery = useDealBoardViews();
   const updateViewMutation = useUpdateDealBoardView();
   useDealsBoardRealtimeSync(!viewsQuery.isLoading);
@@ -270,6 +274,28 @@ const DealsBoardContent = () => {
 
   const visibleTotalCount = lineItemMatchedOpportunityIds ? visibleRecords.length : totalCount;
 
+  useEffect(() => {
+    if (layoutMode !== 'mobile' || showAllDeals) {
+      setAccumulatedRecords(visibleRecords);
+      return;
+    }
+    if (page === 0) {
+      setAccumulatedRecords(visibleRecords);
+      return;
+    }
+    setAccumulatedRecords((prev) => {
+      const seen = new Set(prev.map((record) => record.id));
+      const merged = [...prev];
+      for (const record of visibleRecords) {
+        if (!seen.has(record.id)) merged.push(record);
+      }
+      return merged;
+    });
+  }, [layoutMode, page, showAllDeals, visibleRecords]);
+
+  const mobileRecords =
+    layoutMode === 'mobile' && !showAllDeals ? accumulatedRecords : visibleRecords;
+
   const loadError = viewsQuery.error ?? opportunitiesQuery.error ?? null;
   const metadataFieldsError =
     parentFieldsQuery.error ?? childFieldsQuery.error ?? null;
@@ -348,6 +374,7 @@ const DealsBoardContent = () => {
           top: 0,
           zIndex: theme.zIndex.dropdown,
           backgroundColor: colors.bg,
+          display: layoutMode === 'desktop' ? 'block' : 'none',
         }}
       >
       <header
@@ -478,6 +505,7 @@ const DealsBoardContent = () => {
           </div>
         </div>
       </header>
+      </div>
 
       {metadataFieldsWarning ? (
         <div
@@ -508,7 +536,6 @@ const DealsBoardContent = () => {
           Позиции сделок не загрузились: {lineItemsWarning}
         </div>
       ) : null}
-      </div>
 
       <div
         data-deals-board-body
@@ -518,6 +545,42 @@ const DealsBoardContent = () => {
           display: 'block',
         }}
       >
+      {layoutMode === 'mobile' ? (
+        <MobileDealsBoard
+          activeView={activeView}
+          views={views}
+          parentColumns={mergedParentColumns}
+          childColumns={mergedChildColumns}
+          parentDescriptorByField={parentDescriptorByField}
+          childDescriptorByField={childDescriptorByField}
+          opportunityLinkFields={opportunityLinkFields}
+          records={mobileRecords}
+          lineItems={visibleLineItems}
+          lineItemFilters={lineItemQueryFilters}
+          totalCount={visibleTotalCount}
+          page={page}
+          totalPages={totalPages}
+          showAll={showAllDeals}
+          quickFilters={quickFilters}
+          onQuickFiltersChange={setQuickFilters}
+          onQuickFiltersReset={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
+          onPageChange={setPage}
+          onSelectView={setActiveViewId}
+          onCreateView={() => setIsCreateModalOpen(true)}
+          onEditView={() => {
+            if (activeView) setEditViewDraft(activeView);
+          }}
+          onParentColumnsSave={(columns) => saveActiveViewColumns('parent', columns)}
+          onChildColumnsSave={(columns) => saveActiveViewColumns('child', columns)}
+          onShowAllChange={(nextShowAll) => void handleShowAllChange(nextShowAll)}
+          onResetFilters={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
+          isLoading={opportunitiesQuery.isLoading}
+          isViewLoading={viewsQuery.isLoading || viewsQuery.isSeedingDefault}
+          errorMessage={
+            loadError instanceof Error ? loadError.message : loadError ? String(loadError) : undefined
+          }
+        />
+      ) : (
       <DealsTable
         activeView={activeView}
         parentColumns={mergedParentColumns}
@@ -541,6 +604,7 @@ const DealsBoardContent = () => {
         isViewLoading={viewsQuery.isLoading || viewsQuery.isSeedingDefault}
         errorMessage={loadError instanceof Error ? loadError.message : loadError ? String(loadError) : undefined}
       />
+      )}
       </div>
 
       <ViewSettingsModal

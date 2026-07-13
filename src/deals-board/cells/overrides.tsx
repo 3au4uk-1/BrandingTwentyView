@@ -41,6 +41,7 @@ export type FieldOverrideProps = {
   row?: Record<string, unknown>;
   opportunityLinkFields?: FieldDescriptor[];
   onToggleExpand?: (id: string) => void;
+  listMenuPresentation?: 'inline' | 'sheet';
 };
 
 const ParentNameCell = ({
@@ -129,7 +130,7 @@ const ParentNameCell = ({
   );
 };
 
-const ChildNameCell = ({ value, recordId }: FieldOverrideProps) => {
+const ChildNameCell = ({ value, recordId, listMenuPresentation }: FieldOverrideProps) => {
   const theme = useTheme();
   const { data: listStatus } = useLineItemListStatus(recordId);
   const showListMenu = isCrmparserConfigured();
@@ -152,7 +153,11 @@ const ChildNameCell = ({ value, recordId }: FieldOverrideProps) => {
       {listStatus?.podryadMatch ? <Chip text="подряд" color="blue" theme={theme} /> : null}
       {listStatus?.bannerMatch ? <Chip text="баннер" color="green" theme={theme} /> : null}
       {showListMenu && recordId ? (
-        <LineItemListMenu lineItemId={recordId} listStatus={listStatus} />
+        <LineItemListMenu
+          lineItemId={recordId}
+          listStatus={listStatus}
+          presentation={listMenuPresentation ?? 'inline'}
+        />
       ) : null}
     </div>
   );

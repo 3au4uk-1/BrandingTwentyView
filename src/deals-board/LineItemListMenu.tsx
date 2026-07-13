@@ -9,14 +9,20 @@ import {
 import { lineItemListStatusQueryKey } from './hooks/useLineItemListStatus';
 import { LINE_ITEM_LIST_ACTIONS } from './line-item-list-actions';
 import { useTheme } from './theme/ThemeContext';
+import { BottomSheet } from './ui/BottomSheet';
 import { SettingsIcon } from './ui/Icons';
 
 type LineItemListMenuProps = {
   lineItemId: string;
   listStatus: LineItemListStatus | null | undefined;
+  presentation?: 'inline' | 'sheet';
 };
 
-export const LineItemListMenu = ({ lineItemId, listStatus }: LineItemListMenuProps) => {
+export const LineItemListMenu = ({
+  lineItemId,
+  listStatus,
+  presentation = 'inline',
+}: LineItemListMenuProps) => {
   const theme = useTheme();
   const { colors, radius, font, spacing } = theme;
   const queryClient = useQueryClient();
@@ -39,6 +45,83 @@ export const LineItemListMenu = ({ lineItemId, listStatus }: LineItemListMenuPro
     }
   };
 
+  const renderSheetActions = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm }}>
+      {LINE_ITEM_LIST_ACTIONS.map(({ list, label, isActive }) => {
+        const active = isActive(listStatus);
+        const disabled = active || busyList !== null;
+        return (
+          <button
+            key={list}
+            type="button"
+            disabled={disabled}
+            onClick={() => void handleAction(list)}
+            style={{
+              width: '100%',
+              minHeight: 44,
+              border: `1px solid ${active ? colors.accent : colors.border}`,
+              background: active ? colors.accentMuted : colors.bgSecondary,
+              borderRadius: radius.md,
+              color: active ? colors.accentText : colors.text,
+              fontSize: font.sizeSm,
+              fontWeight: font.weightMedium,
+              cursor: disabled ? 'default' : 'pointer',
+              opacity: disabled ? 0.6 : 1,
+              fontFamily: font.family,
+            }}
+          >
+            {busyList === list ? '…' : active ? `${label} — уже добавлено` : label}
+          </button>
+        );
+      })}
+      {error ? (
+        <span role="alert" style={{ color: colors.danger, fontSize: font.sizeSm }}>
+          {error}
+        </span>
+      ) : null}
+    </div>
+  );
+
+  if (presentation === 'sheet') {
+    return (
+      <div onClick={(event) => event.stopPropagation()} style={{ display: 'inline-flex' }}>
+        <button
+          type="button"
+          data-list-menu-btn="0.2.86"
+          onClick={(event) => {
+            event.stopPropagation();
+            setError(null);
+            setIsOpen(true);
+          }}
+          title="Списки фильтров"
+          aria-label="Списки фильтров"
+          style={{
+            border: `1px solid ${colors.border}`,
+            background: colors.bgSecondary,
+            borderRadius: radius.sm,
+            minWidth: 44,
+            minHeight: 44,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: colors.textMuted,
+            cursor: 'pointer',
+          }}
+        >
+          <SettingsIcon size={16} color="currentColor" />
+        </button>
+        <BottomSheet
+          theme={theme}
+          isOpen={isOpen}
+          title="Списки"
+          onClose={() => setIsOpen(false)}
+        >
+          {renderSheetActions()}
+        </BottomSheet>
+      </div>
+    );
+  }
+
   return (
     <div
       onClick={(event) => event.stopPropagation()}
@@ -52,7 +135,7 @@ export const LineItemListMenu = ({ lineItemId, listStatus }: LineItemListMenuPro
     >
       <button
         type="button"
-        data-list-menu-btn="0.2.79"
+        data-list-menu-btn="0.2.86"
         onClick={(event) => {
           event.stopPropagation();
           setError(null);

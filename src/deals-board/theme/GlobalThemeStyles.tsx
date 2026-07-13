@@ -81,6 +81,12 @@ export const GlobalThemeStyles = ({ theme }: GlobalThemeStylesProps) => {
         border-radius: ${radius.sm};
       }
 
+      [data-layout="mobile"] [data-expand-btn],
+      [data-layout="mobile"] [data-list-menu-btn] {
+        min-height: 44px;
+        min-width: 44px;
+      }
+
       @media (prefers-reduced-motion: reduce) {
         [data-deals-board] button:not(:disabled):active {
           transform: none;
