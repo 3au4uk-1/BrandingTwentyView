@@ -81,6 +81,38 @@ export const GlobalThemeStyles = ({ theme }: GlobalThemeStylesProps) => {
         border-radius: ${radius.sm};
       }
 
+      [data-deals-board] [data-layout-shell="mobile"] {
+        display: none;
+      }
+
+      [data-deals-board][data-mobile-layout] [data-layout-shell="desktop"] {
+        display: none !important;
+      }
+
+      [data-deals-board][data-mobile-layout] [data-layout-shell="mobile"] {
+        display: block !important;
+      }
+
+      @media (max-width: 767px) {
+        [data-deals-board] [data-layout-shell="desktop"] {
+          display: none !important;
+        }
+
+        [data-deals-board] [data-layout-shell="mobile"] {
+          display: block !important;
+        }
+      }
+
+      @media (pointer: coarse) and (max-width: 1024px) {
+        [data-deals-board] [data-layout-shell="desktop"] {
+          display: none !important;
+        }
+
+        [data-deals-board] [data-layout-shell="mobile"] {
+          display: block !important;
+        }
+      }
+
       [data-layout="mobile"] [data-expand-btn],
       [data-layout="mobile"] [data-list-menu-btn] {
         min-height: 44px;

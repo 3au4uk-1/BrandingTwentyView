@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { MOBILE_BREAKPOINT, resolveLayoutMode } from './layout-mode';
 import {
   resolveLayoutEffectiveWidth,
+  resolveShouldUseMobileLayout,
   resolveViewportWidth,
 } from './viewport-width';
 
@@ -41,5 +42,33 @@ describe('resolveLayoutEffectiveWidth', () => {
 describe('resolveViewportWidth', () => {
   it('returns the minimum candidate width', () => {
     expect(resolveViewportWidth([390, 1280, 414])).toBe(390);
+  });
+});
+
+describe('resolveShouldUseMobileLayout', () => {
+  it('uses mobile user agent even when Twenty widget is wide', () => {
+    expect(
+      resolveShouldUseMobileLayout({
+        prefersMobileMedia: false,
+        viewportWidth: 0,
+        containerWidth: 1280,
+        mobileUserAgent: true,
+        narrowScreen: true,
+        coarsePointer: true,
+      }),
+    ).toBe(true);
+  });
+
+  it('uses narrow effective width when available', () => {
+    expect(
+      resolveShouldUseMobileLayout({
+        prefersMobileMedia: false,
+        viewportWidth: 390,
+        containerWidth: 1280,
+        mobileUserAgent: false,
+        narrowScreen: false,
+        coarsePointer: false,
+      }),
+    ).toBe(true);
   });
 });

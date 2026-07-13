@@ -50,16 +50,27 @@ export const usePrefersMobileViewport = () => {
   const [prefersMobile, setPrefersMobile] = useState(readMobileMediaQueryMatches);
 
   useLayoutEffect(() => {
+    const update = () => setPrefersMobile(readMobileMediaQueryMatches());
+    update();
+
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
       return;
     }
 
-    const mediaQuery = window.matchMedia('(max-width: 767px)');
-    const update = () => setPrefersMobile(mediaQuery.matches);
+    const mediaQueries = [
+      window.matchMedia('(max-width: 767px)'),
+      window.matchMedia('(pointer: coarse) and (max-width: 1024px)'),
+    ];
 
-    update();
-    mediaQuery.addEventListener('change', update);
-    return () => mediaQuery.removeEventListener('change', update);
+    for (const mediaQuery of mediaQueries) {
+      mediaQuery.addEventListener('change', update);
+    }
+
+    return () => {
+      for (const mediaQuery of mediaQueries) {
+        mediaQuery.removeEventListener('change', update);
+      }
+    };
   }, []);
 
   return prefersMobile;

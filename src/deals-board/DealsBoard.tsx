@@ -13,7 +13,7 @@ import {
 } from 'src/constants/opportunity-links';
 import { resolveOpportunityRestFieldNames } from 'src/constants/opportunity-rest-fields';
 
-import { useLayoutMode } from './hooks/useLayoutMode';
+import { useShouldUseMobileLayout } from './hooks/useShouldUseMobileLayout';
 import { ColumnPicker } from './ColumnPicker';
 import { MobileDealsBoard } from './mobile/MobileDealsBoard';
 import { DealsTable } from './DealsTable/DealsTable';
@@ -57,7 +57,7 @@ const DealsBoardContent = () => {
   const theme = useTheme();
   const { colors, font, spacing, radius, layout } = theme;
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const layoutMode = useLayoutMode(rootRef);
+  const mobileLayoutActive = useShouldUseMobileLayout(rootRef);
   const [accumulatedRecords, setAccumulatedRecords] = useState<OpportunityRow[]>([]);
   const viewsQuery = useDealBoardViews();
   const updateViewMutation = useUpdateDealBoardView();
@@ -275,7 +275,7 @@ const DealsBoardContent = () => {
   const visibleTotalCount = lineItemMatchedOpportunityIds ? visibleRecords.length : totalCount;
 
   useEffect(() => {
-    if (layoutMode !== 'mobile' || showAllDeals) {
+    if (showAllDeals) {
       setAccumulatedRecords(visibleRecords);
       return;
     }
@@ -291,10 +291,9 @@ const DealsBoardContent = () => {
       }
       return merged;
     });
-  }, [layoutMode, page, showAllDeals, visibleRecords]);
+  }, [page, showAllDeals, visibleRecords]);
 
-  const mobileRecords =
-    layoutMode === 'mobile' && !showAllDeals ? accumulatedRecords : visibleRecords;
+  const mobileRecords = !showAllDeals ? accumulatedRecords : visibleRecords;
 
   const loadError = viewsQuery.error ?? opportunitiesQuery.error ?? null;
   const metadataFieldsError =
@@ -354,6 +353,7 @@ const DealsBoardContent = () => {
         ref={rootRef}
         id={DEALS_BOARD_ROOT_ID}
         data-deals-board
+        data-mobile-layout={mobileLayoutActive ? '' : undefined}
         style={{
           position: 'relative',
           height: 'auto',
@@ -367,6 +367,37 @@ const DealsBoardContent = () => {
           fontSize: font.sizeSm,
         }}
       >
+      {metadataFieldsWarning ? (
+        <div
+          style={{
+            padding: `${spacing.xs} ${spacing.md}`,
+            fontSize: font.sizeSm,
+            color: colors.warning,
+            backgroundColor: colors.warningMuted,
+            borderBottom: `1px solid ${colors.border}`,
+            flexShrink: 0,
+          }}
+        >
+          {metadataFieldsWarning}
+        </div>
+      ) : null}
+
+      {lineItemsWarning ? (
+        <div
+          style={{
+            padding: `${spacing.xs} ${spacing.md}`,
+            fontSize: font.sizeSm,
+            color: colors.warning,
+            backgroundColor: colors.warningMuted,
+            borderBottom: `1px solid ${colors.border}`,
+            flexShrink: 0,
+          }}
+        >
+          Позиции сделок не загрузились: {lineItemsWarning}
+        </div>
+      ) : null}
+
+      <div data-layout-shell="desktop">
       <div
         data-deals-board-toolbar
         style={{
@@ -374,7 +405,6 @@ const DealsBoardContent = () => {
           top: 0,
           zIndex: theme.zIndex.dropdown,
           backgroundColor: colors.bg,
-          display: layoutMode === 'desktop' ? 'block' : 'none',
         }}
       >
       <header
@@ -507,36 +537,6 @@ const DealsBoardContent = () => {
       </header>
       </div>
 
-      {metadataFieldsWarning ? (
-        <div
-          style={{
-            padding: `${spacing.xs} ${spacing.md}`,
-            fontSize: font.sizeSm,
-            color: colors.warning,
-            backgroundColor: colors.warningMuted,
-            borderBottom: `1px solid ${colors.border}`,
-            flexShrink: 0,
-          }}
-        >
-          {metadataFieldsWarning}
-        </div>
-      ) : null}
-
-      {lineItemsWarning ? (
-        <div
-          style={{
-            padding: `${spacing.xs} ${spacing.md}`,
-            fontSize: font.sizeSm,
-            color: colors.warning,
-            backgroundColor: colors.warningMuted,
-            borderBottom: `1px solid ${colors.border}`,
-            flexShrink: 0,
-          }}
-        >
-          Позиции сделок не загрузились: {lineItemsWarning}
-        </div>
-      ) : null}
-
       <div
         data-deals-board-body
         style={{
@@ -545,7 +545,33 @@ const DealsBoardContent = () => {
           display: 'block',
         }}
       >
-      {layoutMode === 'mobile' ? (
+      <DealsTable
+        activeView={activeView}
+        parentColumns={mergedParentColumns}
+        childColumns={mergedChildColumns}
+        parentDescriptorByField={parentDescriptorByField}
+        childDescriptorByField={childDescriptorByField}
+        opportunityLinkFields={opportunityLinkFields}
+        records={visibleRecords}
+        lineItems={visibleLineItems}
+        lineItemFilters={lineItemQueryFilters}
+        totalCount={visibleTotalCount}
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        onResetFilters={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
+        onParentColumnsSave={(columns) => saveActiveViewColumns('parent', columns)}
+        onChildColumnsSave={(columns) => saveActiveViewColumns('child', columns)}
+        showAll={showAllDeals}
+        onShowAllChange={(nextShowAll) => void handleShowAllChange(nextShowAll)}
+        isLoading={opportunitiesQuery.isLoading}
+        isViewLoading={viewsQuery.isLoading || viewsQuery.isSeedingDefault}
+        errorMessage={loadError instanceof Error ? loadError.message : loadError ? String(loadError) : undefined}
+      />
+      </div>
+      </div>
+
+      <div data-layout-shell="mobile">
         <MobileDealsBoard
           activeView={activeView}
           views={views}
@@ -580,31 +606,6 @@ const DealsBoardContent = () => {
             loadError instanceof Error ? loadError.message : loadError ? String(loadError) : undefined
           }
         />
-      ) : (
-      <DealsTable
-        activeView={activeView}
-        parentColumns={mergedParentColumns}
-        childColumns={mergedChildColumns}
-        parentDescriptorByField={parentDescriptorByField}
-        childDescriptorByField={childDescriptorByField}
-        opportunityLinkFields={opportunityLinkFields}
-        records={visibleRecords}
-        lineItems={visibleLineItems}
-        lineItemFilters={lineItemQueryFilters}
-        totalCount={visibleTotalCount}
-        page={page}
-        totalPages={totalPages}
-        onPageChange={setPage}
-        onResetFilters={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
-        onParentColumnsSave={(columns) => saveActiveViewColumns('parent', columns)}
-        onChildColumnsSave={(columns) => saveActiveViewColumns('child', columns)}
-        showAll={showAllDeals}
-        onShowAllChange={(nextShowAll) => void handleShowAllChange(nextShowAll)}
-        isLoading={opportunitiesQuery.isLoading}
-        isViewLoading={viewsQuery.isLoading || viewsQuery.isSeedingDefault}
-        errorMessage={loadError instanceof Error ? loadError.message : loadError ? String(loadError) : undefined}
-      />
-      )}
       </div>
 
       <ViewSettingsModal
