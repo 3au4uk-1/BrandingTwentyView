@@ -15,6 +15,8 @@ export const GlobalThemeStyles = ({ theme }: GlobalThemeStylesProps) => {
         max-height: 100%;
         min-height: 0;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
       }
 
       [data-deals-board][data-mobile-layout] {
@@ -27,11 +29,13 @@ export const GlobalThemeStyles = ({ theme }: GlobalThemeStylesProps) => {
 
       [data-deals-board-toolbar] {
         min-height: 0;
+        flex-shrink: 0;
         background-color: ${colors.bg};
       }
 
       [data-deals-board][data-desktop-layout] [data-deals-board-body] {
         min-height: 0;
+        flex: 1;
         overflow: hidden;
         display: flex;
         flex-direction: column;

@@ -63,7 +63,7 @@ const DealsBoardContent = () => {
   const { colors, font, spacing, radius, layout } = theme;
   const rootRef = useRef<HTMLDivElement | null>(null);
   const mobileLayoutActive = useShouldUseMobileLayout(rootRef);
-  useHostHeightLock(rootRef, !mobileLayoutActive);
+  const lockedHostHeight = useHostHeightLock(rootRef, !mobileLayoutActive);
   const [accumulatedRecords, setAccumulatedRecords] = useState<OpportunityRow[]>([]);
   const viewsQuery = useDealBoardViews();
   const updateViewMutation = useUpdateDealBoardView();
@@ -397,11 +397,19 @@ const DealsBoardContent = () => {
         data-desktop-layout={mobileLayoutActive ? undefined : ''}
         style={{
           position: 'relative',
-          height: mobileLayoutActive ? 'auto' : '100%',
-          maxHeight: mobileLayoutActive ? 'none' : '100%',
+          height: mobileLayoutActive
+            ? 'auto'
+            : lockedHostHeight
+              ? `${lockedHostHeight}px`
+              : '100%',
+          maxHeight: mobileLayoutActive
+            ? 'none'
+            : lockedHostHeight
+              ? `${lockedHostHeight}px`
+              : '100%',
           minHeight: 0,
-          display: mobileLayoutActive ? 'block' : 'grid',
-          gridTemplateRows: mobileLayoutActive ? undefined : 'auto 1fr',
+          display: mobileLayoutActive ? 'block' : 'flex',
+          flexDirection: mobileLayoutActive ? undefined : 'column',
           overflow: mobileLayoutActive ? 'visible' : 'hidden',
           backgroundColor: colors.bg,
           color: colors.text,

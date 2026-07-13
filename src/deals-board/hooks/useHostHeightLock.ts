@@ -1,4 +1,4 @@
-import { useLayoutEffect, type RefObject } from 'react';
+import { useLayoutEffect, useState, type RefObject } from 'react';
 
 import {
   readClientHeight,
@@ -6,14 +6,6 @@ import {
   resolveBoundedHostHeight,
   type DomLikeElement,
 } from '../utils/host-height';
-
-const applyHostHeight = (root: HTMLElement, viewportHeight: number) => {
-  const height = resolveBoundedHostHeight(root as DomLikeElement, viewportHeight);
-  if (height <= 0) return;
-
-  root.style.height = `${height}px`;
-  root.style.maxHeight = `${height}px`;
-};
 
 const collectAncestors = (root: HTMLElement): HTMLElement[] => {
   const ancestors: HTMLElement[] = [];
@@ -30,9 +22,14 @@ const collectAncestors = (root: HTMLElement): HTMLElement[] => {
 export const useHostHeightLock = (
   rootRef: RefObject<HTMLElement | null>,
   enabled = true,
-) => {
+): number | undefined => {
+  const [lockedHeight, setLockedHeight] = useState<number | undefined>();
+
   useLayoutEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      setLockedHeight(undefined);
+      return;
+    }
 
     const root = rootRef.current;
     if (!root) return;
@@ -50,10 +47,12 @@ export const useHostHeightLock = (
       const viewportHeight =
         typeof view?.innerHeight === 'number' ? view.innerHeight : 0;
       const height = resolveBoundedHostHeight(root as DomLikeElement, viewportHeight);
+
       if (height > 0) {
-        applyHostHeight(root, viewportHeight);
+        setLockedHeight((current) => (current === height ? current : height));
       }
-      if (height <= 0 && attempts < 24) {
+
+      if (height <= 0 && attempts < 48) {
         attempts += 1;
         frameId = requestAnimationFrame(scheduleApply);
       }
@@ -74,6 +73,7 @@ export const useHostHeightLock = (
 
     if (view && typeof view.addEventListener === 'function') {
       view.addEventListener('resize', scheduleApply);
+      view.visualViewport?.addEventListener('resize', scheduleApply);
     }
 
     return () => {
@@ -81,9 +81,11 @@ export const useHostHeightLock = (
       observer?.disconnect();
       if (view && typeof view.removeEventListener === 'function') {
         view.removeEventListener('resize', scheduleApply);
+        view.visualViewport?.removeEventListener('resize', scheduleApply);
       }
-      root.style.height = '';
-      root.style.maxHeight = '';
+      setLockedHeight(undefined);
     };
   }, [enabled, rootRef]);
+
+  return lockedHeight;
 };
