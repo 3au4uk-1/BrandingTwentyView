@@ -1,5 +1,13 @@
 export type ListName = 'blacklist' | 'restoration' | 'podryad' | 'banner';
 
+export type ManualLineItemSyncBody = {
+  opportunityId: string;
+  name: string;
+  kolichestvo: number;
+  amountMicros: number;
+  currencyCode: string;
+};
+
 export type LineItemListStatus = {
   blacklisted: boolean;
   restorationMatch: boolean;
@@ -90,5 +98,19 @@ export async function addLineItemToList(lineItemId: string, list: ListName) {
       method: 'POST',
       body: JSON.stringify({ list }),
     },
+  );
+}
+
+export async function syncManualLineItem(lineItemId: string, body: ManualLineItemSyncBody) {
+  return logicFunctionFetch<{ success: boolean; dealItemId?: number }>(
+    `/crmparser/line-items/${encodeURIComponent(lineItemId)}/sync`,
+    { method: 'POST', body: JSON.stringify(body) },
+  );
+}
+
+export async function archiveManualLineItem(lineItemId: string) {
+  return logicFunctionFetch<{ success: boolean }>(
+    `/crmparser/line-items/${encodeURIComponent(lineItemId)}/archive`,
+    { method: 'POST', body: JSON.stringify({}) },
   );
 }

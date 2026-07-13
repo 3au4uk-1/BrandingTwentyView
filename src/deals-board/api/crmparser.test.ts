@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { addLineItemToList, fetchLineItemListStatus, isCrmparserConfigured } from './crmparser';
+import {
+  addLineItemToList,
+  archiveManualLineItem,
+  fetchLineItemListStatus,
+  isCrmparserConfigured,
+  syncManualLineItem,
+} from './crmparser';
 
 describe('crmparser proxy client', () => {
   afterEach(() => {
@@ -119,6 +125,62 @@ describe('crmparser proxy client', () => {
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ list: 'restoration' }),
+      }),
+    );
+  });
+
+  it('syncManualLineItem posts payload to logic function', async () => {
+    globalThis.process = {
+      env: {
+        TWENTY_FUNCTIONS_URL: 'https://twenty.test/functions',
+        TWENTY_APP_ACCESS_TOKEN: 'app-token',
+      },
+    } as NodeJS.Process;
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true, dealItemId: 7 }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const payload = {
+      opportunityId: 'opp-1',
+      name: 'Баннер',
+      kolichestvo: 2,
+      amountMicros: 500_000_000,
+      currencyCode: 'RUB',
+    };
+    const result = await syncManualLineItem('li-42', payload);
+    expect(result).toEqual({ success: true, dealItemId: 7 });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://twenty.test/functions/crmparser/line-items/li-42/sync',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
+    );
+  });
+
+  it('archiveManualLineItem posts to logic function archive route', async () => {
+    globalThis.process = {
+      env: {
+        TWENTY_FUNCTIONS_URL: 'https://twenty.test/functions',
+        TWENTY_APP_ACCESS_TOKEN: 'app-token',
+      },
+    } as NodeJS.Process;
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await archiveManualLineItem('li-42');
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://twenty.test/functions/crmparser/line-items/li-42/archive',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({}),
       }),
     );
   });
