@@ -2,14 +2,34 @@ import { Response } from 'twenty-sdk/logic-function';
 
 export type CrmparserProxyConfig = {
   baseUrl: string;
+  internalUrl?: string;
   secret: string;
 };
 
+const normalizeBaseUrl = (value: string | undefined): string | undefined =>
+  value?.trim().replace(/\/$/, '') || undefined;
+
+export const resolveCrmparserProxyBaseUrls = (config: CrmparserProxyConfig): string[] => {
+  const urls: string[] = [];
+  const internalUrl = normalizeBaseUrl(config.internalUrl);
+  const baseUrl = normalizeBaseUrl(config.baseUrl);
+
+  if (internalUrl) urls.push(internalUrl);
+  if (baseUrl && baseUrl !== internalUrl) urls.push(baseUrl);
+
+  return urls;
+};
+
 export const getCrmparserProxyConfig = (): CrmparserProxyConfig | null => {
-  const baseUrl = process.env.CRMPARSER_API_URL?.trim().replace(/\/$/, '');
+  const baseUrl = normalizeBaseUrl(process.env.CRMPARSER_API_URL);
+  const internalUrl = normalizeBaseUrl(process.env.CRMPARSER_API_INTERNAL_URL);
   const secret = process.env.CRMPARSER_API_SECRET?.trim();
-  if (!baseUrl || !secret) return null;
-  return { baseUrl, secret };
+  if ((!baseUrl && !internalUrl) || !secret) return null;
+  return {
+    baseUrl: baseUrl ?? internalUrl!,
+    internalUrl,
+    secret,
+  };
 };
 
 export const isCrmparserProxyConfigured = (): boolean => getCrmparserProxyConfig() !== null;
@@ -17,6 +37,17 @@ export const isCrmparserProxyConfigured = (): boolean => getCrmparserProxyConfig
 type CrmparserProxyResult = {
   status: number;
   body: unknown;
+};
+
+const readResponseBody = async (response: Response): Promise<unknown> => {
+  const text = await response.text();
+  if (!text) return null;
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { error: text };
+  }
 };
 
 export const crmparserProxyFetch = async (
@@ -28,35 +59,40 @@ export const crmparserProxyFetch = async (
     return { status: 503, body: { error: 'Crmparser API not configured in app settings' } };
   }
 
-  try {
-    const response = await fetch(`${config.baseUrl}${path}`, {
-      ...init,
-      headers: {
-        Authorization: `Bearer ${config.secret}`,
-        'Content-Type': 'application/json',
-        ...init?.headers,
-      },
-    });
+  const baseUrls = resolveCrmparserProxyBaseUrls(config);
+  let lastError: string | null = null;
 
-    const text = await response.text();
-    let body: unknown = null;
-    if (text) {
-      try {
-        body = JSON.parse(text);
-      } catch {
-        body = { error: text };
+  for (const baseUrl of baseUrls) {
+    try {
+      const response = await fetch(`${baseUrl}${path}`, {
+        ...init,
+        headers: {
+          Authorization: `Bearer ${config.secret}`,
+          'Content-Type': 'application/json',
+          ...init?.headers,
+        },
+      });
+
+      const body = await readResponseBody(response);
+      if (response.ok || baseUrls.length === 1) {
+        return { status: response.status, body };
       }
-    }
 
-    return { status: response.status, body };
-  } catch (error) {
-    return {
-      status: 503,
-      body: {
-        error: error instanceof Error ? error.message : 'Crmparser proxy fetch failed',
-      },
-    };
+      lastError =
+        typeof body === 'object' && body && 'error' in body
+          ? String((body as { error?: unknown }).error)
+          : `HTTP ${response.status}`;
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : 'Crmparser proxy fetch failed';
+    }
   }
+
+  return {
+    status: 503,
+    body: {
+      error: lastError ?? 'Crmparser proxy fetch failed',
+    },
+  };
 };
 
 export const jsonProxyResponse = (status: number, body: unknown): Response =>

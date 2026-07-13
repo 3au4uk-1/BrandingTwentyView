@@ -26,6 +26,23 @@ const getAppAccessToken = (): string | null => {
 export const isCrmparserConfigured = (): boolean =>
   Boolean(getFunctionsBaseUrl() && getAppAccessToken());
 
+const formatCrmparserProxyError = (status: number, body: unknown): string => {
+  const record = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
+  const messages = Array.isArray(record.messages)
+    ? record.messages.filter((message): message is string => typeof message === 'string')
+    : [];
+  const detail =
+    (typeof record.error === 'string' && record.error) ||
+    messages[0] ||
+    `Crmparser proxy error ${status}`;
+
+  if (detail.includes('fetch failed')) {
+    return 'Парсер недоступен с сервера Twenty. В настройках приложения укажите CRMPARSER_API_INTERNAL_URL=http://crmparser:3000/api (Docker) или проверьте CRMPARSER_API_URL.';
+  }
+
+  return detail;
+};
+
 async function logicFunctionFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const baseUrl = getFunctionsBaseUrl();
   const token = getAppAccessToken();
@@ -42,9 +59,12 @@ async function logicFunctionFetch<T>(path: string, init?: RequestInit): Promise<
     },
   });
 
-  const body = (await response.json().catch(() => ({}))) as T & { error?: string };
+  const body = (await response.json().catch(() => ({}))) as T & {
+    error?: string;
+    messages?: string[];
+  };
   if (!response.ok) {
-    throw new Error(body.error ?? `Crmparser proxy error ${response.status}`);
+    throw new Error(formatCrmparserProxyError(response.status, body));
   }
 
   return body;

@@ -5,13 +5,26 @@ import { LINE_ITEM_ADD_TO_LIST_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER } from 'src/c
 
 import { crmparserProxyFetch, jsonProxyResponse } from './shared/crmparser-proxy';
 
+const parseRequestBody = (body: unknown): { list?: string } | null => {
+  if (!body) return null;
+  if (typeof body === 'string') {
+    try {
+      return JSON.parse(body) as { list?: string };
+    } catch {
+      return null;
+    }
+  }
+  if (typeof body === 'object') return body as { list?: string };
+  return null;
+};
+
 const handler = async (event: RoutePayload) => {
   const lineItemId = event.pathParameters?.lineItemId?.trim();
   if (!lineItemId) {
     return jsonProxyResponse(400, { error: 'Missing lineItemId' });
   }
 
-  const list = (event.body as { list?: string } | null)?.list;
+  const list = parseRequestBody(event.body)?.list;
   if (!list) {
     return jsonProxyResponse(400, { error: 'Missing list' });
   }

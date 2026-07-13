@@ -43,6 +43,28 @@ describe('crmparser proxy client', () => {
     await expect(fetchLineItemListStatus('li-42')).resolves.toBeNull();
   });
 
+  it('returns a helpful message when proxy cannot reach parser', async () => {
+    globalThis.process = {
+      env: {
+        TWENTY_FUNCTIONS_URL: 'https://twenty.test/functions',
+        TWENTY_APP_ACCESS_TOKEN: 'app-token',
+      },
+    } as NodeJS.Process;
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 503,
+        json: async () => ({ error: 'fetch failed' }),
+      }),
+    );
+
+    await expect(addLineItemToList('li-42', 'podryad')).rejects.toThrow(
+      'CRMPARSER_API_INTERNAL_URL',
+    );
+  });
+
   it('calls logic function route with app access token', async () => {
     globalThis.process = {
       env: {
