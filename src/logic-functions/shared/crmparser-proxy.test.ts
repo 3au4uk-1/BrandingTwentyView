@@ -41,6 +41,7 @@ describe('crmparser-proxy', () => {
       .mockRejectedValueOnce(new Error('fetch failed'))
       .mockResolvedValueOnce({
         ok: true,
+        status: 200,
         text: async () => JSON.stringify({ success: true }),
       });
     vi.stubGlobal('fetch', fetchMock);
