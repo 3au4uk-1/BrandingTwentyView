@@ -11,6 +11,7 @@ import {
   defaultManualLineItemBaseline,
   setManualLineItemBaseline,
 } from '../utils/manual-line-item-baselines';
+import { syncManualLineItemAfterUpdate } from './useManualLineItemParserSync';
 import { syncDealStage } from '../utils/sync-deal-stage';
 
 export const lineItemsQueryKey = (
@@ -110,7 +111,7 @@ export const useUpdateLineItem = () => {
       }
     },
 
-    onSettled: async (_data, _error, { id }) => {
+    onSettled: async (_data, error, { id, data }) => {
       let opportunityId: string | undefined;
 
       for (const [, items] of queryClient.getQueriesData<LineItemRow[]>({
@@ -121,6 +122,10 @@ export const useUpdateLineItem = () => {
           opportunityId = match.opportunityId;
           break;
         }
+      }
+
+      if (!error) {
+        await syncManualLineItemAfterUpdate(queryClient, id, data);
       }
 
       queryClient.invalidateQueries({ queryKey: ['lineItems'] });

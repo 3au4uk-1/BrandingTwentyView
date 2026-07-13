@@ -4,6 +4,7 @@ import { patchOpportunity } from '../api/opportunities';
 import { updateLineItem } from '../api/line-items';
 import type { BoardObjectName } from '../metadata/types';
 import type { OpportunityRow } from '../types';
+import { syncManualLineItemAfterUpdate } from './useManualLineItemParserSync';
 
 type OpportunitiesPage = {
   records: OpportunityRow[];
@@ -55,7 +56,11 @@ export const useUpdateRecord = (objectName: BoardObjectName) => {
       }
     },
 
-    onSettled: () => {
+    onSettled: async (_data, error, variables) => {
+      if (objectName === 'dealLineItem' && !error) {
+        await syncManualLineItemAfterUpdate(queryClient, variables.id, variables.data);
+      }
+
       queryClient.invalidateQueries({
         queryKey: objectName === 'dealLineItem' ? ['lineItems'] : ['opportunities'],
       });
