@@ -120,6 +120,18 @@ const findPageLayoutScrollWrapper = (root: DomLikeElement): DomLikeElement | nul
   return null;
 };
 
+export const readElementRect = (element: Element | null | undefined) => {
+  if (!element || typeof (element as HTMLElement).getBoundingClientRect !== 'function') {
+    return null;
+  }
+
+  try {
+    return (element as HTMLElement).getBoundingClientRect();
+  } catch {
+    return null;
+  }
+};
+
 /**
  * Resolves a bounded height for the deals board root inside Twenty's page layout.
  * Prefers Twenty's page-layout scroll wrapper, then any scroll ancestor,

@@ -6,7 +6,7 @@ import {
   resolveBoundedHostHeight,
   type DomLikeElement,
 } from '../utils/host-height';
-import { readElementRect } from '../utils/scroll-host';
+import { readElementRect } from '../utils/host-height';
 
 const collectAncestors = (root: HTMLElement): HTMLElement[] => {
   const ancestors: HTMLElement[] = [];

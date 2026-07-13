@@ -11,8 +11,8 @@ export const GlobalThemeStyles = ({ theme }: GlobalThemeStylesProps) => {
     <style>{`
       [data-deals-board][data-desktop-layout] {
         box-sizing: border-box;
-        height: 100%;
-        max-height: 100%;
+        height: calc(100dvh - 7rem);
+        max-height: calc(100dvh - 7rem);
         min-height: 0;
         overflow: hidden;
         display: flex;

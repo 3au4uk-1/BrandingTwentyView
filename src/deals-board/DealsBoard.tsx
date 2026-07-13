@@ -15,7 +15,7 @@ import { resolveOpportunityRestFieldNames } from 'src/constants/opportunity-rest
 
 import { useShouldUseMobileLayout } from './hooks/useShouldUseMobileLayout';
 import { useHostHeightLock } from './hooks/useHostHeightLock';
-import { useDesktopToolbarPin } from './hooks/useDesktopToolbarPin';
+import { DESKTOP_BOARD_HEIGHT_CSS } from './utils/desktop-layout';
 import { ColumnPicker } from './ColumnPicker';
 import { MobileDealsBoard } from './mobile/MobileDealsBoard';
 import { DealsTable } from './DealsTable/DealsTable';
@@ -63,10 +63,11 @@ const DealsBoardContent = () => {
   const theme = useTheme();
   const { colors, font, spacing, radius, layout } = theme;
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const toolbarRef = useRef<HTMLDivElement | null>(null);
   const mobileLayoutActive = useShouldUseMobileLayout(rootRef);
   const lockedHostHeight = useHostHeightLock(rootRef, !mobileLayoutActive);
-  const toolbarPin = useDesktopToolbarPin(rootRef, toolbarRef, !mobileLayoutActive);
+  const desktopBoardHeight = lockedHostHeight
+    ? `${lockedHostHeight}px`
+    : DESKTOP_BOARD_HEIGHT_CSS;
   const [accumulatedRecords, setAccumulatedRecords] = useState<OpportunityRow[]>([]);
   const viewsQuery = useDealBoardViews();
   const updateViewMutation = useUpdateDealBoardView();
@@ -400,16 +401,8 @@ const DealsBoardContent = () => {
         data-desktop-layout={mobileLayoutActive ? undefined : ''}
         style={{
           position: 'relative',
-          height: mobileLayoutActive
-            ? 'auto'
-            : lockedHostHeight
-              ? `${lockedHostHeight}px`
-              : '100%',
-          maxHeight: mobileLayoutActive
-            ? 'none'
-            : lockedHostHeight
-              ? `${lockedHostHeight}px`
-              : '100%',
+          height: mobileLayoutActive ? 'auto' : desktopBoardHeight,
+          maxHeight: mobileLayoutActive ? 'none' : desktopBoardHeight,
           minHeight: 0,
           display: mobileLayoutActive ? 'block' : 'flex',
           flexDirection: mobileLayoutActive ? undefined : 'column',
@@ -489,23 +482,7 @@ const DealsBoardContent = () => {
         </>
       ) : (
         <>
-          <div
-            ref={toolbarRef}
-            data-deals-board-toolbar
-            style={
-              toolbarPin
-                ? {
-                    position: 'fixed',
-                    top: toolbarPin.top,
-                    left: toolbarPin.left,
-                    width: toolbarPin.width,
-                    zIndex: theme.zIndex.dropdown,
-                    backgroundColor: colors.bg,
-                    boxShadow: `0 1px 0 ${colors.border}`,
-                  }
-                : undefined
-            }
-          >
+          <div data-deals-board-toolbar>
             <header
               style={{
                 borderBottom: `1px solid ${colors.border}`,
@@ -665,14 +642,6 @@ const DealsBoardContent = () => {
               </div>
             ) : null}
           </div>
-
-          {toolbarPin ? (
-            <div
-              aria-hidden="true"
-              data-deals-board-toolbar-spacer
-              style={{ height: toolbarPin.height, flexShrink: 0 }}
-            />
-          ) : null}
 
           <div
             data-deals-board-body
