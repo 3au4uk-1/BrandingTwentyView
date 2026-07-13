@@ -6,6 +6,7 @@ import {
   resolveBoundedHostHeight,
   type DomLikeElement,
 } from '../utils/host-height';
+import { readElementRect } from '../utils/scroll-host';
 
 const collectAncestors = (root: HTMLElement): HTMLElement[] => {
   const ancestors: HTMLElement[] = [];
@@ -46,13 +47,20 @@ export const useHostHeightLock = (
     const scheduleApply = () => {
       const viewportHeight =
         typeof view?.innerHeight === 'number' ? view.innerHeight : 0;
-      const height = resolveBoundedHostHeight(root as DomLikeElement, viewportHeight);
+      let height = resolveBoundedHostHeight(root as DomLikeElement, viewportHeight);
 
-      if (height > 0) {
+      if (height <= 0 && viewportHeight > 0) {
+        const rootRect = readElementRect(root);
+        height = rootRect
+          ? Math.floor(viewportHeight - rootRect.top - 16)
+          : Math.floor(viewportHeight - 120);
+      }
+
+      if (height > 100) {
         setLockedHeight((current) => (current === height ? current : height));
       }
 
-      if (height <= 0 && attempts < 48) {
+      if (height <= 100 && attempts < 60) {
         attempts += 1;
         frameId = requestAnimationFrame(scheduleApply);
       }
