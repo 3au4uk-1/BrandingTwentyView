@@ -47,6 +47,7 @@ export const useOpportunities = (params: {
   includeCompanyRelation?: boolean;
   fieldTypesByName?: Readonly<Record<string, string>>;
   showAll?: boolean;
+  forcePaginated?: boolean;
   enabled?: boolean;
 }) => {
   const pageSize = params.pageSize ?? DEFAULT_PAGE_SIZE;
@@ -55,11 +56,12 @@ export const useOpportunities = (params: {
   const includeCompanyRelation = params.includeCompanyRelation ?? false;
   const fieldTypesByName = params.fieldTypesByName ?? {};
   const showAll = params.showAll ?? false;
+  const forcePaginated = params.forcePaginated ?? false;
   const effectiveSort = getEffectiveOpportunitySort(
     params.sort.length > 0 ? params.sort : DEFAULT_DATE_SORT,
   );
   const fetchAll =
-    showAll || shouldFetchAllOpportunities(params.filters, effectiveSort);
+    !forcePaginated && (showAll || shouldFetchAllOpportunities(params.filters, effectiveSort));
 
   return useQuery({
     queryKey: opportunitiesQueryKey(

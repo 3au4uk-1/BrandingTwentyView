@@ -30,6 +30,7 @@ export const MobileDealsBoard = (props: MobileDealsBoardProps) => {
     page,
     totalPages,
     showAll,
+    maxRecordsReached = false,
     quickFilters,
     onQuickFiltersChange,
     onQuickFiltersReset,
@@ -39,7 +40,6 @@ export const MobileDealsBoard = (props: MobileDealsBoardProps) => {
     onEditView,
     onParentColumnsSave,
     onChildColumnsSave,
-    onShowAllChange,
     onResetFilters,
     isLoading,
     isViewLoading,
@@ -82,7 +82,7 @@ export const MobileDealsBoard = (props: MobileDealsBoardProps) => {
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
 
   const activeFilterCount = countActiveQuickFilters(quickFilters);
-  const hasMore = !showAll && page < totalPages - 1;
+  const hasMore = !showAll && !maxRecordsReached && page < totalPages - 1;
 
   return (
     <div data-mobile-deals-board data-layout="mobile">
@@ -153,6 +153,18 @@ export const MobileDealsBoard = (props: MobileDealsBoardProps) => {
               Показать ещё
             </Button>
           ) : null}
+          {maxRecordsReached && totalCount > records.length ? (
+            <p
+              style={{
+                margin: `${spacing.sm} 0 0`,
+                fontSize: theme.font.sizeXs,
+                color: theme.colors.textMuted,
+                textAlign: 'center',
+              }}
+            >
+              Показаны первые {records.length} из {totalCount}. Уточните фильтры, чтобы сузить список.
+            </p>
+          ) : null}
         </div>
       )}
 
@@ -179,11 +191,9 @@ export const MobileDealsBoard = (props: MobileDealsBoardProps) => {
         activeView={activeView}
         parentColumns={parentColumns}
         childColumns={childColumns}
-        showAll={showAll}
         onEditView={onEditView}
         onParentColumnsSave={onParentColumnsSave ?? (() => undefined)}
         onChildColumnsSave={onChildColumnsSave ?? (() => undefined)}
-        onShowAllChange={onShowAllChange ?? (() => undefined)}
       />
     </div>
   );

@@ -31,7 +31,11 @@ export const MobileToolbar = ({
 
   return (
     <div
+      data-mobile-toolbar
       style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: theme.zIndex.dropdown,
         display: 'flex',
         flexDirection: 'column',
         gap: spacing.sm,

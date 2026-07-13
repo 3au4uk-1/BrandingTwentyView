@@ -20,9 +20,11 @@ export const GlobalThemeStyles = ({ theme }: GlobalThemeStylesProps) => {
       [data-deals-board-toolbar] {
         min-height: 0;
         background-color: ${colors.bg};
+        position: -webkit-sticky;
         position: sticky;
         top: 0;
         z-index: ${zIndex.dropdown};
+        box-shadow: 0 1px 0 ${colors.border};
       }
 
       [data-deals-board-body] {
@@ -81,36 +83,12 @@ export const GlobalThemeStyles = ({ theme }: GlobalThemeStylesProps) => {
         border-radius: ${radius.sm};
       }
 
-      [data-deals-board] [data-layout-shell="mobile"] {
-        display: none;
-      }
-
-      [data-deals-board][data-mobile-layout] [data-layout-shell="desktop"] {
-        display: none !important;
-      }
-
-      [data-deals-board][data-mobile-layout] [data-layout-shell="mobile"] {
-        display: block !important;
-      }
-
-      @media (max-width: 767px) {
-        [data-deals-board] [data-layout-shell="desktop"] {
-          display: none !important;
-        }
-
-        [data-deals-board] [data-layout-shell="mobile"] {
-          display: block !important;
-        }
-      }
-
-      @media (pointer: coarse) and (max-width: 1024px) {
-        [data-deals-board] [data-layout-shell="desktop"] {
-          display: none !important;
-        }
-
-        [data-deals-board] [data-layout-shell="mobile"] {
-          display: block !important;
-        }
+      [data-layout="mobile"] [data-mobile-toolbar] {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        z-index: ${zIndex.dropdown};
+        background-color: ${colors.bgSecondary};
       }
 
       [data-layout="mobile"] [data-expand-btn],

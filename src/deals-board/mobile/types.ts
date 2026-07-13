@@ -18,6 +18,7 @@ export type MobileDealsBoardProps = {
   page: number;
   totalPages: number;
   showAll: boolean;
+  maxRecordsReached?: boolean;
   quickFilters: QuickFiltersValue;
   onQuickFiltersChange: (next: QuickFiltersValue) => void;
   onQuickFiltersReset: () => void;
@@ -27,7 +28,6 @@ export type MobileDealsBoardProps = {
   onEditView: () => void;
   onParentColumnsSave?: (columns: ColumnConfig[]) => void;
   onChildColumnsSave?: (columns: ColumnConfig[]) => void;
-  onShowAllChange?: (showAll: boolean) => void;
   onResetFilters?: () => void;
   isLoading?: boolean;
   isViewLoading?: boolean;

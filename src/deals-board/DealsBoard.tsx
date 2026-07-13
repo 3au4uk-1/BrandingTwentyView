@@ -34,13 +34,17 @@ import { Button } from './ui/Button';
 import { PortalHostProvider } from './ui/PortalHostContext';
 import { DEALS_BOARD_ROOT_ID } from './utils/dom';
 import { mergeCompanyFilters, mergeStageFilters, mergeTypeFilters } from './utils/filters';
+import {
+  DESKTOP_PAGE_SIZE,
+  MOBILE_MAX_RECORDS,
+  MOBILE_PAGE_SIZE,
+} from './utils/pagination';
 import { asArray } from './utils/parse-json-field';
 import { filterLineItemsForSearch, normalizeSearchTerm } from './utils/search';
 import { ViewSettingsModal } from './ViewSettingsModal';
 import { ViewSwitcher } from './ViewSwitcher';
 
 const queryClient = new QueryClient();
-const PAGE_SIZE = 50;
 
 const DEFAULT_QUICK_FILTERS: QuickFiltersValue = {
   datePreset: null,
@@ -83,6 +87,11 @@ const DealsBoardContent = () => {
       setActiveViewId(activeView.id);
     }
   }, [activeView?.id, activeViewId]);
+
+  useEffect(() => {
+    setPage(0);
+    setAccumulatedRecords([]);
+  }, [mobileLayoutActive]);
 
   useEffect(() => {
     setPage(0);
@@ -201,14 +210,17 @@ const DealsBoardContent = () => {
   );
 
   const showAllDeals = activeView?.filters?.showAll ?? false;
+  const effectiveShowAll = mobileLayoutActive ? false : showAllDeals;
+  const pageSize = mobileLayoutActive ? MOBILE_PAGE_SIZE : DESKTOP_PAGE_SIZE;
 
   const opportunitiesQuery = useOpportunities({
     viewId: activeView?.id,
     filters: mergedFilters,
     sort: activeView?.sort ?? [],
-    page: showAllDeals ? 0 : page,
-    pageSize: PAGE_SIZE,
-    showAll: showAllDeals,
+    page: effectiveShowAll ? 0 : page,
+    pageSize,
+    showAll: effectiveShowAll,
+    forcePaginated: mobileLayoutActive,
     visibleCrmFieldNames: visibleParentCrmFields,
     restFieldNames: opportunityRestFieldNames,
     includeCompanyRelation,
@@ -222,8 +234,9 @@ const DealsBoardContent = () => {
 
   const records = asArray<OpportunityRow>(opportunitiesQuery.data?.records);
   const totalCount = opportunitiesQuery.data?.totalCount ?? 0;
-  const totalPages = showAllDeals ? 1 : Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-  const visibleOpportunityIds = useMemo(() => records.map((record) => record.id), [records]);
+  const totalPages = effectiveShowAll
+    ? 1
+    : Math.max(1, Math.ceil(totalCount / pageSize));
 
   useEffect(() => {
     if (page > totalPages - 1) {
@@ -240,7 +253,7 @@ const DealsBoardContent = () => {
   );
 
   const lineItemsQuery = useLineItems(
-    visibleOpportunityIds,
+    records.map((record) => record.id),
     lineItemQueryFilters,
     !opportunitiesQuery.isLoading,
   );
@@ -275,7 +288,7 @@ const DealsBoardContent = () => {
   const visibleTotalCount = lineItemMatchedOpportunityIds ? visibleRecords.length : totalCount;
 
   useEffect(() => {
-    if (showAllDeals) {
+    if (effectiveShowAll) {
       setAccumulatedRecords(visibleRecords);
       return;
     }
@@ -289,11 +302,36 @@ const DealsBoardContent = () => {
       for (const record of visibleRecords) {
         if (!seen.has(record.id)) merged.push(record);
       }
+      if (mobileLayoutActive && merged.length > MOBILE_MAX_RECORDS) {
+        return merged.slice(0, MOBILE_MAX_RECORDS);
+      }
       return merged;
     });
-  }, [page, showAllDeals, visibleRecords]);
+  }, [effectiveShowAll, mobileLayoutActive, page, visibleRecords]);
 
-  const mobileRecords = !showAllDeals ? accumulatedRecords : visibleRecords;
+  const mobileRecords = !effectiveShowAll ? accumulatedRecords : visibleRecords;
+
+  const mobileLineItemsQuery = useLineItems(
+    mobileLayoutActive ? mobileRecords.map((record) => record.id) : [],
+    lineItemQueryFilters,
+    mobileLayoutActive && mobileRecords.length > 0 && !opportunitiesQuery.isLoading,
+  );
+  const mobileLineItems = asArray<LineItemRow>(mobileLineItemsQuery.data);
+
+  const displayLineItems = useMemo(() => {
+    if (!mobileLayoutActive) return visibleLineItems;
+    const search = normalizeSearchTerm(mergedFilters.search);
+    const scoped = mobileLineItems.length > 0 ? mobileLineItems : visibleLineItems;
+    if (!search) return scoped;
+    const recordsByMobileId = new Map(mobileRecords.map((record) => [record.id, record]));
+    return filterLineItemsForSearch(scoped, search, recordsByMobileId);
+  }, [
+    mobileLayoutActive,
+    mobileLineItems,
+    mobileRecords,
+    mergedFilters.search,
+    visibleLineItems,
+  ]);
 
   const loadError = viewsQuery.error ?? opportunitiesQuery.error ?? null;
   const metadataFieldsError =
@@ -397,181 +435,7 @@ const DealsBoardContent = () => {
         </div>
       ) : null}
 
-      <div data-layout-shell="desktop">
-      <div
-        data-deals-board-toolbar
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: theme.zIndex.dropdown,
-          backgroundColor: colors.bg,
-        }}
-      >
-      <header
-        style={{
-          borderBottom: `1px solid ${colors.border}`,
-          backgroundColor: colors.bgSecondary,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: spacing.md,
-            padding: `${spacing.sm} ${spacing.md}`,
-            minHeight: layout.toolbarHeight,
-            flexWrap: 'wrap',
-          }}
-        >
-          <ViewSwitcher
-            views={views}
-            activeViewId={activeView?.id}
-            onSelectView={setActiveViewId}
-            onCreateView={() => setIsCreateModalOpen(true)}
-          />
-
-          <div
-            style={{
-              width: '1px',
-              alignSelf: 'stretch',
-              backgroundColor: colors.borderSubtle,
-              flexShrink: 0,
-              minHeight: '28px',
-            }}
-          />
-
-          <QuickFiltersBar
-            value={quickFilters}
-            onChange={setQuickFilters}
-            onReset={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
-          />
-
-          <ExpandModeToggle />
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: spacing.md,
-            padding: `6px ${spacing.md}`,
-            borderTop: `1px solid ${colors.borderSubtle}`,
-            minHeight: '32px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, minWidth: 0 }}>
-            <span
-              style={{
-                fontSize: font.sizeSm,
-                fontWeight: font.weightSemibold,
-                color: colors.text,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {APP_DISPLAY_NAME}
-            </span>
-            {activeView ? (
-              <>
-                <span style={{ color: colors.textMuted, fontSize: font.sizeXs }}>/</span>
-                <span
-                  style={{
-                    fontSize: font.sizeSm,
-                    color: colors.textSecondary,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {activeView.name}
-                </span>
-                {!opportunitiesQuery.isLoading ? (
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      padding: '1px 7px',
-                      borderRadius: radius.pill,
-                      fontSize: font.sizeXs,
-                      fontWeight: font.weightMedium,
-                      fontFamily: font.mono,
-                      color: colors.textMuted,
-                      backgroundColor: colors.bgTertiary,
-                      border: `1px solid ${colors.borderSubtle}`,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {visibleTotalCount}
-                  </span>
-                ) : null}
-              </>
-            ) : null}
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, flexShrink: 0 }}>
-            <Button
-              theme={theme}
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                if (activeView) {
-                  setEditViewDraft(activeView);
-                }
-              }}
-              disabled={!activeView}
-            >
-              Редактировать view
-            </Button>
-            <ColumnPicker
-              target="parent"
-              columns={mergedParentColumns}
-              onSave={(columns) => saveActiveViewColumns('parent', columns)}
-            />
-            <ColumnPicker
-              target="child"
-              columns={mergedChildColumns}
-              onSave={(columns) => saveActiveViewColumns('child', columns)}
-            />
-          </div>
-        </div>
-      </header>
-      </div>
-
-      <div
-        data-deals-board-body
-        style={{
-          minHeight: 0,
-          overflow: 'visible',
-          display: 'block',
-        }}
-      >
-      <DealsTable
-        activeView={activeView}
-        parentColumns={mergedParentColumns}
-        childColumns={mergedChildColumns}
-        parentDescriptorByField={parentDescriptorByField}
-        childDescriptorByField={childDescriptorByField}
-        opportunityLinkFields={opportunityLinkFields}
-        records={visibleRecords}
-        lineItems={visibleLineItems}
-        lineItemFilters={lineItemQueryFilters}
-        totalCount={visibleTotalCount}
-        page={page}
-        totalPages={totalPages}
-        onPageChange={setPage}
-        onResetFilters={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
-        onParentColumnsSave={(columns) => saveActiveViewColumns('parent', columns)}
-        onChildColumnsSave={(columns) => saveActiveViewColumns('child', columns)}
-        showAll={showAllDeals}
-        onShowAllChange={(nextShowAll) => void handleShowAllChange(nextShowAll)}
-        isLoading={opportunitiesQuery.isLoading}
-        isViewLoading={viewsQuery.isLoading || viewsQuery.isSeedingDefault}
-        errorMessage={loadError instanceof Error ? loadError.message : loadError ? String(loadError) : undefined}
-      />
-      </div>
-      </div>
-
-      <div data-layout-shell="mobile">
+      {mobileLayoutActive ? (
         <MobileDealsBoard
           activeView={activeView}
           views={views}
@@ -581,12 +445,13 @@ const DealsBoardContent = () => {
           childDescriptorByField={childDescriptorByField}
           opportunityLinkFields={opportunityLinkFields}
           records={mobileRecords}
-          lineItems={visibleLineItems}
+          lineItems={displayLineItems}
           lineItemFilters={lineItemQueryFilters}
           totalCount={visibleTotalCount}
           page={page}
           totalPages={totalPages}
-          showAll={showAllDeals}
+          showAll={effectiveShowAll}
+          maxRecordsReached={mobileRecords.length >= MOBILE_MAX_RECORDS}
           quickFilters={quickFilters}
           onQuickFiltersChange={setQuickFilters}
           onQuickFiltersReset={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
@@ -598,7 +463,6 @@ const DealsBoardContent = () => {
           }}
           onParentColumnsSave={(columns) => saveActiveViewColumns('parent', columns)}
           onChildColumnsSave={(columns) => saveActiveViewColumns('child', columns)}
-          onShowAllChange={(nextShowAll) => void handleShowAllChange(nextShowAll)}
           onResetFilters={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
           isLoading={opportunitiesQuery.isLoading}
           isViewLoading={viewsQuery.isLoading || viewsQuery.isSeedingDefault}
@@ -606,7 +470,168 @@ const DealsBoardContent = () => {
             loadError instanceof Error ? loadError.message : loadError ? String(loadError) : undefined
           }
         />
-      </div>
+      ) : (
+        <>
+          <div data-deals-board-toolbar>
+            <header
+              style={{
+                borderBottom: `1px solid ${colors.border}`,
+                backgroundColor: colors.bgSecondary,
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: spacing.md,
+                  padding: `${spacing.sm} ${spacing.md}`,
+                  minHeight: layout.toolbarHeight,
+                  flexWrap: 'wrap',
+                }}
+              >
+                <ViewSwitcher
+                  views={views}
+                  activeViewId={activeView?.id}
+                  onSelectView={setActiveViewId}
+                  onCreateView={() => setIsCreateModalOpen(true)}
+                />
+
+                <div
+                  style={{
+                    width: '1px',
+                    alignSelf: 'stretch',
+                    backgroundColor: colors.borderSubtle,
+                    flexShrink: 0,
+                    minHeight: '28px',
+                  }}
+                />
+
+                <QuickFiltersBar
+                  value={quickFilters}
+                  onChange={setQuickFilters}
+                  onReset={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
+                />
+
+                <ExpandModeToggle />
+              </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: spacing.md,
+                  padding: `6px ${spacing.md}`,
+                  borderTop: `1px solid ${colors.borderSubtle}`,
+                  minHeight: '32px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, minWidth: 0 }}>
+                  <span
+                    style={{
+                      fontSize: font.sizeSm,
+                      fontWeight: font.weightSemibold,
+                      color: colors.text,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {APP_DISPLAY_NAME}
+                  </span>
+                  {activeView ? (
+                    <>
+                      <span style={{ color: colors.textMuted, fontSize: font.sizeXs }}>/</span>
+                      <span
+                        style={{
+                          fontSize: font.sizeSm,
+                          color: colors.textSecondary,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {activeView.name}
+                      </span>
+                      {!opportunitiesQuery.isLoading ? (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            padding: '1px 7px',
+                            borderRadius: radius.pill,
+                            fontSize: font.sizeXs,
+                            fontWeight: font.weightMedium,
+                            fontFamily: font.mono,
+                            color: colors.textMuted,
+                            backgroundColor: colors.bgTertiary,
+                            border: `1px solid ${colors.borderSubtle}`,
+                            flexShrink: 0,
+                          }}
+                        >
+                          {visibleTotalCount}
+                        </span>
+                      ) : null}
+                    </>
+                  ) : null}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, flexShrink: 0 }}>
+                  <Button
+                    theme={theme}
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      if (activeView) {
+                        setEditViewDraft(activeView);
+                      }
+                    }}
+                    disabled={!activeView}
+                  >
+                    Редактировать view
+                  </Button>
+                  <ColumnPicker
+                    target="parent"
+                    columns={mergedParentColumns}
+                    onSave={(columns) => saveActiveViewColumns('parent', columns)}
+                  />
+                  <ColumnPicker
+                    target="child"
+                    columns={mergedChildColumns}
+                    onSave={(columns) => saveActiveViewColumns('child', columns)}
+                  />
+                </div>
+              </div>
+            </header>
+          </div>
+
+          <div data-deals-board-body>
+            <DealsTable
+              activeView={activeView}
+              parentColumns={mergedParentColumns}
+              childColumns={mergedChildColumns}
+              parentDescriptorByField={parentDescriptorByField}
+              childDescriptorByField={childDescriptorByField}
+              opportunityLinkFields={opportunityLinkFields}
+              records={visibleRecords}
+              lineItems={visibleLineItems}
+              lineItemFilters={lineItemQueryFilters}
+              totalCount={visibleTotalCount}
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              onResetFilters={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
+              onParentColumnsSave={(columns) => saveActiveViewColumns('parent', columns)}
+              onChildColumnsSave={(columns) => saveActiveViewColumns('child', columns)}
+              showAll={showAllDeals}
+              onShowAllChange={(nextShowAll) => void handleShowAllChange(nextShowAll)}
+              isLoading={opportunitiesQuery.isLoading}
+              isViewLoading={viewsQuery.isLoading || viewsQuery.isSeedingDefault}
+              errorMessage={
+                loadError instanceof Error ? loadError.message : loadError ? String(loadError) : undefined
+              }
+            />
+          </div>
+        </>
+      )}
 
       <ViewSettingsModal
         isOpen={isCreateModalOpen}
