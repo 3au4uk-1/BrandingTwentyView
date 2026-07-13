@@ -1,6 +1,9 @@
 import type { QueryClient } from '@tanstack/react-query';
 
-import { LINE_ITEM_ORIGIN } from 'src/constants/line-item-origin';
+import {
+  DEFAULT_MANUAL_LINE_ITEM_NAME,
+  LINE_ITEM_ORIGIN,
+} from 'src/constants/line-item-origin';
 
 import { syncManualLineItem } from '../api/crmparser';
 import type { LineItemRow } from '../types';
@@ -45,6 +48,44 @@ export const isManualLineItemOrigin = (
   return hasBaseline;
 };
 
+export const mergeLineItemPatch = (
+  lineItem: LineItemRow,
+  patch: Record<string, unknown>,
+): LineItemRow => ({
+  ...lineItem,
+  ...patch,
+  amount:
+    patch.amount && typeof patch.amount === 'object'
+      ? {
+          ...(lineItem.amount ?? { amountMicros: 0, currencyCode: 'RUB' }),
+          ...(patch.amount as { amountMicros?: number; currencyCode?: string }),
+        }
+      : lineItem.amount,
+});
+
+export async function syncNewManualLineItemToParser(
+  queryClient: QueryClient,
+  lineItemId: string,
+  opportunityId: string,
+): Promise<void> {
+  const lineItem: LineItemRow = {
+    id: lineItemId,
+    opportunityId,
+    name: DEFAULT_MANUAL_LINE_ITEM_NAME,
+    kolichestvo: 1,
+    amount: { amountMicros: 0, currencyCode: 'RUB' },
+    istochnik: LINE_ITEM_ORIGIN.TWENTY_MANUAL,
+    stage: 'NOVYY',
+  };
+
+  try {
+    await syncManualLineItem(lineItemId, buildManualLineItemSyncPayload(lineItem));
+    setManualLineItemSyncedToParser(queryClient, lineItemId);
+  } catch (error) {
+    console.error('Failed to sync new manual line item to parser:', error);
+  }
+}
+
 export async function maybeSyncManualLineItemToParser(params: {
   lineItem: LineItemRow;
   patch: Record<string, unknown>;
@@ -86,11 +127,12 @@ export const syncManualLineItemAfterUpdate = async (
   if (!isManualLineItemOrigin(lineItem, baseline !== undefined)) return;
 
   const syncedToParser = isManualLineItemSyncedToParser(queryClient, lineItemId);
+  const merged = mergeLineItemPatch(lineItem, patch);
 
   try {
     const didSync = await maybeSyncManualLineItemToParser({
-      lineItem,
-      patch,
+      lineItem: merged,
+      patch: {},
       baseline,
       syncedToParser,
     });

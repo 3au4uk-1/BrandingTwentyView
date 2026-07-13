@@ -11,7 +11,7 @@ import {
   defaultManualLineItemBaseline,
   setManualLineItemBaseline,
 } from '../utils/manual-line-item-baselines';
-import { syncManualLineItemAfterUpdate } from './useManualLineItemParserSync';
+import { syncManualLineItemAfterUpdate, syncNewManualLineItemToParser } from './useManualLineItemParserSync';
 import { syncDealStage } from '../utils/sync-deal-stage';
 
 export const lineItemsQueryKey = (
@@ -46,6 +46,8 @@ export const useCreateLineItem = () => {
         lineItemId,
         defaultManualLineItemBaseline(),
       );
+
+      void syncNewManualLineItemToParser(queryClient, lineItemId, opportunityId);
 
       void Promise.allSettled([
         queryClient.invalidateQueries({ queryKey: ['lineItems'] }),

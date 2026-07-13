@@ -15,6 +15,7 @@ import {
   maybeSyncManualLineItemToParser,
   setManualLineItemSyncedToParser,
   syncManualLineItemAfterUpdate,
+  syncNewManualLineItemToParser,
   toSyncSnapshot,
 } from './useManualLineItemParserSync';
 
@@ -131,6 +132,28 @@ describe('maybeSyncManualLineItemToParser', () => {
       amountMicros: 0,
       currencyCode: 'RUB',
     });
+  });
+});
+
+describe('syncNewManualLineItemToParser', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(syncManualLineItem).mockResolvedValue({ success: true, dealItemId: 42 });
+  });
+
+  it('syncs draft line item immediately after create', async () => {
+    const queryClient = new QueryClient();
+
+    await syncNewManualLineItemToParser(queryClient, 'li-new', 'opp-1');
+
+    expect(syncManualLineItem).toHaveBeenCalledWith('li-new', {
+      opportunityId: 'opp-1',
+      name: DEFAULT_MANUAL_LINE_ITEM_NAME,
+      kolichestvo: 1,
+      amountMicros: 0,
+      currencyCode: 'RUB',
+    });
+    expect(isManualLineItemSyncedToParser(queryClient, 'li-new')).toBe(true);
   });
 });
 
