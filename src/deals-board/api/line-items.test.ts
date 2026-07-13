@@ -12,6 +12,7 @@ import {
   buildDealLineItemsSearchFilter,
   createLineItemWithClient,
   extractCreatedLineItemId,
+  resolveCreatedLineItemId,
   fetchLineItemsForOpportunityIdsWithClient,
   filterLineItemsByQueryFilters,
   isDefaultLineItemHiddenByFilters,
@@ -66,6 +67,20 @@ describe('buildCreateLineItemInput', () => {
       istochnik: LINE_ITEM_ORIGIN.TWENTY_MANUAL,
     });
   });
+
+  it('extracts id from createDealLineItem REST response', async () => {
+    const post = vi.fn().mockResolvedValue({
+      data: { createDealLineItem: { id: 'item-create-op', name: 'Новая позиция' } },
+    });
+    const patch = vi.fn().mockResolvedValue(undefined);
+
+    const id = await createLineItemWithClient({ post, patch } as never, 'deal-1');
+
+    expect(id).toBe('item-create-op');
+    expect(patch).toHaveBeenCalledWith('/rest/dealLineItems/item-create-op', {
+      istochnik: LINE_ITEM_ORIGIN.TWENTY_MANUAL,
+    });
+  });
 });
 
 describe('extractCreatedLineItemId', () => {
@@ -73,10 +88,42 @@ describe('extractCreatedLineItemId', () => {
     expect(extractCreatedLineItemId({ id: 'a' })).toBe('a');
     expect(extractCreatedLineItemId({ data: { id: 'b' } })).toBe('b');
     expect(extractCreatedLineItemId({ data: { dealLineItem: { id: 'c' } } })).toBe('c');
+    expect(
+      extractCreatedLineItemId({ data: { createDealLineItem: { id: 'd' } } }),
+    ).toBe('d');
+    expect(extractCreatedLineItemId({ createDealLineItem: { id: 'e' } })).toBe('e');
   });
 
-  it('throws when id is missing', () => {
-    expect(() => extractCreatedLineItemId({ data: { name: 'x' } })).toThrow(/missing id/i);
+  it('returns null when id is missing', () => {
+    expect(extractCreatedLineItemId(null)).toBeNull();
+    expect(extractCreatedLineItemId({ data: { name: 'x' } })).toBeNull();
+  });
+});
+
+describe('resolveCreatedLineItemId', () => {
+  it('falls back to the newest draft line item when POST body has no id', async () => {
+    const get = vi.fn().mockResolvedValue({
+      data: [
+        {
+          id: 'item-old',
+          name: DEFAULT_MANUAL_LINE_ITEM_NAME,
+          opportunityId: 'deal-1',
+          stage: 'NOVYY',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+        {
+          id: 'item-new',
+          name: DEFAULT_MANUAL_LINE_ITEM_NAME,
+          opportunityId: 'deal-1',
+          stage: 'NOVYY',
+          createdAt: '2026-01-02T00:00:00.000Z',
+        },
+      ],
+    });
+
+    await expect(
+      resolveCreatedLineItemId({ get } as never, 'deal-1', { data: { createDealLineItem: {} } }),
+    ).resolves.toBe('item-new');
   });
 });
 

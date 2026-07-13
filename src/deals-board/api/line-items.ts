@@ -300,37 +300,85 @@ export const updateLineItem = async (
   await client.patch(`/rest/dealLineItems/${id}`, data);
 };
 
-type LineItemCreateClient = Pick<RestApiClient, 'post' | 'patch'>;
+type LineItemCreateClient = Pick<RestApiClient, 'post' | 'patch' | 'get'>;
 
-export const extractCreatedLineItemId = (response: unknown): string => {
-  if (!response || typeof response !== 'object') {
-    throw new Error('Created line item response missing id');
+const CREATED_LINE_ITEM_RESPONSE_KEYS = [
+  'createDealLineItem',
+  'createOneDealLineItem',
+  'dealLineItem',
+] as const;
+
+const readRecordId = (value: unknown): string | null => {
+  if (!value || typeof value !== 'object') return null;
+  const id = (value as { id?: unknown }).id;
+  return typeof id === 'string' && id.length > 0 ? id : null;
+};
+
+const readIdFromDataContainer = (data: unknown): string | null => {
+  if (!data || typeof data !== 'object') return null;
+
+  const record = data as Record<string, unknown>;
+  const directId = readRecordId(record);
+  if (directId) return directId;
+
+  for (const key of CREATED_LINE_ITEM_RESPONSE_KEYS) {
+    const nestedId = readRecordId(record[key]);
+    if (nestedId) return nestedId;
   }
 
-  const candidates: unknown[] = [
-    (response as { id?: unknown }).id,
-  ];
+  for (const value of Object.values(record)) {
+    const nestedId = readRecordId(value);
+    if (nestedId) return nestedId;
+  }
 
-  const data = (response as { data?: unknown }).data;
-  if (data && typeof data === 'object') {
-    const record = data as Record<string, unknown>;
-    candidates.push(record.id);
-    const nested = record.dealLineItem;
-    if (nested && typeof nested === 'object') {
-      candidates.push((nested as { id?: unknown }).id);
+  return null;
+};
+
+export const extractCreatedLineItemId = (response: unknown): string | null => {
+  const directId = readRecordId(response);
+  if (directId) return directId;
+
+  if (!response || typeof response !== 'object') return null;
+
+  const body = response as Record<string, unknown>;
+  const fromData = readIdFromDataContainer(body.data);
+  if (fromData) return fromData;
+
+  for (const key of CREATED_LINE_ITEM_RESPONSE_KEYS) {
+    const nestedId = readRecordId(body[key]);
+    if (nestedId) return nestedId;
+  }
+
+  return null;
+};
+
+const pickNewestDraftLineItem = (items: LineItemRow[]): LineItemRow | undefined => {
+  const drafts = items.filter(
+    (item) => item.name === DEFAULT_MANUAL_LINE_ITEM_NAME && item.stage === 'NOVYY',
+  );
+  if (!drafts.length) return undefined;
+
+  return [...drafts].sort((left, right) => {
+    const leftCreatedAt = typeof left.createdAt === 'string' ? left.createdAt : '';
+    const rightCreatedAt = typeof right.createdAt === 'string' ? right.createdAt : '';
+    if (leftCreatedAt && rightCreatedAt && leftCreatedAt !== rightCreatedAt) {
+      return rightCreatedAt.localeCompare(leftCreatedAt);
     }
-  }
+    return right.id.localeCompare(left.id);
+  })[0];
+};
 
-  const topLevelRecord = (response as { dealLineItem?: unknown }).dealLineItem;
-  if (topLevelRecord && typeof topLevelRecord === 'object') {
-    candidates.push((topLevelRecord as { id?: unknown }).id);
-  }
+export const resolveCreatedLineItemId = async (
+  client: LineItemCreateClient,
+  opportunityId: string,
+  response: unknown,
+): Promise<string> => {
+  const extractedId = extractCreatedLineItemId(response);
+  if (extractedId) return extractedId;
 
-  for (const candidate of candidates) {
-    if (typeof candidate === 'string' && candidate.length > 0) {
-      return candidate;
-    }
-  }
+  const items = await fetchLineItemsForOpportunityIdsWithClient(client, [opportunityId]);
+  const fallbackItem = pickNewestDraftLineItem(items);
+  if (fallbackItem) return fallbackItem.id;
 
   throw new Error('Created line item response missing id');
 };
@@ -343,7 +391,7 @@ export const createLineItemWithClient = async (
     '/rest/dealLineItems',
     buildCreateLineItemInput(opportunityId),
   );
-  const id = extractCreatedLineItemId(response);
+  const id = await resolveCreatedLineItemId(client, opportunityId, response);
 
   await client.patch(`/rest/dealLineItems/${id}`, {
     istochnik: LINE_ITEM_ORIGIN.TWENTY_MANUAL,
