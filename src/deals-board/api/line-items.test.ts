@@ -11,6 +11,7 @@ import {
   buildDealLineItemsQuery,
   buildDealLineItemsSearchFilter,
   createLineItemWithClient,
+  extractCreatedLineItemId,
   fetchLineItemsForOpportunityIdsWithClient,
   filterLineItemsByQueryFilters,
   isDefaultLineItemHiddenByFilters,
@@ -50,6 +51,32 @@ describe('buildCreateLineItemInput', () => {
     expect(patch).toHaveBeenCalledWith('/rest/dealLineItems/item-1', {
       istochnik: LINE_ITEM_ORIGIN.TWENTY_MANUAL,
     });
+  });
+
+  it('extracts id from wrapped REST create response', async () => {
+    const post = vi.fn().mockResolvedValue({
+      data: { id: 'item-wrapped', name: 'Новая позиция' },
+    });
+    const patch = vi.fn().mockResolvedValue(undefined);
+
+    const id = await createLineItemWithClient({ post, patch } as never, 'deal-1');
+
+    expect(id).toBe('item-wrapped');
+    expect(patch).toHaveBeenCalledWith('/rest/dealLineItems/item-wrapped', {
+      istochnik: LINE_ITEM_ORIGIN.TWENTY_MANUAL,
+    });
+  });
+});
+
+describe('extractCreatedLineItemId', () => {
+  it('reads id from direct and wrapped shapes', () => {
+    expect(extractCreatedLineItemId({ id: 'a' })).toBe('a');
+    expect(extractCreatedLineItemId({ data: { id: 'b' } })).toBe('b');
+    expect(extractCreatedLineItemId({ data: { dealLineItem: { id: 'c' } } })).toBe('c');
+  });
+
+  it('throws when id is missing', () => {
+    expect(() => extractCreatedLineItemId({ data: { name: 'x' } })).toThrow(/missing id/i);
   });
 });
 

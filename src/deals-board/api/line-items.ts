@@ -302,17 +302,37 @@ export const updateLineItem = async (
 
 type LineItemCreateClient = Pick<RestApiClient, 'post' | 'patch'>;
 
-const extractCreatedLineItemId = (response: unknown): string => {
+export const extractCreatedLineItemId = (response: unknown): string => {
   if (!response || typeof response !== 'object') {
     throw new Error('Created line item response missing id');
   }
 
-  const id = (response as { id?: unknown }).id;
-  if (typeof id !== 'string') {
-    throw new Error('Created line item response missing id');
+  const candidates: unknown[] = [
+    (response as { id?: unknown }).id,
+  ];
+
+  const data = (response as { data?: unknown }).data;
+  if (data && typeof data === 'object') {
+    const record = data as Record<string, unknown>;
+    candidates.push(record.id);
+    const nested = record.dealLineItem;
+    if (nested && typeof nested === 'object') {
+      candidates.push((nested as { id?: unknown }).id);
+    }
   }
 
-  return id;
+  const topLevelRecord = (response as { dealLineItem?: unknown }).dealLineItem;
+  if (topLevelRecord && typeof topLevelRecord === 'object') {
+    candidates.push((topLevelRecord as { id?: unknown }).id);
+  }
+
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.length > 0) {
+      return candidate;
+    }
+  }
+
+  throw new Error('Created line item response missing id');
 };
 
 export const createLineItemWithClient = async (

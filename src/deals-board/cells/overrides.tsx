@@ -10,10 +10,12 @@ import { LineItemListMenu } from '../LineItemListMenu';
 import { useLineItemListStatus } from '../hooks/useLineItemListStatus';
 import { isCrmparserConfigured } from '../api/crmparser';
 import { DealStageSelect } from '../editors/DealStageSelect';
+import { CurrencyAmountCell } from '../editors/CurrencyAmountCell';
 import { DatePickerModal } from '../editors/DatePickerModal';
 import { LinkCell } from '../editors/LinkCell';
 import { RichTextPopover } from '../editors/RichTextPopover';
 import { StageSelect } from '../editors/StageSelect';
+import { TextCell } from '../editors/TextCell';
 import { TypeSelect } from '../editors/TypeSelect';
 import { TimePickerModal } from '../editors/TimePickerModal';
 import { useTheme } from '../theme/ThemeContext';
@@ -129,27 +131,20 @@ const ParentNameCell = ({
 
 const ChildNameCell = ({ value, recordId }: FieldOverrideProps) => {
   const theme = useTheme();
-  const { colors, font } = theme;
-  const name = typeof value === 'string' ? value : '';
   const { data: listStatus } = useLineItemListStatus(recordId);
   const showListMenu = isCrmparserConfigured();
+  const name = typeof value === 'string' ? value : '';
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-      <span
-        title={name}
-        style={{
-          minWidth: 0,
-          flex: 1,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          fontWeight: font.weightMedium,
-          color: colors.text,
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {name}
-      </span>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <TextCell
+          objectName="dealLineItem"
+          recordId={recordId}
+          fieldName="name"
+          value={name}
+        />
+      </div>
       {listStatus?.restorationMatch ? (
         <Chip text="реставрация · 0 ₽" color="yellow" theme={theme} />
       ) : null}
@@ -325,6 +320,16 @@ export const renderFieldOverride = (props: FieldOverrideProps): ReactNode | null
     case 'links':
       return <LinksCell {...props} />;
     case 'amount':
+      if (variant === 'child') {
+        return (
+          <CurrencyAmountCell
+            objectName="dealLineItem"
+            recordId={recordId}
+            fieldName="amount"
+            value={value as { amountMicros?: number; currencyCode?: string } | null | undefined}
+          />
+        );
+      }
       return <AmountChipCell {...props} />;
     case 'oplata':
       return <OplataChipCell {...props} />;
