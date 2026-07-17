@@ -8,10 +8,12 @@ import {
 } from './stages';
 
 describe('LINE_ITEM_STAGES', () => {
-  it('does not include banner or contractor values', () => {
+  it('does not include type-like values', () => {
     const values = LINE_ITEM_STAGES.map((stage) => stage.value);
     expect(values).not.toContain('BANNERA');
     expect(values).not.toContain('PODRYAD');
+    expect(values).not.toContain('RESTAVRACIYA');
+    expect(values).not.toContain('NE_NASHE');
   });
 
   it('maps stage colors', () => {
@@ -19,7 +21,8 @@ describe('LINE_ITEM_STAGES', () => {
     expect(LINE_ITEM_STAGES.find((stage) => stage.value === 'V_RABOTE')?.color).toBe('orange');
     expect(LINE_ITEM_STAGES.find((stage) => stage.value === 'V_PECHATI')?.color).toBe('yellow');
     expect(LINE_ITEM_STAGES.find((stage) => stage.value === 'OKLEYKA')?.color).toBe('blue');
-    expect(LINE_ITEM_STAGES.find((stage) => stage.value === 'RESTAVRACIYA')?.color).toBe('purple');
+    expect(LINE_ITEM_STAGES.find((stage) => stage.value === 'GOTOVO')?.color).toBe('green');
+    expect(LINE_ITEM_STAGES.find((stage) => stage.value === 'OTMENA')?.color).toBe('red');
   });
 });
 

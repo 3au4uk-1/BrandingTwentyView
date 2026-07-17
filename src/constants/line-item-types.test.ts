@@ -7,19 +7,29 @@ import {
 } from './line-item-types';
 
 describe('LINE_ITEM_TYPES', () => {
-  it('has banner, film and contractor types', () => {
-    expect(LINE_ITEM_TYPES.map((type) => type.value)).toEqual(['BANNERA', 'PLENKA', 'PODRYAD']);
+  it('has banner, film, contractor, restoration and not-ours types', () => {
+    expect(LINE_ITEM_TYPES.map((type) => type.value)).toEqual([
+      'BANNERA',
+      'PLENKA',
+      'PODRYAD',
+      'RESTAVRACIYA',
+      'NE_NASHE',
+    ]);
   });
 
   it('resolves Russian labels', () => {
     expect(getLineItemTypeLabel('BANNERA')).toBe('Баннера');
     expect(getLineItemTypeLabel('PLENKA')).toBe('Плёнка');
     expect(getLineItemTypeLabel('PODRYAD')).toBe('Подряд');
+    expect(getLineItemTypeLabel('RESTAVRACIYA')).toBe('Реставрация');
+    expect(getLineItemTypeLabel('NE_NASHE')).toBe('Не наше');
   });
 
   it('assigns distinct colors', () => {
     expect(getLineItemTypeColor('BANNERA')).toBe('blue');
     expect(getLineItemTypeColor('PLENKA')).toBe('green');
     expect(getLineItemTypeColor('PODRYAD')).toBe('purple');
+    expect(getLineItemTypeColor('RESTAVRACIYA')).toBe('pink');
+    expect(getLineItemTypeColor('NE_NASHE')).toBe('gray');
   });
 });

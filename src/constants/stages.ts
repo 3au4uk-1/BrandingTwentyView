@@ -4,7 +4,6 @@ export const LINE_ITEM_STAGES = [
   { value: 'V_PECHATI', label: 'В печати', color: 'yellow' },
   { value: 'OKLEYKA', label: 'Оклейка', color: 'blue' },
   { value: 'GOTOVO', label: 'Готово', color: 'green' },
-  { value: 'RESTAVRACIYA', label: 'Реставрация', color: 'purple' },
   { value: 'OTMENA', label: 'Отмена', color: 'red' },
 ] as const;
 

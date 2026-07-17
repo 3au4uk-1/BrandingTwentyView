@@ -6,7 +6,6 @@ const SHORT_LABELS: Record<string, string> = {
   V_PECHATI: 'печать',
   OKLEYKA: 'оклейка',
   GOTOVO: 'готово',
-  RESTAVRACIYA: 'реставр',
   OTMENA: 'отмена',
 };
 
