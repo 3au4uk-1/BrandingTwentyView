@@ -3,7 +3,9 @@ import type { QueryClient } from '@tanstack/react-query';
 import { fetchLineItemsByOpportunityIds } from '../api/line-items';
 import { patchOpportunity } from '../api/opportunities';
 import type { OpportunityRow } from '../types';
+import { notifyDealCancelled } from './cancel-otmena-notify';
 import { computeDealStage } from './compute-deal-stage';
+import { isOtmenaTransition } from './otmena-transition';
 
 type OpportunitiesPage = {
   records: OpportunityRow[];
@@ -32,6 +34,7 @@ export const syncDealStage = async (
   if (!opportunity || opportunity.stageZakreplen === true) return;
 
   const lineItems = await fetchLineItemsByOpportunityIds([opportunityId]);
+  const previousStage = typeof opportunity.stage === 'string' ? opportunity.stage : null;
   const nextStage = computeDealStage(lineItems);
   if (nextStage === opportunity.stage) return;
 
@@ -48,5 +51,9 @@ export const syncDealStage = async (
         record.id === opportunityId ? { ...record, stage: nextStage } : record,
       ),
     });
+  }
+
+  if (isOtmenaTransition(previousStage, nextStage)) {
+    notifyDealCancelled();
   }
 };

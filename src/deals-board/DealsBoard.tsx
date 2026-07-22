@@ -33,6 +33,7 @@ import { QuickFiltersBar, type QuickFiltersValue } from './QuickFiltersBar';
 import type { DealBoardViewRecord, LineItemRow, OpportunityRow } from './types';
 import { ThemeProvider, useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
+import { CancelOtmenaProvider } from './ui/CancelOtmenaPopup';
 import { PortalHostProvider } from './ui/PortalHostContext';
 import { DEALS_BOARD_ROOT_ID } from './utils/dom';
 import { mergeCompanyFilters, mergeStageFilters, mergeTypeFilters } from './utils/filters';
@@ -395,6 +396,7 @@ const DealsBoardContent = () => {
 
   return (
     <PortalHostProvider hostRef={rootRef}>
+      <CancelOtmenaProvider>
       <div
         ref={rootRef}
         id={DEALS_BOARD_ROOT_ID}
@@ -696,6 +698,7 @@ const DealsBoardContent = () => {
         onSaved={(view) => setActiveViewId(view.id)}
       />
     </div>
+      </CancelOtmenaProvider>
     </PortalHostProvider>
   );
 };

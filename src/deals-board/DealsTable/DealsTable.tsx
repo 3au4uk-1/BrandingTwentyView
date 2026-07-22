@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { fetchCompanyNames } from '../api/companies';
 import type { LineItemQueryFilters } from '../api/line-items';
@@ -24,6 +24,12 @@ import {
   layoutColumnsForContainer,
   visibleColumns,
 } from '../utils/columns';
+import {
+  formatDaySeparatorLabel,
+  getOpportunityDayKey,
+  shouldInsertDaySeparatorBefore,
+  shouldShowDaySeparators,
+} from '../utils/day-separators';
 import { DealRow } from './DealRow';
 import { ResizableColumnHeader } from './ResizableColumnHeader';
 
@@ -233,6 +239,8 @@ export const DealsTable = ({
     opportunityStageById,
   );
 
+  const showDaySeparators = shouldShowDaySeparators(activeView?.sort ?? []);
+
   if (isViewLoading || isLoading) {
     return (
       <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -364,24 +372,58 @@ export const DealsTable = ({
             </tr>
           </thead>
           <tbody>
-            {records.map((row) => (
-              <DealRow
-                key={row.id}
-                row={{ ...row, companyName: row.companyName ?? companyNameMap.get(row.companyId ?? '') }}
-                columns={layoutParentColumns}
-                childColumns={safeDisplayChildColumns}
-                parentDescriptorByField={parentDescriptorByField}
-                childDescriptorByField={childDescriptorByField}
-                onChildColumnResizeStart={beginChildResize}
-                lineItems={lineItemsByOpportunity.get(row.id) ?? []}
-                isExpanded={isExpanded(row.id)}
-                isHovered={hoveredRowId === row.id}
-                onHoverChange={(hovered) => setHoveredRowId(hovered ? row.id : null)}
-                onToggleExpand={toggleExpand}
-                opportunityLinkFields={opportunityLinkFields}
-                filters={lineItemFilters}
-              />
-            ))}
+            {records.map((row, index) => {
+              const dayKey = getOpportunityDayKey(row);
+              const previousDayKey =
+                index > 0 ? getOpportunityDayKey(records[index - 1]!) : null;
+              const insertSeparator = shouldInsertDaySeparatorBefore(
+                previousDayKey,
+                dayKey,
+                showDaySeparators,
+              );
+
+              return (
+                <Fragment key={row.id}>
+                  {insertSeparator && dayKey ? (
+                    <tr>
+                      <td
+                        colSpan={layoutParentColumns.length}
+                        style={{
+                          padding: `${spacing.xs} ${spacing.md}`,
+                          backgroundColor: colors.bgSecondary,
+                          borderTop: `1px solid ${colors.border}`,
+                          borderBottom: `1px solid ${colors.borderSubtle}`,
+                          fontSize: font.sizeXs,
+                          fontWeight: font.weightMedium,
+                          color: colors.textMuted,
+                          letterSpacing: '0.02em',
+                        }}
+                      >
+                        {formatDaySeparatorLabel(dayKey)}
+                      </td>
+                    </tr>
+                  ) : null}
+                  <DealRow
+                    row={{
+                      ...row,
+                      companyName: row.companyName ?? companyNameMap.get(row.companyId ?? ''),
+                    }}
+                    columns={layoutParentColumns}
+                    childColumns={safeDisplayChildColumns}
+                    parentDescriptorByField={parentDescriptorByField}
+                    childDescriptorByField={childDescriptorByField}
+                    onChildColumnResizeStart={beginChildResize}
+                    lineItems={lineItemsByOpportunity.get(row.id) ?? []}
+                    isExpanded={isExpanded(row.id)}
+                    isHovered={hoveredRowId === row.id}
+                    onHoverChange={(hovered) => setHoveredRowId(hovered ? row.id : null)}
+                    onToggleExpand={toggleExpand}
+                    opportunityLinkFields={opportunityLinkFields}
+                    filters={lineItemFilters}
+                  />
+                </Fragment>
+              );
+            })}
           </tbody>
         </table>
       </div>

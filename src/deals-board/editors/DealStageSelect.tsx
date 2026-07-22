@@ -9,6 +9,8 @@ import {
 import { useUpdateRecord } from '../hooks/useUpdateRecord';
 import { useTheme } from '../theme/ThemeContext';
 import { Button } from '../ui/Button';
+import { notifyDealCancelled } from '../utils/cancel-otmena-notify';
+import { isOtmenaTransition } from '../utils/otmena-transition';
 import { syncDealStage } from '../utils/sync-deal-stage';
 import { ColoredStageSelect } from './ColoredStageSelect';
 
@@ -37,6 +39,9 @@ export const DealStageSelect = ({
         id: recordId,
         data: { stage: nextValue, stageZakreplen: true },
       });
+      if (isOtmenaTransition(selectedValue, nextValue)) {
+        notifyDealCancelled();
+      }
     } catch (error) {
       window.alert(
         `Не удалось обновить этап.${error instanceof Error ? ` ${error.message}` : ''}`,
