@@ -38,11 +38,12 @@ export const CancelOtmenaProvider = ({ children }: CancelOtmenaProviderProps) =>
       if (event.key === 'Escape') setIsOpen(false);
     };
 
-    const timer = window.setTimeout(() => setIsOpen(false), AUTO_DISMISS_MS);
-    window.addEventListener('keydown', handleKeyDown);
+    const timer = setTimeout(() => setIsOpen(false), AUTO_DISMISS_MS);
+    const view = typeof globalThis !== 'undefined' ? globalThis : undefined;
+    view?.addEventListener?.('keydown', handleKeyDown);
     return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener('keydown', handleKeyDown);
+      clearTimeout(timer);
+      view?.removeEventListener?.('keydown', handleKeyDown);
     };
   }, [isOpen]);
 
