@@ -2,7 +2,12 @@ import { DynamicFieldCell } from '../cells/DynamicFieldCell';
 import type { LineItemQueryFilters } from '../api/line-items';
 import type { FieldDescriptor } from '../metadata/types';
 import { useTheme } from '../theme/ThemeContext';
-import type { ColumnConfig, LineItemRow, OpportunityRow } from '../types';
+import type {
+  ColumnConfig,
+  ColumnGroupConfig,
+  LineItemRow,
+  OpportunityRow,
+} from '../types';
 import { getColumnWidth } from '../utils/columns';
 import { resolveFieldValue } from '../utils/resolve-field-value';
 import { getStageRowStyles } from '../utils/stage-row-styles';
@@ -12,6 +17,7 @@ type DealRowProps = {
   row: OpportunityRow;
   columns: ColumnConfig[];
   childColumns: ColumnConfig[];
+  childGroups: ColumnGroupConfig[];
   parentDescriptorByField: Map<string, FieldDescriptor>;
   childDescriptorByField: Map<string, FieldDescriptor>;
   lineItems: LineItemRow[];
@@ -34,6 +40,7 @@ export const DealRow = ({
   row,
   columns,
   childColumns,
+  childGroups,
   parentDescriptorByField,
   childDescriptorByField,
   lineItems,
@@ -123,6 +130,7 @@ export const DealRow = ({
               opportunityId={row.id}
               items={lineItems}
               columns={childColumns}
+              groups={childGroups}
               descriptorByField={childDescriptorByField}
               filters={filters}
               onColumnResizeStart={onChildColumnResizeStart}

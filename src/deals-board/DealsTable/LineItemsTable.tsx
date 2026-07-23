@@ -5,20 +5,25 @@ import {
   type LineItemQueryFilters,
 } from '../api/line-items';
 import { DynamicFieldCell } from '../cells/DynamicFieldCell';
+import { GroupColumnCell } from '../cells/GroupColumnCell';
 import { useCreateLineItem } from '../hooks/useLineItems';
 import type { FieldDescriptor } from '../metadata/types';
 import { useTheme } from '../theme/ThemeContext';
 import { getColumnWidth, getTableLayoutStyle, sumColumnWidths } from '../utils/columns';
+import { buildChildLayoutColumns } from '../utils/column-groups';
 import { resolveFieldValue } from '../utils/resolve-field-value';
 import { getStageRowStyles } from '../utils/stage-row-styles';
 
-import type { ColumnConfig, LineItemRow } from '../types';
+import type { ColumnConfig, ColumnGroupConfig, LineItemRow } from '../types';
 import { ResizableColumnHeader } from './ResizableColumnHeader';
+
+const GROUP_COLUMN_WIDTH = 160;
 
 type LineItemsTableProps = {
   opportunityId: string;
   items: LineItemRow[];
   columns: ColumnConfig[];
+  groups: ColumnGroupConfig[];
   descriptorByField: Map<string, FieldDescriptor>;
   filters?: LineItemQueryFilters;
   onColumnResizeStart: (
@@ -34,13 +39,26 @@ export const LineItemsTable = ({
   opportunityId,
   items,
   columns,
+  groups,
   descriptorByField,
   filters,
   onColumnResizeStart,
 }: LineItemsTableProps) => {
   const theme = useTheme();
   const { colorScheme, colors, font, spacing } = theme;
-  const tableStyle = getTableLayoutStyle(columns, sumColumnWidths(columns));
+  const layout = buildChildLayoutColumns(columns, groups);
+  const layoutColumns = layout.map((entry) =>
+    'type' in entry
+      ? {
+          field: `group:${entry.group.id}`,
+          label: entry.group.name,
+          order: entry.group.order,
+          visible: true,
+          width: GROUP_COLUMN_WIDTH,
+        }
+      : entry,
+  );
+  const tableStyle = getTableLayoutStyle(layoutColumns, sumColumnWidths(layoutColumns));
   const visibleFields = columns.map(({ field }) => field);
   const createLineItem = useCreateLineItem();
   const isCreatingRef = useRef(false);
@@ -93,22 +111,39 @@ export const LineItemsTable = ({
           }}
         >
           <colgroup>
-            {columns.map((column) => (
+            {layoutColumns.map((column) => (
               <col key={column.field} style={{ width: `${getColumnWidth(column)}px` }} />
             ))}
           </colgroup>
           <thead>
             <tr style={{ borderBottom: `1px solid ${colors.borderSubtle}`, backgroundColor: colors.bgTertiary }}>
-              {columns.map((column) => (
-                <ResizableColumnHeader
-                  key={column.field}
-                  column={column}
-                  onResizeStart={onColumnResizeStart}
-                  compact
-                >
-                  {column.label}
-                </ResizableColumnHeader>
-              ))}
+              {layout.map((entry) =>
+                'type' in entry ? (
+                  <th
+                    key={entry.group.id}
+                    scope="col"
+                    style={{
+                      width: `${GROUP_COLUMN_WIDTH}px`,
+                      padding: '6px 10px',
+                      color: colors.textSecondary,
+                      fontSize: font.sizeXs,
+                      fontWeight: font.weightMedium,
+                      textAlign: 'left',
+                    }}
+                  >
+                    {entry.group.name}
+                  </th>
+                ) : (
+                  <ResizableColumnHeader
+                    key={entry.field}
+                    column={entry}
+                    onResizeStart={onColumnResizeStart}
+                    compact
+                  >
+                    {entry.label}
+                  </ResizableColumnHeader>
+                ),
+              )}
             </tr>
           </thead>
           <tbody>
@@ -126,12 +161,13 @@ export const LineItemsTable = ({
                     boxShadow: stageStyles.boxShadow,
                   }}
                 >
-                  {columns.map((column) => {
-                    const width = getColumnWidth(column);
+                  {layout.map((entry) => {
+                    const isGroup = 'type' in entry;
+                    const width = isGroup ? GROUP_COLUMN_WIDTH : getColumnWidth(entry);
 
                     return (
                       <td
-                        key={column.field}
+                        key={isGroup ? entry.group.id : entry.field}
                         style={{
                           width: `${width}px`,
                           maxWidth: `${width}px`,
@@ -147,16 +183,26 @@ export const LineItemsTable = ({
                           position: 'relative',
                         }}
                       >
-                        <DynamicFieldCell
-                          objectName="dealLineItem"
-                          recordId={item.id}
-                          field={column.field}
-                          descriptor={descriptorByField.get(column.field)}
-                          value={resolveFieldValue(item, column.field)}
-                          variant="child"
-                          row={item}
-                          visibleFields={visibleFields}
-                        />
+                        {isGroup ? (
+                          <GroupColumnCell
+                            group={entry.group}
+                            members={entry.members}
+                            item={item}
+                            descriptorByField={descriptorByField}
+                            visibleFields={visibleFields}
+                          />
+                        ) : (
+                          <DynamicFieldCell
+                            objectName="dealLineItem"
+                            recordId={item.id}
+                            field={entry.field}
+                            descriptor={descriptorByField.get(entry.field)}
+                            value={resolveFieldValue(item, entry.field)}
+                            variant="child"
+                            row={item}
+                            visibleFields={visibleFields}
+                          />
+                        )}
                       </td>
                     );
                   })}
@@ -167,7 +213,7 @@ export const LineItemsTable = ({
           <tfoot>
             <tr style={{ borderTop: `1px solid ${colors.borderSubtle}` }}>
               <td
-                colSpan={columns.length}
+                colSpan={layout.length}
                 style={{
                   height: '28px',
                   padding: '0 8px',

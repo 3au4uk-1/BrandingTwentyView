@@ -12,7 +12,13 @@ import { useTheme } from '../theme/ThemeContext';
 import { Button } from '../ui/Button';
 import { EmptyState } from '../ui/EmptyState';
 import { Spinner } from '../ui/Spinner';
-import type { ColumnConfig, DealBoardViewRecord, LineItemRow, OpportunityRow } from '../types';
+import type {
+  ColumnConfig,
+  ColumnGroupConfig,
+  DealBoardViewRecord,
+  LineItemRow,
+  OpportunityRow,
+} from '../types';
 import {
   readColumnUserSized,
   writeColumnUserSized,
@@ -37,6 +43,7 @@ type DealsTableProps = {
   activeView?: DealBoardViewRecord;
   parentColumns: ColumnConfig[];
   childColumns: ColumnConfig[];
+  childGroups: ColumnGroupConfig[];
   parentDescriptorByField: Map<string, FieldDescriptor>;
   childDescriptorByField: Map<string, FieldDescriptor>;
   opportunityLinkFields: FieldDescriptor[];
@@ -61,6 +68,7 @@ export const DealsTable = ({
   activeView,
   parentColumns: allParentColumns,
   childColumns: allChildColumns,
+  childGroups,
   parentDescriptorByField,
   childDescriptorByField,
   opportunityLinkFields,
@@ -410,6 +418,7 @@ export const DealsTable = ({
                     }}
                     columns={layoutParentColumns}
                     childColumns={safeDisplayChildColumns}
+                    childGroups={childGroups}
                     parentDescriptorByField={parentDescriptorByField}
                     childDescriptorByField={childDescriptorByField}
                     onChildColumnResizeStart={beginChildResize}
