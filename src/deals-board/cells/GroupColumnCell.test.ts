@@ -1,9 +1,27 @@
 import { createElement, type ReactNode } from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { GroupChipModeProvider } from '../hooks/useGroupChipMode';
 import type { ColumnConfig, ColumnGroupConfig, LineItemRow } from '../types';
 import { GroupColumnCell } from './GroupColumnCell';
+
+vi.mock('../theme/ThemeContext', () => ({
+  useTheme: () => ({
+    colors: {
+      accent: '#3b6fd9',
+      accentMuted: 'rgba(59, 111, 217, 0.1)',
+      accentText: '#2f5fc4',
+      borderStrong: '#cacad4',
+    },
+    font: {
+      weightNormal: 400,
+      weightSemibold: 600,
+    },
+    spacing: {
+      xs: '4px',
+    },
+  }),
+}));
 
 const { renderToStaticMarkup } = require('react-dom/server') as {
   renderToStaticMarkup: (node: ReactNode) => string;
@@ -46,7 +64,7 @@ describe('GroupColumnCell', () => {
     expect(markup).toContain('aria-expanded="false"');
   });
 
-  it('uses the supplied member renderer for expanded group fields', () => {
+  it('keeps expanded group members out of the legacy vertical cell', () => {
     const originalLocalStorage = globalThis.localStorage;
     Object.defineProperty(globalThis, 'localStorage', {
       configurable: true,
@@ -68,14 +86,13 @@ describe('GroupColumnCell', () => {
             members,
             item,
             descriptorByField: new Map(),
-            renderMember: (member) =>
-              createElement('section', { 'data-mobile-field': member.field }, member.label),
           }),
         ),
       );
 
-      expect(markup).toContain('data-mobile-field="vzatoVRabotu"');
-      expect(markup).toContain('data-mobile-field="gotovo"');
+      expect(markup).toContain('aria-expanded="true"');
+      expect(markup).not.toContain('Взято в работу');
+      expect(markup).not.toContain('Готово');
     } finally {
       Object.defineProperty(globalThis, 'localStorage', {
         configurable: true,
