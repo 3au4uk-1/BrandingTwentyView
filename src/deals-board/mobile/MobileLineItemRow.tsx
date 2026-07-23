@@ -37,13 +37,23 @@ export const MobileLineItemRow = ({
   const theme = useTheme();
   const { colors, font, spacing } = theme;
   const visible = visibleColumns(columns);
-  const visibleFields = visible.map(({ field }) => field);
   const { header, detail } = partitionColumns(visible, MOBILE_LINE_ITEM_HEADER_FIELDS);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const nameValue = typeof item.name === 'string' ? item.name : 'Без названия';
   const stageValue = item.stage ?? null;
   const showStageInHeader = header.some((column) => column.field === 'stage') && stageValue;
+  const detailFields = [
+    ...header.filter((column) => column.field !== 'name'),
+    ...detail,
+  ];
+  const detailLayout = buildChildLayoutColumns(
+    clearHeaderFieldGroupIds(detailFields, MOBILE_LINE_ITEM_HEADER_FIELDS),
+    groups,
+  );
+  const flatVisibleFields = detailLayout
+    .filter((entry) => !('type' in entry))
+    .map((entry) => entry.field);
 
   const renderField = (column: ColumnConfig) => (
     <DynamicFieldCell
@@ -54,19 +64,10 @@ export const MobileLineItemRow = ({
       value={resolveFieldValue(item, column.field)}
       variant="child"
       row={item}
-      visibleFields={visibleFields}
+      visibleFields={flatVisibleFields}
       listMenuPresentation="sheet"
       touchFriendly
     />
-  );
-
-  const detailFields = [
-    ...header.filter((column) => column.field !== 'name'),
-    ...detail,
-  ];
-  const detailLayout = buildChildLayoutColumns(
-    clearHeaderFieldGroupIds(detailFields, MOBILE_LINE_ITEM_HEADER_FIELDS),
-    groups,
   );
 
   return (
@@ -167,7 +168,6 @@ export const MobileLineItemRow = ({
                   members={entry.members}
                   item={item}
                   descriptorByField={descriptorByField}
-                  visibleFields={visibleFields}
                   listMenuPresentation="sheet"
                   touchFriendly
                   keepChipStyleWhenExpanded

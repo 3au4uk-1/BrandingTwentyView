@@ -53,3 +53,20 @@ export const moveColumnWithinGroup = (
     return candidate;
   });
 };
+
+export const moveGroup = (
+  groups: ColumnGroupConfig[],
+  groupId: string,
+  direction: -1 | 1,
+): ColumnGroupConfig[] => {
+  const ordered = [...groups].sort(
+    (a, b) => a.order - b.order || a.name.localeCompare(b.name, 'ru'),
+  );
+  const index = ordered.findIndex((group) => group.id === groupId);
+  const nextIndex = index + direction;
+  if (index < 0 || nextIndex < 0 || nextIndex >= ordered.length) return groups;
+
+  const [moved] = ordered.splice(index, 1);
+  ordered.splice(nextIndex, 0, moved);
+  return ordered.map((group, order) => ({ ...group, order }));
+};

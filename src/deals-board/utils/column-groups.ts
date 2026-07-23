@@ -2,6 +2,7 @@ import {
   isPrintFieldGroupMember,
   PRINT_FIELD_GROUP_ID,
 } from 'src/constants/print-field-group';
+import { DEFAULT_CHILD_COLUMNS } from 'src/constants/column-definitions';
 import type { ColumnConfig, ColumnGroupConfig, LineItemRow } from '../types';
 
 export type GroupChipMode = 'name' | 'name+status';
@@ -30,8 +31,13 @@ export const applyPrintGroupSeed = (
       ? { ...column, groupId: PRINT_FIELD_GROUP_ID }
       : column,
   );
+  const seededFields = new Set(seededColumns.map((column) => column.field));
+  const nextOrder = seededColumns.reduce((max, column) => Math.max(max, column.order), -1) + 1;
+  const missingPrintColumns = DEFAULT_CHILD_COLUMNS.filter(
+    (column) => isPrintFieldGroupMember(column.field) && !seededFields.has(column.field),
+  ).map((column, index) => ({ ...column, order: nextOrder + index }));
 
-  return { columns: seededColumns, groups: seededGroups };
+  return { columns: [...seededColumns, ...missingPrintColumns], groups: seededGroups };
 };
 
 export const buildChildLayoutColumns = (
@@ -39,9 +45,25 @@ export const buildChildLayoutColumns = (
   groups: ColumnGroupConfig[],
 ): ChildLayoutColumn[] => {
   const groupById = new Map(groups.map((group) => [group.id, group]));
-  const visibleColumns = columns.filter((column) => column.visible);
-  const emittedGroupIds = new Set<string>();
+  const visibleColumns = columns
+    .filter((column) => column.visible)
+    .sort((a, b) => a.order - b.order);
+  const groupEntries = groups
+    .map((group) => ({
+      type: 'group' as const,
+      group,
+      members: visibleColumns
+        .filter((member) => member.groupId === group.id)
+        .sort((a, b) => a.order - b.order),
+    }))
+    .filter((entry) => entry.members.length > 0)
+    .sort(
+      (a, b) =>
+        a.group.order - b.group.order || a.group.name.localeCompare(b.group.name, 'ru'),
+    );
+  const emittedSourceGroupIds = new Set<string>();
   const layout: ChildLayoutColumn[] = [];
+  let nextGroupIndex = 0;
 
   for (const column of visibleColumns) {
     if (!column.groupId) {
@@ -50,24 +72,25 @@ export const buildChildLayoutColumns = (
     }
 
     const group = groupById.get(column.groupId);
-    if (!group || emittedGroupIds.has(group.id)) {
+    if (!group || emittedSourceGroupIds.has(group.id)) {
       continue;
     }
 
-    const members = visibleColumns
-      .filter((member) => member.groupId === group.id)
-      .sort((a, b) => a.order - b.order);
-
-    if (members.length === 0) {
-      continue;
-    }
-
-    emittedGroupIds.add(group.id);
-    layout.push({ type: 'group', group, members });
+    emittedSourceGroupIds.add(group.id);
+    const orderedGroupEntry = groupEntries[nextGroupIndex++];
+    if (orderedGroupEntry) layout.push(orderedGroupEntry);
   }
 
   return layout;
 };
+
+export const getVisibleFieldsForChildLayoutEntry = (
+  layout: ChildLayoutColumn[],
+  entry: ChildLayoutColumn,
+): string[] =>
+  'type' in entry
+    ? entry.members.map(({ field }) => field)
+    : layout.filter((candidate) => !('type' in candidate)).map(({ field }) => field);
 
 export const getGroupChipStatus = (
   members: ColumnConfig[],

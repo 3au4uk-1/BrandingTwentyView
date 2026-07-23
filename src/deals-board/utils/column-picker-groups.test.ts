@@ -6,6 +6,7 @@ import {
   createGroup,
   deleteGroup,
   moveColumnWithinGroup,
+  moveGroup,
 } from './column-picker-groups';
 
 const columns: ColumnConfig[] = [
@@ -71,5 +72,25 @@ describe('moveColumnWithinGroup', () => {
 
   it('does nothing at a section boundary', () => {
     expect(moveColumnWithinGroup(columns, 'plenka', -1)).toBe(columns);
+  });
+});
+
+describe('moveGroup', () => {
+  const groups: ColumnGroupConfig[] = [
+    { id: 'first', name: 'Первая', order: 0 },
+    { id: 'second', name: 'Вторая', order: 1 },
+    { id: 'third', name: 'Третья', order: 2 },
+  ];
+
+  it('moves a group and normalizes all group orders', () => {
+    expect(moveGroup(groups, 'third', -1)).toEqual([
+      groups[0],
+      { ...groups[2], order: 1 },
+      { ...groups[1], order: 2 },
+    ]);
+  });
+
+  it('does nothing at a group boundary', () => {
+    expect(moveGroup(groups, 'first', -1)).toBe(groups);
   });
 });

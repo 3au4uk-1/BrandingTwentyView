@@ -8,6 +8,7 @@ import {
   createGroup,
   deleteGroup,
   moveColumnWithinGroup,
+  moveGroup,
 } from './utils/column-picker-groups';
 
 type ColumnPickerProps = {
@@ -102,6 +103,10 @@ export const ColumnPicker = ({
         column.field === field ? { ...column, visible: checked } : column,
       ),
     );
+  };
+
+  const reorderGroup = (groupId: string, direction: -1 | 1) => {
+    setDraftGroups((previous) => moveGroup(previous, groupId, direction));
   };
 
   const handleSave = async () => {
@@ -281,6 +286,10 @@ export const ColumnPicker = ({
                   renderColumn(column, sortColumns(draftColumns)),
                 )
               : sortGroups(draftGroups).map((group) => {
+                  const orderedGroups = sortGroups(draftGroups);
+                  const groupIndex = orderedGroups.findIndex(
+                    (candidate) => candidate.id === group.id,
+                  );
                   const members = sortColumns(
                     draftColumns.filter((column) => column.groupId === group.id),
                   );
@@ -321,21 +330,45 @@ export const ColumnPicker = ({
                             fontWeight: font.weightSemibold,
                           }}
                         />
-                        <Button
-                          theme={theme}
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            const next = deleteGroup(draftColumns, draftGroups, group.id);
-                            setDraftColumns(next.columns);
-                            setDraftGroups(next.groups);
-                          }}
-                          disabled={!canInteract}
-                          aria-label={`Удалить группу ${group.name}`}
-                          style={{ padding: '2px 8px' }}
-                        >
-                          ×
-                        </Button>
+                        <div style={{ display: 'flex', gap: '2px' }}>
+                          <Button
+                            theme={theme}
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => reorderGroup(group.id, -1)}
+                            disabled={groupIndex === 0 || !canInteract}
+                            aria-label={`Поднять группу ${group.name}`}
+                            style={{ padding: '2px 6px', minWidth: '28px' }}
+                          >
+                            ↑
+                          </Button>
+                          <Button
+                            theme={theme}
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => reorderGroup(group.id, 1)}
+                            disabled={groupIndex === orderedGroups.length - 1 || !canInteract}
+                            aria-label={`Опустить группу ${group.name}`}
+                            style={{ padding: '2px 6px', minWidth: '28px' }}
+                          >
+                            ↓
+                          </Button>
+                          <Button
+                            theme={theme}
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const next = deleteGroup(draftColumns, draftGroups, group.id);
+                              setDraftColumns(next.columns);
+                              setDraftGroups(next.groups);
+                            }}
+                            disabled={!canInteract}
+                            aria-label={`Удалить группу ${group.name}`}
+                            style={{ padding: '2px 8px' }}
+                          >
+                            ×
+                          </Button>
+                        </div>
                       </div>
                       {members.length > 0 ? (
                         members.map((column) => renderColumn(column, members))

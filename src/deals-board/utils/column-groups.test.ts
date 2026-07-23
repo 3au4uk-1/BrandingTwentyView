@@ -10,6 +10,7 @@ import {
   buildChildLayoutColumns,
   formatGroupChipLabel,
   getGroupChipStatus,
+  getVisibleFieldsForChildLayoutEntry,
 } from './column-groups';
 
 const printGroup: ColumnGroupConfig = {
@@ -56,9 +57,7 @@ describe('applyPrintGroupSeed', () => {
 
     for (const field of PRINT_FIELD_GROUP_MEMBER_FIELDS) {
       const column = result.columns.find((c) => c.field === field);
-      if (column) {
-        expect(column.groupId).toBe(PRINT_FIELD_GROUP_ID);
-      }
+      expect(column).toMatchObject({ groupId: PRINT_FIELD_GROUP_ID });
     }
   });
 });
@@ -96,6 +95,61 @@ describe('buildChildLayoutColumns', () => {
       members: [columns[3], columns[4]],
     });
     expect(layout).toHaveLength(4);
+  });
+
+  it('orders group slots by group.order instead of first member position', () => {
+    const finishingGroup: ColumnGroupConfig = {
+      id: '123e4567-e89b-42d3-a456-426614174010',
+      name: 'Финиш',
+      order: 0,
+    };
+    const artworkGroup: ColumnGroupConfig = {
+      id: '123e4567-e89b-42d3-a456-426614174011',
+      name: 'Макеты',
+      order: 1,
+    };
+    const columns: ColumnConfig[] = [
+      { field: 'name', label: 'Позиция', order: 0, visible: true },
+      { field: 'artwork', label: 'Макет', order: 1, visible: true, groupId: artworkGroup.id },
+      { field: 'amount', label: 'Сумма', order: 2, visible: true },
+      { field: 'finishing', label: 'Финиш', order: 3, visible: true, groupId: finishingGroup.id },
+    ];
+
+    const layout = buildChildLayoutColumns(columns, [artworkGroup, finishingGroup]);
+
+    expect(layout.map((entry) => ('type' in entry ? entry.group.id : entry.field))).toEqual([
+      'name',
+      finishingGroup.id,
+      'amount',
+      artworkGroup.id,
+    ]);
+  });
+});
+
+describe('getVisibleFieldsForChildLayoutEntry', () => {
+  it('uses only the current group members for a group stack', () => {
+    const columns: ColumnConfig[] = [
+      { field: 'vzatoVRabotu', label: 'Взято', order: 0, visible: true, groupId: printGroup.id },
+      { field: 'gotovo', label: 'Готово', order: 1, visible: true },
+    ];
+    const layout = buildChildLayoutColumns(columns, [printGroup]);
+    const groupedEntry = layout.find((entry) => 'type' in entry);
+
+    expect(groupedEntry && getVisibleFieldsForChildLayoutEntry(layout, groupedEntry)).toEqual([
+      'vzatoVRabotu',
+    ]);
+  });
+
+  it('uses only visible flat fields for an ungrouped column', () => {
+    const columns: ColumnConfig[] = [
+      { field: 'vzatoVRabotu', label: 'Взято', order: 0, visible: false },
+      { field: 'gotovo', label: 'Готово', order: 1, visible: true },
+      { field: 'plenka', label: 'Плёнка', order: 2, visible: true, groupId: printGroup.id },
+    ];
+    const layout = buildChildLayoutColumns(columns, [printGroup]);
+    const flatEntry = layout.find((entry) => !('type' in entry));
+
+    expect(flatEntry && getVisibleFieldsForChildLayoutEntry(layout, flatEntry)).toEqual(['gotovo']);
   });
 });
 
@@ -137,11 +191,13 @@ describe('DEFAULT_CHILD_COLUMNS', () => {
       visible: true,
       width: 140,
     });
-    expect(DEFAULT_CHILD_COLUMNS.find((c) => c.field === 'ssylkaNaMakety')?.groupId).toBe(
-      PRINT_FIELD_GROUP_ID,
-    );
-    expect(DEFAULT_CHILD_COLUMNS.find((c) => c.field === 'plenka')?.groupId).toBe(
-      PRINT_FIELD_GROUP_ID,
-    );
+    expect(
+      DEFAULT_CHILD_COLUMNS.find((c) => c.field === 'zatratyNaRabotu')?.groupId,
+    ).toBeUndefined();
+    for (const field of PRINT_FIELD_GROUP_MEMBER_FIELDS) {
+      expect(DEFAULT_CHILD_COLUMNS.find((column) => column.field === field)).toMatchObject({
+        groupId: PRINT_FIELD_GROUP_ID,
+      });
+    }
   });
 });

@@ -38,7 +38,6 @@ describe('GroupColumnCell', () => {
           members,
           item,
           descriptorByField: new Map(),
-          visibleFields: members.map(({ field }) => field),
         }),
       ),
     );
@@ -69,7 +68,6 @@ describe('GroupColumnCell', () => {
             members,
             item,
             descriptorByField: new Map(),
-            visibleFields: members.map(({ field }) => field),
             renderMember: (member) =>
               createElement('section', { 'data-mobile-field': member.field }, member.label),
           }),

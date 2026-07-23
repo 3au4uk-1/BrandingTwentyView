@@ -16,7 +16,6 @@ type GroupColumnCellProps = {
   members: ColumnConfig[];
   item: LineItemRow;
   descriptorByField: Map<string, FieldDescriptor>;
-  visibleFields: readonly string[];
   renderMember?: (member: ColumnConfig, cell: ReactNode) => ReactNode;
   listMenuPresentation?: 'inline' | 'sheet';
   touchFriendly?: boolean;
@@ -28,7 +27,6 @@ export const GroupColumnCell = ({
   members,
   item,
   descriptorByField,
-  visibleFields,
   renderMember,
   listMenuPresentation,
   touchFriendly,
@@ -102,7 +100,7 @@ export const GroupColumnCell = ({
             value={resolveFieldValue(item, member.field)}
             variant="child"
             row={item}
-            visibleFields={visibleFields}
+            visibleFields={members.map(({ field }) => field)}
             listMenuPresentation={listMenuPresentation}
             touchFriendly={touchFriendly}
           />

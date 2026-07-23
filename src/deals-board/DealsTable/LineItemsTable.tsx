@@ -10,7 +10,10 @@ import { useCreateLineItem } from '../hooks/useLineItems';
 import type { FieldDescriptor } from '../metadata/types';
 import { useTheme } from '../theme/ThemeContext';
 import { getColumnWidth, getTableLayoutStyle, sumColumnWidths } from '../utils/columns';
-import { buildChildLayoutColumns } from '../utils/column-groups';
+import {
+  buildChildLayoutColumns,
+  getVisibleFieldsForChildLayoutEntry,
+} from '../utils/column-groups';
 import { resolveFieldValue } from '../utils/resolve-field-value';
 import { getStageRowStyles } from '../utils/stage-row-styles';
 
@@ -59,7 +62,6 @@ export const LineItemsTable = ({
       : entry,
   );
   const tableStyle = getTableLayoutStyle(layoutColumns, sumColumnWidths(layoutColumns));
-  const visibleFields = columns.map(({ field }) => field);
   const createLineItem = useCreateLineItem();
   const isCreatingRef = useRef(false);
   const [statusMessage, setStatusMessage] = useState<{
@@ -189,7 +191,6 @@ export const LineItemsTable = ({
                             members={entry.members}
                             item={item}
                             descriptorByField={descriptorByField}
-                            visibleFields={visibleFields}
                           />
                         ) : (
                           <DynamicFieldCell
@@ -200,7 +201,7 @@ export const LineItemsTable = ({
                             value={resolveFieldValue(item, entry.field)}
                             variant="child"
                             row={item}
-                            visibleFields={visibleFields}
+                            visibleFields={getVisibleFieldsForChildLayoutEntry(layout, entry)}
                           />
                         )}
                       </td>
