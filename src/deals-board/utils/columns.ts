@@ -1,5 +1,69 @@
-import type { ColumnConfig } from '../types';
+import type { ColumnConfig, ColumnGroupConfig } from '../types';
 import { parseJsonField } from './parse-json-field';
+
+type ChildColumnsV2Payload = {
+  version: 2;
+  columns: ColumnConfig[];
+  groups: ColumnGroupConfig[];
+};
+
+const isColumnGroupConfig = (value: unknown): value is ColumnGroupConfig =>
+  typeof value === 'object' &&
+  value !== null &&
+  typeof (value as ColumnGroupConfig).id === 'string' &&
+  typeof (value as ColumnGroupConfig).name === 'string' &&
+  typeof (value as ColumnGroupConfig).order === 'number';
+
+const isChildColumnsV2Payload = (value: unknown): value is ChildColumnsV2Payload =>
+  typeof value === 'object' &&
+  value !== null &&
+  (value as ChildColumnsV2Payload).version === 2 &&
+  Array.isArray((value as ChildColumnsV2Payload).columns) &&
+  Array.isArray((value as ChildColumnsV2Payload).groups);
+
+const parseColumnList = (raw: unknown): ColumnConfig[] =>
+  (Array.isArray(raw) ? raw : [])
+    .filter((c): c is ColumnConfig => typeof c?.field === 'string')
+    .sort((a, b) => a.order - b.order);
+
+const parseGroupList = (raw: unknown): ColumnGroupConfig[] =>
+  (Array.isArray(raw) ? raw : [])
+    .filter(isColumnGroupConfig)
+    .sort((a, b) => a.order - b.order);
+
+export const parseChildColumnsPayload = (
+  raw: unknown,
+  fallbackColumns: ColumnConfig[],
+): { columns: ColumnConfig[]; groups: ColumnGroupConfig[] } => {
+  const parsed = parseJsonField(raw);
+
+  if (isChildColumnsV2Payload(parsed)) {
+    const groups = parseGroupList(parsed.groups);
+    const groupIds = new Set(groups.map((group) => group.id));
+    const columns = parseColumnList(parsed.columns).map((column) =>
+      column.groupId && groupIds.has(column.groupId)
+        ? column
+        : { ...column, groupId: undefined },
+    );
+
+    return { columns, groups };
+  }
+
+  if (Array.isArray(parsed)) {
+    return { columns: parseColumnList(parsed), groups: [] };
+  }
+
+  return { columns: fallbackColumns, groups: [] };
+};
+
+export const serializeChildColumnsPayload = (
+  columns: ColumnConfig[],
+  groups: ColumnGroupConfig[],
+): ChildColumnsV2Payload => ({
+  version: 2,
+  columns,
+  groups,
+});
 
 export const parseColumns = (raw: unknown, fallback: ColumnConfig[]): ColumnConfig[] => {
   const parsed = parseJsonField(raw);

@@ -2,12 +2,19 @@ import type { LineItemType } from 'src/constants/line-item-types';
 import type { LineItemStage } from 'src/constants/stages';
 import type { ViewVisibility } from 'src/constants/view-visibility';
 
+export type ColumnGroupConfig = {
+  id: string;
+  name: string;
+  order: number;
+};
+
 export type ColumnConfig = {
   field: string;
   label: string;
   width?: number;
   order: number;
   visible: boolean;
+  groupId?: string;
 };
 
 export type DealBoardDatePreset =
@@ -39,6 +46,7 @@ export type DealBoardViewRecord = {
   visibility: ViewVisibility;
   parentColumns: ColumnConfig[];
   childColumns: ColumnConfig[];
+  childGroups: ColumnGroupConfig[];
   filters: DealBoardFilters;
   sort: DealBoardSort[];
   isDefault: boolean;
