@@ -48,6 +48,7 @@ import { getEffectiveClauses } from './filter-model/session';
 import type { FilterState } from './filter-model/types';
 import type {
   ColumnGroupConfig,
+  DealBoardSort,
   DealBoardViewRecord,
   LineItemRow,
   OpportunityRow,
@@ -93,6 +94,7 @@ const DealsBoardContent = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editViewDraft, setEditViewDraft] = useState<DealBoardViewRecord>();
   const [filterSession, setFilterSession] = useState<Partial<FilterState>>(EMPTY_FILTER_SESSION);
+  const [sortSession, setSortSession] = useState<DealBoardSort[] | undefined>(undefined);
   const [showAllPositionOppIds, setShowAllPositionOppIds] = useState<Set<string>>(() => new Set());
   const views = asArray<DealBoardViewRecord>(viewsQuery.data);
   const hasPrintGroupMigrationAttemptedRef = useRef(false);
@@ -149,6 +151,7 @@ const DealsBoardContent = () => {
     setPage(0);
     setAccumulatedRecords([]);
     setFilterSession(EMPTY_FILTER_SESSION);
+    setSortSession(undefined);
     setShowAllPositionOppIds(new Set());
   }, [activeView?.id]);
 
@@ -232,6 +235,13 @@ const DealsBoardContent = () => {
     [effectiveClauses],
   );
 
+  const effectiveSort = sortSession ?? activeView?.sort ?? [];
+
+  const effectiveSortKey = useMemo(
+    () => effectiveSort.map((entry) => `${entry.field}:${entry.direction}`).join('|'),
+    [effectiveSort],
+  );
+
   useEffect(() => {
     setPage(0);
   }, [
@@ -241,6 +251,7 @@ const DealsBoardContent = () => {
     filterSession.dateTo,
     filterSession.search,
     effectiveClauseKey,
+    effectiveSortKey,
   ]);
 
   const parentFieldsQuery = useObjectFields('opportunity');
@@ -315,7 +326,7 @@ const DealsBoardContent = () => {
   const opportunitiesQuery = useOpportunities({
     viewId: activeView?.id,
     filters: mergedFilters,
-    sort: activeView?.sort ?? [],
+    sort: effectiveSort,
     page: effectiveShowAll ? 0 : page,
     pageSize,
     showAll: effectiveShowAll,
@@ -410,7 +421,13 @@ const DealsBoardContent = () => {
 
   const handleFilterReset = () => {
     setFilterSession(EMPTY_FILTER_SESSION);
+    setSortSession(undefined);
     setShowAllPositionOppIds(new Set());
+  };
+
+  const handleSortChange = (next: DealBoardSort[]) => {
+    setSortSession(next);
+    setPage(0);
   };
 
   const handleToggleShowAllPositions = (opportunityId: string) => {
@@ -850,6 +867,8 @@ const DealsBoardContent = () => {
               }
               showAll={showAllDeals}
               onShowAllChange={(nextShowAll) => void handleShowAllChange(nextShowAll)}
+              sort={effectiveSort}
+              onSortChange={handleSortChange}
               isLoading={opportunitiesQuery.isLoading}
               isViewLoading={viewsQuery.isLoading || viewsQuery.isSeedingDefault}
               errorMessage={

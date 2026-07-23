@@ -2,6 +2,7 @@ import { DynamicFieldCell } from '../cells/DynamicFieldCell';
 import type { LineItemQueryFilters } from '../api/line-items';
 import type { FieldDescriptor } from '../metadata/types';
 import { useTheme } from '../theme/ThemeContext';
+import { ChevronRightIcon } from '../ui/Icons';
 import type {
   ColumnConfig,
   ColumnGroupConfig,
@@ -11,6 +12,7 @@ import type {
 import { getColumnWidth } from '../utils/columns';
 import { resolveFieldValue } from '../utils/resolve-field-value';
 import { getStageRowStyles } from '../utils/stage-row-styles';
+import { PARENT_EXPAND_COLUMN, PARENT_EXPAND_COLUMN_FIELD } from './build-parent-columns';
 import { LineItemsTable } from './LineItemsTable';
 
 type DealRowProps = {
@@ -39,6 +41,47 @@ type DealRowProps = {
   ) => void;
 };
 
+const ExpandToggleButton = ({
+  recordId,
+  isExpanded,
+  onToggleExpand,
+}: {
+  recordId: string;
+  isExpanded: boolean;
+  onToggleExpand: (id: string) => void;
+}) => {
+  const theme = useTheme();
+  const { colors } = theme;
+
+  return (
+    <button
+      type="button"
+      data-expand-btn
+      onClick={() => onToggleExpand(recordId)}
+      style={{
+        border: 'none',
+        background: 'transparent',
+        padding: '2px',
+        width: '22px',
+        minWidth: '22px',
+        height: '22px',
+        minHeight: '22px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: isExpanded ? colors.accentText : colors.textMuted,
+        cursor: 'pointer',
+        transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+        transition: 'transform 0.15s ease, color 0.12s ease, background-color 0.12s ease',
+        flexShrink: 0,
+      }}
+      aria-label={isExpanded ? 'Свернуть позиции' : 'Развернуть позиции'}
+    >
+      <ChevronRightIcon size={14} color="currentColor" />
+    </button>
+  );
+};
+
 export const DealRow = ({
   row,
   columns,
@@ -63,6 +106,35 @@ export const DealRow = ({
   const stageValue = typeof row.stage === 'string' ? row.stage : null;
   const stageStyles = getStageRowStyles(stageValue, colorScheme, 'parent');
   const rowBg = stageStyles.backgroundColor;
+  const rowAccentShadow = isExpanded
+    ? `inset 4px 0 0 ${stageStyles.accentColor}`
+    : stageStyles.boxShadow;
+  const expandColumnWidth = getColumnWidth(PARENT_EXPAND_COLUMN);
+  const hasExpandColumn = columns.some((column) => column.field === PARENT_EXPAND_COLUMN_FIELD);
+
+  const getPinnedCellStyle = (column: ColumnConfig) => {
+    if (column.field === PARENT_EXPAND_COLUMN_FIELD) {
+      return {
+        position: 'sticky' as const,
+        left: 0,
+        zIndex: zIndex.sticky,
+        backgroundColor: rowBg,
+        boxShadow: rowAccentShadow,
+      };
+    }
+
+    if (column.field === 'name') {
+      return {
+        position: 'sticky' as const,
+        left: hasExpandColumn ? expandColumnWidth : 0,
+        zIndex: zIndex.sticky,
+        backgroundColor: rowBg,
+        boxShadow: `${colors.stickyShadow}, ${rowAccentShadow}`,
+      };
+    }
+
+    return {};
+  };
 
   return (
     <>
@@ -73,9 +145,7 @@ export const DealRow = ({
           borderBottom: `1px solid ${colors.borderSubtle}`,
           backgroundColor: rowBg,
           transition: 'background-color 0.12s ease',
-          boxShadow: isExpanded
-            ? `inset 4px 0 0 ${stageStyles.accentColor}`
-            : stageStyles.boxShadow,
+          boxShadow: rowAccentShadow,
         }}
       >
         {columns.map((column) => (
@@ -85,7 +155,7 @@ export const DealRow = ({
               width: `${getColumnWidth(column)}px`,
               maxWidth: `${getColumnWidth(column)}px`,
               minWidth: `${getColumnWidth(column)}px`,
-              padding: '7px 12px',
+              padding: column.field === PARENT_EXPAND_COLUMN_FIELD ? '7px 4px' : '7px 12px',
               fontSize: font.sizeSm,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -93,31 +163,32 @@ export const DealRow = ({
               color: colors.textSecondary,
               boxSizing: 'border-box',
               verticalAlign: 'middle',
-              ...(column.field === 'name'
-                ? {
-                    position: 'sticky' as const,
-                    left: 0,
-                    zIndex: zIndex.sticky,
-                    backgroundColor: rowBg,
-                    boxShadow: colors.stickyShadow,
-                  }
-                : {}),
+              ...getPinnedCellStyle(column),
             }}
           >
-            <DynamicFieldCell
-              objectName="opportunity"
-              recordId={row.id}
-              field={column.field}
-              descriptor={parentDescriptorByField.get(column.field)}
-              value={resolveFieldValue(row, column.field)}
-              variant="parent"
-              lineItems={lineItems}
-              isExpanded={isExpanded}
-              companyName={row.companyName}
-              row={row}
-              opportunityLinkFields={opportunityLinkFields}
-              onToggleExpand={onToggleExpand}
-            />
+            {column.field === PARENT_EXPAND_COLUMN_FIELD ? (
+              <ExpandToggleButton
+                recordId={row.id}
+                isExpanded={isExpanded}
+                onToggleExpand={onToggleExpand}
+              />
+            ) : (
+              <DynamicFieldCell
+                objectName="opportunity"
+                recordId={row.id}
+                field={column.field}
+                descriptor={parentDescriptorByField.get(column.field)}
+                value={resolveFieldValue(row, column.field)}
+                variant="parent"
+                lineItems={lineItems}
+                isExpanded={isExpanded}
+                companyName={row.companyName}
+                row={row}
+                opportunityLinkFields={opportunityLinkFields}
+                onToggleExpand={onToggleExpand}
+                hideExpandButton={hasExpandColumn}
+              />
+            )}
           </td>
         ))}
       </tr>

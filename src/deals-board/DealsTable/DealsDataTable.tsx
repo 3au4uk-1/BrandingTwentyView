@@ -1,5 +1,6 @@
 import {
   flexRender,
+  functionalUpdate,
   getCoreRowModel,
   useReactTable,
   type Table,
@@ -12,6 +13,7 @@ import { useTheme } from '../theme/ThemeContext';
 import type {
   ColumnConfig,
   ColumnGroupConfig,
+  DealBoardSort,
   LineItemRow,
   OpportunityRow,
 } from '../types';
@@ -20,8 +22,16 @@ import {
   getOpportunityDayKey,
   shouldInsertDaySeparatorBefore,
 } from '../utils/day-separators';
-import { buildParentColumnDefs, type ParentColumnMeta } from './build-parent-columns';
+import {
+  buildParentColumnDefs,
+  withParentExpandColumn,
+  type ParentColumnMeta,
+} from './build-parent-columns';
 import { DealRow } from './DealRow';
+import {
+  dealBoardSortToSortingState,
+  sortingStateToDealBoardSort,
+} from './parent-table-sort';
 import { ResizableColumnHeader } from './ResizableColumnHeader';
 
 export type DealsDataTableProps = {
@@ -62,7 +72,11 @@ export type DealsDataTableProps = {
   hoveredRowId: string | null;
   onHoverRowChange: (rowId: string | null) => void;
   showDaySeparators: boolean;
+  sort: DealBoardSort[];
+  onSortChange: (next: DealBoardSort[]) => void;
 };
+
+const PINNED_LEFT_COLUMN_IDS = ['__expand', 'name'] as const;
 
 const getColumnFromHeader = (table: Table<OpportunityRow>, headerId: string): ColumnConfig => {
   const header = table.getFlatHeaders().find((item) => item.id === headerId);
@@ -100,20 +114,37 @@ export const DealsDataTable = ({
   hoveredRowId,
   onHoverRowChange,
   showDaySeparators,
+  sort,
+  onSortChange,
 }: DealsDataTableProps) => {
   const theme = useTheme();
   const { colors, font, spacing, zIndex } = theme;
 
-  const columnDefs = useMemo(
-    () => buildParentColumnDefs(layoutParentColumns),
+  const tableColumns = useMemo(
+    () => withParentExpandColumn(layoutParentColumns),
     [layoutParentColumns],
   );
+
+  const columnDefs = useMemo(() => buildParentColumnDefs(tableColumns), [tableColumns]);
+
+  const sortingState = useMemo(() => dealBoardSortToSortingState(sort), [sort]);
 
   const table = useReactTable({
     data: records,
     columns: columnDefs,
     getCoreRowModel: getCoreRowModel(),
     getRowId: (row) => row.id,
+    manualSorting: true,
+    enableMultiSort: false,
+    enableSortingRemoval: false,
+    state: {
+      sorting: sortingState,
+      columnPinning: { left: [...PINNED_LEFT_COLUMN_IDS] },
+    },
+    onSortingChange: (updater) => {
+      const next = functionalUpdate(updater, sortingState);
+      onSortChange(sortingStateToDealBoardSort(next));
+    },
   });
 
   const tableRows = table.getRowModel().rows;
@@ -150,7 +181,7 @@ export const DealsDataTable = ({
         }}
       >
         <colgroup>
-          {layoutParentColumns.map((column) => (
+          {tableColumns.map((column) => (
             <col
               key={column.field}
               style={{
@@ -171,16 +202,32 @@ export const DealsDataTable = ({
             >
               {headerGroup.headers.map((header) => {
                 const column = getColumnFromHeader(table, header.id);
+                const isPinnedLeft = header.column.getIsPinned() === 'left';
+                const sortEntry = sortingState.find((entry) => entry.id === header.id);
+                const sortDirection = sortEntry
+                  ? sortEntry.desc
+                    ? 'desc'
+                    : 'asc'
+                  : false;
+
                 return (
                   <ResizableColumnHeader
                     key={header.id}
                     column={column}
                     onResizeStart={beginParentResize}
+                    disableResize={column.field === '__expand'}
+                    compact={column.field === '__expand'}
+                    onHeaderClick={
+                      header.column.getCanSort()
+                        ? header.column.getToggleSortingHandler()
+                        : undefined
+                    }
+                    sortDirection={sortDirection}
                     stickyStyle={
-                      column.field === 'name'
+                      isPinnedLeft
                         ? {
                             position: 'sticky',
-                            left: 0,
+                            left: header.column.getStart('left'),
                             zIndex: zIndex.sticky + 1,
                             backgroundColor: colors.bgSecondary,
                             boxShadow: colors.stickyShadow,
@@ -224,7 +271,7 @@ export const DealsDataTable = ({
                 {insertSeparator && dayKey ? (
                   <tr>
                     <td
-                      colSpan={layoutParentColumns.length}
+                      colSpan={tableColumns.length}
                       style={{
                         padding: `${spacing.xs} ${spacing.md}`,
                         backgroundColor: colors.bgSecondary,
@@ -245,7 +292,7 @@ export const DealsDataTable = ({
                     ...row,
                     companyName: row.companyName ?? companyNameMap.get(row.companyId ?? ''),
                   }}
-                  columns={layoutParentColumns}
+                  columns={tableColumns}
                   childColumns={childColumns}
                   childGroups={childGroups}
                   parentDescriptorByField={parentDescriptorByField}

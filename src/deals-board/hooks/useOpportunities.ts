@@ -16,6 +16,7 @@ const DEFAULT_DATE_SORT: DealBoardSort[] = [
 export const opportunitiesQueryKey = (
   viewId: string | undefined,
   filters: DealBoardFilters,
+  sort: DealBoardSort[],
   page: number,
   visibleCrmFieldNames: string[],
   restFieldNames: readonly string[],
@@ -28,6 +29,7 @@ export const opportunitiesQueryKey = (
     'opportunities',
     viewId,
     filters,
+    sort,
     page,
     visibleCrmFieldNames,
     restFieldNames,
@@ -71,6 +73,7 @@ export const useOpportunities = (params: {
     queryKey: opportunitiesQueryKey(
       params.viewId,
       params.filters,
+      effectiveSort,
       params.page,
       visibleCrmFieldNames,
       restFieldNames,
@@ -83,7 +86,7 @@ export const useOpportunities = (params: {
       const result = await fetchOpportunities({
         limit: pageSize,
         offset: fetchAll ? 0 : params.page * pageSize,
-        sort: params.sort,
+        sort: effectiveSort,
         filters: params.filters,
         visibleCrmFieldNames,
         restFieldNames,

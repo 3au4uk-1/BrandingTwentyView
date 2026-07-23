@@ -16,6 +16,9 @@ type ResizableColumnHeaderProps = {
   stickyStyle?: CSSProperties;
   children: ReactNode;
   compact?: boolean;
+  sortDirection?: false | 'asc' | 'desc';
+  onHeaderClick?: () => void;
+  disableResize?: boolean;
 };
 
 export const ResizableColumnHeader = ({
@@ -24,6 +27,9 @@ export const ResizableColumnHeader = ({
   stickyStyle,
   children,
   compact = false,
+  sortDirection = false,
+  onHeaderClick,
+  disableResize = false,
 }: ResizableColumnHeaderProps) => {
   const theme = useTheme();
   const { colors, font, zIndex } = theme;
@@ -35,6 +41,8 @@ export const ResizableColumnHeader = ({
   onResizeStartRef.current = onResizeStart;
 
   useEffect(() => {
+    if (disableResize) return;
+
     const handle = handleRef.current;
     if (!handle) return;
 
@@ -55,11 +63,18 @@ export const ResizableColumnHeader = ({
 
     handle.addEventListener('mousedown', onMouseDown);
     return () => handle.removeEventListener('mousedown', onMouseDown);
-  }, [column.field, width]);
+  }, [column.field, disableResize, width]);
+
+  const sortIndicator =
+    sortDirection === 'asc' ? ' ↑' : sortDirection === 'desc' ? ' ↓' : '';
 
   return (
     <th
       ref={headerRef}
+      onClick={onHeaderClick}
+      aria-sort={
+        sortDirection === 'asc' ? 'ascending' : sortDirection === 'desc' ? 'descending' : undefined
+      }
       style={{
         position: 'relative',
         padding: compact ? '7px 10px' : '8px 12px',
@@ -75,42 +90,47 @@ export const ResizableColumnHeader = ({
         whiteSpace: 'nowrap',
         userSelect: 'none',
         boxSizing: 'border-box',
+        cursor: onHeaderClick ? 'pointer' : undefined,
         ...(compact ? { backgroundColor: colors.bgTertiary } : { backgroundColor: colors.bgSecondary }),
         ...stickyStyle,
       }}
     >
       <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {children}
+        {sortIndicator}
       </span>
-      <div
-        ref={handleRef}
-        role="separator"
-        aria-orientation="vertical"
-        aria-label={`Изменить ширину колонки ${column.label}`}
-        style={{
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          width: '12px',
-          height: '100%',
-          cursor: 'col-resize',
-          touchAction: 'none',
-          zIndex: zIndex.dropdown,
-        }}
-      >
+      {!disableResize ? (
         <div
+          ref={handleRef}
+          role="separator"
+          aria-orientation="vertical"
+          aria-label={`Изменить ширину колонки ${column.label}`}
+          onClick={(event) => event.stopPropagation()}
           style={{
             position: 'absolute',
-            top: '18%',
-            bottom: '18%',
-            right: '5px',
-            width: '2px',
-            backgroundColor: colors.borderStrong,
-            opacity: 0.85,
-            pointerEvents: 'none',
+            top: 0,
+            right: 0,
+            width: '12px',
+            height: '100%',
+            cursor: 'col-resize',
+            touchAction: 'none',
+            zIndex: zIndex.dropdown,
           }}
-        />
-      </div>
+        >
+          <div
+            style={{
+              position: 'absolute',
+              top: '18%',
+              bottom: '18%',
+              right: '5px',
+              width: '2px',
+              backgroundColor: colors.borderStrong,
+              opacity: 0.85,
+              pointerEvents: 'none',
+            }}
+          />
+        </div>
+      ) : null}
     </th>
   );
 };

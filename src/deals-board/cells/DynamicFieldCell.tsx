@@ -22,6 +22,7 @@ export type DynamicFieldCellProps = {
   row?: Record<string, unknown>;
   opportunityLinkFields?: FieldDescriptor[];
   onToggleExpand?: (id: string) => void;
+  hideExpandButton?: boolean;
   listMenuPresentation?: 'inline' | 'sheet';
   touchFriendly?: boolean;
   visibleFields?: readonly string[];
@@ -101,6 +102,7 @@ export const DynamicFieldCell = (props: DynamicFieldCellProps) => {
     row: props.row,
     opportunityLinkFields: props.opportunityLinkFields,
     onToggleExpand: props.onToggleExpand,
+    hideExpandButton: props.hideExpandButton,
     listMenuPresentation: props.listMenuPresentation,
     touchFriendly: props.touchFriendly,
     visibleFields: props.visibleFields,

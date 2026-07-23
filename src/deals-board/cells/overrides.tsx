@@ -46,6 +46,7 @@ export type FieldOverrideProps = {
   row?: Record<string, unknown>;
   opportunityLinkFields?: FieldDescriptor[];
   onToggleExpand?: (id: string) => void;
+  hideExpandButton?: boolean;
   listMenuPresentation?: 'inline' | 'sheet';
   touchFriendly?: boolean;
   visibleFields?: readonly string[];
@@ -56,6 +57,7 @@ const ParentNameCell = ({
   value,
   isExpanded,
   onToggleExpand,
+  hideExpandButton = false,
   touchFriendly = false,
 }: FieldOverrideProps) => {
   const theme = useTheme();
@@ -69,32 +71,34 @@ const ParentNameCell = ({
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, minWidth: 0 }}>
-      <button
-        type="button"
-        data-expand-btn
-        onClick={() => onToggleExpand?.(recordId)}
-        style={{
-          border: 'none',
-          background: 'transparent',
-          padding: touchFriendly ? '10px' : '2px',
-          width: touchFriendly ? '44px' : '22px',
-          minWidth: touchFriendly ? '44px' : '22px',
-          height: touchFriendly ? '44px' : '22px',
-          minHeight: touchFriendly ? '44px' : '22px',
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: isExpanded ? colors.accentText : colors.textMuted,
-          cursor: 'pointer',
-          transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-          transition: 'transform 0.15s ease, color 0.12s ease, background-color 0.12s ease',
-          flexShrink: 0,
-          touchAction: touchFriendly ? 'manipulation' : undefined,
-        }}
-        aria-label={isExpanded ? 'Свернуть позиции' : 'Развернуть позиции'}
-      >
-        <ChevronRightIcon size={14} color="currentColor" />
-      </button>
+      {!hideExpandButton ? (
+        <button
+          type="button"
+          data-expand-btn
+          onClick={() => onToggleExpand?.(recordId)}
+          style={{
+            border: 'none',
+            background: 'transparent',
+            padding: touchFriendly ? '10px' : '2px',
+            width: touchFriendly ? '44px' : '22px',
+            minWidth: touchFriendly ? '44px' : '22px',
+            height: touchFriendly ? '44px' : '22px',
+            minHeight: touchFriendly ? '44px' : '22px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: isExpanded ? colors.accentText : colors.textMuted,
+            cursor: 'pointer',
+            transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+            transition: 'transform 0.15s ease, color 0.12s ease, background-color 0.12s ease',
+            flexShrink: 0,
+            touchAction: touchFriendly ? 'manipulation' : undefined,
+          }}
+          aria-label={isExpanded ? 'Свернуть позиции' : 'Развернуть позиции'}
+        >
+          <ChevronRightIcon size={14} color="currentColor" />
+        </button>
+      ) : null}
       <span
         title={name}
         style={{
