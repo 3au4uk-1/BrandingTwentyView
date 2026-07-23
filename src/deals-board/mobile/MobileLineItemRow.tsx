@@ -29,6 +29,7 @@ export const MobileLineItemRow = ({
   const theme = useTheme();
   const { colors, font, spacing } = theme;
   const visible = visibleColumns(columns);
+  const visibleFields = visible.map(({ field }) => field);
   const { header, detail } = partitionColumns(visible, MOBILE_LINE_ITEM_HEADER_FIELDS);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -45,6 +46,7 @@ export const MobileLineItemRow = ({
       value={resolveFieldValue(item, column.field)}
       variant="child"
       row={item}
+      visibleFields={visibleFields}
       listMenuPresentation="sheet"
       touchFriendly
     />

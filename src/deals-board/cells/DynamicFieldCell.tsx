@@ -24,6 +24,7 @@ export type DynamicFieldCellProps = {
   onToggleExpand?: (id: string) => void;
   listMenuPresentation?: 'inline' | 'sheet';
   touchFriendly?: boolean;
+  visibleFields?: readonly string[];
 };
 
 const renderEditableCell = ({
@@ -102,9 +103,14 @@ export const DynamicFieldCell = (props: DynamicFieldCellProps) => {
     onToggleExpand: props.onToggleExpand,
     listMenuPresentation: props.listMenuPresentation,
     touchFriendly: props.touchFriendly,
+    visibleFields: props.visibleFields,
   });
 
-  if (override !== null) {
+  if (
+    override !== null ||
+    props.field === 'vzatoVRabotu' ||
+    props.field === 'gotovo'
+  ) {
     return override;
   }
 

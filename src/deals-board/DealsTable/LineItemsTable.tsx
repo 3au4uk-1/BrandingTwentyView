@@ -41,6 +41,7 @@ export const LineItemsTable = ({
   const theme = useTheme();
   const { colorScheme, colors, font, spacing } = theme;
   const tableStyle = getTableLayoutStyle(columns, sumColumnWidths(columns));
+  const visibleFields = columns.map(({ field }) => field);
   const createLineItem = useCreateLineItem();
   const isCreatingRef = useRef(false);
   const [statusMessage, setStatusMessage] = useState<{
@@ -153,6 +154,8 @@ export const LineItemsTable = ({
                           descriptor={descriptorByField.get(column.field)}
                           value={resolveFieldValue(item, column.field)}
                           variant="child"
+                          row={item}
+                          visibleFields={visibleFields}
                         />
                       </td>
                     );

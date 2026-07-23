@@ -13,6 +13,11 @@ import { DealStageSelect } from '../editors/DealStageSelect';
 import { CurrencyAmountCell } from '../editors/CurrencyAmountCell';
 import { DatePickerModal } from '../editors/DatePickerModal';
 import { LinkCell } from '../editors/LinkCell';
+import {
+  PrintProgressCell,
+  shouldRenderPrintProgress,
+  type PrintProgressField,
+} from '../editors/PrintProgressCell';
 import { RichTextPopover } from '../editors/RichTextPopover';
 import { StageSelect } from '../editors/StageSelect';
 import { TextCell } from '../editors/TextCell';
@@ -43,6 +48,7 @@ export type FieldOverrideProps = {
   onToggleExpand?: (id: string) => void;
   listMenuPresentation?: 'inline' | 'sheet';
   touchFriendly?: boolean;
+  visibleFields?: readonly string[];
 };
 
 const ParentNameCell = ({
@@ -342,6 +348,23 @@ export const renderFieldOverride = (props: FieldOverrideProps): ReactNode | null
       return <AmountChipCell {...props} />;
     case 'oplata':
       return <OplataChipCell {...props} />;
+    case 'vzatoVRabotu':
+    case 'gotovo': {
+      const visibleFields = props.visibleFields ?? [field];
+      if (!shouldRenderPrintProgress(field as PrintProgressField, visibleFields)) return null;
+
+      const showBoth =
+        visibleFields.includes('vzatoVRabotu') && visibleFields.includes('gotovo');
+
+      return (
+        <PrintProgressCell
+          recordId={recordId}
+          vzatoVRabotu={props.row?.vzatoVRabotu === true}
+          gotovo={props.row?.gotovo === true}
+          mode={showBoth ? 'full' : field === 'vzatoVRabotu' ? 'vzato' : 'gotovo'}
+        />
+      );
+    }
     default:
       return null;
   }
