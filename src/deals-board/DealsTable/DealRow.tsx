@@ -12,7 +12,8 @@ import type {
 import { getColumnWidth } from '../utils/columns';
 import { resolveFieldValue } from '../utils/resolve-field-value';
 import { getStageRowStyles } from '../utils/stage-row-styles';
-import { PARENT_EXPAND_COLUMN, PARENT_EXPAND_COLUMN_FIELD } from './build-parent-columns';
+import { PARENT_EXPAND_COLUMN } from './build-parent-columns';
+import { PARENT_EXPAND_COLUMN_FIELD } from './parent-table-sort';
 import { LineItemsTable } from './LineItemsTable';
 
 type DealRowProps = {

@@ -1,34 +1,57 @@
-# Task 7 report
+# Task 7 Report: Header sort + sticky pin + row color on sticky cells
 
 ## Status
+Complete.
 
-Implemented child-column group management in `ColumnPicker` and persisted picker-provided groups with child column saves.
+## Summary
+Added server-side header sort via TanStack controlled `manualSorting`, session-over-view sort in `DealsBoard`, sort↔`SortingState` mapping helpers, left pin for `__expand` + `name`, and stage background + inset accent on pinned body cells. Cleaned `DealsTable.tsx` blank-line noise.
 
-## Changes
+## Files
+| Action | Path |
+|--------|------|
+| Create | `src/deals-board/DealsTable/parent-table-sort.ts` |
+| Create | `src/deals-board/DealsTable/parent-table-sort.test.ts` |
+| Modify | `src/deals-board/DealsTable/DealsDataTable.tsx` |
+| Modify | `src/deals-board/DealsTable/DealsTable.tsx` |
+| Modify | `src/deals-board/DealsTable/DealRow.tsx` |
+| Modify | `src/deals-board/DealsTable/ResizableColumnHeader.tsx` |
+| Modify | `src/deals-board/DealsTable/build-parent-columns.tsx` |
+| Modify | `src/deals-board/DealsBoard.tsx` |
+| Modify | `src/deals-board/hooks/useOpportunities.ts` |
+| Modify | `src/deals-board/cells/DynamicFieldCell.tsx`, `overrides.tsx` |
 
-- Added pure helpers for assigning and moving columns, creating UUID v4 groups, and deleting groups while clearing member assignments.
-- Added helper unit tests with a verified red-green cycle.
-- Added child picker sections for each group and `Без группы`, editable group names, group creation/deletion, visibility toggles, section-local up/down ordering, and group assignment selects.
-- Kept the parent picker group-agnostic and made it always submit `[]`.
-- Wired desktop and mobile child pickers to the active view groups and extended `saveActiveViewColumns` to persist the groups supplied by the picker.
-- Preserved existing groups for non-picker child-column saves from `DealsTable`.
+## Interfaces
+- `dealBoardSortToSortingState(sort)` / `sortingStateToDealBoardSort(state)` — `AscNullsFirst`↔asc, `DescNullsLast`↔desc; drops `__expand`
+- `PARENT_EXPAND_COLUMN`, `withParentExpandColumn(columns)`
+- `DealsDataTable`: `sort`, `onSortChange` — header click → server refetch (no `getSortedRowModel`)
+- `DealsBoard`: `sortSession` overrides view sort; reset on view change / filter reset
 
-## Verification
+## Tests
+```
+node node_modules/vitest/dist/cli.js run --config vitest.unit.config.ts
+→ 61 files, 348 tests passed (+4 parent-table-sort)
+```
 
-- `corepack yarn test:unit src/deals-board/utils/column-picker-groups.test.ts`
-  - Red: 6 expected `Not implemented` failures.
-  - Green: 1 file, 6 tests passed.
-- `corepack yarn test:unit`
-  - Passed: 49 files, 279 tests.
-- `corepack yarn lint`
-  - Passed with 0 errors and 5 pre-existing unused-variable warnings.
-- `corepack yarn twenty dev:build`
-  - Passed, including the Twenty CLI typecheck.
-- `corepack yarn tsc -b --pretty false`
-  - Remains blocked by pre-existing repository type errors; none were reported in Task 7 files.
-- `git diff --check`
-  - Passed.
+## Lint
+```
+npx oxlint … → 0 errors (2 pre-existing warnings: DealRow isHovered, DealsBoard opportunityLinkFieldNames)
+```
+
+## Self-review
+- Sort query key now includes `effectiveSort` — fixes stale fetch on header toggle.
+- Expand split into dedicated pinned column; name cell uses `hideExpandButton`.
+- Pinned cells carry `backgroundColor` + inset accent + sticky shadow on name.
+- `GlobalThemeStyles` unchanged — inline sticky styles sufficient.
+
+## Commit
+**Not created** — `git commit` failed (`Author identity unknown`). Staged files ready; message: `feat: TanStack header sort and sticky columns with stage colors`.
 
 ## Concerns
+1. Manual smoke: horizontal scroll + header sort + pinned stage colors.
+2. Session sort not persisted to view on save (by design v1; persist deferred).
+3. Commit requires local git user.name/email without changing agent git config.
 
-- Repository-wide `tsc -b` remains red due to existing unrelated type errors, although the supported Twenty app build and its typecheck pass.
+## Follow-up fix (import)
+- **Issue:** `DealRow.tsx` imported `PARENT_EXPAND_COLUMN_FIELD` from `build-parent-columns`, but that constant is defined in `parent-table-sort.ts` and not re-exported.
+- **Fix:** Import `PARENT_EXPAND_COLUMN_FIELD` directly from `./parent-table-sort`; keep `PARENT_EXPAND_COLUMN` from `./build-parent-columns`.
+- **Tests:** `parent-table-sort.test.ts` — 4 passed.
