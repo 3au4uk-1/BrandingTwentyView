@@ -27,6 +27,9 @@ type DealRowProps = {
   onToggleExpand: (id: string) => void;
   opportunityLinkFields: FieldDescriptor[];
   filters?: LineItemQueryFilters;
+  hasLineItemFilters?: boolean;
+  showAllPositions?: boolean;
+  onToggleShowAllPositions?: () => void;
   onChildColumnResizeStart: (
     event: MouseEvent | PointerEvent,
     field: string,
@@ -50,6 +53,9 @@ export const DealRow = ({
   onToggleExpand,
   opportunityLinkFields,
   filters,
+  hasLineItemFilters = false,
+  showAllPositions = false,
+  onToggleShowAllPositions,
   onChildColumnResizeStart,
 }: DealRowProps) => {
   const theme = useTheme();
@@ -133,6 +139,9 @@ export const DealRow = ({
               groups={childGroups}
               descriptorByField={childDescriptorByField}
               filters={filters}
+              hasLineItemFilters={hasLineItemFilters}
+              showAllPositions={showAllPositions}
+              onToggleShowAllPositions={onToggleShowAllPositions}
               onColumnResizeStart={onChildColumnResizeStart}
             />
           </td>

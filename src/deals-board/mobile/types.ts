@@ -26,6 +26,7 @@ export type MobileDealsBoardProps = {
   totalPages: number;
   showAll: boolean;
   maxRecordsReached?: boolean;
+  activeFilterCount?: number;
   quickFilters: QuickFiltersValue;
   onQuickFiltersChange: (next: QuickFiltersValue) => void;
   onQuickFiltersReset: () => void;

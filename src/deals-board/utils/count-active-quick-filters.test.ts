@@ -1,37 +1,46 @@
 import { describe, expect, it } from 'vitest';
 
-import type { QuickFiltersValue } from '../QuickFiltersBar';
+import type { FilterClause } from '../filter-model/types';
 import { countActiveQuickFilters } from './count-active-quick-filters';
 
-const EMPTY: QuickFiltersValue = {
-  datePreset: null,
-  stages: [],
-  types: [],
-  companyIds: [],
-  oplata: 'all',
-  search: '',
-};
+const VIEW_CLAUSES: FilterClause[] = [
+  { id: '1', level: 'lineItem', field: 'stage', operator: 'in', value: ['GOTOVO'] },
+];
 
 describe('countActiveQuickFilters', () => {
-  it('returns 0 for defaults', () => {
-    expect(countActiveQuickFilters(EMPTY)).toBe(0);
+  it('returns 0 for empty session and view', () => {
+    expect(countActiveQuickFilters({}, {}, [])).toBe(0);
   });
 
-  it('counts date preset, stages, types, companies, oplata, search', () => {
+  it('counts date preset, clause groups, and search', () => {
     expect(
-      countActiveQuickFilters({
-        ...EMPTY,
-        datePreset: 'today',
-        stages: ['V_PECHATI'],
-        types: ['BANNERA'],
-        companyIds: ['c1'],
-        oplata: 'filled',
-        search: 'test',
-      }),
-    ).toBe(6);
+      countActiveQuickFilters(
+        {
+          datePreset: 'today',
+          search: 'test',
+          sessionClauses: [
+            { id: '1', level: 'lineItem', field: 'stage', operator: 'in', value: ['GOTOVO'] },
+            { id: '2', level: 'lineItem', field: 'tip', operator: 'in', value: ['BANNERA'] },
+            { id: '3', level: 'deal', field: 'companyId', operator: 'in', value: ['c1'] },
+          ],
+        },
+        {},
+        [],
+      ),
+    ).toBe(5);
+  });
+
+  it('uses view clauses when session is undefined', () => {
+    expect(
+      countActiveQuickFilters(
+        { search: 'deal' },
+        { datePreset: 'week' },
+        VIEW_CLAUSES,
+      ),
+    ).toBe(3);
   });
 
   it('ignores whitespace-only search', () => {
-    expect(countActiveQuickFilters({ ...EMPTY, search: '   ' })).toBe(0);
+    expect(countActiveQuickFilters({ search: '   ' }, {}, [])).toBe(0);
   });
 });

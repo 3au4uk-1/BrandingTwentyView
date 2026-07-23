@@ -33,7 +33,18 @@ import { crmFieldNamesFromColumns, fieldTypesByNameFromDescriptors, needsCompany
 import { mergeColumns } from './metadata/merge-columns';
 import { useObjectFields } from './metadata/useObjectFields';
 import { VIRTUAL_PARENT_FIELD_DESCRIPTORS } from './metadata/virtual-columns';
-import { QuickFiltersBar, type QuickFiltersValue } from './QuickFiltersBar';
+import { FilterBar } from './FilterBar';
+import { filterDealsAndLineItems } from './filter-model/apply-line-item-filters';
+import { clausesToDealBoardFilters } from './filter-model/clauses-to-deal-board-filters';
+import {
+  buildPersistedViewFilters,
+  filterSessionToQuickFilters,
+  quickFiltersToFilterSession,
+} from './filter-model/filter-session-bridge';
+import { hasLineItemFilterClauses } from './filter-model/has-line-item-filter-clauses';
+import { migrateLegacyFilters } from './filter-model/migrate-legacy-filters';
+import { getEffectiveClauses } from './filter-model/session';
+import type { FilterState } from './filter-model/types';
 import type {
   ColumnGroupConfig,
   DealBoardViewRecord,
@@ -46,8 +57,8 @@ import { CancelOtmenaProvider } from './ui/CancelOtmenaPopup';
 import { ManualSyncErrorToastProvider } from './ui/ManualSyncErrorToast';
 import { PortalHostProvider } from './ui/PortalHostContext';
 import { DEALS_BOARD_ROOT_ID } from './utils/dom';
-import { mergeCompanyFilters, mergeStageFilters, mergeTypeFilters } from './utils/filters';
 import { resolveActiveDealBoardView } from './utils/resolve-active-view';
+import { countActiveQuickFilters } from './utils/count-active-quick-filters';
 import {
   DESKTOP_PAGE_SIZE,
   MOBILE_MAX_RECORDS,
@@ -61,16 +72,7 @@ import { ViewSwitcher } from './ViewSwitcher';
 
 const queryClient = new QueryClient();
 
-const DEFAULT_QUICK_FILTERS: QuickFiltersValue = {
-  datePreset: null,
-  dateFrom: undefined,
-  dateTo: undefined,
-  stages: [],
-  types: [],
-  companyIds: [],
-  oplata: 'all',
-  search: '',
-};
+const EMPTY_FILTER_SESSION: Partial<FilterState> = {};
 
 const DealsBoardContent = () => {
   const theme = useTheme();
@@ -89,7 +91,8 @@ const DealsBoardContent = () => {
   const [page, setPage] = useState(0);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editViewDraft, setEditViewDraft] = useState<DealBoardViewRecord>();
-  const [quickFilters, setQuickFilters] = useState<QuickFiltersValue>(DEFAULT_QUICK_FILTERS);
+  const [filterSession, setFilterSession] = useState<Partial<FilterState>>(EMPTY_FILTER_SESSION);
+  const [showAllPositionOppIds, setShowAllPositionOppIds] = useState<Set<string>>(() => new Set());
   const views = asArray<DealBoardViewRecord>(viewsQuery.data);
   const hasPrintGroupMigrationAttemptedRef = useRef(false);
 
@@ -143,54 +146,93 @@ const DealsBoardContent = () => {
 
   useEffect(() => {
     setPage(0);
+    setAccumulatedRecords([]);
+    setFilterSession(EMPTY_FILTER_SESSION);
+    setShowAllPositionOppIds(new Set());
+  }, [activeView?.id]);
+
+  const viewClauses = useMemo(
+    () => migrateLegacyFilters(activeView?.filters ?? {}),
+    [activeView?.filters],
+  );
+
+  const effectiveClauses = useMemo(
+    () => getEffectiveClauses(viewClauses, filterSession.sessionClauses),
+    [filterSession.sessionClauses, viewClauses],
+  );
+
+  const mergedFilters = useMemo(() => {
+    const boardFilters = clausesToDealBoardFilters(
+      effectiveClauses,
+      filterSession.datePreset ?? activeView?.filters?.datePreset,
+      filterSession.dateFrom ?? activeView?.filters?.dateFrom,
+      filterSession.dateTo ?? activeView?.filters?.dateTo,
+      filterSession.search ?? activeView?.filters?.search,
+    );
+
+    return {
+      ...boardFilters,
+      showAll: activeView?.filters?.showAll,
+    };
   }, [
-    activeView?.id,
-    quickFilters.datePreset,
-    quickFilters.dateFrom,
-    quickFilters.dateTo,
-    quickFilters.search,
-    (quickFilters.stages ?? []).join(','),
-    (quickFilters.types ?? []).join(','),
-    (quickFilters.companyIds ?? []).join(','),
+    activeView?.filters?.dateFrom,
+    activeView?.filters?.datePreset,
+    activeView?.filters?.dateTo,
+    activeView?.filters?.search,
+    activeView?.filters?.showAll,
+    effectiveClauses,
+    filterSession.dateFrom,
+    filterSession.datePreset,
+    filterSession.dateTo,
+    filterSession.search,
   ]);
 
-  const mergedStages = useMemo(
-    () => mergeStageFilters(activeView?.filters?.stages, quickFilters.stages),
-    [activeView?.filters?.stages, quickFilters.stages],
-  );
-
-  const mergedTypes = useMemo(
-    () => mergeTypeFilters(activeView?.filters?.types, quickFilters.types),
-    [activeView?.filters?.types, quickFilters.types],
-  );
-
-  const mergedCompanyIds = useMemo(
-    () => mergeCompanyFilters(activeView?.filters?.companyIds, quickFilters.companyIds),
-    [activeView?.filters?.companyIds, quickFilters.companyIds],
-  );
-
-  const mergedFilters = useMemo(
+  const filterBarValue = useMemo<FilterState>(
     () => ({
-      ...(activeView?.filters ?? {}),
-      datePreset: quickFilters.datePreset ?? activeView?.filters?.datePreset,
-      dateFrom: quickFilters.dateFrom ?? activeView?.filters?.dateFrom,
-      dateTo: quickFilters.dateTo ?? activeView?.filters?.dateTo,
-      search: quickFilters.search.trim() || activeView?.filters?.search,
-      stages: mergedStages,
-      types: mergedTypes,
-      companyIds: mergedCompanyIds,
+      datePreset: filterSession.datePreset ?? activeView?.filters?.datePreset,
+      dateFrom: filterSession.dateFrom ?? activeView?.filters?.dateFrom,
+      dateTo: filterSession.dateTo ?? activeView?.filters?.dateTo,
+      search: filterSession.search ?? activeView?.filters?.search ?? '',
+      clauses: viewClauses,
+      sessionClauses: filterSession.sessionClauses,
     }),
-    [
-      activeView?.filters,
-      mergedCompanyIds,
-      mergedStages,
-      mergedTypes,
-      quickFilters.dateFrom,
-      quickFilters.datePreset,
-      quickFilters.dateTo,
-      quickFilters.search,
-    ],
+    [activeView?.filters, filterSession, viewClauses],
   );
+
+  const mobileQuickFilters = useMemo(
+    () => filterSessionToQuickFilters(filterSession, activeView?.filters ?? {}, viewClauses),
+    [activeView?.filters, filterSession, viewClauses],
+  );
+
+  const hasLineItemFilters = useMemo(
+    () => hasLineItemFilterClauses(effectiveClauses),
+    [effectiveClauses],
+  );
+
+  const activeFilterCount = countActiveQuickFilters(
+    filterSession,
+    activeView?.filters ?? {},
+    viewClauses,
+  );
+
+  const effectiveClauseKey = useMemo(
+    () =>
+      effectiveClauses
+        .map((clause) => `${clause.id}:${clause.level}:${clause.field}:${JSON.stringify(clause.value)}`)
+        .join('|'),
+    [effectiveClauses],
+  );
+
+  useEffect(() => {
+    setPage(0);
+  }, [
+    activeView?.id,
+    filterSession.datePreset,
+    filterSession.dateFrom,
+    filterSession.dateTo,
+    filterSession.search,
+    effectiveClauseKey,
+  ]);
 
   const parentFieldsQuery = useObjectFields('opportunity');
   const childFieldsQuery = useObjectFields('dealLineItem');
@@ -273,6 +315,7 @@ const DealsBoardContent = () => {
     restFieldNames: opportunityRestFieldNames,
     includeCompanyRelation,
     fieldTypesByName: parentFieldTypesByName,
+    effectiveClauses,
     enabled:
       !viewsQuery.isLoading &&
       !viewsQuery.isSeedingDefault &&
@@ -294,10 +337,10 @@ const DealsBoardContent = () => {
 
   const lineItemQueryFilters = useMemo(
     () =>
-      mergedStages?.length || mergedTypes?.length
-        ? { stages: mergedStages, types: mergedTypes }
+      mergedFilters.stages?.length || mergedFilters.types?.length
+        ? { stages: mergedFilters.stages, types: mergedFilters.types }
         : undefined,
-    [mergedStages, mergedTypes],
+    [mergedFilters.stages, mergedFilters.types],
   );
 
   const lineItemsQuery = useLineItems(
@@ -307,33 +350,71 @@ const DealsBoardContent = () => {
   );
   const lineItems = asArray<LineItemRow>(lineItemsQuery.data);
 
+  const lineItemsByOppId = useMemo(() => {
+    const grouped: Record<string, LineItemRow[]> = {};
+    for (const item of lineItems) {
+      (grouped[item.opportunityId] ??= []).push(item);
+    }
+    return grouped;
+  }, [lineItems]);
+
+  const filteredBoardData = useMemo(() => {
+    if (!hasLineItemFilters) {
+      return {
+        deals: records,
+        lineItemsByOppId,
+      };
+    }
+
+    return filterDealsAndLineItems({
+      deals: records,
+      lineItemsByOppId,
+      clauses: effectiveClauses,
+      showAllPositionOppIds,
+    });
+  }, [effectiveClauses, hasLineItemFilters, lineItemsByOppId, records, showAllPositionOppIds]);
+
   const recordsById = useMemo(
-    () => new Map(records.map((record) => [record.id, record])),
-    [records],
+    () => new Map(filteredBoardData.deals.map((record) => [record.id, record])),
+    [filteredBoardData.deals],
   );
 
   const visibleLineItems = useMemo(() => {
+    const flat = Object.values(filteredBoardData.lineItemsByOppId).flat();
     const search = normalizeSearchTerm(mergedFilters.search);
-    if (!search) return lineItems;
-    return filterLineItemsForSearch(lineItems, search, recordsById);
-  }, [lineItems, mergedFilters.search, recordsById]);
+    if (!search) return flat;
+    return filterLineItemsForSearch(flat, search, recordsById);
+  }, [filteredBoardData.lineItemsByOppId, mergedFilters.search, recordsById]);
 
-  const lineItemMatchedOpportunityIds = useMemo(() => {
-    if (!mergedStages?.length && !mergedTypes?.length) {
-      return undefined;
-    }
-    return new Set(lineItems.map((item) => item.opportunityId));
-  }, [lineItems, mergedStages, mergedTypes]);
+  const visibleRecords = filteredBoardData.deals;
+  const visibleTotalCount = hasLineItemFilters ? visibleRecords.length : totalCount;
 
-  const visibleRecords = useMemo(() => {
-    if (!lineItemMatchedOpportunityIds) {
-      return records;
-    }
+  const handleFilterBarChange = (next: FilterState) => {
+    setFilterSession({
+      sessionClauses: next.sessionClauses,
+      datePreset: next.datePreset,
+      dateFrom: next.dateFrom,
+      dateTo: next.dateTo,
+      search: next.search,
+    });
+  };
 
-    return records.filter((record) => lineItemMatchedOpportunityIds.has(record.id));
-  }, [records, lineItemMatchedOpportunityIds]);
+  const handleFilterReset = () => {
+    setFilterSession(EMPTY_FILTER_SESSION);
+    setShowAllPositionOppIds(new Set());
+  };
 
-  const visibleTotalCount = lineItemMatchedOpportunityIds ? visibleRecords.length : totalCount;
+  const handleToggleShowAllPositions = (opportunityId: string) => {
+    setShowAllPositionOppIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(opportunityId)) {
+        next.delete(opportunityId);
+      } else {
+        next.add(opportunityId);
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (effectiveShowAll) {
@@ -368,16 +449,38 @@ const DealsBoardContent = () => {
 
   const displayLineItems = useMemo(() => {
     if (!mobileLayoutActive) return visibleLineItems;
+
+    const sourceItems = mobileLineItems.length > 0 ? mobileLineItems : lineItems;
+    let scoped = sourceItems;
+
+    if (hasLineItemFilters) {
+      const mobileLineItemsByOppId: Record<string, LineItemRow[]> = {};
+      for (const item of sourceItems) {
+        (mobileLineItemsByOppId[item.opportunityId] ??= []).push(item);
+      }
+      scoped = Object.values(
+        filterDealsAndLineItems({
+          deals: mobileRecords,
+          lineItemsByOppId: mobileLineItemsByOppId,
+          clauses: effectiveClauses,
+          showAllPositionOppIds,
+        }).lineItemsByOppId,
+      ).flat();
+    }
+
     const search = normalizeSearchTerm(mergedFilters.search);
-    const scoped = mobileLineItems.length > 0 ? mobileLineItems : visibleLineItems;
     if (!search) return scoped;
     const recordsByMobileId = new Map(mobileRecords.map((record) => [record.id, record]));
     return filterLineItemsForSearch(scoped, search, recordsByMobileId);
   }, [
+    effectiveClauses,
+    hasLineItemFilters,
+    lineItems,
     mobileLayoutActive,
     mobileLineItems,
     mobileRecords,
     mergedFilters.search,
+    showAllPositionOppIds,
     visibleLineItems,
   ]);
 
@@ -426,10 +529,9 @@ const DealsBoardContent = () => {
       await updateViewMutation.mutateAsync({
         id: activeView.id,
         data: {
-          filters: {
-            ...activeView.filters,
+          filters: buildPersistedViewFilters(activeView.filters, {
             showAll: nextShowAll,
-          },
+          }),
         },
       });
       setPage(0);
@@ -513,9 +615,10 @@ const DealsBoardContent = () => {
           totalPages={totalPages}
           showAll={effectiveShowAll}
           maxRecordsReached={mobileRecords.length >= MOBILE_MAX_RECORDS}
-          quickFilters={quickFilters}
-          onQuickFiltersChange={setQuickFilters}
-          onQuickFiltersReset={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
+          activeFilterCount={activeFilterCount}
+          quickFilters={mobileQuickFilters}
+          onQuickFiltersChange={(next) => setFilterSession(quickFiltersToFilterSession(next))}
+          onQuickFiltersReset={handleFilterReset}
           onPageChange={setPage}
           onSelectView={setActiveViewId}
           onCreateView={() => setIsCreateModalOpen(true)}
@@ -526,7 +629,7 @@ const DealsBoardContent = () => {
           onChildColumnsSave={(columns, groups) =>
             saveActiveViewColumns('child', columns, groups)
           }
-          onResetFilters={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
+          onResetFilters={handleFilterReset}
           isLoading={opportunitiesQuery.isLoading}
           isViewLoading={viewsQuery.isLoading || viewsQuery.isSeedingDefault}
           errorMessage={
@@ -570,10 +673,13 @@ const DealsBoardContent = () => {
                   }}
                 />
 
-                <QuickFiltersBar
-                  value={quickFilters}
-                  onChange={setQuickFilters}
-                  onReset={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
+                <FilterBar
+                  value={filterBarValue}
+                  viewClauses={viewClauses}
+                  onChange={handleFilterBarChange}
+                  onReset={handleFilterReset}
+                  parentFields={parentFieldsQuery.data ?? []}
+                  childFields={childFieldsQuery.data ?? []}
                 />
 
                 <ExpandModeToggle />
@@ -721,11 +827,14 @@ const DealsBoardContent = () => {
               records={visibleRecords}
               lineItems={visibleLineItems}
               lineItemFilters={lineItemQueryFilters}
+              hasLineItemFilters={hasLineItemFilters}
+              showAllPositionOppIds={showAllPositionOppIds}
+              onToggleShowAllPositions={handleToggleShowAllPositions}
               totalCount={visibleTotalCount}
               page={page}
               totalPages={totalPages}
               onPageChange={setPage}
-              onResetFilters={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
+              onResetFilters={handleFilterReset}
               onParentColumnsSave={(columns) => saveActiveViewColumns('parent', columns)}
               onChildColumnsSave={(columns) =>
                 saveActiveViewColumns('child', columns, activeView?.childGroups ?? [])

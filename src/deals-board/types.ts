@@ -2,6 +2,8 @@ import type { LineItemType } from 'src/constants/line-item-types';
 import type { LineItemStage } from 'src/constants/stages';
 import type { ViewVisibility } from 'src/constants/view-visibility';
 
+import type { FilterClause } from './filter-model/types';
+
 export type ColumnGroupConfig = {
   id: string;
   name: string;
@@ -36,6 +38,7 @@ export type DealBoardFilters = {
   search?: string;
   showAll?: boolean;
   companyIds?: string[];
+  clauses?: FilterClause[];
 };
 
 export type DealBoardSort = { field: string; direction: 'AscNullsFirst' | 'DescNullsLast' };

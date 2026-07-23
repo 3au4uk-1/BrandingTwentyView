@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { OPPORTUNITY_DATE_FILTER_FIELD } from 'src/constants/date-filter-field';
 
+import type { FilterClause } from '../filter-model/types';
 import { fetchOpportunities } from '../api/opportunities';
 import { shouldFetchAllOpportunities } from '../utils/date-filters';
 import { getEffectiveOpportunitySort } from '../utils/sort-opportunities';
@@ -49,6 +50,7 @@ export const useOpportunities = (params: {
   showAll?: boolean;
   forcePaginated?: boolean;
   enabled?: boolean;
+  effectiveClauses?: FilterClause[];
 }) => {
   const pageSize = params.pageSize ?? DEFAULT_PAGE_SIZE;
   const visibleCrmFieldNames = params.visibleCrmFieldNames ?? [];
@@ -61,7 +63,9 @@ export const useOpportunities = (params: {
     params.sort.length > 0 ? params.sort : DEFAULT_DATE_SORT,
   );
   const fetchAll =
-    !forcePaginated && (showAll || shouldFetchAllOpportunities(params.filters, effectiveSort));
+    !forcePaginated &&
+    (showAll ||
+      shouldFetchAllOpportunities(params.filters, effectiveSort, params.effectiveClauses));
 
   return useQuery({
     queryKey: opportunitiesQueryKey(

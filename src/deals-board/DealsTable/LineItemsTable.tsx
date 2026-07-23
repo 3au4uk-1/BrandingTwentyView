@@ -11,6 +11,7 @@ import { useCreateLineItem } from '../hooks/useLineItems';
 import { useLineItemGroupExpand } from '../hooks/useLineItemGroupExpand';
 import type { FieldDescriptor } from '../metadata/types';
 import { useTheme } from '../theme/ThemeContext';
+import { Button } from '../ui/Button';
 import { getColumnWidth, getTableLayoutStyle, sumColumnWidths } from '../utils/columns';
 import {
   buildChildLayoutColumns,
@@ -33,6 +34,9 @@ type LineItemsTableProps = {
   groups: ColumnGroupConfig[];
   descriptorByField: Map<string, FieldDescriptor>;
   filters?: LineItemQueryFilters;
+  hasLineItemFilters?: boolean;
+  showAllPositions?: boolean;
+  onToggleShowAllPositions?: () => void;
   onColumnResizeStart: (
     event: MouseEvent | PointerEvent,
     field: string,
@@ -49,6 +53,9 @@ export const LineItemsTable = ({
   groups,
   descriptorByField,
   filters,
+  hasLineItemFilters = false,
+  showAllPositions = false,
+  onToggleShowAllPositions,
   onColumnResizeStart,
 }: LineItemsTableProps) => {
   const theme = useTheme();
@@ -93,6 +100,18 @@ export const LineItemsTable = ({
 
   return (
     <div style={{ padding: `${spacing.xs} ${spacing.md} ${spacing.sm} 28px` }}>
+      {hasLineItemFilters && onToggleShowAllPositions ? (
+        <div style={{ marginBottom: spacing.xs }}>
+          <Button
+            theme={theme}
+            variant="ghost"
+            size="sm"
+            onClick={onToggleShowAllPositions}
+          >
+            {showAllPositions ? 'Только совпадения' : 'Показать все позиции'}
+          </Button>
+        </div>
+      ) : null}
       <div
         style={{
           borderLeft: `2px solid ${colors.borderStrong}`,

@@ -50,6 +50,9 @@ type DealsTableProps = {
   records: OpportunityRow[];
   lineItems: LineItemRow[];
   lineItemFilters?: LineItemQueryFilters;
+  hasLineItemFilters?: boolean;
+  showAllPositionOppIds?: Set<string>;
+  onToggleShowAllPositions?: (opportunityId: string) => void;
   totalCount: number;
   page: number;
   totalPages: number;
@@ -75,6 +78,9 @@ export const DealsTable = ({
   records,
   lineItems,
   lineItemFilters,
+  hasLineItemFilters = false,
+  showAllPositionOppIds,
+  onToggleShowAllPositions,
   totalCount,
   page,
   totalPages,
@@ -429,6 +435,13 @@ export const DealsTable = ({
                     onToggleExpand={toggleExpand}
                     opportunityLinkFields={opportunityLinkFields}
                     filters={lineItemFilters}
+                    hasLineItemFilters={hasLineItemFilters}
+                    showAllPositions={showAllPositionOppIds?.has(row.id) ?? false}
+                    onToggleShowAllPositions={
+                      onToggleShowAllPositions
+                        ? () => onToggleShowAllPositions(row.id)
+                        : undefined
+                    }
                   />
                 </Fragment>
               );

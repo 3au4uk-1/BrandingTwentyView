@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 
-import { countActiveQuickFilters } from '../utils/count-active-quick-filters';
 import { useDealExpandState } from '../hooks/useDealExpandState';
 import { useExpandMode } from '../hooks/useExpandMode';
 import { useTheme } from '../theme/ThemeContext';
@@ -32,6 +31,7 @@ export const MobileDealsBoard = (props: MobileDealsBoardProps) => {
     totalPages,
     showAll,
     maxRecordsReached = false,
+    activeFilterCount = 0,
     quickFilters,
     onQuickFiltersChange,
     onQuickFiltersReset,
@@ -100,7 +100,7 @@ export const MobileDealsBoard = (props: MobileDealsBoardProps) => {
     setFiltersSheetOpen(true);
   };
 
-  const activeFilterCount = countActiveQuickFilters(quickFilters);
+  const activeFilterCountValue = activeFilterCount;
   const hasMore = !showAll && !maxRecordsReached && page < totalPages - 1;
 
   return (
@@ -117,7 +117,7 @@ export const MobileDealsBoard = (props: MobileDealsBoardProps) => {
         onOpenViewSheet={openViewSheet}
         onOpenSettingsSheet={openSettingsSheet}
         onOpenFiltersSheet={openFiltersSheet}
-        activeFilterCount={activeFilterCount}
+        activeFilterCount={activeFilterCountValue}
       />
 
       {errorMessage ? (
