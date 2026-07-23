@@ -1,13 +1,19 @@
 import { useState } from 'react';
 
 import { DynamicFieldCell } from '../cells/DynamicFieldCell';
-import { GroupColumnCell } from '../cells/GroupColumnCell';
+import { GroupChipsCell } from '../cells/GroupChipsCell';
+import { GroupFieldStrip } from '../cells/GroupFieldStrip';
 import { Chip, type ChipColor } from '../Chip';
+import { useLineItemGroupExpand } from '../hooks/useLineItemGroupExpand';
 import type { FieldDescriptor } from '../metadata/types';
 import { useTheme } from '../theme/ThemeContext';
 import { ChevronRightIcon } from '../ui/Icons';
 import { visibleColumns } from '../utils/columns';
-import { buildChildLayoutColumns } from '../utils/column-groups';
+import {
+  buildChildLayoutColumns,
+  partitionUngroupedAndGroups,
+} from '../utils/column-groups';
+import { findActiveGroupMembers } from '../utils/active-group';
 import { resolveFieldValue } from '../utils/resolve-field-value';
 import { getStageLabel, getStageColor } from 'src/constants/stages';
 import type { ColumnConfig, ColumnGroupConfig, LineItemRow } from '../types';
@@ -51,9 +57,9 @@ export const MobileLineItemRow = ({
     clearHeaderFieldGroupIds(detailFields, MOBILE_LINE_ITEM_HEADER_FIELDS),
     groups,
   );
-  const flatVisibleFields = detailLayout
-    .filter((entry) => !('type' in entry))
-    .map((entry) => entry.field);
+  const { ungrouped, groupEntries } = partitionUngroupedAndGroups(detailLayout);
+  const flatVisibleFields = ungrouped.map((entry) => entry.field);
+  const groupExpansion = useLineItemGroupExpand();
 
   const renderField = (column: ColumnConfig) => (
     <DynamicFieldCell
@@ -160,30 +166,45 @@ export const MobileLineItemRow = ({
               {renderField(header.find((column) => column.field === 'name')!)}
             </MobileFieldStack>
           ) : null}
-          {detailLayout.map((entry) =>
-            'type' in entry ? (
-              <div key={entry.group.id} style={{ padding: `${spacing.xs} 0` }}>
-                <GroupColumnCell
-                  group={entry.group}
-                  members={entry.members}
-                  item={item}
-                  descriptorByField={descriptorByField}
-                  listMenuPresentation="sheet"
-                  touchFriendly
-                  keepChipStyleWhenExpanded
-                  renderMember={(member, cell) => (
-                    <MobileFieldStack label={member.label} compact>
-                      {cell}
-                    </MobileFieldStack>
-                  )}
-                />
+          {ungrouped.map((entry) => (
+            <MobileFieldStack key={entry.field} label={entry.label} compact>
+              {renderField(entry)}
+            </MobileFieldStack>
+          ))}
+          {groupEntries.length > 0 ? (
+            <div
+              style={{
+                display: 'grid',
+                gap: spacing.sm,
+                minWidth: 0,
+                padding: `${spacing.xs} 0`,
+              }}
+            >
+              <div style={{ minWidth: 0, overflowX: 'auto' }}>
+                <div style={{ width: 'max-content', minWidth: '100%' }}>
+                  <GroupChipsCell
+                    groups={groupEntries}
+                    item={item}
+                    isExpanded={groupExpansion.isExpanded}
+                    onToggle={groupExpansion.toggle}
+                  />
+                </div>
               </div>
-            ) : (
-              <MobileFieldStack key={entry.field} label={entry.label} compact>
-                {renderField(entry)}
-              </MobileFieldStack>
-            ),
-          )}
+              <GroupFieldStrip
+                members={
+                  findActiveGroupMembers(
+                    groupEntries,
+                    item.id,
+                    groupExpansion.isExpanded,
+                  ) ?? []
+                }
+                item={item}
+                descriptorByField={descriptorByField}
+                listMenuPresentation="sheet"
+                touchFriendly
+              />
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>
