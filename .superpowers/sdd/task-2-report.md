@@ -1,98 +1,96 @@
-# Task 2 Report: Wire views API + call-site defaults for `childGroups`
+# Task 2 Report: Board — visible sync errors + retry
 
-## Status
+## Status: DONE
 
-**Complete.** Remaining Task 2 work implemented; Task 1 had already covered `mapViewRecord` parsing and `childGroups: []` defaults on seeds/fixtures.
+## Summary
 
-## What changed
+Silent parser sync failures for manual line items now surface via a portal toast with «Повторить» retry. Added `manual-sync-notify` handler registry (mirrors `cancel-otmena-notify`), `ManualSyncErrorToastProvider` wired next to `CancelOtmenaProvider`, and notify calls in `syncNewManualLineItemToParser` / `syncManualLineItemAfterUpdate`. Exported `retryManualLineItemSync`. `useLineItems` unchanged — create/update paths already call sync helpers that now notify.
 
-### Already done (Task 1)
+## TDD Evidence
 
-- `mapViewRecord` uses `parseChildColumnsPayload` → sets `childColumns` + `childGroups`
-- `childGroups: []` on view seeds (`useDealBoardViews.ts`), `ViewSettingsModal` create payload, and `resolve-active-view.test.ts` fixture
+### RED — Step 2
 
-### This session
-
-**`src/deals-board/api/views.ts`**
-
-- Imported `serializeChildColumnsPayload`
-- Added `serializeViewMutationData` helper:
-  - Strips in-memory-only `childGroups` from mutation payload
-  - When `childColumns` is present, writes v2 `{ version: 2, columns, groups }` via `serializeChildColumnsPayload(columns, childGroups ?? [])`
-  - Partial updates without `childColumns` pass through unchanged (filters/sort/isDefault only)
-- `createDealBoardView` and `updateDealBoardView` both route mutation `data` through `serializeViewMutationData`
-
-## Commits
-
-| SHA | Message |
-|-----|---------|
-| 685b775 | `feat: load and save childGroups on deal board views` |
-
-Prior Task 1 commits on branch: `9187153`, `b66e16d`, `cecb5cc`.
-
-## Test summary
-
+Command:
 ```
-corepack yarn test:unit
-Test Files  44 passed (44)
-Tests       257 passed (257)
+node node_modules/vitest/dist/cli.js run --config vitest.unit.config.ts src/deals-board/hooks/useManualLineItemParserSync.test.ts
 ```
 
-Includes `columns-groups.test.ts` (parse/serialize) and `resolve-active-view.test.ts` (fixture with `childGroups: []`).
+Result: **FAIL** — `Cannot find module '../utils/manual-sync-notify'`
 
-## Concerns / follow-ups
+### GREEN — Step 4
 
-1. ~~**`saveActiveViewColumns` (DealsBoard.tsx)** still sends `{ childColumns: columns }` without `childGroups` — partial updates serialize with `groups: []`, which would wipe stored groups. Intentionally deferred to **Task 6** per plan.~~ **Fixed** (see follow-up commit below): child column saves now pass `childGroups: activeView.childGroups`.
-2. **No dedicated views API mapping test** — ~~round-trip covered indirectly by `columns-groups.test.ts`~~ **`views-mutation.test.ts` added** for `serializeViewMutationData` (pass-through, groups preserved, omitted-groups regression).
-3. **`childGroups`-only partial updates** are not supported (no columns to embed groups into) — acceptable for current API surface.
-4. **`serializeViewMutationData` JSDoc**: callers updating `childColumns` must pass `childGroups`; omitted groups still default to `[]` at serialize time.
-
----
-
-## Follow-up fix: `saveActiveViewColumns` group wipe (review finding)
-
-### Status
-
-**Complete.** Column-only saves no longer wipe stored `childGroups`.
-
-### What changed
-
-**`src/deals-board/DealsBoard.tsx`**
-
-- `saveActiveViewColumns('child', …)` now sends `{ childColumns, childGroups: activeView.childGroups }` so v2 serialization preserves existing groups.
-
-**`src/deals-board/api/views.ts`**
-
-- Exported `serializeViewMutationData` for unit testing.
-- Added JSDoc: callers updating `childColumns` must pass `childGroups`.
-
-**`src/deals-board/api/views-mutation.test.ts`** (new)
-
-- Pass-through when `childColumns` omitted.
-- Groups preserved when both `childColumns` + `childGroups` provided.
-- Regression: omitted `childGroups` still serializes `groups: []` (documents caller contract).
-
-### Commits
-
-| SHA | Message |
-|-----|---------|
-| 5177eec | `fix: preserve childGroups when saving child columns` |
-
-### Test summary
-
+Command:
 ```
-corepack yarn test:unit
-Test Files  45 passed (45)
-Tests       260 passed (260)
+node node_modules/vitest/dist/cli.js run --config vitest.unit.config.ts src/deals-board/hooks/useManualLineItemParserSync.test.ts
 ```
 
-Includes new `views-mutation.test.ts` (3 tests).
+Result: **15 passed** (includes 2 new notify-on-failure tests)
 
-## Files touched (Task 2 total)
+## Files Changed
 
 | File | Change |
 |------|--------|
-| `src/deals-board/api/views.ts` | Serialize on create/update |
-| `src/deals-board/hooks/useDealBoardViews.ts` | Task 1: `childGroups: []` seeds |
-| `src/deals-board/ViewSettingsModal.tsx` | Task 1: `childGroups: []` on create |
-| `src/deals-board/utils/resolve-active-view.test.ts` | Task 1: fixture default |
+| `src/deals-board/utils/manual-sync-notify.ts` | New: `notifyManualSyncError`, `registerManualSyncErrorHandler` |
+| `src/deals-board/ui/ManualSyncErrorToast.tsx` | New: portal toast «Не удалось сохранить позицию в parser» + «Повторить» |
+| `src/deals-board/hooks/useManualLineItemParserSync.ts` | Notify on failure; `retryManualLineItemSync`; throwing inner sync for retry |
+| `src/deals-board/hooks/useManualLineItemParserSync.test.ts` | 2 notify-on-failure tests |
+| `src/deals-board/DealsBoard.tsx` | Wrap `ManualSyncErrorToastProvider` inside `CancelOtmenaProvider` |
+
+## Implementation Notes
+
+- Retry closures call throwing inner helpers (`performNewManualLineItemSync`, `performUpdateSync`) so toast stays open on repeated failure.
+- Toast dismisses on successful retry or «Закрыть» / Escape; no auto-dismiss.
+- `useLineItems.ts`: no edit needed — `syncNewManualLineItemToParser` / `syncManualLineItemAfterUpdate` already invoked from create/update hooks.
+
+## Commit
+
+```
+3cd0f07 fix: surface manual line-item parser sync errors with retry
+```
+
+## Self-Review
+
+- Brief interfaces and Russian strings used verbatim.
+- Follows CancelOtmena portal/handler pattern.
+- Synced flag not set on failure (tests assert).
+- Fixed retry swallowing errors during self-review (inner perform* helpers throw).
+- No component-level toast test (brief only required hook unit tests).
+
+## Concerns
+
+1. **No UI/integration test** for toast render — manual QA recommended.
+2. **`retryManualLineItemSync` exported but unused** by toast (toast uses payload.retry); available for future callers per brief.
+3. **`corepack yarn test:unit` fails on this Windows path** (Cyrillic username / vitest.mjs resolution); tests run via `node node_modules/vitest/dist/cli.js`.
+
+---
+
+## Review fix: `retryManualLineItemSync` no-op + missing notify
+
+### Status
+
+**Complete.** Important review findings addressed.
+
+### What changed
+
+**`src/deals-board/hooks/useManualLineItemParserSync.ts`**
+
+- `retryManualLineItemSync` now always force-syncs the cached line item payload (bypasses `maybeSyncManualLineItemToParser` meaningful-change gate that no-op'd default unsynced items).
+- Marks synced only on first successful sync (`!syncedToParser`).
+- Wraps in try/catch; calls `notifyManualSyncError` on failure with `retry: () => retryManualLineItemSync(...)`.
+
+**`src/deals-board/hooks/useManualLineItemParserSync.test.ts`**
+
+- Added 3 tests: default unsynced retry syncs, already-synced force re-sync, notify on failure.
+
+### Test summary
+
+Command:
+```
+npm run test:unit -- src/deals-board/hooks/useManualLineItemParserSync.test.ts
+```
+
+Result: **18 passed** (3 new `retryManualLineItemSync` tests)
+
+### Commit
+
+(SHA appended after commit)

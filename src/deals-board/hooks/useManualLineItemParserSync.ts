@@ -86,23 +86,35 @@ export async function retryManualLineItemSync(
   queryClient: QueryClient,
   lineItemId: string,
 ): Promise<void> {
-  const lineItem = findLineItemInCache(queryClient, lineItemId);
-  if (!lineItem) return;
+  const performRetrySync = async (): Promise<void> => {
+    const lineItem = findLineItemInCache(queryClient, lineItemId);
+    if (!lineItem) return;
 
-  const baseline = getManualLineItemBaseline(queryClient, lineItemId);
-  if (!isManualLineItemOrigin(lineItem, baseline !== undefined)) return;
+    const baseline = getManualLineItemBaseline(queryClient, lineItemId);
+    if (!isManualLineItemOrigin(lineItem, baseline !== undefined)) return;
 
-  const syncedToParser = isManualLineItemSyncedToParser(queryClient, lineItemId);
+    const syncedToParser = isManualLineItemSyncedToParser(queryClient, lineItemId);
 
-  const didSync = await maybeSyncManualLineItemToParser({
-    lineItem,
-    patch: {},
-    baseline,
-    syncedToParser,
-  });
+    await syncManualLineItem(lineItemId, buildManualLineItemSyncPayload(lineItem));
 
-  if (didSync) {
-    setManualLineItemSyncedToParser(queryClient, lineItemId);
+    if (!syncedToParser) {
+      setManualLineItemSyncedToParser(queryClient, lineItemId);
+    }
+  };
+
+  try {
+    await performRetrySync();
+  } catch (error) {
+    const lineItem = findLineItemInCache(queryClient, lineItemId);
+    if (!lineItem) return;
+
+    console.error('Failed to retry manual line item sync to parser:', error);
+    notifyManualSyncError({
+      lineItemId,
+      opportunityId: lineItem.opportunityId,
+      message: syncErrorMessage(error),
+      retry: () => retryManualLineItemSync(queryClient, lineItemId),
+    });
   }
 }
 

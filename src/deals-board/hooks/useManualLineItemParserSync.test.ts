@@ -14,6 +14,7 @@ import {
   isManualLineItemOrigin,
   isManualLineItemSyncedToParser,
   maybeSyncManualLineItemToParser,
+  retryManualLineItemSync,
   setManualLineItemSyncedToParser,
   syncManualLineItemAfterUpdate,
   syncNewManualLineItemToParser,
@@ -224,6 +225,69 @@ describe('syncManualLineItemAfterUpdate', () => {
     await syncManualLineItemAfterUpdate(queryClient, 'li-1', { name: 'Баннер' });
 
     expect(notify).toHaveBeenCalled();
+    expect(isManualLineItemSyncedToParser(queryClient, 'li-1')).toBe(false);
+  });
+});
+
+describe('retryManualLineItemSync', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(syncManualLineItem).mockResolvedValue({ success: true });
+  });
+
+  it('syncs default unsynced manual line item from cache', async () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(['lineItems', ['opp-1'], undefined], [manualLineItem()]);
+    setManualLineItemBaseline(queryClient, 'li-1', defaultManualLineItemBaseline());
+
+    await retryManualLineItemSync(queryClient, 'li-1');
+
+    expect(syncManualLineItem).toHaveBeenCalledWith('li-1', {
+      opportunityId: 'opp-1',
+      name: DEFAULT_MANUAL_LINE_ITEM_NAME,
+      kolichestvo: 1,
+      amountMicros: 0,
+      currencyCode: 'RUB',
+    });
+    expect(isManualLineItemSyncedToParser(queryClient, 'li-1')).toBe(true);
+  });
+
+  it('force re-syncs already synced manual line items', async () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(['lineItems', ['opp-1'], undefined], [
+      manualLineItem({ name: 'Баннер' }),
+    ]);
+    setManualLineItemBaseline(queryClient, 'li-1', defaultManualLineItemBaseline());
+    setManualLineItemSyncedToParser(queryClient, 'li-1');
+
+    await retryManualLineItemSync(queryClient, 'li-1');
+
+    expect(syncManualLineItem).toHaveBeenCalledWith('li-1', {
+      opportunityId: 'opp-1',
+      name: 'Баннер',
+      kolichestvo: 1,
+      amountMicros: 0,
+      currencyCode: 'RUB',
+    });
+  });
+
+  it('notifies when retryManualLineItemSync fails', async () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(['lineItems', ['opp-1'], undefined], [manualLineItem()]);
+    setManualLineItemBaseline(queryClient, 'li-1', defaultManualLineItemBaseline());
+    vi.mocked(syncManualLineItem).mockRejectedValueOnce(new Error('network'));
+    const notify = vi.spyOn(manualSyncNotify, 'notifyManualSyncError');
+
+    await retryManualLineItemSync(queryClient, 'li-1');
+
+    expect(notify).toHaveBeenCalledWith(
+      expect.objectContaining({
+        lineItemId: 'li-1',
+        opportunityId: 'opp-1',
+        message: 'network',
+        retry: expect.any(Function),
+      }),
+    );
     expect(isManualLineItemSyncedToParser(queryClient, 'li-1')).toBe(false);
   });
 });
