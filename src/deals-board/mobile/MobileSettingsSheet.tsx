@@ -1,5 +1,6 @@
 import { ColumnPicker } from '../ColumnPicker';
 import { ExpandModeToggle } from '../ExpandModeToggle';
+import { GroupChipModeToggle } from '../GroupChipModeToggle';
 import { useTheme } from '../theme/ThemeContext';
 import { BottomSheet } from '../ui/BottomSheet';
 import { Button } from '../ui/Button';
@@ -37,6 +38,12 @@ export const MobileSettingsSheet = ({
             Режим раскрытия
           </div>
           <ExpandModeToggle />
+        </div>
+        <div>
+          <div style={{ fontSize: font.sizeXs, color: colors.textMuted, marginBottom: spacing.xs }}>
+            Отображение групп
+          </div>
+          <GroupChipModeToggle />
         </div>
         <div>
           <div style={{ fontSize: font.sizeXs, color: colors.textMuted, marginBottom: spacing.xs }}>

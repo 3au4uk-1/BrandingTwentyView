@@ -22,7 +22,9 @@ import { ColumnPicker } from './ColumnPicker';
 import { MobileDealsBoard } from './mobile/MobileDealsBoard';
 import { DealsTable } from './DealsTable/DealsTable';
 import { ExpandModeToggle } from './ExpandModeToggle';
+import { GroupChipModeToggle } from './GroupChipModeToggle';
 import { ExpandModeProvider } from './hooks/useExpandMode';
+import { GroupChipModeProvider } from './hooks/useGroupChipMode';
 import { useDealBoardViews, useUpdateDealBoardView } from './hooks/useDealBoardViews';
 import { useLineItems } from './hooks/useLineItems';
 import { useOpportunities } from './hooks/useOpportunities';
@@ -561,6 +563,7 @@ const DealsBoardContent = () => {
                 />
 
                 <ExpandModeToggle />
+                <GroupChipModeToggle />
               </div>
 
               <div
@@ -742,7 +745,9 @@ export const DealsBoard = () => {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <ExpandModeProvider>
-          <DealsBoardContent />
+          <GroupChipModeProvider>
+            <DealsBoardContent />
+          </GroupChipModeProvider>
         </ExpandModeProvider>
       </ThemeProvider>
     </QueryClientProvider>
