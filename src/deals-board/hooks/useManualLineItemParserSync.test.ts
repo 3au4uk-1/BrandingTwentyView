@@ -5,6 +5,7 @@ import { LINE_ITEM_ORIGIN, DEFAULT_MANUAL_LINE_ITEM_NAME } from 'src/constants/l
 
 import { syncManualLineItem } from '../api/crmparser';
 import type { LineItemRow } from '../types';
+import * as manualSyncNotify from '../utils/manual-sync-notify';
 import {
   defaultManualLineItemBaseline,
   setManualLineItemBaseline,
@@ -155,6 +156,17 @@ describe('syncNewManualLineItemToParser', () => {
     });
     expect(isManualLineItemSyncedToParser(queryClient, 'li-new')).toBe(true);
   });
+
+  it('notifies when syncNewManualLineItemToParser fails', async () => {
+    const queryClient = new QueryClient();
+    const notify = vi.spyOn(manualSyncNotify, 'notifyManualSyncError');
+    vi.mocked(syncManualLineItem).mockRejectedValueOnce(new Error('network'));
+
+    await syncNewManualLineItemToParser(queryClient, 'li-1', 'opp-1');
+
+    expect(notify).toHaveBeenCalled();
+    expect(isManualLineItemSyncedToParser(queryClient, 'li-1')).toBe(false);
+  });
 });
 
 describe('syncManualLineItemAfterUpdate', () => {
@@ -200,6 +212,19 @@ describe('syncManualLineItemAfterUpdate', () => {
     expect(consoleError).toHaveBeenCalled();
     expect(isManualLineItemSyncedToParser(queryClient, 'li-1')).toBe(false);
     consoleError.mockRestore();
+  });
+
+  it('notifies when syncManualLineItemAfterUpdate fails', async () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(['lineItems', ['opp-1'], undefined], [manualLineItem()]);
+    setManualLineItemBaseline(queryClient, 'li-1', defaultManualLineItemBaseline());
+    vi.mocked(syncManualLineItem).mockRejectedValueOnce(new Error('network'));
+    const notify = vi.spyOn(manualSyncNotify, 'notifyManualSyncError');
+
+    await syncManualLineItemAfterUpdate(queryClient, 'li-1', { name: 'Баннер' });
+
+    expect(notify).toHaveBeenCalled();
+    expect(isManualLineItemSyncedToParser(queryClient, 'li-1')).toBe(false);
   });
 });
 

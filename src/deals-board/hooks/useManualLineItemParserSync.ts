@@ -17,6 +17,9 @@ import {
   isMeaningfulManualLineItemChange,
   type ManualLineItemSyncSnapshot,
 } from '../utils/manual-line-item-sync';
+import {
+  notifyManualSyncError,
+} from '../utils/manual-sync-notify';
 
 export const manualLineItemsSyncedQueryKey = (lineItemId: string) =>
   ['manualLineItemsSynced', lineItemId] as const;
@@ -63,11 +66,51 @@ export const mergeLineItemPatch = (
       : lineItem.amount,
 });
 
-export async function syncNewManualLineItemToParser(
+const findLineItemInCache = (
+  queryClient: QueryClient,
+  lineItemId: string,
+): LineItemRow | undefined => {
+  for (const [, items] of queryClient.getQueriesData<LineItemRow[]>({
+    queryKey: ['lineItems'],
+  })) {
+    const match = items?.find((item) => item.id === lineItemId);
+    if (match) return match;
+  }
+  return undefined;
+};
+
+const syncErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
+
+export async function retryManualLineItemSync(
+  queryClient: QueryClient,
+  lineItemId: string,
+): Promise<void> {
+  const lineItem = findLineItemInCache(queryClient, lineItemId);
+  if (!lineItem) return;
+
+  const baseline = getManualLineItemBaseline(queryClient, lineItemId);
+  if (!isManualLineItemOrigin(lineItem, baseline !== undefined)) return;
+
+  const syncedToParser = isManualLineItemSyncedToParser(queryClient, lineItemId);
+
+  const didSync = await maybeSyncManualLineItemToParser({
+    lineItem,
+    patch: {},
+    baseline,
+    syncedToParser,
+  });
+
+  if (didSync) {
+    setManualLineItemSyncedToParser(queryClient, lineItemId);
+  }
+}
+
+const performNewManualLineItemSync = async (
   queryClient: QueryClient,
   lineItemId: string,
   opportunityId: string,
-): Promise<void> {
+): Promise<void> => {
   const lineItem: LineItemRow = {
     id: lineItemId,
     opportunityId,
@@ -78,11 +121,25 @@ export async function syncNewManualLineItemToParser(
     stage: 'NOVYY',
   };
 
+  await syncManualLineItem(lineItemId, buildManualLineItemSyncPayload(lineItem));
+  setManualLineItemSyncedToParser(queryClient, lineItemId);
+};
+
+export async function syncNewManualLineItemToParser(
+  queryClient: QueryClient,
+  lineItemId: string,
+  opportunityId: string,
+): Promise<void> {
   try {
-    await syncManualLineItem(lineItemId, buildManualLineItemSyncPayload(lineItem));
-    setManualLineItemSyncedToParser(queryClient, lineItemId);
+    await performNewManualLineItemSync(queryClient, lineItemId, opportunityId);
   } catch (error) {
     console.error('Failed to sync new manual line item to parser:', error);
+    notifyManualSyncError({
+      lineItemId,
+      opportunityId,
+      message: syncErrorMessage(error),
+      retry: () => performNewManualLineItemSync(queryClient, lineItemId, opportunityId),
+    });
   }
 }
 
@@ -109,17 +166,7 @@ export const syncManualLineItemAfterUpdate = async (
   lineItemId: string,
   patch: Record<string, unknown>,
 ): Promise<void> => {
-  let lineItem: LineItemRow | undefined;
-
-  for (const [, items] of queryClient.getQueriesData<LineItemRow[]>({
-    queryKey: ['lineItems'],
-  })) {
-    const match = items?.find((item) => item.id === lineItemId);
-    if (match) {
-      lineItem = match;
-      break;
-    }
-  }
+  const lineItem = findLineItemInCache(queryClient, lineItemId);
 
   if (!lineItem) return;
 
@@ -129,7 +176,7 @@ export const syncManualLineItemAfterUpdate = async (
   const syncedToParser = isManualLineItemSyncedToParser(queryClient, lineItemId);
   const merged = mergeLineItemPatch(lineItem, patch);
 
-  try {
+  const performUpdateSync = async (): Promise<void> => {
     const didSync = await maybeSyncManualLineItemToParser({
       lineItem: merged,
       patch: {},
@@ -140,7 +187,17 @@ export const syncManualLineItemAfterUpdate = async (
     if (didSync) {
       setManualLineItemSyncedToParser(queryClient, lineItemId);
     }
+  };
+
+  try {
+    await performUpdateSync();
   } catch (error) {
     console.error('Failed to sync manual line item to parser:', error);
+    notifyManualSyncError({
+      lineItemId,
+      opportunityId: lineItem.opportunityId,
+      message: syncErrorMessage(error),
+      retry: performUpdateSync,
+    });
   }
 };

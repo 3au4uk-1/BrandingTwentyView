@@ -43,6 +43,7 @@ import type {
 import { ThemeProvider, useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
 import { CancelOtmenaProvider } from './ui/CancelOtmenaPopup';
+import { ManualSyncErrorToastProvider } from './ui/ManualSyncErrorToast';
 import { PortalHostProvider } from './ui/PortalHostContext';
 import { DEALS_BOARD_ROOT_ID } from './utils/dom';
 import { mergeCompanyFilters, mergeStageFilters, mergeTypeFilters } from './utils/filters';
@@ -442,6 +443,7 @@ const DealsBoardContent = () => {
   return (
     <PortalHostProvider hostRef={rootRef}>
       <CancelOtmenaProvider>
+      <ManualSyncErrorToastProvider>
       <div
         ref={rootRef}
         id={DEALS_BOARD_ROOT_ID}
@@ -753,6 +755,7 @@ const DealsBoardContent = () => {
         onSaved={(view) => setActiveViewId(view.id)}
       />
     </div>
+      </ManualSyncErrorToastProvider>
       </CancelOtmenaProvider>
     </PortalHostProvider>
   );
