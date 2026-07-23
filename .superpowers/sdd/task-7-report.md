@@ -55,3 +55,4 @@ npx oxlint … → 0 errors (2 pre-existing warnings: DealRow isHovered, DealsBo
 - **Issue:** `DealRow.tsx` imported `PARENT_EXPAND_COLUMN_FIELD` from `build-parent-columns`, but that constant is defined in `parent-table-sort.ts` and not re-exported.
 - **Fix:** Import `PARENT_EXPAND_COLUMN_FIELD` directly from `./parent-table-sort`; keep `PARENT_EXPAND_COLUMN` from `./build-parent-columns`.
 - **Tests:** `parent-table-sort.test.ts` — 4 passed.
+- **Commit:** `303f5f7` — `fix: import PARENT_EXPAND_COLUMN_FIELD from parent-table-sort`
