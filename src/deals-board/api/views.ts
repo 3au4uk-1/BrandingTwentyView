@@ -3,7 +3,11 @@ import {
   DEFAULT_PARENT_COLUMNS,
 } from 'src/constants/column-definitions';
 
-import { parseChildColumnsPayload, parseColumns } from '../utils/columns';
+import {
+  parseChildColumnsPayload,
+  parseColumns,
+  serializeChildColumnsPayload,
+} from '../utils/columns';
 import { parseJsonField } from '../utils/parse-json-field';
 import { normalizeStageList } from '../utils/filters';
 import type { DealBoardFilters, DealBoardSort, DealBoardViewRecord } from '../types';
@@ -81,6 +85,23 @@ const mapViewRecord = (node: RawViewNode): DealBoardViewRecord => {
   };
 };
 
+const serializeViewMutationData = (
+  data: Partial<Omit<DealBoardViewRecord, 'id'>>,
+): Partial<Omit<DealBoardViewRecord, 'id' | 'childGroups'>> & {
+  childColumns?: ReturnType<typeof serializeChildColumnsPayload>;
+} => {
+  const { childColumns, childGroups, ...rest } = data;
+
+  if (childColumns === undefined) {
+    return rest;
+  }
+
+  return {
+    ...rest,
+    childColumns: serializeChildColumnsPayload(childColumns, childGroups ?? []),
+  };
+};
+
 export const fetchDealBoardViews = async (): Promise<DealBoardViewRecord[]> => {
   const client = getApiClient();
   const result = await client.query({
@@ -100,15 +121,7 @@ export const createDealBoardView = async (
   const result = await client.mutation({
     createDealBoardView: {
       __args: {
-        data: {
-          name: data.name,
-          visibility: data.visibility,
-          parentColumns: data.parentColumns,
-          childColumns: data.childColumns,
-          filters: data.filters,
-          sort: data.sort,
-          isDefault: data.isDefault,
-        },
+        data: serializeViewMutationData(data),
       },
       ...VIEW_FIELDS,
     },
@@ -124,7 +137,7 @@ export const updateDealBoardView = async (
   const client = getApiClient();
   const result = await client.mutation({
     updateDealBoardView: {
-      __args: { id, data },
+      __args: { id, data: serializeViewMutationData(data) },
       ...VIEW_FIELDS,
     },
   });
