@@ -2,6 +2,10 @@ import { useUpdateRecord } from '../hooks/useUpdateRecord';
 import type { BoardObjectName, SelectOption } from '../metadata/types';
 import { useTheme } from '../theme/ThemeContext';
 import { Select } from '../ui/Input';
+import {
+  resolveSelectDisplayValue,
+  selectValueToPatch,
+} from './select-cell-value';
 
 type SelectCellProps = {
   objectName: BoardObjectName;
@@ -20,15 +24,16 @@ export const SelectCell = ({
 }: SelectCellProps) => {
   const theme = useTheme();
   const updateMutation = useUpdateRecord(objectName);
-  const selectedValue = value ?? options[0]?.value ?? '';
+  const selectedValue = resolveSelectDisplayValue(value);
 
   const handleChange = async (nextValue: string) => {
-    if (nextValue === selectedValue) return;
+    const patchValue = selectValueToPatch(nextValue);
+    if (patchValue === (value ?? null)) return;
 
     try {
       await updateMutation.mutateAsync({
         id: recordId,
-        data: { [fieldName]: nextValue },
+        data: { [fieldName]: patchValue },
       });
     } catch (error) {
       window.alert(
@@ -50,6 +55,7 @@ export const SelectCell = ({
         padding: '4px 8px',
       }}
     >
+      <option value="">—</option>
       {options.map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}
