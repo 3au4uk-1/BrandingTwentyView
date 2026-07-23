@@ -2,13 +2,22 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
-import type { ColumnConfig } from './types';
+import type { ColumnConfig, ColumnGroupConfig } from './types';
+import {
+  assignColumnGroup,
+  createGroup,
+  deleteGroup,
+  moveColumnWithinGroup,
+} from './utils/column-picker-groups';
 
 type ColumnPickerProps = {
   target: 'parent' | 'child';
   columns: ColumnConfig[];
-  onSave: (columns: ColumnConfig[]) => Promise<void>;
+  groups?: ColumnGroupConfig[];
+  onSave: (columns: ColumnConfig[], groups: ColumnGroupConfig[]) => Promise<void>;
 };
+
+const EMPTY_GROUPS: ColumnGroupConfig[] = [];
 
 const normalizeColumns = (columns: ColumnConfig[]) =>
   columns.map((column, index) => ({
@@ -21,12 +30,23 @@ const sortColumns = (columns: ColumnConfig[]) =>
     (a, b) => a.order - b.order || a.label.localeCompare(b.label, 'ru'),
   );
 
-export const ColumnPicker = ({ target, columns, onSave }: ColumnPickerProps) => {
+const sortGroups = (groups: ColumnGroupConfig[]) =>
+  [...(Array.isArray(groups) ? groups : [])].sort(
+    (a, b) => a.order - b.order || a.name.localeCompare(b.name, 'ru'),
+  );
+
+export const ColumnPicker = ({
+  target,
+  columns,
+  groups = EMPTY_GROUPS,
+  onSave,
+}: ColumnPickerProps) => {
   const theme = useTheme();
   const { colors, radius, font, spacing, zIndex } = theme;
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [draftColumns, setDraftColumns] = useState<ColumnConfig[]>([]);
+  const [draftGroups, setDraftGroups] = useState<ColumnGroupConfig[]>([]);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const title = target === 'parent' ? 'Колонки сделок' : 'Колонки позиций';
 
@@ -47,16 +67,25 @@ export const ColumnPicker = ({ target, columns, onSave }: ColumnPickerProps) => 
     setDraftColumns(sortColumns(columns));
   }, [columns]);
 
+  useEffect(() => {
+    setDraftGroups(target === 'child' ? sortGroups(groups) : []);
+  }, [groups, target]);
+
   const canInteract = !isSaving;
   const triggerLabel = useMemo(
     () => (target === 'parent' ? 'Колонки: сделки' : 'Колонки: позиции'),
     [target],
   );
 
-  const moveColumn = (index: number, direction: -1 | 1) => {
+  const moveColumn = (field: string, direction: -1 | 1) => {
     setDraftColumns((previous) => {
+      if (target === 'child') {
+        return moveColumnWithinGroup(previous, field, direction);
+      }
+
+      const index = previous.findIndex((column) => column.field === field);
       const nextIndex = index + direction;
-      if (nextIndex < 0 || nextIndex >= previous.length) {
+      if (index < 0 || nextIndex < 0 || nextIndex >= previous.length) {
         return previous;
       }
 
@@ -67,10 +96,10 @@ export const ColumnPicker = ({ target, columns, onSave }: ColumnPickerProps) => 
     });
   };
 
-  const toggleColumn = (index: number, checked: boolean) => {
+  const toggleColumn = (field: string, checked: boolean) => {
     setDraftColumns((previous) =>
-      previous.map((column, currentIndex) =>
-        currentIndex === index ? { ...column, visible: checked } : column,
+      previous.map((column) =>
+        column.field === field ? { ...column, visible: checked } : column,
       ),
     );
   };
@@ -78,11 +107,112 @@ export const ColumnPicker = ({ target, columns, onSave }: ColumnPickerProps) => 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await onSave(normalizeColumns(draftColumns));
+      await onSave(
+        normalizeColumns(sortColumns(draftColumns)),
+        target === 'child'
+          ? sortGroups(draftGroups).map((group, order) => ({ ...group, order }))
+          : [],
+      );
       setIsOpen(false);
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const renderColumn = (column: ColumnConfig, sectionColumns: ColumnConfig[]) => {
+    const index = sectionColumns.findIndex((candidate) => candidate.field === column.field);
+
+    return (
+      <div
+        key={column.field}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr) auto',
+          alignItems: 'center',
+          gap: spacing.xs,
+          border: `1px solid ${colors.borderSubtle}`,
+          borderRadius: radius.md,
+          padding: '8px 10px',
+          backgroundColor: column.visible ? colors.bg : colors.bgTertiary,
+        }}
+      >
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: spacing.sm,
+            minWidth: 0,
+            color: colors.text,
+            fontSize: font.sizeSm,
+            cursor: 'pointer',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={column.visible}
+            onChange={(event) => toggleColumn(column.field, event.target.checked)}
+            disabled={!canInteract}
+          />
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {column.label}
+          </span>
+        </label>
+        <div style={{ display: 'flex', gap: '2px' }}>
+          <Button
+            theme={theme}
+            variant="ghost"
+            size="sm"
+            onClick={() => moveColumn(column.field, -1)}
+            disabled={index === 0 || !canInteract}
+            aria-label={`Поднять ${column.label}`}
+            style={{ padding: '2px 6px', minWidth: '28px' }}
+          >
+            ↑
+          </Button>
+          <Button
+            theme={theme}
+            variant="ghost"
+            size="sm"
+            onClick={() => moveColumn(column.field, 1)}
+            disabled={index === sectionColumns.length - 1 || !canInteract}
+            aria-label={`Опустить ${column.label}`}
+            style={{ padding: '2px 6px', minWidth: '28px' }}
+          >
+            ↓
+          </Button>
+        </div>
+        {target === 'child' ? (
+          <select
+            value={column.groupId ?? ''}
+            onChange={(event) =>
+              setDraftColumns((previous) =>
+                assignColumnGroup(previous, column.field, event.target.value || undefined),
+              )
+            }
+            disabled={!canInteract}
+            aria-label={`Группа для ${column.label}`}
+            style={{
+              gridColumn: '1 / -1',
+              width: '100%',
+              minWidth: 0,
+              padding: '5px 7px',
+              color: colors.text,
+              backgroundColor: colors.bgElevated,
+              border: `1px solid ${colors.border}`,
+              borderRadius: radius.sm,
+              fontSize: font.sizeXs,
+            }}
+          >
+            <option value="">Без группы</option>
+            {sortGroups(draftGroups).map((group) => (
+              <option key={group.id} value={group.id}>
+                {group.name}
+              </option>
+            ))}
+          </select>
+        ) : null}
+      </div>
+    );
   };
 
   return (
@@ -97,7 +227,7 @@ export const ColumnPicker = ({ target, columns, onSave }: ColumnPickerProps) => 
             position: 'absolute',
             top: 'calc(100% + 6px)',
             right: 0,
-            width: '320px',
+            width: target === 'child' ? 'min(390px, calc(100vw - 24px))' : '320px',
             border: `1px solid ${colors.border}`,
             borderRadius: radius.lg,
             backgroundColor: colors.bgElevated,
@@ -109,83 +239,155 @@ export const ColumnPicker = ({ target, columns, onSave }: ColumnPickerProps) => 
         >
           <div
             style={{
-              fontSize: font.sizeSm,
-              fontWeight: font.weightSemibold,
-              color: colors.text,
-              marginBottom: spacing.sm,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: spacing.sm,
             }}
           >
-            {title}
+            <div
+              style={{
+                fontSize: font.sizeSm,
+                fontWeight: font.weightSemibold,
+                color: colors.text,
+              }}
+            >
+              {title}
+            </div>
+            {target === 'child' ? (
+              <Button
+                theme={theme}
+                variant="secondary"
+                size="sm"
+                onClick={() => setDraftGroups((previous) => createGroup(previous))}
+                disabled={!canInteract}
+              >
+                + Группа
+              </Button>
+            ) : null}
           </div>
           <div
             style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: spacing.xs,
-              maxHeight: '280px',
+              gap: spacing.sm,
+              maxHeight: target === 'child' ? 'min(480px, calc(100vh - 180px))' : '320px',
               overflow: 'auto',
+              marginTop: spacing.sm,
             }}
           >
-            {draftColumns.map((column, index) => (
-              <div
-                key={column.field}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr auto',
-                  alignItems: 'center',
-                  gap: spacing.sm,
-                  border: `1px solid ${colors.borderSubtle}`,
-                  borderRadius: radius.md,
-                  padding: '8px 10px',
-                  backgroundColor: column.visible ? colors.bg : colors.bgTertiary,
-                }}
-              >
-                <label
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: spacing.sm,
-                    color: colors.text,
-                    fontSize: font.sizeSm,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={column.visible}
-                    onChange={(event) => toggleColumn(index, event.target.checked)}
-                    disabled={!canInteract}
-                  />
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {column.label}
-                  </span>
-                </label>
-                <div style={{ display: 'flex', gap: '2px' }}>
-                  <Button
-                    theme={theme}
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => moveColumn(index, -1)}
-                    disabled={index === 0 || !canInteract}
-                    aria-label={`Поднять ${column.label}`}
-                    style={{ padding: '2px 6px', minWidth: '28px' }}
-                  >
-                    ↑
-                  </Button>
-                  <Button
-                    theme={theme}
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => moveColumn(index, 1)}
-                    disabled={index === draftColumns.length - 1 || !canInteract}
-                    aria-label={`Опустить ${column.label}`}
-                    style={{ padding: '2px 6px', minWidth: '28px' }}
-                  >
-                    ↓
-                  </Button>
-                </div>
-              </div>
-            ))}
+            {target === 'parent'
+              ? sortColumns(draftColumns).map((column) =>
+                  renderColumn(column, sortColumns(draftColumns)),
+                )
+              : sortGroups(draftGroups).map((group) => {
+                  const members = sortColumns(
+                    draftColumns.filter((column) => column.groupId === group.id),
+                  );
+                  return (
+                    <section
+                      key={group.id}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: spacing.xs,
+                        padding: spacing.xs,
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: radius.md,
+                      }}
+                    >
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: spacing.xs }}>
+                        <input
+                          value={group.name}
+                          onChange={(event) =>
+                            setDraftGroups((previous) =>
+                              previous.map((candidate) =>
+                                candidate.id === group.id
+                                  ? { ...candidate, name: event.target.value }
+                                  : candidate,
+                              ),
+                            )
+                          }
+                          disabled={!canInteract}
+                          aria-label={`Название группы ${group.name}`}
+                          style={{
+                            minWidth: 0,
+                            padding: '6px 8px',
+                            color: colors.text,
+                            backgroundColor: colors.bgElevated,
+                            border: `1px solid ${colors.border}`,
+                            borderRadius: radius.sm,
+                            fontSize: font.sizeSm,
+                            fontWeight: font.weightSemibold,
+                          }}
+                        />
+                        <Button
+                          theme={theme}
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const next = deleteGroup(draftColumns, draftGroups, group.id);
+                            setDraftColumns(next.columns);
+                            setDraftGroups(next.groups);
+                          }}
+                          disabled={!canInteract}
+                          aria-label={`Удалить группу ${group.name}`}
+                          style={{ padding: '2px 8px' }}
+                        >
+                          ×
+                        </Button>
+                      </div>
+                      {members.length > 0 ? (
+                        members.map((column) => renderColumn(column, members))
+                      ) : (
+                        <span
+                          style={{
+                            padding: spacing.xs,
+                            color: colors.textMuted,
+                            fontSize: font.sizeXs,
+                          }}
+                        >
+                          Нет полей
+                        </span>
+                      )}
+                    </section>
+                  );
+                })}
+            {target === 'child'
+              ? (() => {
+                  const ungrouped = sortColumns(
+                    draftColumns.filter(
+                      (column) =>
+                        !column.groupId ||
+                        !draftGroups.some((group) => group.id === column.groupId),
+                    ),
+                  );
+                  return (
+                    <section
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: spacing.xs,
+                        padding: spacing.xs,
+                        border: `1px solid ${colors.border}`,
+                        borderRadius: radius.md,
+                      }}
+                    >
+                      <div
+                        style={{
+                          padding: `0 ${spacing.xs}`,
+                          color: colors.textSecondary,
+                          fontSize: font.sizeSm,
+                          fontWeight: font.weightSemibold,
+                        }}
+                      >
+                        Без группы
+                      </div>
+                      {ungrouped.map((column) => renderColumn(column, ungrouped))}
+                    </section>
+                  );
+                })()
+              : null}
           </div>
 
           <div
@@ -206,6 +408,7 @@ export const ColumnPicker = ({ target, columns, onSave }: ColumnPickerProps) => 
                 size="sm"
                 onClick={() => {
                   setDraftColumns(sortColumns(columns));
+                  setDraftGroups(target === 'child' ? sortGroups(groups) : []);
                   setIsOpen(false);
                 }}
                 disabled={!canInteract}

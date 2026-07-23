@@ -4,7 +4,7 @@ import { GroupChipModeToggle } from '../GroupChipModeToggle';
 import { useTheme } from '../theme/ThemeContext';
 import { BottomSheet } from '../ui/BottomSheet';
 import { Button } from '../ui/Button';
-import type { ColumnConfig, DealBoardViewRecord } from '../types';
+import type { ColumnConfig, ColumnGroupConfig, DealBoardViewRecord } from '../types';
 
 type MobileSettingsSheetProps = {
   isOpen: boolean;
@@ -13,8 +13,8 @@ type MobileSettingsSheetProps = {
   parentColumns: ColumnConfig[];
   childColumns: ColumnConfig[];
   onEditView: () => void;
-  onParentColumnsSave: (columns: ColumnConfig[]) => void;
-  onChildColumnsSave: (columns: ColumnConfig[]) => void;
+  onParentColumnsSave: (columns: ColumnConfig[], groups: ColumnGroupConfig[]) => Promise<void>;
+  onChildColumnsSave: (columns: ColumnConfig[], groups: ColumnGroupConfig[]) => Promise<void>;
 };
 
 export const MobileSettingsSheet = ({
@@ -55,7 +55,12 @@ export const MobileSettingsSheet = ({
           <div style={{ fontSize: font.sizeXs, color: colors.textMuted, marginBottom: spacing.xs }}>
             Колонки позиций
           </div>
-          <ColumnPicker target="child" columns={childColumns} onSave={onChildColumnsSave} />
+          <ColumnPicker
+            target="child"
+            columns={childColumns}
+            groups={activeView?.childGroups ?? []}
+            onSave={onChildColumnsSave}
+          />
         </div>
         <div style={{ width: '100%' }}>
           <Button

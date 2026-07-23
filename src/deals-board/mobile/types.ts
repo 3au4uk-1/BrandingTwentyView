@@ -1,7 +1,13 @@
 import type { LineItemQueryFilters } from '../api/line-items';
 import type { QuickFiltersValue } from '../QuickFiltersBar';
 import type { FieldDescriptor } from '../metadata/types';
-import type { ColumnConfig, DealBoardViewRecord, LineItemRow, OpportunityRow } from '../types';
+import type {
+  ColumnConfig,
+  ColumnGroupConfig,
+  DealBoardViewRecord,
+  LineItemRow,
+  OpportunityRow,
+} from '../types';
 
 export type MobileDealsBoardProps = {
   activeView?: DealBoardViewRecord;
@@ -26,8 +32,8 @@ export type MobileDealsBoardProps = {
   onSelectView: (id: string) => void;
   onCreateView: () => void;
   onEditView: () => void;
-  onParentColumnsSave?: (columns: ColumnConfig[]) => void;
-  onChildColumnsSave?: (columns: ColumnConfig[]) => void;
+  onParentColumnsSave?: (columns: ColumnConfig[], groups: ColumnGroupConfig[]) => Promise<void>;
+  onChildColumnsSave?: (columns: ColumnConfig[], groups: ColumnGroupConfig[]) => Promise<void>;
   onResetFilters?: () => void;
   isLoading?: boolean;
   isViewLoading?: boolean;

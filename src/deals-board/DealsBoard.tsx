@@ -34,7 +34,12 @@ import { mergeColumns } from './metadata/merge-columns';
 import { useObjectFields } from './metadata/useObjectFields';
 import { VIRTUAL_PARENT_FIELD_DESCRIPTORS } from './metadata/virtual-columns';
 import { QuickFiltersBar, type QuickFiltersValue } from './QuickFiltersBar';
-import type { DealBoardViewRecord, LineItemRow, OpportunityRow } from './types';
+import type {
+  ColumnGroupConfig,
+  DealBoardViewRecord,
+  LineItemRow,
+  OpportunityRow,
+} from './types';
 import { ThemeProvider, useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
 import { CancelOtmenaProvider } from './ui/CancelOtmenaPopup';
@@ -390,7 +395,11 @@ const DealsBoardContent = () => {
         ? String(lineItemsQuery.error)
         : undefined;
 
-  const saveActiveViewColumns = async (target: 'parent' | 'child', columns: DealBoardViewRecord['parentColumns']) => {
+  const saveActiveViewColumns = async (
+    target: 'parent' | 'child',
+    columns: DealBoardViewRecord['parentColumns'],
+    groups: ColumnGroupConfig[] = [],
+  ) => {
     if (!activeView) return;
 
     try {
@@ -399,7 +408,7 @@ const DealsBoardContent = () => {
         data:
           target === 'parent'
             ? { parentColumns: columns }
-            : { childColumns: columns, childGroups: activeView.childGroups },
+            : { childColumns: columns, childGroups: groups },
       });
     } catch (error) {
       window.alert(
@@ -511,7 +520,9 @@ const DealsBoardContent = () => {
             if (activeView) setEditViewDraft(activeView);
           }}
           onParentColumnsSave={(columns) => saveActiveViewColumns('parent', columns)}
-          onChildColumnsSave={(columns) => saveActiveViewColumns('child', columns)}
+          onChildColumnsSave={(columns, groups) =>
+            saveActiveViewColumns('child', columns, groups)
+          }
           onResetFilters={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
           isLoading={opportunitiesQuery.isLoading}
           isViewLoading={viewsQuery.isLoading || viewsQuery.isSeedingDefault}
@@ -647,7 +658,10 @@ const DealsBoardContent = () => {
                   <ColumnPicker
                     target="child"
                     columns={mergedChildColumns}
-                    onSave={(columns) => saveActiveViewColumns('child', columns)}
+                    groups={activeView?.childGroups ?? []}
+                    onSave={(columns, groups) =>
+                      saveActiveViewColumns('child', columns, groups)
+                    }
                   />
                 </div>
               </div>
@@ -709,7 +723,9 @@ const DealsBoardContent = () => {
               onPageChange={setPage}
               onResetFilters={() => setQuickFilters(DEFAULT_QUICK_FILTERS)}
               onParentColumnsSave={(columns) => saveActiveViewColumns('parent', columns)}
-              onChildColumnsSave={(columns) => saveActiveViewColumns('child', columns)}
+              onChildColumnsSave={(columns) =>
+                saveActiveViewColumns('child', columns, activeView?.childGroups ?? [])
+              }
               showAll={showAllDeals}
               onShowAllChange={(nextShowAll) => void handleShowAllChange(nextShowAll)}
               isLoading={opportunitiesQuery.isLoading}
