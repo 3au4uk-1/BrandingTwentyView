@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import type { FilterClause, FilterState } from './types';
-import { beginSessionClauses, getEffectiveClauses, resetSession } from './session';
+import {
+  beginSessionClauses,
+  commitSessionClauses,
+  getEffectiveClauses,
+  resetSession,
+} from './session';
 
 const clause = (
   id: string,
@@ -40,6 +45,17 @@ describe('beginSessionClauses', () => {
     expect(session).toEqual(view);
     expect(session).not.toBe(view);
     expect(session[0]).not.toBe(view[0]);
+  });
+});
+
+describe('commitSessionClauses', () => {
+  it('returns undefined when removing the last clause', () => {
+    expect(commitSessionClauses([])).toBeUndefined();
+  });
+
+  it('preserves non-empty clause arrays', () => {
+    const clauses = [clause('a', '1')];
+    expect(commitSessionClauses(clauses)).toBe(clauses);
   });
 });
 

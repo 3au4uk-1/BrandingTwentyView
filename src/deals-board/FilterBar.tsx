@@ -7,7 +7,7 @@ import type { DealBoardDatePreset } from 'src/deals-board/types';
 
 import { fetchCompanyNames } from './api/companies';
 import { formatFilterClauseLabel } from './filter-model/format-clause-label';
-import { beginSessionClauses } from './filter-model/session';
+import { beginSessionClauses, commitSessionClauses } from './filter-model/session';
 import type { FilterClause, FilterState } from './filter-model/types';
 import { useCompanies } from './hooks/useCompanies';
 import type { FieldDescriptor } from './metadata/types';
@@ -147,7 +147,7 @@ export const FilterBar = ({ value, viewClauses, onChange, onReset }: FilterBarPr
       value.sessionClauses === undefined ? beginSessionClauses(viewClauses) : value.sessionClauses;
     onChange({
       ...value,
-      sessionClauses: mutator([...base]),
+      sessionClauses: commitSessionClauses(mutator([...base])),
     });
   };
 

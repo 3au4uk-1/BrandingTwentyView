@@ -6,7 +6,7 @@ import { LINE_ITEM_STAGES } from 'src/constants/stages';
 
 import { fetchCompanyNames } from '../api/companies';
 import { useCompanies } from '../hooks/useCompanies';
-import { beginSessionClauses } from './session';
+import { beginSessionClauses, commitSessionClauses } from './session';
 import type { FilterClause, FilterState } from './types';
 
 export type FilterBuilderField = {
@@ -124,7 +124,7 @@ export const useFilterClauseEditor = (
       value.sessionClauses === undefined ? beginSessionClauses(viewClauses) : value.sessionClauses;
     onChange({
       ...value,
-      sessionClauses: mutator([...base]),
+      sessionClauses: commitSessionClauses(mutator([...base])),
     });
   };
 
