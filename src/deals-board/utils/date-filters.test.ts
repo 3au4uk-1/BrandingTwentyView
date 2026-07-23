@@ -4,6 +4,7 @@ import {
   buildOpportunityDateFilter,
   getLocalDayBounds,
   getPresetRange,
+  hasLineItemFilterClauses,
   resolveDealBoardDateRange,
   shouldFetchAllOpportunities,
   toInputDate,
@@ -131,7 +132,39 @@ describe('resolveDealBoardDateRange', () => {
   });
 });
 
+describe('hasLineItemFilterClauses', () => {
+  it('returns true when any line-item clause is present', () => {
+    expect(
+      hasLineItemFilterClauses([
+        { id: '1', level: 'lineItem', field: 'stage', operator: 'in', value: ['NOVYY'] },
+      ]),
+    ).toBe(true);
+    expect(
+      hasLineItemFilterClauses([
+        { id: '1', level: 'deal', field: 'companyId', operator: 'in', value: ['c1'] },
+      ]),
+    ).toBe(false);
+  });
+});
+
 describe('shouldFetchAllOpportunities', () => {
+  it('loads all records when line-item filter clauses are active', () => {
+    expect(
+      shouldFetchAllOpportunities(
+        {},
+        undefined,
+        [{ id: '1', level: 'lineItem', field: 'stage', operator: 'in', value: ['NOVYY'] }],
+      ),
+    ).toBe(true);
+    expect(
+      shouldFetchAllOpportunities(
+        {},
+        undefined,
+        [{ id: '1', level: 'deal', field: 'companyId', operator: 'in', value: ['c1'] }],
+      ),
+    ).toBe(false);
+  });
+
   it('loads all records for active date filters', () => {
     expect(shouldFetchAllOpportunities({ datePreset: 'today' })).toBe(true);
     expect(shouldFetchAllOpportunities({ datePreset: 'tomorrow' })).toBe(true);

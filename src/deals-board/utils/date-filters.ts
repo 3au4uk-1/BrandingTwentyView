@@ -1,8 +1,12 @@
 import { OPPORTUNITY_DATE_FILTER_FIELD } from 'src/constants/date-filter-field';
 
+import type { FilterClause } from '../filter-model/types';
+import { hasLineItemFilterClauses } from '../filter-model/has-line-item-filter-clauses';
 import type { DealBoardFilters, DealBoardSort } from '../types';
 import { OPPORTUNITY_EVENT_DATE_FIELD } from './resolve-opportunity-date';
 import { sortsByDateField } from './sort-opportunities';
+
+export { hasLineItemFilterClauses };
 
 export type DatePreset =
   | 'today'
@@ -190,5 +194,8 @@ export const buildOpportunityDateFilter = (
 export const shouldFetchAllOpportunities = (
   filters: DealBoardFilters,
   sort?: DealBoardSort[],
+  clauses?: FilterClause[],
 ): boolean =>
-  (sort ? sortsByDateField(sort) : false) || Boolean(buildOpportunityDateFilter(filters));
+  (sort ? sortsByDateField(sort) : false) ||
+  Boolean(buildOpportunityDateFilter(filters)) ||
+  Boolean(clauses?.length && hasLineItemFilterClauses(clauses));
