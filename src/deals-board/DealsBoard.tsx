@@ -5,6 +5,8 @@ import {
   DEFAULT_CHILD_COLUMNS,
   DEFAULT_PARENT_COLUMNS,
 } from 'src/constants/column-definitions';
+import { FUTURE_DEALS_VIEW_NAME } from 'src/constants/future-deals-view';
+import { MOBILE_VIEW_NAME } from 'src/constants/mobile-view';
 import { APP_DISPLAY_NAME } from 'src/constants/universal-identifiers';
 
 import {
@@ -43,6 +45,7 @@ import {
   MOBILE_MAX_RECORDS,
   MOBILE_PAGE_SIZE,
 } from './utils/pagination';
+import { applyPrintGroupSeed } from './utils/column-groups';
 import { asArray } from './utils/parse-json-field';
 import { filterLineItemsForSearch, normalizeSearchTerm } from './utils/search';
 import { ViewSettingsModal } from './ViewSettingsModal';
@@ -80,6 +83,34 @@ const DealsBoardContent = () => {
   const [editViewDraft, setEditViewDraft] = useState<DealBoardViewRecord>();
   const [quickFilters, setQuickFilters] = useState<QuickFiltersValue>(DEFAULT_QUICK_FILTERS);
   const views = asArray<DealBoardViewRecord>(viewsQuery.data);
+  const hasPrintGroupMigrationAttemptedRef = useRef(false);
+
+  useEffect(() => {
+    if (!viewsQuery.isSuccess || hasPrintGroupMigrationAttemptedRef.current) {
+      return;
+    }
+
+    const viewsToMigrate = views.filter(
+      (view) =>
+        (view.name === FUTURE_DEALS_VIEW_NAME || view.name === MOBILE_VIEW_NAME) &&
+        view.childGroups.length === 0,
+    );
+    if (viewsToMigrate.length === 0) {
+      return;
+    }
+
+    hasPrintGroupMigrationAttemptedRef.current = true;
+    for (const view of viewsToMigrate) {
+      const seeded = applyPrintGroupSeed(view.childColumns, view.childGroups);
+      updateViewMutation.mutate({
+        id: view.id,
+        data: {
+          childColumns: seeded.columns,
+          childGroups: seeded.groups,
+        },
+      });
+    }
+  }, [updateViewMutation.mutate, views, viewsQuery.isSuccess]);
 
   const activeView = useMemo(
     () =>

@@ -43,4 +43,13 @@ describe('mergeColumns', () => {
     const merged = mergeColumns(saved, crmFields, VIRTUAL_PARENT_FIELD_DESCRIPTORS);
     expect(merged.some((c) => c.field === 'summary')).toBe(true);
   });
+
+  it('preserves groupId from saved columns', () => {
+    const merged = mergeColumns(
+      [{ field: 'name', label: 'Сделка', order: 0, visible: true, groupId: 'g1' }],
+      [{ field: 'name', label: 'Сделка', source: 'crm', fieldType: 'TEXT', isEditable: true }],
+    );
+
+    expect(merged[0]?.groupId).toBe('g1');
+  });
 });

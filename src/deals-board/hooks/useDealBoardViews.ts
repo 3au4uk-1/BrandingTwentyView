@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 
 import {
   DEFAULT_CHILD_COLUMNS,
+  DEFAULT_CHILD_GROUPS,
   DEFAULT_PARENT_COLUMNS,
 } from 'src/constants/column-definitions';
 import {
@@ -39,7 +40,7 @@ const FUTURE_DEALS_VIEW_SEED: Omit<DealBoardViewRecord, 'id'> = {
   visibility: VIEW_VISIBILITY.WORKSPACE,
   parentColumns: DEFAULT_PARENT_COLUMNS,
   childColumns: DEFAULT_CHILD_COLUMNS,
-  childGroups: [],
+  childGroups: DEFAULT_CHILD_GROUPS,
   filters: FUTURE_DEALS_VIEW_FILTERS,
   sort: FUTURE_DEALS_VIEW_SORT,
   isDefault: true,
@@ -50,7 +51,7 @@ const MOBILE_VIEW_SEED: Omit<DealBoardViewRecord, 'id'> = {
   visibility: VIEW_VISIBILITY.WORKSPACE,
   parentColumns: DEFAULT_PARENT_COLUMNS,
   childColumns: DEFAULT_CHILD_COLUMNS,
-  childGroups: [],
+  childGroups: DEFAULT_CHILD_GROUPS,
   filters: FUTURE_DEALS_VIEW_FILTERS,
   sort: FUTURE_DEALS_VIEW_SORT,
   isDefault: false,

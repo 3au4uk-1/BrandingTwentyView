@@ -23,6 +23,7 @@ export const mergeColumns = (
     merged.push({
       ...saved,
       label: descriptor.label,
+      groupId: saved.groupId,
     });
   }
 
