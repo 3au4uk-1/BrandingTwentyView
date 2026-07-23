@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import type { FieldDescriptor } from '../metadata/types';
 import { useGroupChipMode } from '../hooks/useGroupChipMode';
 import { useLineItemGroupExpand } from '../hooks/useLineItemGroupExpand';
@@ -15,6 +17,10 @@ type GroupColumnCellProps = {
   item: LineItemRow;
   descriptorByField: Map<string, FieldDescriptor>;
   visibleFields: readonly string[];
+  renderMember?: (member: ColumnConfig, cell: ReactNode) => ReactNode;
+  listMenuPresentation?: 'inline' | 'sheet';
+  touchFriendly?: boolean;
+  keepChipStyleWhenExpanded?: boolean;
 };
 
 export const GroupColumnCell = ({
@@ -23,18 +29,21 @@ export const GroupColumnCell = ({
   item,
   descriptorByField,
   visibleFields,
+  renderMember,
+  listMenuPresentation,
+  touchFriendly,
+  keepChipStyleWhenExpanded = false,
 }: GroupColumnCellProps) => {
   const { mode } = useGroupChipMode();
   const { isExpanded, toggle } = useLineItemGroupExpand();
   const expanded = isExpanded(item.id, group.id);
+  const label = formatGroupChipLabel(
+    group.name,
+    getGroupChipStatus(members, item),
+    mode,
+  );
 
   if (!expanded) {
-    const label = formatGroupChipLabel(
-      group.name,
-      getGroupChipStatus(members, item),
-      mode,
-    );
-
     return (
       <button
         type="button"
@@ -66,21 +75,25 @@ export const GroupColumnCell = ({
         aria-expanded={true}
         onClick={() => toggle(item.id, group.id)}
         style={{
-          padding: 0,
-          border: 0,
+          maxWidth: '100%',
+          padding: keepChipStyleWhenExpanded ? '3px 8px' : 0,
+          border: keepChipStyleWhenExpanded ? '1px solid currentColor' : 0,
+          borderRadius: keepChipStyleWhenExpanded ? '999px' : undefined,
           background: 'transparent',
           color: 'inherit',
           cursor: 'pointer',
           font: 'inherit',
           fontWeight: 600,
           textAlign: 'left',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
         }}
       >
-        {group.name}
+        {keepChipStyleWhenExpanded ? label : group.name}
       </button>
-      {members.map((member) => (
-        <div key={member.field} style={{ display: 'grid', gap: '2px', minWidth: 0 }}>
-          <span style={{ fontSize: '11px', opacity: 0.7 }}>{member.label}</span>
+      {members.map((member) => {
+        const cell = (
           <DynamicFieldCell
             objectName="dealLineItem"
             recordId={item.id}
@@ -90,9 +103,20 @@ export const GroupColumnCell = ({
             variant="child"
             row={item}
             visibleFields={visibleFields}
+            listMenuPresentation={listMenuPresentation}
+            touchFriendly={touchFriendly}
           />
-        </div>
-      ))}
+        );
+
+        return renderMember ? (
+          <div key={member.field}>{renderMember(member, cell)}</div>
+        ) : (
+          <div key={member.field} style={{ display: 'grid', gap: '2px', minWidth: 0 }}>
+            <span style={{ fontSize: '11px', opacity: 0.7 }}>{member.label}</span>
+            {cell}
+          </div>
+        );
+      })}
     </div>
   );
 };

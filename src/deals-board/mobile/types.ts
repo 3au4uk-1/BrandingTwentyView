@@ -14,6 +14,7 @@ export type MobileDealsBoardProps = {
   views: DealBoardViewRecord[];
   parentColumns: ColumnConfig[];
   childColumns: ColumnConfig[];
+  childGroups: ColumnGroupConfig[];
   parentDescriptorByField: Map<string, FieldDescriptor>;
   childDescriptorByField: Map<string, FieldDescriptor>;
   opportunityLinkFields: FieldDescriptor[];

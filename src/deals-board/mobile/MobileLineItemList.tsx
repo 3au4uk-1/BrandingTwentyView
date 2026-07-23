@@ -1,13 +1,14 @@
 import type { LineItemQueryFilters } from '../api/line-items';
 import type { FieldDescriptor } from '../metadata/types';
 import { useTheme } from '../theme/ThemeContext';
-import type { ColumnConfig, LineItemRow } from '../types';
+import type { ColumnConfig, ColumnGroupConfig, LineItemRow } from '../types';
 import { MobileLineItemRow } from './MobileLineItemRow';
 
 type MobileLineItemListProps = {
   opportunityId: string;
   items: LineItemRow[];
   columns: ColumnConfig[];
+  groups: ColumnGroupConfig[];
   descriptorByField: Map<string, FieldDescriptor>;
   filters?: LineItemQueryFilters;
 };
@@ -15,6 +16,7 @@ type MobileLineItemListProps = {
 export const MobileLineItemList = ({
   items,
   columns,
+  groups,
   descriptorByField,
 }: MobileLineItemListProps) => {
   const theme = useTheme();
@@ -49,6 +51,7 @@ export const MobileLineItemList = ({
             key={item.id}
             item={item}
             columns={columns}
+            groups={groups}
             descriptorByField={descriptorByField}
             isLast={index === items.length - 1}
           />

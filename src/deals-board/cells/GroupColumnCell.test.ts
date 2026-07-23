@@ -46,4 +46,43 @@ describe('GroupColumnCell', () => {
     expect(markup).toContain('Печать · готово');
     expect(markup).toContain('aria-expanded="false"');
   });
+
+  it('uses the supplied member renderer for expanded group fields', () => {
+    const originalLocalStorage = globalThis.localStorage;
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: {
+        getItem: (key: string) =>
+          key === 'deals-board-line-item-group-expand'
+            ? JSON.stringify({ [`${item.id}:${group.id}`]: true })
+            : null,
+      },
+    });
+
+    try {
+      const markup = renderToStaticMarkup(
+        createElement(
+          GroupChipModeProvider,
+          null,
+          createElement(GroupColumnCell, {
+            group,
+            members,
+            item,
+            descriptorByField: new Map(),
+            visibleFields: members.map(({ field }) => field),
+            renderMember: (member) =>
+              createElement('section', { 'data-mobile-field': member.field }, member.label),
+          }),
+        ),
+      );
+
+      expect(markup).toContain('data-mobile-field="vzatoVRabotu"');
+      expect(markup).toContain('data-mobile-field="gotovo"');
+    } finally {
+      Object.defineProperty(globalThis, 'localStorage', {
+        configurable: true,
+        value: originalLocalStorage,
+      });
+    }
+  });
 });

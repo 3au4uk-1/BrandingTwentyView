@@ -1,14 +1,16 @@
 import { useState } from 'react';
 
 import { DynamicFieldCell } from '../cells/DynamicFieldCell';
+import { GroupColumnCell } from '../cells/GroupColumnCell';
 import { Chip, type ChipColor } from '../Chip';
 import type { FieldDescriptor } from '../metadata/types';
 import { useTheme } from '../theme/ThemeContext';
 import { ChevronRightIcon } from '../ui/Icons';
 import { visibleColumns } from '../utils/columns';
+import { buildChildLayoutColumns } from '../utils/column-groups';
 import { resolveFieldValue } from '../utils/resolve-field-value';
 import { getStageLabel, getStageColor } from 'src/constants/stages';
-import type { ColumnConfig, LineItemRow } from '../types';
+import type { ColumnConfig, ColumnGroupConfig, LineItemRow } from '../types';
 
 import { MobileFieldStack } from './MobileFieldStack';
 import { MOBILE_LINE_ITEM_HEADER_FIELDS, partitionColumns } from './mobile-field-layout';
@@ -16,6 +18,7 @@ import { MOBILE_LINE_ITEM_HEADER_FIELDS, partitionColumns } from './mobile-field
 type MobileLineItemRowProps = {
   item: LineItemRow;
   columns: ColumnConfig[];
+  groups: ColumnGroupConfig[];
   descriptorByField: Map<string, FieldDescriptor>;
   isLast: boolean;
 };
@@ -23,6 +26,7 @@ type MobileLineItemRowProps = {
 export const MobileLineItemRow = ({
   item,
   columns,
+  groups,
   descriptorByField,
   isLast,
 }: MobileLineItemRowProps) => {
@@ -56,6 +60,7 @@ export const MobileLineItemRow = ({
     ...header.filter((column) => column.field !== 'name'),
     ...detail,
   ];
+  const detailLayout = buildChildLayoutColumns(detailFields, groups);
 
   return (
     <div
@@ -147,11 +152,31 @@ export const MobileLineItemRow = ({
               {renderField(header.find((column) => column.field === 'name')!)}
             </MobileFieldStack>
           ) : null}
-          {detailFields.map((column) => (
-            <MobileFieldStack key={column.field} label={column.label} compact>
-              {renderField(column)}
-            </MobileFieldStack>
-          ))}
+          {detailLayout.map((entry) =>
+            'type' in entry ? (
+              <div key={entry.group.id} style={{ padding: `${spacing.xs} 0` }}>
+                <GroupColumnCell
+                  group={entry.group}
+                  members={entry.members}
+                  item={item}
+                  descriptorByField={descriptorByField}
+                  visibleFields={visibleFields}
+                  listMenuPresentation="sheet"
+                  touchFriendly
+                  keepChipStyleWhenExpanded
+                  renderMember={(member, cell) => (
+                    <MobileFieldStack label={member.label} compact>
+                      {cell}
+                    </MobileFieldStack>
+                  )}
+                />
+              </div>
+            ) : (
+              <MobileFieldStack key={entry.field} label={entry.label} compact>
+                {renderField(entry)}
+              </MobileFieldStack>
+            ),
+          )}
         </div>
       ) : null}
     </div>

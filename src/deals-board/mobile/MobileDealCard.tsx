@@ -11,7 +11,12 @@ import { visibleColumns } from '../utils/columns';
 import { resolveFieldValue } from '../utils/resolve-field-value';
 import { getStageRowStyles } from '../utils/stage-row-styles';
 import { openRecordSidePanel } from '../utils/open-record-side-panel';
-import type { ColumnConfig, LineItemRow, OpportunityRow } from '../types';
+import type {
+  ColumnConfig,
+  ColumnGroupConfig,
+  LineItemRow,
+  OpportunityRow,
+} from '../types';
 import {
   getOpportunityStageColor,
   getOpportunityStageLabel,
@@ -30,6 +35,7 @@ type MobileDealCardProps = {
   lineItems: LineItemRow[];
   parentColumns: ColumnConfig[];
   childColumns: ColumnConfig[];
+  childGroups: ColumnGroupConfig[];
   parentDescriptorByField: Map<string, FieldDescriptor>;
   childDescriptorByField: Map<string, FieldDescriptor>;
   opportunityLinkFields: FieldDescriptor[];
@@ -41,7 +47,10 @@ type MobileDealCardProps = {
 const renderParentField = (
   row: OpportunityRow,
   column: ColumnConfig,
-  props: Omit<MobileDealCardProps, 'row' | 'parentColumns' | 'childColumns'>,
+  props: Pick<
+    MobileDealCardProps,
+    'parentDescriptorByField' | 'opportunityLinkFields' | 'onToggleExpand'
+  >,
   dealLineItems: LineItemRow[],
   isExpanded: boolean,
 ) => (
@@ -68,6 +77,7 @@ export const MobileDealCard = ({
   lineItems,
   parentColumns,
   childColumns,
+  childGroups,
   parentDescriptorByField,
   childDescriptorByField,
   opportunityLinkFields,
@@ -270,6 +280,7 @@ export const MobileDealCard = ({
             opportunityId={row.id}
             items={dealLineItems}
             columns={childColumns}
+            groups={childGroups}
             descriptorByField={childDescriptorByField}
             filters={lineItemFilters}
           />

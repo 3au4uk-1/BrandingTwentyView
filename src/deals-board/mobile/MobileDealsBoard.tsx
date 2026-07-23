@@ -20,6 +20,7 @@ export const MobileDealsBoard = (props: MobileDealsBoardProps) => {
     views,
     parentColumns,
     childColumns,
+    childGroups,
     parentDescriptorByField,
     childDescriptorByField,
     opportunityLinkFields,
@@ -146,6 +147,7 @@ export const MobileDealsBoard = (props: MobileDealsBoardProps) => {
               lineItems={lineItems}
               parentColumns={parentColumns}
               childColumns={childColumns}
+              childGroups={childGroups}
               parentDescriptorByField={parentDescriptorByField}
               childDescriptorByField={childDescriptorByField}
               opportunityLinkFields={opportunityLinkFields}

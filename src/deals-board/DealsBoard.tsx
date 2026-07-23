@@ -499,6 +499,7 @@ const DealsBoardContent = () => {
           views={views}
           parentColumns={mergedParentColumns}
           childColumns={mergedChildColumns}
+          childGroups={activeView?.childGroups ?? []}
           parentDescriptorByField={parentDescriptorByField}
           childDescriptorByField={childDescriptorByField}
           opportunityLinkFields={opportunityLinkFields}
