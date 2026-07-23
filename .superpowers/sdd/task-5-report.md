@@ -68,4 +68,4 @@ node node_modules/vitest/dist/cli.js run --config vitest.unit.config.ts \
 ```
 
 ### Commit
-(see git log after commit)
+`b9b1550` — `fix: mobile bridge sessionClauses and view filter persist`
