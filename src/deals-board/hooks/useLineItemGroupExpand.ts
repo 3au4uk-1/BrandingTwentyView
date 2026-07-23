@@ -12,7 +12,18 @@ export const toggleGroupExpandKey = (
   groupId: string,
 ): GroupExpandState => {
   const key = `${lineItemId}:${groupId}`;
-  return { ...state, [key]: !state[key] };
+  const prefix = `${lineItemId}:`;
+  const currentlyOpen = state[key] === true;
+
+  const next: GroupExpandState = { ...state };
+  for (const existingKey of Object.keys(next)) {
+    if (existingKey.startsWith(prefix)) {
+      next[existingKey] = false;
+    }
+  }
+
+  next[key] = !currentlyOpen;
+  return next;
 };
 
 const readStoredState = (): GroupExpandState => {

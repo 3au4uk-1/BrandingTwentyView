@@ -25,3 +25,29 @@ describe('toggleGroupExpandKey', () => {
     });
   });
 });
+
+describe('toggleGroupExpandKey exclusive', () => {
+  it('opens a group', () => {
+    expect(toggleGroupExpandKey({}, 'item-1', 'g-a')).toEqual({ 'item-1:g-a': true });
+  });
+
+  it('closes the same group on second toggle', () => {
+    const open = { 'item-1:g-a': true };
+    expect(toggleGroupExpandKey(open, 'item-1', 'g-a')).toEqual({ 'item-1:g-a': false });
+  });
+
+  it('switching groups closes the previous on the same item', () => {
+    const open = { 'item-1:g-a': true };
+    const next = toggleGroupExpandKey(open, 'item-1', 'g-b');
+    expect(next['item-1:g-a']).toBeFalsy();
+    expect(next['item-1:g-b']).toBe(true);
+  });
+
+  it('does not close another item group', () => {
+    const open = { 'item-1:g-a': true, 'item-2:g-a': true };
+    const next = toggleGroupExpandKey(open, 'item-1', 'g-b');
+    expect(next['item-2:g-a']).toBe(true);
+    expect(next['item-1:g-b']).toBe(true);
+    expect(next['item-1:g-a']).toBeFalsy();
+  });
+});
