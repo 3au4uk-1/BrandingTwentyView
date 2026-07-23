@@ -3,7 +3,7 @@ import {
   DEFAULT_PARENT_COLUMNS,
 } from 'src/constants/column-definitions';
 
-import { parseColumns } from '../utils/columns';
+import { parseChildColumnsPayload, parseColumns } from '../utils/columns';
 import { parseJsonField } from '../utils/parse-json-field';
 import { normalizeStageList } from '../utils/filters';
 import type { DealBoardFilters, DealBoardSort, DealBoardViewRecord } from '../types';
@@ -62,16 +62,24 @@ const parseSort = (raw: unknown): DealBoardSort[] => {
   );
 };
 
-const mapViewRecord = (node: RawViewNode): DealBoardViewRecord => ({
-  id: node.id,
-  name: node.name,
-  visibility: node.visibility as DealBoardViewRecord['visibility'],
-  parentColumns: parseColumns(node.parentColumns, DEFAULT_PARENT_COLUMNS),
-  childColumns: parseColumns(node.childColumns, DEFAULT_CHILD_COLUMNS),
-  filters: parseFilters(node.filters),
-  sort: parseSort(node.sort),
-  isDefault: node.isDefault ?? false,
-});
+const mapViewRecord = (node: RawViewNode): DealBoardViewRecord => {
+  const { columns: childColumns, groups: childGroups } = parseChildColumnsPayload(
+    node.childColumns,
+    DEFAULT_CHILD_COLUMNS,
+  );
+
+  return {
+    id: node.id,
+    name: node.name,
+    visibility: node.visibility as DealBoardViewRecord['visibility'],
+    parentColumns: parseColumns(node.parentColumns, DEFAULT_PARENT_COLUMNS),
+    childColumns,
+    childGroups,
+    filters: parseFilters(node.filters),
+    sort: parseSort(node.sort),
+    isDefault: node.isDefault ?? false,
+  };
+};
 
 export const fetchDealBoardViews = async (): Promise<DealBoardViewRecord[]> => {
   const client = getApiClient();

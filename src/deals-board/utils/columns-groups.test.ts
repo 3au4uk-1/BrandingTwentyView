@@ -34,6 +34,23 @@ describe('parseChildColumnsPayload', () => {
   it('returns fallback when raw is invalid', () => {
     expect(parseChildColumnsPayload(null, fallback).columns).toEqual(fallback);
   });
+
+  it('clears orphan groupId when group is missing', () => {
+    const result = parseChildColumnsPayload(
+      {
+        version: 2,
+        groups: [{ id: 'g1', name: 'Печать', order: 0 }],
+        columns: [
+          { field: 'plenka', label: 'Плёнка', order: 0, visible: true, groupId: 'g1' },
+          { field: 'stage', label: 'Стадия', order: 1, visible: true, groupId: 'missing' },
+        ],
+      },
+      fallback,
+    );
+
+    expect(result.columns[0]?.groupId).toBe('g1');
+    expect(result.columns[1]?.groupId).toBeUndefined();
+  });
 });
 
 describe('serializeChildColumnsPayload', () => {

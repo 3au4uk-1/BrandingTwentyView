@@ -15,6 +15,7 @@ const makeView = (
   visibility: 'WORKSPACE',
   parentColumns: [],
   childColumns: [],
+  childGroups: [],
   filters: {},
   sort: [],
   isDefault,

@@ -66,6 +66,7 @@ export const ViewSettingsModal = ({
           visibility,
           parentColumns: DEFAULT_PARENT_COLUMNS,
           childColumns: DEFAULT_CHILD_COLUMNS,
+          childGroups: [],
           filters: {},
           sort: [],
           isDefault: false,
