@@ -42,8 +42,14 @@ import {
 } from './filter-model/filter-session-bridge';
 import { hasLineItemFilterClauses } from './filter-model/has-line-item-filter-clauses';
 import { migrateLegacyFilters } from './filter-model/migrate-legacy-filters';
-import { getEffectiveClauses } from './filter-model/session';
+import {
+  beginSessionClauses,
+  commitSessionClauses,
+  getEffectiveClauses,
+} from './filter-model/session';
+import { toggleInClauseValue } from './filter-model/toggle-in-clause';
 import type { FilterState } from './filter-model/types';
+import { ProductionScoreboard } from './scoreboard/ProductionScoreboard';
 import type {
   ColumnGroupConfig,
   DealBoardSort,
@@ -408,6 +414,19 @@ const DealsBoardContent = () => {
       dateFrom: next.dateFrom,
       dateTo: next.dateTo,
       search: next.search,
+    });
+  };
+
+  const toggleScoreboardClause = (field: 'tip' | 'stage', optionValue: string) => {
+    const base =
+      filterSession.sessionClauses === undefined
+        ? beginSessionClauses(viewClauses)
+        : filterSession.sessionClauses;
+    setFilterSession({
+      ...filterSession,
+      sessionClauses: commitSessionClauses(
+        toggleInClauseValue(base, 'lineItem', field, optionValue),
+      ),
     });
   };
 
@@ -822,6 +841,14 @@ const DealsBoardContent = () => {
               </div>
             ) : null}
           </div>
+
+          <ProductionScoreboard
+            lineItems={visibleLineItems}
+            selectedTypes={mergedFilters.types ?? []}
+            selectedStages={mergedFilters.stages ?? []}
+            onToggleType={(tip) => toggleScoreboardClause('tip', tip)}
+            onToggleStage={(stage) => toggleScoreboardClause('stage', stage)}
+          />
 
           <div
             data-deals-board-body
