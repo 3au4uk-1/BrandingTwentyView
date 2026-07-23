@@ -93,4 +93,6 @@ Result: **18 passed** (3 new `retryManualLineItemSync` tests)
 
 ### Commit
 
-(SHA appended after commit)
+```
+ba83ab0 fix: retryManualLineItemSync force-syncs unsynced defaults and notifies on failure
+```
