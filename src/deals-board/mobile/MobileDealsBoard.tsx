@@ -32,9 +32,10 @@ export const MobileDealsBoard = (props: MobileDealsBoardProps) => {
     showAll,
     maxRecordsReached = false,
     activeFilterCount = 0,
-    quickFilters,
-    onQuickFiltersChange,
-    onQuickFiltersReset,
+    filterValue,
+    viewClauses,
+    onFilterChange,
+    onFilterReset,
     onPageChange,
     onSelectView,
     onCreateView,
@@ -112,8 +113,8 @@ export const MobileDealsBoard = (props: MobileDealsBoardProps) => {
       <MobileToolbar
         activeView={activeView}
         totalCount={totalCount}
-        search={quickFilters.search}
-        onSearchChange={(search) => onQuickFiltersChange({ ...quickFilters, search })}
+        search={filterValue.search ?? ''}
+        onSearchChange={(search) => onFilterChange({ ...filterValue, search })}
         onOpenViewSheet={openViewSheet}
         onOpenSettingsSheet={openSettingsSheet}
         onOpenFiltersSheet={openFiltersSheet}
@@ -194,9 +195,10 @@ export const MobileDealsBoard = (props: MobileDealsBoardProps) => {
       <MobileFiltersSheet
         isOpen={filtersSheetOpen}
         onClose={() => setFiltersSheetOpen(false)}
-        value={quickFilters}
-        onChange={onQuickFiltersChange}
-        onReset={onQuickFiltersReset}
+        value={filterValue}
+        viewClauses={viewClauses}
+        onChange={onFilterChange}
+        onReset={onFilterReset}
       />
 
       <MobileSettingsSheet

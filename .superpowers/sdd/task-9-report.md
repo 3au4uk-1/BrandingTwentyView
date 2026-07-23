@@ -1,24 +1,42 @@
-# Task 9 report: Desktop LineItemsTable group columns
+# Task 9 Report: Mobile filters + sync path
 
 ## Status
+Complete.
 
-Implemented desktop child-field groups from `DealsBoard` through `DealsTable`, `DealRow`, and `LineItemsTable`.
+## Summary
+Mobile deals board now edits filters directly via `FilterState` / FilterAST (same session CoW pipeline as desktop). Removed `QuickFiltersBar` from `MobileFiltersSheet`; clause edits use `useFilterClauseEditor` with `beginSessionClauses` and never set `sessionClauses: []` on reset (reset clears session to `{}`). `DealsBoard` passes `filterBarValue` + `handleFilterBarChange` to mobile instead of the legacy quick-filter bridge. Added mobile «+ Позиция» via `useCreateLineItem` so manual sync toast path is reachable on mobile. Confirmed `ManualSyncErrorToastProvider` already wraps the mobile tree (Task 2).
 
-## Changes
+## Files
+| Action | Path |
+|--------|------|
+| Create | `src/deals-board/filter-model/use-filter-clause-editor.ts` |
+| Modify | `src/deals-board/mobile/MobileFiltersSheet.tsx` |
+| Modify | `src/deals-board/mobile/MobileDealsBoard.tsx` |
+| Modify | `src/deals-board/mobile/MobileLineItemList.tsx` |
+| Modify | `src/deals-board/mobile/types.ts` |
+| Modify | `src/deals-board/DealsBoard.tsx` |
 
-- Added `GroupColumnCell` with a status-aware collapsed chip and per-line-item/group expansion state.
-- Expanded groups render labeled member fields through the existing `DynamicFieldCell` editors.
-- `LineItemsTable` now uses `buildChildLayoutColumns`, renders 160px group headers/cells, and keeps the complete child-column list available to editors.
-- Added a render test covering the collapsed status label and accessibility state.
+## Session contract
+- Mobile sheet mutates `FilterState.sessionClauses` via `beginSessionClauses(viewClauses)` on first clause edit.
+- Reset → `handleFilterReset` → `setFilterSession({})` (not `[]`).
+- Search in toolbar updates `FilterState.search` on the same `filterBarValue` object.
 
-## Verification
+## Tests
+```
+node node_modules/vitest/dist/cli.js run --config vitest.unit.config.ts
+→ 61 files, 348 tests passed
+```
 
-- `corepack yarn test:unit`: 51 files, 285 tests passed.
-- Touched-file oxlint: 0 errors; 2 pre-existing warnings in `DealRow.tsx` and `DealsBoard.tsx`.
-- `git diff --check`: passed.
-- `corepack yarn tsc --noEmit -p tsconfig.spec.json`: blocked by existing project-wide type errors outside Task 9, including view sort typing, API implicit-any diagnostics, existing React DOM declarations, mobile props, and logic-function response types.
+## Lint
+```
+npx oxlint -c .oxlintrc.json src/deals-board/mobile/ src/deals-board/filter-model/use-filter-clause-editor.ts src/deals-board/DealsBoard.tsx
+→ 0 errors (1 pre-existing warning: unused opportunityLinkFieldNames in DealsBoard)
+```
+
+## Commit
+`feat: mobile simplified filters on FilterAST + shared sync toast`
 
 ## Concerns
-
-- Group columns use a fixed 160px width and are not individually resizable; this follows the task brief.
-- No browser interaction suite is configured, so the new regression test verifies server-rendered collapsed output while expansion behavior relies on the existing tested expansion-state utility and the component wiring.
+1. Manual smoke: mobile filter sheet touch targets + company search scroll on small screens.
+2. `QuickFiltersBar` + bridge helpers remain for legacy/tests; desktop FilterBar still has parallel clause logic (hook not yet shared with FilterBar).
+3. No mobile UI test for filter sheet or create-line-item button.

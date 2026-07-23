@@ -1,5 +1,5 @@
 import type { LineItemQueryFilters } from '../api/line-items';
-import type { QuickFiltersValue } from '../QuickFiltersBar';
+import type { FilterClause, FilterState } from '../filter-model/types';
 import type { FieldDescriptor } from '../metadata/types';
 import type {
   ColumnConfig,
@@ -27,9 +27,10 @@ export type MobileDealsBoardProps = {
   showAll: boolean;
   maxRecordsReached?: boolean;
   activeFilterCount?: number;
-  quickFilters: QuickFiltersValue;
-  onQuickFiltersChange: (next: QuickFiltersValue) => void;
-  onQuickFiltersReset: () => void;
+  filterValue: FilterState;
+  viewClauses: FilterClause[];
+  onFilterChange: (next: FilterState) => void;
+  onFilterReset: () => void;
   onPageChange: (nextPage: number) => void;
   onSelectView: (id: string) => void;
   onCreateView: () => void;

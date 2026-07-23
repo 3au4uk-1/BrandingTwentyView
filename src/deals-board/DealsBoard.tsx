@@ -39,8 +39,6 @@ import { clausesToDealBoardFilters } from './filter-model/clauses-to-deal-board-
 import {
   buildPersistedFiltersFromSession,
   buildPersistedViewFilters,
-  filterSessionToQuickFilters,
-  quickFiltersToFilterSession,
 } from './filter-model/filter-session-bridge';
 import { hasLineItemFilterClauses } from './filter-model/has-line-item-filter-clauses';
 import { migrateLegacyFilters } from './filter-model/migrate-legacy-filters';
@@ -199,11 +197,6 @@ const DealsBoardContent = () => {
       clauses: viewClauses,
       sessionClauses: filterSession.sessionClauses,
     }),
-    [activeView?.filters, filterSession, viewClauses],
-  );
-
-  const mobileQuickFilters = useMemo(
-    () => filterSessionToQuickFilters(filterSession, activeView?.filters ?? {}, viewClauses),
     [activeView?.filters, filterSession, viewClauses],
   );
 
@@ -641,9 +634,10 @@ const DealsBoardContent = () => {
           showAll={effectiveShowAll}
           maxRecordsReached={mobileRecords.length >= MOBILE_MAX_RECORDS}
           activeFilterCount={activeFilterCount}
-          quickFilters={mobileQuickFilters}
-          onQuickFiltersChange={(next) => setFilterSession(quickFiltersToFilterSession(next))}
-          onQuickFiltersReset={handleFilterReset}
+          filterValue={filterBarValue}
+          viewClauses={viewClauses}
+          onFilterChange={handleFilterBarChange}
+          onFilterReset={handleFilterReset}
           onPageChange={setPage}
           onSelectView={setActiveViewId}
           onCreateView={() => setIsCreateModalOpen(true)}
