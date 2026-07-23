@@ -13,7 +13,11 @@ import { getStageLabel, getStageColor } from 'src/constants/stages';
 import type { ColumnConfig, ColumnGroupConfig, LineItemRow } from '../types';
 
 import { MobileFieldStack } from './MobileFieldStack';
-import { MOBILE_LINE_ITEM_HEADER_FIELDS, partitionColumns } from './mobile-field-layout';
+import {
+  clearHeaderFieldGroupIds,
+  MOBILE_LINE_ITEM_HEADER_FIELDS,
+  partitionColumns,
+} from './mobile-field-layout';
 
 type MobileLineItemRowProps = {
   item: LineItemRow;
@@ -60,7 +64,10 @@ export const MobileLineItemRow = ({
     ...header.filter((column) => column.field !== 'name'),
     ...detail,
   ];
-  const detailLayout = buildChildLayoutColumns(detailFields, groups);
+  const detailLayout = buildChildLayoutColumns(
+    clearHeaderFieldGroupIds(detailFields, MOBILE_LINE_ITEM_HEADER_FIELDS),
+    groups,
+  );
 
   return (
     <div

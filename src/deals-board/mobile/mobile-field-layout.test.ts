@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ColumnConfig } from '../types';
-import { formatCompactDealDate, partitionColumns } from './mobile-field-layout';
+import {
+  clearHeaderFieldGroupIds,
+  formatCompactDealDate,
+  MOBILE_LINE_ITEM_HEADER_FIELDS,
+  partitionColumns,
+} from './mobile-field-layout';
 
 const columns: ColumnConfig[] = [
   { field: 'name', label: 'Название', visible: true, order: 0 },
@@ -19,6 +24,22 @@ describe('partitionColumns', () => {
     expect(result.header.map((column) => column.field)).toEqual(['name']);
     expect(result.meta.map((column) => column.field)).toEqual(['loadDate', 'stage', 'summary']);
     expect(result.detail.map((column) => column.field)).toEqual(['companyName']);
+  });
+});
+
+describe('clearHeaderFieldGroupIds', () => {
+  it('strips groupId from mobile header fields for group layout', () => {
+    const columns: ColumnConfig[] = [
+      { field: 'name', label: 'Название', visible: true, order: 0, groupId: 'print' },
+      { field: 'stage', label: 'Стадия', visible: true, order: 1, groupId: 'print' },
+      { field: 'gotovo', label: 'Готово', visible: true, order: 2, groupId: 'print' },
+    ];
+
+    const result = clearHeaderFieldGroupIds(columns, MOBILE_LINE_ITEM_HEADER_FIELDS);
+
+    expect(result.find((column) => column.field === 'name')?.groupId).toBeUndefined();
+    expect(result.find((column) => column.field === 'stage')?.groupId).toBeUndefined();
+    expect(result.find((column) => column.field === 'gotovo')?.groupId).toBe('print');
   });
 });
 

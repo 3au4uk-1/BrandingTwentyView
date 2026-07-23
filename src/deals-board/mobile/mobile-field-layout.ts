@@ -11,6 +11,19 @@ export type PartitionedColumns = {
   detail: ColumnConfig[];
 };
 
+export const clearHeaderFieldGroupIds = (
+  columns: ColumnConfig[],
+  headerFields: readonly string[],
+): ColumnConfig[] => {
+  const headerSet = new Set(headerFields);
+
+  return columns.map((column) =>
+    headerSet.has(column.field) && column.groupId
+      ? { ...column, groupId: undefined }
+      : column,
+  );
+};
+
 export const partitionColumns = (
   columns: ColumnConfig[],
   headerFields: readonly string[],

@@ -20,3 +20,13 @@ Implemented mobile line-item field groups.
 ## Concerns
 
 The repository's full TypeScript build is not currently green because of unrelated baseline errors in constants, API, realtime, UI declaration, test fixture, and logic-function files.
+
+---
+
+## Review fix: header fields excluded from mobile group layout
+
+**Problem:** `MobileLineItemRow` excluded `name` from `buildChildLayoutColumns` input but still passed other header fields (e.g. `stage`) with their `groupId`, so header identity fields could be counted as group members or block group chips when only header fields shared a group.
+
+**Fix:** Added `clearHeaderFieldGroupIds` in `mobile-field-layout.ts` and applied it before `buildChildLayoutColumns` so `MOBILE_LINE_ITEM_HEADER_FIELDS` (`name`, `stage`) are treated as ungrouped for chip/layout purposes while `name` continues to render in the collapsed/expanded header row.
+
+**Verification:** `corepack yarn test:unit src/deals-board/mobile/mobile-field-layout.test.ts src/deals-board/utils/column-groups.test.ts` — 2 files, 13 tests passed.
