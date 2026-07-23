@@ -11,11 +11,12 @@ import { useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
 import { Input, Select } from './ui/Input';
 import { Modal } from './ui/Modal';
-import type { DealBoardViewRecord } from './types';
+import type { DealBoardFilters, DealBoardViewRecord } from './types';
 
 type ViewSettingsModalProps = {
   isOpen: boolean;
   initialView?: DealBoardViewRecord;
+  filtersToPersist?: DealBoardFilters;
   onClose: () => void;
   onSaved?: (view: DealBoardViewRecord) => void;
 };
@@ -23,6 +24,7 @@ type ViewSettingsModalProps = {
 export const ViewSettingsModal = ({
   isOpen,
   initialView,
+  filtersToPersist,
   onClose,
   onSaved,
 }: ViewSettingsModalProps) => {
@@ -57,6 +59,7 @@ export const ViewSettingsModal = ({
           data: {
             name: trimmedName,
             visibility,
+            ...(filtersToPersist ? { filters: filtersToPersist } : {}),
           },
         });
         onSaved?.(updated);
@@ -67,7 +70,7 @@ export const ViewSettingsModal = ({
           parentColumns: DEFAULT_PARENT_COLUMNS,
           childColumns: DEFAULT_CHILD_COLUMNS,
           childGroups: [],
-          filters: {},
+          filters: filtersToPersist ?? {},
           sort: [],
           isDefault: false,
         });

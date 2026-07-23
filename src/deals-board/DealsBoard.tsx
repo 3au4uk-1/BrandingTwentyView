@@ -37,6 +37,7 @@ import { FilterBar } from './FilterBar';
 import { filterDealsAndLineItems } from './filter-model/apply-line-item-filters';
 import { clausesToDealBoardFilters } from './filter-model/clauses-to-deal-board-filters';
 import {
+  buildPersistedFiltersFromSession,
   buildPersistedViewFilters,
   filterSessionToQuickFilters,
   quickFiltersToFilterSession,
@@ -213,6 +214,14 @@ const DealsBoardContent = () => {
     filterSession,
     activeView?.filters ?? {},
     viewClauses,
+  );
+
+  const persistedViewFilters = useMemo(
+    () =>
+      activeView
+        ? buildPersistedFiltersFromSession(activeView.filters, filterSession, effectiveClauses)
+        : undefined,
+    [activeView, effectiveClauses, filterSession],
   );
 
   const effectiveClauseKey = useMemo(
@@ -853,6 +862,7 @@ const DealsBoardContent = () => {
 
       <ViewSettingsModal
         isOpen={isCreateModalOpen}
+        filtersToPersist={persistedViewFilters}
         onClose={() => setIsCreateModalOpen(false)}
         onSaved={(view) => setActiveViewId(view.id)}
       />
@@ -860,6 +870,7 @@ const DealsBoardContent = () => {
       <ViewSettingsModal
         isOpen={Boolean(editViewDraft)}
         initialView={editViewDraft}
+        filtersToPersist={persistedViewFilters}
         onClose={() => setEditViewDraft(undefined)}
         onSaved={(view) => setActiveViewId(view.id)}
       />

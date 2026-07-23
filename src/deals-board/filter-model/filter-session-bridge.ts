@@ -35,18 +35,35 @@ export const filterSessionToQuickFilters = (
 
 export const quickFiltersToFilterSession = (
   next: QuickFiltersValue,
-): Partial<FilterState> => ({
-  datePreset: next.datePreset ?? undefined,
-  dateFrom: next.dateFrom,
-  dateTo: next.dateTo,
-  search: next.search,
-  sessionClauses: migrateLegacyFilters({
+): Partial<FilterState> => {
+  const sessionClauses = migrateLegacyFilters({
     stages: next.stages,
     types: next.types,
     companyIds: next.companyIds,
     oplata: next.oplata,
-  }),
-});
+  });
+
+  return {
+    datePreset: next.datePreset ?? undefined,
+    dateFrom: next.dateFrom,
+    dateTo: next.dateTo,
+    search: next.search,
+    ...(sessionClauses.length > 0 ? { sessionClauses } : {}),
+  };
+};
+
+export const buildPersistedFiltersFromSession = (
+  viewFilters: DealBoardFilters,
+  filterSession: Partial<FilterState>,
+  effectiveClauses: FilterClause[],
+): DealBoardFilters & { clauses: FilterClause[] } =>
+  buildPersistedViewFilters(viewFilters, {
+    datePreset: filterSession.datePreset ?? viewFilters.datePreset,
+    dateFrom: filterSession.dateFrom ?? viewFilters.dateFrom,
+    dateTo: filterSession.dateTo ?? viewFilters.dateTo,
+    search: filterSession.search ?? viewFilters.search,
+    clauses: effectiveClauses,
+  });
 
 export const buildPersistedViewFilters = (
   viewFilters: DealBoardFilters,

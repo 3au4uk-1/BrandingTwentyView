@@ -1,27 +1,71 @@
-# Task 5 report: Mobile parity
+# Task 5 Report: FilterBar UI + wire DealsBoard
 
 ## Status
+Complete.
 
-Implemented horizontal grouped-field controls for expanded mobile line items while preserving header and ungrouped field stacks.
+## Summary
+Replaced desktop `QuickFiltersBar` with universal `FilterBar` wired to the filter-model session contract. `DealsBoard` now builds effective filters via `migrateLegacyFilters` → `getEffectiveClauses` → `clausesToDealBoardFilters`, passes `effectiveClauses` into `useOpportunities` / `shouldFetchAllOpportunities`, and applies `filterDealsAndLineItems` before render. Per-deal «Показать все позиции» toggle added in expanded rows when line-item clauses are active.
 
-## Changes
+## Files
+| Action | Path |
+|--------|------|
+| Create | `src/deals-board/FilterBar.tsx` |
+| Create | `src/deals-board/filter-model/filter-session-bridge.ts` |
+| Create | `src/deals-board/filter-model/format-clause-label.ts` |
+| Modify | `src/deals-board/DealsBoard.tsx` |
+| Modify | `src/deals-board/DealsTable/DealRow.tsx`, `LineItemsTable.tsx`, `DealsTable.tsx` |
+| Modify | `src/deals-board/hooks/useOpportunities.ts` |
+| Modify | `src/deals-board/utils/count-active-quick-filters.ts` (+ test) |
+| Modify | `src/deals-board/types.ts` (`clauses?` on `DealBoardFilters`) |
+| Modify | `src/deals-board/mobile/MobileDealsBoard.tsx`, `mobile/types.ts` (activeFilterCount from parent) |
+| Kept | `src/deals-board/QuickFiltersBar.tsx` (mobile `MobileFiltersSheet` — Task 9) |
 
-- Replaced per-group `GroupColumnCell` rendering with one `GroupChipsCell` row.
-- Shared controlled expansion state between the chips and active `GroupFieldStrip`.
-- Rendered only the active group's members in the horizontally scrollable strip.
-- Passed `touchFriendly` and `listMenuPresentation="sheet"` to grouped field editors.
-- Preserved `clearHeaderFieldGroupIds` and `MobileFieldStack` rendering for header and ungrouped fields.
-- Added a regression test covering active grouped fields, ungrouped fields, mobile editor props, and horizontal overflow.
+## Session contract
+- `sessionClauses === undefined` → view clauses via `migrateLegacyFilters`
+- First clause edit → `beginSessionClauses(viewClauses)` inside `FilterBar`
+- Reset → `{}` session (not `[]`)
+- View persist writes `{ datePreset, dateFrom, dateTo, search, clauses, showAll }` via `buildPersistedViewFilters`
 
-## Verification
+## Tests
+```
+node node_modules/vitest/dist/cli.js run --config vitest.unit.config.ts
+→ 58 files, 339 tests passed
+```
 
-- Red phase: targeted test failed because `vzatoVRabotu` was absent from the expanded mobile row.
-- `corepack yarn test:unit src/deals-board/mobile/MobileLineItemRow.test.ts`: 1 test passed.
-- `corepack yarn test:unit`: 54 files passed, 304 tests passed.
-- `corepack yarn lint`: exit 0; 5 pre-existing warnings, 0 errors.
-- `corepack yarn tsc --noEmit -p tsconfig.spec.json`: blocked by existing repository type errors; no errors were reported in the Task 5 source or test.
+## Lint
+```
+npx oxlint -c .oxlintrc.json .
+→ 0 errors (5 pre-existing warnings in unrelated files)
+```
 
-## Concerns
+## Self-review
+- FilterBar v1 builder covers stage / tip / company / oplata (replaces hardcoded quick filters on desktop).
+- Mobile still uses `QuickFiltersBar` in bottom sheet; bridged via `filterSessionToQuickFilters` / `quickFiltersToFilterSession`.
+- `showAllPositionOppIds` is session-only (not persisted) per design.
+- No TanStack changes (Tasks 6–7).
 
-- Full strict type-check remains unavailable until the repository's existing TypeScript errors are resolved.
-- Existing unrelated task report edits and untracked SDD artifacts were intentionally left out of this task commit.
+## Commit
+`4620943` — `feat: replace quick filters with universal FilterBar`
+
+---
+
+## Review fix (Task 5)
+
+### Status
+Complete.
+
+### Fixes
+1. **Mobile bridge regression** — `quickFiltersToFilterSession` omits `sessionClauses` when mobile clears clause fields (empty legacy arrays); `getEffectiveClauses` falls back to view clauses. Added `filter-session-bridge.test.ts`.
+2. **View filter persist** — `ViewSettingsModal` accepts `filtersToPersist`; create/edit save paths write `{ datePreset, dateFrom, dateTo, search, clauses }` via `buildPersistedFiltersFromSession` from `DealsBoard`.
+
+### Tests
+```
+node node_modules/vitest/dist/cli.js run --config vitest.unit.config.ts \
+  src/deals-board/filter-model/filter-session-bridge.test.ts \
+  src/deals-board/filter-model/session.test.ts \
+  src/deals-board/utils/count-active-quick-filters.test.ts
+→ 3 files, 11 tests passed
+```
+
+### Commit
+(see git log after commit)
