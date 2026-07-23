@@ -9,15 +9,35 @@ const OPTIONS = [
 
 export const GroupChipModeToggle = () => {
   const theme = useTheme();
+  const { colors, font, spacing } = theme;
   const { mode, setMode } = useGroupChipMode();
 
   return (
-    <SegmentControl
-      theme={theme}
-      options={OPTIONS}
-      value={mode}
-      onChange={setMode}
-      ariaLabel="Режим отображения групп"
-    />
+    <div
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: spacing.xs,
+        flexShrink: 0,
+      }}
+    >
+      <span
+        style={{
+          fontSize: font.sizeXs,
+          color: colors.textMuted,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        Группы
+      </span>
+      <SegmentControl
+        theme={theme}
+        variant="muted"
+        options={OPTIONS}
+        value={mode}
+        onChange={setMode}
+        ariaLabel="Режим отображения групп"
+      />
+    </div>
   );
 };

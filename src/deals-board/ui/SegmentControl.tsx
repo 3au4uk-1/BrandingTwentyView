@@ -14,6 +14,7 @@ type SegmentControlProps<T extends string> = {
   onChange: (value: T) => void;
   ariaLabel?: string;
   style?: CSSProperties;
+  variant?: 'default' | 'muted';
 };
 
 export const SegmentControl = <T extends string>({
@@ -23,8 +24,10 @@ export const SegmentControl = <T extends string>({
   onChange,
   ariaLabel,
   style,
+  variant = 'default',
 }: SegmentControlProps<T>) => {
   const { colors, radius, font, spacing } = theme;
+  const isMuted = variant === 'muted';
 
   return (
     <div
@@ -33,10 +36,10 @@ export const SegmentControl = <T extends string>({
       style={{
         display: 'inline-flex',
         flexShrink: 0,
-        border: `1px solid ${colors.border}`,
+        border: `1px solid ${isMuted ? colors.borderSubtle : colors.border}`,
         borderRadius: radius.md,
         overflow: 'hidden',
-        backgroundColor: colors.bgElevated,
+        backgroundColor: isMuted ? colors.bgTertiary : colors.bgElevated,
         ...style,
       }}
     >
@@ -53,13 +56,21 @@ export const SegmentControl = <T extends string>({
             onClick={() => onChange(option.value)}
             style={{
               border: 'none',
-              borderRight: index < options.length - 1 ? `1px solid ${colors.border}` : 'none',
-              padding: `${spacing.xs} ${spacing.sm}`,
-              fontSize: font.sizeSm,
+              borderRight: index < options.length - 1 ? `1px solid ${colors.borderSubtle}` : 'none',
+              padding: isMuted ? `3px ${spacing.xs}` : `${spacing.xs} ${spacing.sm}`,
+              fontSize: isMuted ? font.sizeXs : font.sizeSm,
               fontFamily: font.family,
               fontWeight: isActive ? font.weightMedium : font.weightNormal,
-              backgroundColor: isActive ? colors.accentMuted : 'transparent',
-              color: isActive ? colors.accentText : colors.textSecondary,
+              backgroundColor: isActive
+                ? isMuted
+                  ? colors.bgElevated
+                  : colors.accentMuted
+                : 'transparent',
+              color: isActive
+                ? isMuted
+                  ? colors.textSecondary
+                  : colors.accentText
+                : colors.textMuted,
               cursor: 'pointer',
               whiteSpace: 'nowrap',
               transition: 'background-color 0.12s ease, color 0.12s ease',

@@ -16,6 +16,9 @@ type ColumnPickerProps = {
   columns: ColumnConfig[];
   groups?: ColumnGroupConfig[];
   onSave: (columns: ColumnConfig[], groups: ColumnGroupConfig[]) => Promise<void>;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 };
 
 const EMPTY_GROUPS: ColumnGroupConfig[] = [];
@@ -41,10 +44,22 @@ export const ColumnPicker = ({
   columns,
   groups = EMPTY_GROUPS,
   onSave,
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger = false,
 }: ColumnPickerProps) => {
   const theme = useTheme();
   const { colors, radius, font, spacing, zIndex } = theme;
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = controlledOpen ?? internalOpen;
+  const setIsOpen = (next: boolean | ((prev: boolean) => boolean)) => {
+    const resolved = typeof next === 'function' ? next(isOpen) : next;
+    if (onOpenChange) {
+      onOpenChange(resolved);
+    } else {
+      setInternalOpen(resolved);
+    }
+  };
   const [isSaving, setIsSaving] = useState(false);
   const [draftColumns, setDraftColumns] = useState<ColumnConfig[]>([]);
   const [draftGroups, setDraftGroups] = useState<ColumnGroupConfig[]>([]);
@@ -222,9 +237,11 @@ export const ColumnPicker = ({
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
-      <Button theme={theme} variant="ghost" size="sm" onClick={() => setIsOpen((prev) => !prev)}>
-        {triggerLabel}
-      </Button>
+      {hideTrigger ? null : (
+        <Button theme={theme} variant="ghost" size="sm" onClick={() => setIsOpen((prev) => !prev)}>
+          {triggerLabel}
+        </Button>
+      )}
 
       {isOpen ? (
         <div

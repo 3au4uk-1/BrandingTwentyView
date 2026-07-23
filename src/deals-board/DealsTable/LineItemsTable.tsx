@@ -59,7 +59,7 @@ export const LineItemsTable = ({
   onColumnResizeStart,
 }: LineItemsTableProps) => {
   const theme = useTheme();
-  const { colorScheme, colors, font, spacing } = theme;
+  const { colorScheme, colors, font, spacing, radius } = theme;
   const layout = buildChildLayoutColumns(columns, groups);
   const { ungrouped, groupEntries } = partitionUngroupedAndGroups(layout);
   const tableStyle = getTableLayoutStyle(
@@ -99,7 +99,12 @@ export const LineItemsTable = ({
   };
 
   return (
-    <div style={{ padding: `${spacing.xs} ${spacing.md} ${spacing.sm} 28px` }}>
+    <div
+      style={{
+        padding: `${spacing.sm} ${spacing.md} ${spacing.sm} 40px`,
+        borderTop: `1px solid ${colors.borderSubtle}`,
+      }}
+    >
       {hasLineItemFilters && onToggleShowAllPositions ? (
         <div style={{ marginBottom: spacing.xs }}>
           <Button
@@ -114,8 +119,12 @@ export const LineItemsTable = ({
       ) : null}
       <div
         style={{
-          borderLeft: `2px solid ${colors.borderStrong}`,
-          paddingLeft: spacing.md,
+          borderLeft: `3px solid ${colors.borderStrong}`,
+          paddingLeft: spacing.lg,
+          marginLeft: spacing.sm,
+          borderRadius: `0 ${radius.md} ${radius.md} 0`,
+          backgroundColor: colors.bgInset,
+          boxShadow: `inset 0 1px 0 ${colors.borderSubtle}`,
         }}
       >
         <table
@@ -124,9 +133,10 @@ export const LineItemsTable = ({
             borderCollapse: 'collapse',
             tableLayout: 'fixed',
             backgroundColor: colors.bgElevated,
-            border: `1px solid ${colors.borderSubtle}`,
-            borderRadius: theme.radius.md,
+            border: `1px solid ${colors.border}`,
+            borderRadius: radius.md,
             overflow: 'hidden',
+            boxShadow: colors.shadow,
           }}
         >
           <colgroup>

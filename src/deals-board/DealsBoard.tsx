@@ -18,8 +18,8 @@ import { resolveOpportunityRestFieldNames } from 'src/constants/opportunity-rest
 import { useShouldUseMobileLayout } from './hooks/useShouldUseMobileLayout';
 import { useHostHeightLock } from './hooks/useHostHeightLock';
 import { DESKTOP_BOARD_HEIGHT_CSS } from './utils/desktop-layout';
-import { ColumnPicker } from './ColumnPicker';
 import { MobileDealsBoard } from './mobile/MobileDealsBoard';
+import { ToolbarSettingsCluster } from './ToolbarSettingsCluster';
 import { DealsTable } from './DealsTable/DealsTable';
 import { ExpandModeToggle } from './ExpandModeToggle';
 import { GroupChipModeToggle } from './GroupChipModeToggle';
@@ -54,7 +54,6 @@ import type {
   OpportunityRow,
 } from './types';
 import { ThemeProvider, useTheme } from './theme/ThemeContext';
-import { Button } from './ui/Button';
 import { CancelOtmenaProvider } from './ui/CancelOtmenaPopup';
 import { ManualSyncErrorToastProvider } from './ui/ManualSyncErrorToast';
 import { PortalHostProvider } from './ui/PortalHostContext';
@@ -708,8 +707,18 @@ const DealsBoardContent = () => {
                   childFields={childFieldsQuery.data ?? []}
                 />
 
-                <ExpandModeToggle />
-                <GroupChipModeToggle />
+                <div
+                  style={{
+                    marginLeft: 'auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing.sm,
+                    flexShrink: 0,
+                  }}
+                >
+                  <ExpandModeToggle />
+                  <GroupChipModeToggle />
+                </div>
               </div>
 
               <div
@@ -771,34 +780,21 @@ const DealsBoardContent = () => {
                   ) : null}
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xs, flexShrink: 0 }}>
-                  <Button
-                    theme={theme}
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (activeView) {
-                        setEditViewDraft(activeView);
-                      }
-                    }}
-                    disabled={!activeView}
-                  >
-                    Редактировать view
-                  </Button>
-                  <ColumnPicker
-                    target="parent"
-                    columns={mergedParentColumns}
-                    onSave={(columns) => saveActiveViewColumns('parent', columns)}
-                  />
-                  <ColumnPicker
-                    target="child"
-                    columns={mergedChildColumns}
-                    groups={activeView?.childGroups ?? []}
-                    onSave={(columns, groups) =>
-                      saveActiveViewColumns('child', columns, groups)
+                <ToolbarSettingsCluster
+                  disabled={!activeView}
+                  onEditView={() => {
+                    if (activeView) {
+                      setEditViewDraft(activeView);
                     }
-                  />
-                </div>
+                  }}
+                  parentColumns={mergedParentColumns}
+                  childColumns={mergedChildColumns}
+                  childGroups={activeView?.childGroups ?? []}
+                  onParentColumnsSave={(columns) => saveActiveViewColumns('parent', columns)}
+                  onChildColumnsSave={(columns, groups) =>
+                    saveActiveViewColumns('child', columns, groups)
+                  }
+                />
               </div>
             </header>
 
