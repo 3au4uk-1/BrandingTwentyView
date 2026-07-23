@@ -11,6 +11,7 @@ import {
   formatGroupChipLabel,
   getGroupChipStatus,
   getVisibleFieldsForChildLayoutEntry,
+  partitionUngroupedAndGroups,
 } from './column-groups';
 
 const printGroup: ColumnGroupConfig = {
@@ -122,6 +123,28 @@ describe('buildChildLayoutColumns', () => {
       finishingGroup.id,
       'amount',
       artworkGroup.id,
+    ]);
+  });
+});
+
+describe('partitionUngroupedAndGroups', () => {
+  it('separates flat columns from group entries without changing their order', () => {
+    const columns: ColumnConfig[] = [
+      { field: 'name', label: 'Позиция', order: 0, visible: true },
+      { field: 'plenka', label: 'Плёнка', order: 1, visible: true, groupId: printGroup.id },
+      { field: 'amount', label: 'Сумма', order: 2, visible: true },
+    ];
+    const layout = buildChildLayoutColumns(columns, [printGroup]);
+
+    const result = partitionUngroupedAndGroups(layout);
+
+    expect(result.ungrouped).toEqual([columns[0], columns[2]]);
+    expect(result.groupEntries).toEqual([
+      {
+        type: 'group',
+        group: printGroup,
+        members: [columns[1]],
+      },
     ]);
   });
 });

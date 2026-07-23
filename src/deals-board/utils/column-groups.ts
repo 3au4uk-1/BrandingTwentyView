@@ -13,6 +13,26 @@ export type ChildLayoutColumn =
   | ColumnConfig
   | { type: 'group'; group: ColumnGroupConfig; members: ColumnConfig[] };
 
+export const partitionUngroupedAndGroups = (
+  layout: ChildLayoutColumn[],
+): {
+  ungrouped: ColumnConfig[];
+  groupEntries: Array<Extract<ChildLayoutColumn, { type: 'group' }>>;
+} => {
+  const ungrouped: ColumnConfig[] = [];
+  const groupEntries: Array<Extract<ChildLayoutColumn, { type: 'group' }>> = [];
+
+  for (const entry of layout) {
+    if ('type' in entry) {
+      groupEntries.push(entry);
+    } else {
+      ungrouped.push(entry);
+    }
+  }
+
+  return { ungrouped, groupEntries };
+};
+
 export const buildDefaultChildGroups = (): ColumnGroupConfig[] => [
   { id: PRINT_FIELD_GROUP_ID, name: 'Печать', order: 0 },
 ];

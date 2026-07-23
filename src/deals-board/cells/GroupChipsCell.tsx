@@ -11,11 +11,20 @@ import {
 export type GroupChipsCellProps = {
   groups: ColumnGroupEntry[];
   item: LineItemRow;
+  isExpanded?: (lineItemId: string, groupId: string) => boolean;
+  onToggle?: (lineItemId: string, groupId: string) => void;
 };
 
-export const GroupChipsCell = ({ groups, item }: GroupChipsCellProps) => {
+export const GroupChipsCell = ({
+  groups,
+  item,
+  isExpanded: controlledIsExpanded,
+  onToggle,
+}: GroupChipsCellProps) => {
   const { mode } = useGroupChipMode();
-  const { isExpanded, toggle } = useLineItemGroupExpand();
+  const expansion = useLineItemGroupExpand();
+  const isExpanded = controlledIsExpanded ?? expansion.isExpanded;
+  const toggle = onToggle ?? expansion.toggle;
   const { colors, font, spacing } = useTheme();
 
   if (groups.length === 0) {
