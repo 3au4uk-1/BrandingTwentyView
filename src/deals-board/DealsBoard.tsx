@@ -363,7 +363,10 @@ const DealsBoardContent = () => {
     try {
       await updateViewMutation.mutateAsync({
         id: activeView.id,
-        data: target === 'parent' ? { parentColumns: columns } : { childColumns: columns },
+        data:
+          target === 'parent'
+            ? { parentColumns: columns }
+            : { childColumns: columns, childGroups: activeView.childGroups },
       });
     } catch (error) {
       window.alert(

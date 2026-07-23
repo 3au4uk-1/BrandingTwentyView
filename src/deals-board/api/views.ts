@@ -85,7 +85,8 @@ const mapViewRecord = (node: RawViewNode): DealBoardViewRecord => {
   };
 };
 
-const serializeViewMutationData = (
+/** Callers updating `childColumns` must pass `childGroups` to avoid wiping stored groups. */
+export const serializeViewMutationData = (
   data: Partial<Omit<DealBoardViewRecord, 'id'>>,
 ): Partial<Omit<DealBoardViewRecord, 'id' | 'childGroups'>> & {
   childColumns?: ReturnType<typeof serializeChildColumnsPayload>;
