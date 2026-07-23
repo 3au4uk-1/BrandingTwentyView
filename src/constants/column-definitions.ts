@@ -1,4 +1,5 @@
-import type { ColumnConfig } from 'src/deals-board/types';
+import type { ColumnConfig, ColumnGroupConfig } from 'src/deals-board/types';
+import { PRINT_FIELD_GROUP_ID } from './print-field-group';
 
 /** Fallback column layouts when the metadata API is unavailable. */
 export const DEFAULT_PARENT_COLUMNS: ColumnConfig[] = [
@@ -9,13 +10,38 @@ export const DEFAULT_PARENT_COLUMNS: ColumnConfig[] = [
   { field: 'links', label: 'Ссылки', order: 4, visible: false, width: 80 },
 ];
 
+export const DEFAULT_CHILD_GROUPS: ColumnGroupConfig[] = [
+  { id: PRINT_FIELD_GROUP_ID, name: 'Печать', order: 0 },
+];
+
 export const DEFAULT_CHILD_COLUMNS: ColumnConfig[] = [
   { field: 'name', label: 'Позиция', order: 0, visible: true, width: 240 },
   { field: 'tip', label: 'Тип', order: 1, visible: true, width: 110 },
   { field: 'stage', label: 'Стадия', order: 2, visible: true, width: 120 },
-  { field: 'ssylkaNaMakety', label: 'Макеты', order: 3, visible: true, width: 100 },
-  { field: 'plenka', label: 'Плёнка', order: 4, visible: true, width: 80 },
+  {
+    field: 'ssylkaNaMakety',
+    label: 'Макеты',
+    order: 3,
+    visible: true,
+    width: 100,
+    groupId: PRINT_FIELD_GROUP_ID,
+  },
+  {
+    field: 'plenka',
+    label: 'Плёнка',
+    order: 4,
+    visible: true,
+    width: 80,
+    groupId: PRINT_FIELD_GROUP_ID,
+  },
   { field: 'kolichestvo', label: 'Кол-во', order: 5, visible: true, width: 70 },
   { field: 'amount', label: 'Сумма', order: 6, visible: true, width: 100 },
   { field: 'kommentariy', label: 'Комментарий', order: 7, visible: false, width: 120 },
+  {
+    field: 'zatratyNaRabotu',
+    label: 'Затраты на работу',
+    order: 8,
+    visible: true,
+    width: 140,
+  },
 ];
