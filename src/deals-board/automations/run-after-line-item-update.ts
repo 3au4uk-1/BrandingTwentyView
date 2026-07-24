@@ -6,6 +6,7 @@ import { planBrandingFreeNameRename } from './branding-free-name';
 import { planHvataykaAutomation } from './hvatayka';
 import { buildOkleykaMessage } from './okleyka-message';
 import { planRestorationMaketAuto } from './restoration-maket';
+import { planTipFromName } from './tip-from-name';
 import { notifyOkleykaMessage } from '../utils/okleyka-message-notify';
 
 type OpportunitiesPage = {
@@ -92,8 +93,8 @@ export type RunAfterLineItemUpdateArgs = {
 };
 
 /**
- * Side-effects after a successful line-item save: hvatayka auto-complete,
- * one-shot free branding rename, OKLEYKA copy toast, restoration maket auto-fill.
+ * Side-effects after a successful line-item save: name→tip, hvatayka,
+ * branding rename, OKLEYKA toast, restoration maket auto-fill.
  */
 export const runAfterLineItemUpdate = async (
   queryClient: QueryClient,
@@ -106,6 +107,7 @@ export const runAfterLineItemUpdate = async (
   if (!current?.opportunityId) return;
 
   const opportunityId = current.opportunityId;
+  const tipBeforeNameInfer = previousItem?.tip ?? current.tip;
 
   // 1) Branding free-entry rename (once)
   if ('kommentariy' in patch) {
@@ -126,7 +128,21 @@ export const runAfterLineItemUpdate = async (
     }
   }
 
-  // 2) OKLEYKA message
+  // 2) Name → tip (always overwrite when keyword matches)
+  const nameChanged =
+    'name' in patch ||
+    (typeof current.name === 'string' &&
+      previousItem?.name !== undefined &&
+      current.name !== previousItem.name);
+  if (nameChanged || 'kommentariy' in patch) {
+    const tipPlan = planTipFromName(current.name, current.tip);
+    if (tipPlan) {
+      await applyFollowUpPatch(queryClient, id, tipPlan);
+      current.tip = tipPlan.tip;
+    }
+  }
+
+  // 3) OKLEYKA message
   if (
     patch.stage === 'OKLEYKA' &&
     previousItem?.stage !== 'OKLEYKA'
@@ -142,14 +158,17 @@ export const runAfterLineItemUpdate = async (
     }
   }
 
-  // 3) Restoration default maket when tip → RESTAVRACIYA
-  if ('tip' in patch) {
+  // 4) Restoration default maket when tip → RESTAVRACIYA
+  const tipJustChanged =
+    'tip' in patch ||
+    (current.tip !== undefined && current.tip !== tipBeforeNameInfer);
+  if (tipJustChanged) {
     const nextTip =
-      typeof patch.tip === 'string' || patch.tip === null
-        ? (patch.tip as string | null)
-        : current.tip;
+      typeof current.tip === 'string' || current.tip === null
+        ? current.tip
+        : null;
     const plan = planRestorationMaketAuto(
-      previousItem?.tip,
+      tipBeforeNameInfer,
       nextTip,
       current.ssylkaNaMakety,
     );
@@ -159,10 +178,10 @@ export const runAfterLineItemUpdate = async (
     }
   }
 
-  // 4) Hvatayka → GOTOVO
+  // 5) Hvatayka → GOTOVO
   const touchedHvatayka = Object.keys(patch).some((key) =>
     HVATAYKA_TRIGGER_FIELDS.has(key),
-  );
+  ) || nameChanged;
   if (!touchedHvatayka) return;
 
   const siblings = findSiblingsInCache(queryClient, opportunityId).map((item) =>
