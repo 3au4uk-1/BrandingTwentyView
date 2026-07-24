@@ -5,6 +5,7 @@ import type { LineItemRow, OpportunityRow } from '../types';
 import { planBrandingFreeNameRename } from './branding-free-name';
 import { planHvataykaAutomation } from './hvatayka';
 import { buildOkleykaMessage } from './okleyka-message';
+import { planRestorationMaketAuto } from './restoration-maket';
 import { notifyOkleykaMessage } from '../utils/okleyka-message-notify';
 
 type OpportunitiesPage = {
@@ -92,7 +93,7 @@ export type RunAfterLineItemUpdateArgs = {
 
 /**
  * Side-effects after a successful line-item save: hvatayka auto-complete,
- * one-shot free branding rename, OKLEYKA copy toast.
+ * one-shot free branding rename, OKLEYKA copy toast, restoration maket auto-fill.
  */
 export const runAfterLineItemUpdate = async (
   queryClient: QueryClient,
@@ -141,7 +142,24 @@ export const runAfterLineItemUpdate = async (
     }
   }
 
-  // 3) Hvatayka → GOTOVO
+  // 3) Restoration default maket when tip → RESTAVRACIYA
+  if ('tip' in patch) {
+    const nextTip =
+      typeof patch.tip === 'string' || patch.tip === null
+        ? (patch.tip as string | null)
+        : current.tip;
+    const plan = planRestorationMaketAuto(
+      previousItem?.tip,
+      nextTip,
+      current.ssylkaNaMakety,
+    );
+    if (plan) {
+      await applyFollowUpPatch(queryClient, id, plan);
+      current.ssylkaNaMakety = plan.ssylkaNaMakety;
+    }
+  }
+
+  // 4) Hvatayka → GOTOVO
   const touchedHvatayka = Object.keys(patch).some((key) =>
     HVATAYKA_TRIGGER_FIELDS.has(key),
   );

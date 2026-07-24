@@ -1,6 +1,7 @@
 import { PRINT_FIELD_GROUP_ID } from 'src/constants/print-field-group';
 
 import { PrintPanelChip } from '../editors/PrintPanelChip';
+import { RestorationMaketChip } from '../editors/RestorationMaketChip';
 import { useGroupChipMode } from '../hooks/useGroupChipMode';
 import { useLineItemGroupExpand } from '../hooks/useLineItemGroupExpand';
 import { useTheme } from '../theme/ThemeContext';
@@ -30,7 +31,10 @@ export const GroupChipsCell = ({
   const toggle = onToggle ?? expansion.toggle;
   const { colors, font, spacing } = useTheme();
 
-  if (groups.length === 0) {
+  const showRestorationChip =
+    item.tip === 'RESTAVRACIYA' || Boolean(item.ssylkaNaMakety?.primaryLinkUrl);
+
+  if (groups.length === 0 && !showRestorationChip) {
     return null;
   }
 
@@ -81,6 +85,7 @@ export const GroupChipsCell = ({
           </button>
         );
       })}
+      {showRestorationChip ? <RestorationMaketChip item={item} /> : null}
     </div>
   );
 };
