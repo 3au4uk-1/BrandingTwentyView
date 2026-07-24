@@ -1,0 +1,169 @@
+import type { QueryClient } from '@tanstack/react-query';
+
+import { updateLineItem } from '../api/line-items';
+import type { LineItemRow, OpportunityRow } from '../types';
+import { planBrandingFreeNameRename } from './branding-free-name';
+import { planHvataykaAutomation } from './hvatayka';
+import { buildOkleykaMessage } from './okleyka-message';
+import { notifyOkleykaMessage } from '../utils/okleyka-message-notify';
+
+type OpportunitiesPage = {
+  records: OpportunityRow[];
+};
+
+const HVATAYKA_TRIGGER_FIELDS = new Set(['name', 'tip', 'stage', 'tipDetail', 'kommentariy']);
+
+const findLineItemInCache = (
+  queryClient: QueryClient,
+  id: string,
+): LineItemRow | undefined => {
+  for (const [, items] of queryClient.getQueriesData<LineItemRow[]>({
+    queryKey: ['lineItems'],
+  })) {
+    const match = items?.find((item) => item.id === id);
+    if (match) return match;
+  }
+  return undefined;
+};
+
+const findSiblingsInCache = (
+  queryClient: QueryClient,
+  opportunityId: string,
+): LineItemRow[] => {
+  const byId = new Map<string, LineItemRow>();
+
+  for (const [, items] of queryClient.getQueriesData<LineItemRow[]>({
+    queryKey: ['lineItems'],
+  })) {
+    for (const item of items ?? []) {
+      if (item.opportunityId === opportunityId) {
+        byId.set(item.id, item);
+      }
+    }
+  }
+
+  return [...byId.values()];
+};
+
+const findOpportunityInCache = (
+  queryClient: QueryClient,
+  opportunityId: string,
+): OpportunityRow | undefined => {
+  for (const [, page] of queryClient.getQueriesData<OpportunitiesPage>({
+    queryKey: ['opportunities'],
+  })) {
+    const match = page?.records?.find((record) => record.id === opportunityId);
+    if (match) return match;
+  }
+  return undefined;
+};
+
+const patchCaches = (
+  queryClient: QueryClient,
+  id: string,
+  data: Record<string, unknown>,
+): void => {
+  for (const [queryKey, items] of queryClient.getQueriesData<LineItemRow[]>({
+    queryKey: ['lineItems'],
+  })) {
+    if (!items) continue;
+    queryClient.setQueryData<LineItemRow[]>(
+      queryKey,
+      items.map((item) => (item.id === id ? { ...item, ...data } : item)),
+    );
+  }
+};
+
+const applyFollowUpPatch = async (
+  queryClient: QueryClient,
+  id: string,
+  data: Record<string, unknown>,
+): Promise<void> => {
+  await updateLineItem(id, data);
+  patchCaches(queryClient, id, data);
+};
+
+export type RunAfterLineItemUpdateArgs = {
+  id: string;
+  patch: Record<string, unknown>;
+  /** Item state before this user patch (from onMutate). */
+  previousItem?: LineItemRow;
+};
+
+/**
+ * Side-effects after a successful line-item save: hvatayka auto-complete,
+ * one-shot free branding rename, OKLEYKA copy toast.
+ */
+export const runAfterLineItemUpdate = async (
+  queryClient: QueryClient,
+  { id, patch, previousItem }: RunAfterLineItemUpdateArgs,
+): Promise<void> => {
+  const current =
+    findLineItemInCache(queryClient, id) ??
+    (previousItem ? { ...previousItem, ...patch } : undefined);
+
+  if (!current?.opportunityId) return;
+
+  const opportunityId = current.opportunityId;
+
+  // 1) Branding free-entry rename (once)
+  if ('kommentariy' in patch) {
+    const kommentariy =
+      typeof patch.kommentariy === 'string'
+        ? patch.kommentariy
+        : current.kommentariy;
+    const nameBefore =
+      previousItem?.name ??
+      (typeof patch.name === 'string' ? undefined : current.name);
+    const nextName = planBrandingFreeNameRename(
+      nameBefore ?? current.name,
+      kommentariy,
+    );
+    if (nextName && nextName !== current.name) {
+      await applyFollowUpPatch(queryClient, id, { name: nextName });
+      current.name = nextName;
+    }
+  }
+
+  // 2) OKLEYKA message
+  if (
+    patch.stage === 'OKLEYKA' &&
+    previousItem?.stage !== 'OKLEYKA'
+  ) {
+    const opportunity = findOpportunityInCache(queryClient, opportunityId);
+    if (opportunity) {
+      notifyOkleykaMessage(
+        buildOkleykaMessage({
+          opportunity,
+          lineItem: current,
+        }),
+      );
+    }
+  }
+
+  // 3) Hvatayka → GOTOVO
+  const touchedHvatayka = Object.keys(patch).some((key) =>
+    HVATAYKA_TRIGGER_FIELDS.has(key),
+  );
+  if (!touchedHvatayka) return;
+
+  const siblings = findSiblingsInCache(queryClient, opportunityId).map((item) =>
+    item.id === id ? { ...item, ...current } : item,
+  );
+
+  // Ensure current is present even if filters hid siblings
+  if (!siblings.some((item) => item.id === id)) {
+    siblings.push(current);
+  }
+
+  const plans = planHvataykaAutomation(siblings);
+  for (const plan of plans) {
+    if (plan.id === id) {
+      const alreadyApplied =
+        current.stage === plan.data.stage &&
+        (current.kommentariy || '').trim() === plan.data.kommentariy;
+      if (alreadyApplied) continue;
+    }
+    await applyFollowUpPatch(queryClient, plan.id, plan.data);
+  }
+};

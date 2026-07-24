@@ -60,6 +60,7 @@ import type {
 import { ThemeProvider, useTheme } from './theme/ThemeContext';
 import { CancelOtmenaProvider } from './ui/CancelOtmenaPopup';
 import { ManualSyncErrorToastProvider } from './ui/ManualSyncErrorToast';
+import { OkleykaMessageToastProvider } from './ui/OkleykaMessageToast';
 import { PortalHostProvider } from './ui/PortalHostContext';
 import { DEALS_BOARD_ROOT_ID } from './utils/dom';
 import { resolveActiveDealBoardView } from './utils/resolve-active-view';
@@ -525,7 +526,7 @@ const DealsBoardContent = () => {
   const metadataFieldsError =
     parentFieldsQuery.error ?? childFieldsQuery.error ?? null;
   const metadataFieldsWarning = metadataFieldsError
-    ? `–ù–µ —É–¥–∞–ª–æ—Å—å –æ–±–Ω–æ–≤–∏—Ç—å —Å–ø–∏—Å–æ–∫ –ø–æ–ª–µ–π ‚Äî –∏—Å–ø–æ–ª—å–∑—É—é—Ç—Å—è —Å–æ—Ö—Ä–∞–Ω—ë–Ω–Ω—ã–µ –∫–æ–ª–æ–Ω–∫–∏${
+    ? `¶›¶¶ T√¶+¶-¶¨¶-T¡TÃ ¶-¶-¶-¶-¶-¶¨T¬TÃ T¡¶¨¶¨T¡¶-¶¶ ¶¨¶-¶¨¶¶¶¶ Ú¿‘ ¶¨T¡¶¨¶-¶¨TÃ¶¨T√TŒT¬T¡Tœ T¡¶-T≈T¿¶-¶-T—¶-¶-TÀ¶¶ ¶¶¶-¶¨¶-¶-¶¶¶¨${
         metadataFieldsError instanceof Error ? `: ${metadataFieldsError.message}` : ''
       }`
     : undefined;
@@ -553,7 +554,7 @@ const DealsBoardContent = () => {
       });
     } catch (error) {
       window.alert(
-        `–ù–µ —É–¥–∞–ª–æ—Å—å –æ–±–Ω–æ–≤–∏—Ç—å –∫–æ–ª–æ–Ω–∫–∏ view.${error instanceof Error ? ` ${error.message}` : ''}`,
+        `¶›¶¶ T√¶+¶-¶¨¶-T¡TÃ ¶-¶-¶-¶-¶-¶¨T¬TÃ ¶¶¶-¶¨¶-¶-¶¶¶¨ view.${error instanceof Error ? ` ${error.message}` : ''}`,
       );
       throw error;
     }
@@ -574,7 +575,7 @@ const DealsBoardContent = () => {
       setPage(0);
     } catch (error) {
       window.alert(
-        `–ù–µ —É–¥–∞–ª–æ—Å—å –æ–±–Ω–æ–≤–∏—Ç—å –Ω–∞—Å—Ç—Ä–æ–π–∫—É –ø–∞–≥–∏–Ω–∞—Ü–∏–∏.${error instanceof Error ? ` ${error.message}` : ''}`,
+        `¶›¶¶ T√¶+¶-¶¨¶-T¡TÃ ¶-¶-¶-¶-¶-¶¨T¬TÃ ¶-¶-T¡T¬T¿¶-¶¶¶¶T√ ¶¨¶-¶¶¶¨¶-¶-T∆¶¨¶¨.${error instanceof Error ? ` ${error.message}` : ''}`,
       );
     }
   };
@@ -583,6 +584,7 @@ const DealsBoardContent = () => {
     <PortalHostProvider hostRef={rootRef}>
       <CancelOtmenaProvider>
       <ManualSyncErrorToastProvider>
+      <OkleykaMessageToastProvider>
       <div
         ref={rootRef}
         id={DEALS_BOARD_ROOT_ID}
@@ -631,7 +633,7 @@ const DealsBoardContent = () => {
             flexShrink: 0,
           }}
         >
-          –ü–æ–∑–∏—Ü–∏–∏ —Å–¥–µ–ª–æ–∫ –Ω–µ –∑–∞–≥—Ä—É–∑–∏–ª–∏—Å—å: {lineItemsWarning}
+          ¶ﬂ¶-¶¨¶¨T∆¶¨¶¨ T¡¶+¶¶¶¨¶-¶¶ ¶-¶¶ ¶¨¶-¶¶T¿T√¶¨¶¨¶¨¶¨T¡TÃ: {lineItemsWarning}
         </div>
       ) : null}
 
@@ -837,7 +839,7 @@ const DealsBoardContent = () => {
                   flexShrink: 0,
                 }}
               >
-                –ü–æ–∑–∏—Ü–∏–∏ —Å–¥–µ–ª–æ–∫ –Ω–µ –∑–∞–≥—Ä—É–∑–∏–ª–∏—Å—å: {lineItemsWarning}
+                ¶ﬂ¶-¶¨¶¨T∆¶¨¶¨ T¡¶+¶¶¶¨¶-¶¶ ¶-¶¶ ¶¨¶-¶¶T¿T√¶¨¶¨¶¨¶¨T¡TÃ: {lineItemsWarning}
               </div>
             ) : null}
           </div>
@@ -911,6 +913,7 @@ const DealsBoardContent = () => {
         onSaved={(view) => setActiveViewId(view.id)}
       />
     </div>
+      </OkleykaMessageToastProvider>
       </ManualSyncErrorToastProvider>
       </CancelOtmenaProvider>
     </PortalHostProvider>

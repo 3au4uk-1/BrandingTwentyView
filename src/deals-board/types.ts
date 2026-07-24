@@ -79,6 +79,7 @@ export type LineItemRow = {
   amount?: { amountMicros: number; currencyCode: string };
   kommentariy?: string;
   tip?: LineItemType | null;
+  tipDetail?: string | null;
   stage?: LineItemStage | null;
   ssylkaNaMakety?: { primaryLinkUrl?: string; primaryLinkLabel?: string };
   plenka?: { markdown?: string };

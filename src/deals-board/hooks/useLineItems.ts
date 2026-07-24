@@ -7,6 +7,7 @@ import {
   updateLineItem,
 } from '../api/line-items';
 import type { LineItemRow } from '../types';
+import { runAfterLineItemUpdate } from '../automations/run-after-line-item-update';
 import {
   defaultManualLineItemBaseline,
   setManualLineItemBaseline,
@@ -83,11 +84,14 @@ export const useUpdateLineItem = () => {
     }) => updateLineItem(id, data),
 
     onMutate: async ({ id, data }) => {
-      if (Object.keys(data).length === 0) return { snapshots: [] as LineItemsSnapshot[] };
+      if (Object.keys(data).length === 0) {
+        return { snapshots: [] as LineItemsSnapshot[], previousItem: undefined as LineItemRow | undefined };
+      }
 
       await queryClient.cancelQueries({ queryKey: ['lineItems'] });
 
       const snapshots: LineItemsSnapshot[] = [];
+      let previousItem: LineItemRow | undefined;
 
       for (const [queryKey, items] of queryClient.getQueriesData<LineItemRow[]>({
         queryKey: ['lineItems'],
@@ -95,6 +99,9 @@ export const useUpdateLineItem = () => {
         snapshots.push({ queryKey, data: items });
 
         if (items) {
+          if (!previousItem) {
+            previousItem = items.find((item) => item.id === id);
+          }
           queryClient.setQueryData<LineItemRow[]>(
             queryKey,
             items.map((item) =>
@@ -104,7 +111,7 @@ export const useUpdateLineItem = () => {
         }
       }
 
-      return { snapshots };
+      return { snapshots, previousItem };
     },
 
     onError: (_error, _variables, context) => {
@@ -113,7 +120,7 @@ export const useUpdateLineItem = () => {
       }
     },
 
-    onSettled: async (_data, error, { id, data }) => {
+    onSettled: async (_data, error, { id, data }, context) => {
       let opportunityId: string | undefined;
 
       for (const [, items] of queryClient.getQueriesData<LineItemRow[]>({
@@ -128,6 +135,11 @@ export const useUpdateLineItem = () => {
 
       if (!error) {
         await syncManualLineItemAfterUpdate(queryClient, id, data);
+        await runAfterLineItemUpdate(queryClient, {
+          id,
+          patch: data,
+          previousItem: context?.previousItem,
+        });
       }
 
       queryClient.invalidateQueries({ queryKey: ['lineItems'] });
