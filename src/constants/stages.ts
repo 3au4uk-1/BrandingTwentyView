@@ -1,8 +1,8 @@
 export const LINE_ITEM_STAGES = [
   { value: 'NOVYY', label: 'Новый', color: 'white' },
-  { value: 'V_RABOTE', label: 'В работе', color: 'orange' },
   { value: 'V_PECHATI', label: 'В печати', color: 'yellow' },
   { value: 'OKLEYKA', label: 'Оклейка', color: 'blue' },
+  { value: 'V_RABOTE', label: 'В работе', color: 'orange' },
   { value: 'GOTOVO', label: 'Готово', color: 'green' },
   { value: 'OTMENA', label: 'Отмена', color: 'red' },
 ] as const;

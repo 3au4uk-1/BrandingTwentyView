@@ -36,7 +36,14 @@ const bump = (
   }
 };
 
-export const SCOREBOARD_TIP_ORDER: LineItemType[] = ['BANNERA', 'PLENKA', 'PODRYAD'];
+/** Primary tip chips (NE_NASHE only shown when count > 0). */
+export const SCOREBOARD_TIP_ORDER: LineItemType[] = [
+  'BANNERA',
+  'PLENKA',
+  'PODRYAD',
+  'PROIZVODSTVO',
+  'RESTAVRACIYA',
+];
 
 export const SCOREBOARD_STAGE_ORDER: LineItemStage[] = LINE_ITEM_STAGES.map((s) => s.value);
 
@@ -72,4 +79,22 @@ export const computeProductionScoreboard = (
     byTip,
     byStage,
   };
+};
+
+export const computeTipStageBreakdown = (
+  lineItems: LineItemRow[],
+  tip: LineItemType,
+): Record<LineItemStage, MetricCount> => {
+  const byStage = Object.fromEntries(
+    LINE_ITEM_STAGES.map((s) => [s.value, emptyCount()]),
+  ) as Record<LineItemStage, MetricCount>;
+  const stageDeals = new Map<string, Set<string>>();
+
+  for (const item of lineItems) {
+    if (item.tip !== tip) continue;
+    if (!item.stage || !(item.stage in byStage)) continue;
+    bump(byStage, item.stage, item.opportunityId || '', stageDeals);
+  }
+
+  return byStage;
 };

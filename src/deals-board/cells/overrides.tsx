@@ -22,6 +22,7 @@ import { RichTextPopover } from '../editors/RichTextPopover';
 import { StageSelect } from '../editors/StageSelect';
 import { TextCell } from '../editors/TextCell';
 import { TypeSelect } from '../editors/TypeSelect';
+import { TipDetailSelect } from '../editors/TipDetailSelect';
 import { TimePickerModal } from '../editors/TimePickerModal';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
@@ -258,6 +259,23 @@ export const renderFieldOverride = (props: FieldOverrideProps): ReactNode | null
         <TypeSelect
           recordId={recordId}
           value={value as LineItemType | null | undefined}
+          tipDetail={
+            typeof props.row?.tipDetail === 'string' ? props.row.tipDetail : null
+          }
+        />
+      );
+    case 'tipDetail':
+      if (variant !== 'child') return null;
+
+      return (
+        <TipDetailSelect
+          recordId={recordId}
+          tip={
+            typeof props.row?.tip === 'string'
+              ? (props.row.tip as LineItemType)
+              : null
+          }
+          value={typeof value === 'string' ? value : null}
         />
       );
     case 'stage':

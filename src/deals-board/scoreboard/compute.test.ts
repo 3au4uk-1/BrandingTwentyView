@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { computeProductionScoreboard } from './compute';
+import { computeProductionScoreboard, computeTipStageBreakdown } from './compute';
 
 describe('computeProductionScoreboard', () => {
   it('counts positions and distinct deals per tip and stage', () => {
@@ -52,5 +52,22 @@ describe('computeProductionScoreboard', () => {
     expect(stats.byStage.NOVYY.positions).toBe(0);
     expect(stats.totalPositions).toBe(1);
     expect(stats.totalDeals).toBe(1);
+  });
+});
+
+describe('computeTipStageBreakdown', () => {
+  it('counts stages only for the selected tip', () => {
+    const breakdown = computeTipStageBreakdown(
+      [
+        { id: '1', opportunityId: 'a', name: 'x', tip: 'PODRYAD', stage: 'NOVYY' },
+        { id: '2', opportunityId: 'a', name: 'y', tip: 'PODRYAD', stage: 'V_RABOTE' },
+        { id: '3', opportunityId: 'b', name: 'z', tip: 'BANNERA', stage: 'NOVYY' },
+      ],
+      'PODRYAD',
+    );
+
+    expect(breakdown.NOVYY).toEqual({ positions: 1, deals: 1 });
+    expect(breakdown.V_RABOTE).toEqual({ positions: 1, deals: 1 });
+    expect(breakdown.V_PECHATI.positions).toBe(0);
   });
 });

@@ -10,6 +10,6 @@ import {
 export default defineFrontComponent({
   universalIdentifier: DEALS_BOARD_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
   name: 'deals-board',
-  description: `${APP_DISPLAY_NAME} — плоская таблица сделок · сводка смены`,
+  description: `${APP_DISPLAY_NAME} — плоская таблица сделок · сводка смены · тип/уточнение`,
   component: DealsBoard,
 });

@@ -16,12 +16,13 @@ export const DEFAULT_CHILD_GROUPS: ColumnGroupConfig[] = [
 
 export const DEFAULT_CHILD_COLUMNS: ColumnConfig[] = [
   { field: 'name', label: 'Позиция', order: 0, visible: true, width: 240 },
-  { field: 'tip', label: 'Тип', order: 1, visible: true, width: 110 },
+  { field: 'tip', label: 'Тип', order: 1, visible: true, width: 120 },
   { field: 'stage', label: 'Стадия', order: 2, visible: true, width: 120 },
+  { field: 'tipDetail', label: 'Уточнение', order: 3, visible: true, width: 140 },
   {
     field: 'ssylkaNaMakety',
     label: 'Макеты',
-    order: 3,
+    order: 4,
     visible: true,
     width: 100,
     groupId: PRINT_FIELD_GROUP_ID,
@@ -29,7 +30,7 @@ export const DEFAULT_CHILD_COLUMNS: ColumnConfig[] = [
   {
     field: 'dataGotovnostiPechati',
     label: 'Дата готовности печати',
-    order: 4,
+    order: 5,
     visible: true,
     width: 120,
     groupId: PRINT_FIELD_GROUP_ID,
@@ -37,7 +38,7 @@ export const DEFAULT_CHILD_COLUMNS: ColumnConfig[] = [
   {
     field: 'vremyaGotovnostiPechati',
     label: 'Время готовности печати',
-    order: 5,
+    order: 6,
     visible: true,
     width: 110,
     groupId: PRINT_FIELD_GROUP_ID,
@@ -45,7 +46,7 @@ export const DEFAULT_CHILD_COLUMNS: ColumnConfig[] = [
   {
     field: 'kommentariyDlyaPechati',
     label: 'Комментарий для печати',
-    order: 6,
+    order: 7,
     visible: true,
     width: 160,
     groupId: PRINT_FIELD_GROUP_ID,
@@ -53,7 +54,7 @@ export const DEFAULT_CHILD_COLUMNS: ColumnConfig[] = [
   {
     field: 'plenka',
     label: 'Плёнка',
-    order: 7,
+    order: 8,
     visible: true,
     width: 80,
     groupId: PRINT_FIELD_GROUP_ID,
@@ -61,7 +62,7 @@ export const DEFAULT_CHILD_COLUMNS: ColumnConfig[] = [
   {
     field: 'vzatoVRabotu',
     label: 'Взято в работу',
-    order: 8,
+    order: 9,
     visible: true,
     width: 110,
     groupId: PRINT_FIELD_GROUP_ID,
@@ -69,18 +70,18 @@ export const DEFAULT_CHILD_COLUMNS: ColumnConfig[] = [
   {
     field: 'gotovo',
     label: 'Готово',
-    order: 9,
+    order: 10,
     visible: true,
     width: 90,
     groupId: PRINT_FIELD_GROUP_ID,
   },
-  { field: 'kolichestvo', label: 'Кол-во', order: 10, visible: true, width: 70 },
-  { field: 'amount', label: 'Сумма', order: 11, visible: true, width: 100 },
-  { field: 'kommentariy', label: 'Комментарий', order: 12, visible: false, width: 120 },
+  { field: 'kolichestvo', label: 'Кол-во', order: 11, visible: true, width: 70 },
+  { field: 'amount', label: 'Сумма', order: 12, visible: true, width: 100 },
+  { field: 'kommentariy', label: 'Комментарий', order: 13, visible: false, width: 120 },
   {
     field: 'zatratyNaRabotu',
     label: 'Затраты на работу',
-    order: 13,
+    order: 14,
     visible: true,
     width: 140,
   },

@@ -1,12 +1,19 @@
 export const LINE_ITEM_TYPES = [
   { value: 'BANNERA', label: 'Баннера', color: 'blue' },
-  { value: 'PLENKA', label: 'Плёнка', color: 'green' },
+  { value: 'PLENKA', label: 'Оклейка', color: 'green' },
   { value: 'PODRYAD', label: 'Подряд', color: 'purple' },
-  { value: 'RESTAVRACIYA', label: 'Реставрация', color: 'pink' },
+  { value: 'PROIZVODSTVO', label: 'Производство', color: 'orange' },
+  { value: 'RESTAVRACIYA', label: 'Рест. оклейка', color: 'pink' },
+  /** Deprecated as a tip — prefer PLENKA + tipDetail NE_NASHI. Still readable. */
   { value: 'NE_NASHE', label: 'Не наше', color: 'gray' },
 ] as const;
 
 export type LineItemType = (typeof LINE_ITEM_TYPES)[number]['value'];
+
+/** Types offered when creating / changing tip (hides deprecated NE_NASHE). */
+export const LINE_ITEM_TYPES_FOR_PICKER = LINE_ITEM_TYPES.filter(
+  (type) => type.value !== 'NE_NASHE',
+);
 
 const findType = (value: string) => LINE_ITEM_TYPES.find((type) => type.value === value);
 
