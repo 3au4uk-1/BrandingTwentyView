@@ -14,7 +14,10 @@ import {
   resolveOpportunityLinkFieldNames,
 } from 'src/constants/opportunity-links';
 import { resolveOpportunityRestFieldNames } from 'src/constants/opportunity-rest-fields';
+import { OPPORTUNITY_RASHOD_REST_FIELDS } from 'src/constants/opportunity-rashod-fields';
 
+import { AnalyticsPanel } from './analytics/AnalyticsPanel';
+import { MarginStrip } from './analytics/MarginStrip';
 import { useShouldUseMobileLayout } from './hooks/useShouldUseMobileLayout';
 import { useHostHeightLock } from './hooks/useHostHeightLock';
 import { DESKTOP_BOARD_HEIGHT_CSS } from './utils/desktop-layout';
@@ -100,6 +103,7 @@ const DealsBoardContent = () => {
   const [filterSession, setFilterSession] = useState<Partial<FilterState>>(EMPTY_FILTER_SESSION);
   const [sortSession, setSortSession] = useState<DealBoardSort[] | undefined>(undefined);
   const [showAllPositionOppIds, setShowAllPositionOppIds] = useState<Set<string>>(() => new Set());
+  const [boardPane, setBoardPane] = useState<'deals' | 'analytics'>('deals');
   const views = asArray<DealBoardViewRecord>(viewsQuery.data);
   const hasPrintGroupMigrationAttemptedRef = useRef(false);
 
@@ -293,10 +297,13 @@ const DealsBoardContent = () => {
     [mergedParentColumns, parentFieldsQuery.data],
   );
 
-  const opportunityRestFieldNames = useMemo(
-    () => resolveOpportunityRestFieldNames(mergedParentColumns, parentFieldsQuery.data ?? []),
-    [mergedParentColumns, parentFieldsQuery.data],
-  );
+  const opportunityRestFieldNames = useMemo(() => {
+    const fromColumns = resolveOpportunityRestFieldNames(
+      mergedParentColumns,
+      parentFieldsQuery.data ?? [],
+    );
+    return [...new Set([...fromColumns, ...OPPORTUNITY_RASHOD_REST_FIELDS])];
+  }, [mergedParentColumns, parentFieldsQuery.data]);
 
   const opportunityLinkFieldNames = useMemo(
     () => resolveOpportunityLinkFieldNames(mergedParentColumns, parentFieldsQuery.data ?? []),
@@ -526,7 +533,7 @@ const DealsBoardContent = () => {
   const metadataFieldsError =
     parentFieldsQuery.error ?? childFieldsQuery.error ?? null;
   const metadataFieldsWarning = metadataFieldsError
-    ? `¶›¶¶ T√¶+¶-¶¨¶-T¡TÃ ¶-¶-¶-¶-¶-¶¨T¬TÃ T¡¶¨¶¨T¡¶-¶¶ ¶¨¶-¶¨¶¶¶¶ Ú¿‘ ¶¨T¡¶¨¶-¶¨TÃ¶¨T√TŒT¬T¡Tœ T¡¶-T≈T¿¶-¶-T—¶-¶-TÀ¶¶ ¶¶¶-¶¨¶-¶-¶¶¶¨${
+    ? `–ù–µ —É–¥–∞–ª–æ—Å—å –æ–±–Ω–æ–≤–∏—Ç—å —Å–ø–∏—Å–æ–∫ –ø–æ–ª–µ–π ‚Äî –∏—Å–ø–æ–ª—å–∑—É—é—Ç—Å—è —Å–æ—Ö—Ä–∞–Ω—ë–Ω–Ω—ã–µ –∫–æ–ª–æ–Ω–∫–∏${
         metadataFieldsError instanceof Error ? `: ${metadataFieldsError.message}` : ''
       }`
     : undefined;
@@ -554,7 +561,7 @@ const DealsBoardContent = () => {
       });
     } catch (error) {
       window.alert(
-        `¶›¶¶ T√¶+¶-¶¨¶-T¡TÃ ¶-¶-¶-¶-¶-¶¨T¬TÃ ¶¶¶-¶¨¶-¶-¶¶¶¨ view.${error instanceof Error ? ` ${error.message}` : ''}`,
+        `–ù–µ —É–¥–∞–ª–æ—Å—å –æ–±–Ω–æ–≤–∏—Ç—å –∫–æ–ª–æ–Ω–∫–∏ view.${error instanceof Error ? ` ${error.message}` : ''}`,
       );
       throw error;
     }
@@ -575,7 +582,7 @@ const DealsBoardContent = () => {
       setPage(0);
     } catch (error) {
       window.alert(
-        `¶›¶¶ T√¶+¶-¶¨¶-T¡TÃ ¶-¶-¶-¶-¶-¶¨T¬TÃ ¶-¶-T¡T¬T¿¶-¶¶¶¶T√ ¶¨¶-¶¶¶¨¶-¶-T∆¶¨¶¨.${error instanceof Error ? ` ${error.message}` : ''}`,
+        `–ù–µ —É–¥–∞–ª–æ—Å—å –æ–±–Ω–æ–≤–∏—Ç—å –Ω–∞—Å—Ç—Ä–æ–π–∫—É –ø–∞–≥–∏–Ω–∞—Ü–∏–∏.${error instanceof Error ? ` ${error.message}` : ''}`,
       );
     }
   };
@@ -633,7 +640,7 @@ const DealsBoardContent = () => {
             flexShrink: 0,
           }}
         >
-          ¶ﬂ¶-¶¨¶¨T∆¶¨¶¨ T¡¶+¶¶¶¨¶-¶¶ ¶-¶¶ ¶¨¶-¶¶T¿T√¶¨¶¨¶¨¶¨T¡TÃ: {lineItemsWarning}
+          –ü–æ–∑–∏—Ü–∏–∏ —Å–¥–µ–ª–æ–∫ –Ω–µ –∑–∞–≥—Ä—É–∑–∏–ª–∏—Å—å: {lineItemsWarning}
         </div>
       ) : null}
 
@@ -839,7 +846,7 @@ const DealsBoardContent = () => {
                   flexShrink: 0,
                 }}
               >
-                ¶ﬂ¶-¶¨¶¨T∆¶¨¶¨ T¡¶+¶¶¶¨¶-¶¶ ¶-¶¶ ¶¨¶-¶¶T¿T√¶¨¶¨¶¨¶¨T¡TÃ: {lineItemsWarning}
+                –ü–æ–∑–∏—Ü–∏–∏ —Å–¥–µ–ª–æ–∫ –Ω–µ –∑–∞–≥—Ä—É–∑–∏–ª–∏—Å—å: {lineItemsWarning}
               </div>
             ) : null}
           </div>
@@ -852,6 +859,29 @@ const DealsBoardContent = () => {
             onToggleStage={(stage) => toggleScoreboardClause('stage', stage)}
           />
 
+          <MarginStrip
+            opportunities={visibleRecords}
+            lineItems={visibleLineItems}
+            onOpenAnalytics={() => setBoardPane('analytics')}
+          />
+
+          {boardPane === 'analytics' ? (
+            <div
+              data-deals-board-body
+              style={{
+                minHeight: 0,
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <AnalyticsPanel
+                opportunities={visibleRecords}
+                lineItems={visibleLineItems}
+                onBack={() => setBoardPane('deals')}
+              />
+            </div>
+          ) : (
           <div
             data-deals-board-body
             style={{
@@ -895,6 +925,7 @@ const DealsBoardContent = () => {
               }
             />
           </div>
+          )}
         </>
       )}
 
