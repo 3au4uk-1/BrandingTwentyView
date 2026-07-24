@@ -1,7 +1,9 @@
-import { useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   isDefaultLineItemHiddenByFilters,
+  updateLineItem,
   type LineItemQueryFilters,
 } from '../api/line-items';
 import { DynamicFieldCell } from '../cells/DynamicFieldCell';
@@ -19,6 +21,11 @@ import {
   partitionUngroupedAndGroups,
 } from '../utils/column-groups';
 import { findActiveGroupMembers } from '../utils/active-group';
+import {
+  moveItemInOrder,
+  planPoryadokPatches,
+  sortLineItemsByOrder,
+} from '../utils/line-item-order';
 import { resolveFieldValue } from '../utils/resolve-field-value';
 import { getStageRowStyles } from '../utils/stage-row-styles';
 
@@ -59,21 +66,34 @@ export const LineItemsTable = ({
   onColumnResizeStart,
 }: LineItemsTableProps) => {
   const theme = useTheme();
+  const queryClient = useQueryClient();
   const { colorScheme, colors, font, spacing, radius } = theme;
   const layout = buildChildLayoutColumns(columns, groups);
   const { ungrouped, groupEntries } = partitionUngroupedAndGroups(layout);
   const tableStyle = getTableLayoutStyle(
     ungrouped,
-    sumColumnWidths(ungrouped) + GROUP_ZONE_MIN_WIDTH,
+    sumColumnWidths(ungrouped) + GROUP_ZONE_MIN_WIDTH + 36,
   );
   const createLineItem = useCreateLineItem();
   const { isExpanded, toggle } = useLineItemGroupExpand();
   const isCreatingRef = useRef(false);
+  const [orderedItems, setOrderedItems] = useState<LineItemRow[] | null>(null);
   const [statusMessage, setStatusMessage] = useState<{
     kind: 'warning' | 'error';
     text: string;
   } | null>(null);
   const isHiddenByFilters = isDefaultLineItemHiddenByFilters(filters);
+
+  const sortedItems = useMemo(() => sortLineItemsByOrder(items), [items]);
+  const displayItems = orderedItems ?? sortedItems;
+  const itemsOrderSignature = useMemo(
+    () => items.map((item) => `${item.id}:${item.poryadok ?? ''}`).join('|'),
+    [items],
+  );
+
+  useEffect(() => {
+    setOrderedItems(null);
+  }, [itemsOrderSignature]);
 
   const handleCreate = async () => {
     if (isCreatingRef.current) return;
@@ -96,6 +116,41 @@ export const LineItemsTable = ({
     } finally {
       isCreatingRef.current = false;
     }
+  };
+
+  const commitOrder = async (nextIds: string[]) => {
+    const byId = new Map(displayItems.map((item) => [item.id, item]));
+    const nextRows = nextIds
+      .map((id, index) => {
+        const row = byId.get(id);
+        return row ? { ...row, poryadok: index } : null;
+      })
+      .filter((row): row is LineItemRow => row !== null);
+
+    setOrderedItems(nextRows);
+
+    const patches = planPoryadokPatches(nextIds, byId);
+    try {
+      await Promise.all(patches.map((patch) => updateLineItem(patch.id, patch.data)));
+      await queryClient.invalidateQueries({ queryKey: ['lineItems'] });
+    } catch (error) {
+      setOrderedItems(null);
+      setStatusMessage({
+        kind: 'error',
+        text: error instanceof Error ? error.message : 'Не удалось сохранить порядок',
+      });
+    }
+  };
+
+  const moveByOffset = async (fromId: string, offset: -1 | 1) => {
+    const currentIds = displayItems.map((item) => item.id);
+    const fromIndex = currentIds.indexOf(fromId);
+    const toIndex = fromIndex + offset;
+    if (fromIndex < 0 || toIndex < 0 || toIndex >= currentIds.length) return;
+    const toId = currentIds[toIndex];
+    if (!toId) return;
+    const nextIds = moveItemInOrder(currentIds, fromId, toId);
+    if (nextIds) await commitOrder(nextIds);
   };
 
   return (
@@ -140,6 +195,7 @@ export const LineItemsTable = ({
           }}
         >
           <colgroup>
+            <col style={{ width: '36px' }} />
             {ungrouped.map((column) => (
               <col key={column.field} style={{ width: `${getColumnWidth(column)}px` }} />
             ))}
@@ -147,6 +203,16 @@ export const LineItemsTable = ({
           </colgroup>
           <thead>
             <tr style={{ borderBottom: `1px solid ${colors.borderSubtle}`, backgroundColor: colors.bgTertiary }}>
+              <th
+                scope="col"
+                aria-label="Порядок"
+                style={{
+                  width: 28,
+                  padding: '6px 4px',
+                  color: colors.textMuted,
+                  fontSize: font.sizeXs,
+                }}
+              />
               {ungrouped.map((entry) => (
                 <ResizableColumnHeader
                   key={entry.field}
@@ -174,20 +240,86 @@ export const LineItemsTable = ({
             </tr>
           </thead>
           <tbody>
-            {items.map((item, rowIndex) => {
+            {displayItems.map((item, rowIndex) => {
               const stageStyles = getStageRowStyles(item.stage, colorScheme);
+              const canMoveUp = rowIndex > 0;
+              const canMoveDown = rowIndex < displayItems.length - 1;
 
               return (
                 <tr
                   key={item.id}
                   style={{
                     borderBottom:
-                      rowIndex < items.length - 1 ? `1px solid ${colors.borderSubtle}` : 'none',
+                      rowIndex < displayItems.length - 1 ? `1px solid ${colors.borderSubtle}` : 'none',
                     backgroundColor: stageStyles.backgroundColor,
                     transition: 'background-color 0.12s ease',
                     boxShadow: stageStyles.boxShadow,
                   }}
                 >
+                  <td
+                    style={{
+                      width: 36,
+                      padding: '4px 2px',
+                      verticalAlign: 'middle',
+                      textAlign: 'center',
+                      color: colors.textMuted,
+                      userSelect: 'none',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 2,
+                      }}
+                    >
+                      <button
+                        type="button"
+                        aria-label="Выше"
+                        title="Выше"
+                        disabled={!canMoveUp}
+                        onClick={() => void moveByOffset(item.id, -1)}
+                        style={{
+                          width: 22,
+                          height: 16,
+                          padding: 0,
+                          border: `1px solid ${colors.border}`,
+                          borderRadius: radius.sm,
+                          background: colors.bgElevated,
+                          color: canMoveUp ? colors.text : colors.textMuted,
+                          cursor: canMoveUp ? 'pointer' : 'default',
+                          fontSize: 10,
+                          lineHeight: 1,
+                          opacity: canMoveUp ? 1 : 0.4,
+                        }}
+                      >
+                        ▲
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Ниже"
+                        title="Ниже"
+                        disabled={!canMoveDown}
+                        onClick={() => void moveByOffset(item.id, 1)}
+                        style={{
+                          width: 22,
+                          height: 16,
+                          padding: 0,
+                          border: `1px solid ${colors.border}`,
+                          borderRadius: radius.sm,
+                          background: colors.bgElevated,
+                          color: canMoveDown ? colors.text : colors.textMuted,
+                          cursor: canMoveDown ? 'pointer' : 'default',
+                          fontSize: 10,
+                          lineHeight: 1,
+                          opacity: canMoveDown ? 1 : 0.4,
+                        }}
+                      >
+                        ▼
+                      </button>
+                    </div>
+                  </td>
                   {ungrouped.map((entry) => {
                     const width = getColumnWidth(entry);
 
@@ -269,7 +401,7 @@ export const LineItemsTable = ({
           <tfoot>
             <tr style={{ borderTop: `1px solid ${colors.borderSubtle}` }}>
               <td
-                colSpan={ungrouped.length + 1}
+                colSpan={ungrouped.length + 2}
                 style={{
                   height: '28px',
                   padding: '0 8px',

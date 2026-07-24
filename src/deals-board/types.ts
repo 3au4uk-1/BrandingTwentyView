@@ -80,6 +80,7 @@ export type LineItemRow = {
   kommentariy?: string;
   tip?: LineItemType | null;
   tipDetail?: string | null;
+  poryadok?: number | null;
   stage?: LineItemStage | null;
   ssylkaNaMakety?: { primaryLinkUrl?: string; primaryLinkLabel?: string };
   plenka?: { markdown?: string };

@@ -8,6 +8,7 @@ import {
 } from '../api/line-items';
 import type { LineItemRow } from '../types';
 import { runAfterLineItemUpdate } from '../automations/run-after-line-item-update';
+import { nextPoryadok } from '../utils/line-item-order';
 import {
   defaultManualLineItemBaseline,
   setManualLineItemBaseline,
@@ -40,7 +41,17 @@ export const useCreateLineItem = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (opportunityId: string) => createLineItem(opportunityId),
+    mutationFn: (opportunityId: string) => {
+      const siblings: LineItemRow[] = [];
+      for (const [, items] of queryClient.getQueriesData<LineItemRow[]>({
+        queryKey: ['lineItems'],
+      })) {
+        for (const item of items ?? []) {
+          if (item.opportunityId === opportunityId) siblings.push(item);
+        }
+      }
+      return createLineItem(opportunityId, nextPoryadok(siblings));
+    },
     onSuccess: (lineItemId, opportunityId) => {
       setManualLineItemBaseline(
         queryClient,

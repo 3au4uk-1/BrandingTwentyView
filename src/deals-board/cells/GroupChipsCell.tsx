@@ -1,3 +1,6 @@
+import { PRINT_FIELD_GROUP_ID } from 'src/constants/print-field-group';
+
+import { PrintPanelChip } from '../editors/PrintPanelChip';
 import { useGroupChipMode } from '../hooks/useGroupChipMode';
 import { useLineItemGroupExpand } from '../hooks/useLineItemGroupExpand';
 import { useTheme } from '../theme/ThemeContext';
@@ -42,6 +45,10 @@ export const GroupChipsCell = ({
       }}
     >
       {groups.map(({ group, members }) => {
+        if (group.id === PRINT_FIELD_GROUP_ID) {
+          return <PrintPanelChip key={group.id} item={item} />;
+        }
+
         const active = isExpanded(item.id, group.id);
         const label = formatGroupChipLabel(
           group.name,

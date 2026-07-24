@@ -23,17 +23,22 @@ export type CreateLineItemInput = {
   opportunityId: string;
   stage: 'NOVYY';
   kolichestvo: number;
+  poryadok?: number;
   amount: {
     amountMicros: number;
     currencyCode: 'RUB';
   };
 };
 
-export const buildCreateLineItemInput = (opportunityId: string): CreateLineItemInput => ({
+export const buildCreateLineItemInput = (
+  opportunityId: string,
+  poryadok = 0,
+): CreateLineItemInput => ({
   name: DEFAULT_MANUAL_LINE_ITEM_NAME,
   opportunityId,
   stage: 'NOVYY',
   kolichestvo: 1,
+  poryadok,
   amount: {
     amountMicros: 0,
     currencyCode: 'RUB',
@@ -386,10 +391,11 @@ export const resolveCreatedLineItemId = async (
 export const createLineItemWithClient = async (
   client: LineItemCreateClient,
   opportunityId: string,
+  poryadok = 0,
 ): Promise<string> => {
   const response = await client.post<unknown>(
     '/rest/dealLineItems',
-    buildCreateLineItemInput(opportunityId),
+    buildCreateLineItemInput(opportunityId, poryadok),
   );
   const id = await resolveCreatedLineItemId(client, opportunityId, response);
 
@@ -400,6 +406,9 @@ export const createLineItemWithClient = async (
   return id;
 };
 
-export const createLineItem = async (opportunityId: string): Promise<string> => {
-  return createLineItemWithClient(getRestClient(), opportunityId);
+export const createLineItem = async (
+  opportunityId: string,
+  poryadok = 0,
+): Promise<string> => {
+  return createLineItemWithClient(getRestClient(), opportunityId, poryadok);
 };
