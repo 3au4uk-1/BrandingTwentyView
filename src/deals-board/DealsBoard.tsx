@@ -736,8 +736,14 @@ const DealsBoardContent = () => {
                     alignItems: 'center',
                     gap: spacing.sm,
                     flexShrink: 0,
+                    minWidth: 0,
                   }}
                 >
+                  <MarginStrip
+                    opportunities={visibleRecords}
+                    lineItems={visibleLineItems}
+                    onOpenAnalytics={() => setBoardPane('analytics')}
+                  />
                   <ExpandModeToggle />
                   <GroupChipModeToggle />
                 </div>
@@ -857,12 +863,6 @@ const DealsBoardContent = () => {
             selectedStages={mergedFilters.stages ?? []}
             onToggleType={(tip) => toggleScoreboardClause('tip', tip)}
             onToggleStage={(stage) => toggleScoreboardClause('stage', stage)}
-          />
-
-          <MarginStrip
-            opportunities={visibleRecords}
-            lineItems={visibleLineItems}
-            onOpenAnalytics={() => setBoardPane('analytics')}
           />
 
           {boardPane === 'analytics' ? (

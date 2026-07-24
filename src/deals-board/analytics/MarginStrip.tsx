@@ -1,4 +1,4 @@
-import { useMemo, type CSSProperties } from 'react';
+import { useMemo } from 'react';
 
 import { useTheme } from '../theme/ThemeContext';
 import type { LineItemRow, OpportunityRow } from '../types';
@@ -14,118 +14,14 @@ type MarginStripProps = {
   onOpenAnalytics: () => void;
 };
 
-type MetricTone = 'neutral' | 'positive' | 'negative' | 'muted';
-
-const MetricCell = ({
-  label,
-  value,
-  hint,
-  tone,
-  emphasize,
-  style,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  tone: MetricTone;
-  emphasize?: boolean;
-  style?: CSSProperties;
-}) => {
-  const theme = useTheme();
-  const { colors, font, spacing, radius } = theme;
-
-  const valueColor =
-    tone === 'positive'
-      ? colors.success
-      : tone === 'negative'
-        ? colors.danger
-        : tone === 'muted'
-          ? colors.textMuted
-          : colors.text;
-
-  const cellBg =
-    tone === 'positive'
-      ? colors.successMuted
-      : tone === 'negative'
-        ? colors.dangerMuted
-        : emphasize
-          ? colors.bgInset
-          : 'transparent';
-
-  return (
-    <div
-      style={{
-        minWidth: emphasize ? 148 : 112,
-        padding: `${spacing.sm} ${spacing.md}`,
-        borderRadius: radius.md,
-        background: cellBg,
-        border:
-          tone === 'positive' || tone === 'negative' || emphasize
-            ? `1px solid ${
-                tone === 'positive'
-                  ? `${colors.success}44`
-                  : tone === 'negative'
-                    ? `${colors.danger}44`
-                    : colors.borderSubtle
-              }`
-            : '1px solid transparent',
-        ...style,
-      }}
-    >
-      <div
-        style={{
-          fontFamily: font.mono,
-          fontSize: 10,
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-          color: colors.textMuted,
-          marginBottom: 4,
-        }}
-      >
-        {label}
-      </div>
-      <div
-        style={{
-          fontSize: emphasize ? 20 : 16,
-          fontWeight: font.weightBold,
-          color: valueColor,
-          letterSpacing: '-0.03em',
-          lineHeight: 1.1,
-          fontVariantNumeric: 'tabular-nums',
-        }}
-      >
-        {value}
-      </div>
-      {hint ? (
-        <div
-          style={{
-            marginTop: 3,
-            fontSize: font.sizeXs,
-            color: colors.textMuted,
-            fontVariantNumeric: 'tabular-nums',
-          }}
-        >
-          {hint}
-        </div>
-      ) : null}
-    </div>
-  );
-};
-
-const Divider = () => {
-  const { colors } = useTheme();
-  return (
-    <div
-      aria-hidden
-      style={{
-        width: 1,
-        alignSelf: 'stretch',
-        minHeight: 36,
-        background: colors.borderSubtle,
-        flexShrink: 0,
-      }}
-    />
-  );
+const formatShortMonth = (monthKey: string): string => {
+  const [year, month] = monthKey.split('-').map(Number);
+  if (!year || !month) return monthKey;
+  const label = new Date(year, month - 1, 1).toLocaleDateString('ru-RU', {
+    month: 'short',
+    year: '2-digit',
+  });
+  return label.replace(/\s*г\.?$/, '').trim();
 };
 
 export const MarginStrip = ({
@@ -141,101 +37,123 @@ export const MarginStrip = ({
     [opportunities, lineItems, monthKey],
   );
 
-  const marginTone: MetricTone =
-    finance.marginRub > 0 ? 'positive' : finance.marginRub < 0 ? 'negative' : 'muted';
+  const marginColor =
+    finance.marginRub > 0
+      ? colors.success
+      : finance.marginRub < 0
+        ? colors.danger
+        : colors.textMuted;
 
-  const monthTitle =
-    finance.monthLabel.charAt(0).toUpperCase() + finance.monthLabel.slice(1);
+  const marginBg =
+    finance.marginRub > 0
+      ? colors.successMuted
+      : finance.marginRub < 0
+        ? colors.dangerMuted
+        : colors.bgInset;
+
+  const title = [
+    formatShortMonth(monthKey),
+    `${finance.dealCount} сд`,
+    `${finance.positionCount} поз`,
+  ].join(' · ');
 
   return (
-    <div
+    <button
+      type="button"
       data-margin-strip
+      onClick={onOpenAnalytics}
+      title={`Финансы месяца · оборот ${formatRub(finance.turnoverRub)} · расход ${formatRub(finance.expenseRub)} · маржа ${formatRub(finance.marginRub)}${finance.marginPct !== null ? ` (${finance.marginPct.toFixed(0)}%)` : ''} · открыть аналитику`}
       style={{
-        margin: `${spacing.sm} ${spacing.md} 0`,
-        padding: `${spacing.sm} ${spacing.md}`,
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 8,
+        maxWidth: '100%',
+        height: 30,
+        padding: `0 ${spacing.sm} 0 8px`,
+        margin: 0,
         border: `1px solid ${colors.border}`,
-        borderRadius: radius.lg,
+        borderRadius: radius.pill,
         background: `linear-gradient(180deg, ${colors.bgElevated} 0%, ${colors.bgSecondary} 100%)`,
         boxShadow: colors.shadow,
-        display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        gap: spacing.sm,
+        cursor: 'pointer',
+        fontFamily: 'inherit',
+        color: colors.text,
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
       }}
     >
-      <div style={{ minWidth: 120, paddingRight: spacing.sm }}>
-        <div
-          style={{
-            fontFamily: font.mono,
-            fontSize: 10,
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-            color: colors.textMuted,
-            marginBottom: 2,
-          }}
-        >
-          Финансы месяца
-        </div>
-        <div
-          style={{
-            fontSize: font.sizeMd,
-            fontWeight: font.weightSemibold,
-            color: colors.text,
-            letterSpacing: '-0.02em',
-          }}
-        >
-          {monthTitle}
-        </div>
-        <div style={{ fontSize: font.sizeXs, color: colors.textMuted, marginTop: 2 }}>
-          {finance.dealCount} сд · {finance.positionCount} поз
-        </div>
-      </div>
-
-      <Divider />
-
-      <div
+      <span
         style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'stretch',
-          gap: spacing.xs,
-          flex: 1,
-          minWidth: 0,
-        }}
-      >
-        <MetricCell label="Оборот" value={formatRub(finance.turnoverRub)} tone="neutral" />
-        <MetricCell label="Расход" value={formatRub(finance.expenseRub)} tone="neutral" />
-        <MetricCell
-          label="Маржа"
-          value={formatRub(finance.marginRub)}
-          hint={finance.marginPct !== null ? `${finance.marginPct.toFixed(0)}% от оборота` : undefined}
-          tone={marginTone}
-          emphasize
-        />
-      </div>
-
-      <button
-        type="button"
-        onClick={onOpenAnalytics}
-        style={{
-          height: 34,
-          padding: `0 ${spacing.md}`,
-          borderRadius: radius.pill,
-          border: `1px solid ${colors.borderStrong}`,
-          background: colors.bgInset,
-          color: colors.accentText,
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-          fontSize: font.sizeXs,
-          fontWeight: font.weightSemibold,
-          letterSpacing: '0.04em',
+          fontFamily: font.mono,
+          fontSize: 9,
+          letterSpacing: '0.08em',
           textTransform: 'uppercase',
-          whiteSpace: 'nowrap',
+          color: colors.textMuted,
           flexShrink: 0,
         }}
       >
-        Аналитика →
-      </button>
-    </div>
+        {title}
+      </span>
+
+      <span
+        aria-hidden
+        style={{ width: 1, height: 14, background: colors.borderSubtle, flexShrink: 0 }}
+      />
+
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'baseline',
+          gap: 6,
+          fontSize: 11,
+          fontVariantNumeric: 'tabular-nums',
+          minWidth: 0,
+          overflow: 'hidden',
+        }}
+      >
+        <span style={{ color: colors.textMuted }}>Обр</span>
+        <span style={{ fontWeight: font.weightSemibold }}>{formatRub(finance.turnoverRub)}</span>
+        <span style={{ color: colors.textMuted }}>Расх</span>
+        <span style={{ fontWeight: font.weightSemibold }}>{formatRub(finance.expenseRub)}</span>
+      </span>
+
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'baseline',
+          gap: 4,
+          height: 22,
+          padding: '0 7px',
+          borderRadius: radius.pill,
+          background: marginBg,
+          border: `1px solid ${marginColor}44`,
+          color: marginColor,
+          fontSize: 11,
+          fontWeight: font.weightBold,
+          fontVariantNumeric: 'tabular-nums',
+          flexShrink: 0,
+        }}
+      >
+        <span style={{ fontWeight: font.weightSemibold, opacity: 0.85 }}>Маржа</span>
+        {formatRub(finance.marginRub)}
+        {finance.marginPct !== null ? (
+          <span style={{ fontWeight: font.weightMedium, opacity: 0.8 }}>
+            {finance.marginPct.toFixed(0)}%
+          </span>
+        ) : null}
+      </span>
+
+      <span
+        style={{
+          fontFamily: font.mono,
+          fontSize: 10,
+          letterSpacing: '0.04em',
+          color: colors.accentText,
+          flexShrink: 0,
+        }}
+      >
+        →
+      </span>
+    </button>
   );
 };

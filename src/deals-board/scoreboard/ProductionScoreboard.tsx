@@ -33,6 +33,11 @@ type ProductionScoreboardProps = {
 const formatCount = (count: MetricCount): string =>
   `${count.positions} поз · ${count.deals} сд`;
 
+const formatChipValue = (count: MetricCount): string =>
+  count.deals > 0 || count.positions > 0
+    ? `${count.positions}·${count.deals}`
+    : '0';
+
 export const ProductionScoreboard = ({
   lineItems,
   selectedTypes,
@@ -71,50 +76,45 @@ export const ProductionScoreboard = ({
 
     return {
       border: `1px solid ${
-        active ? palette.text : quiet ? colors.borderSubtle : `${palette.text}55`
+        active ? palette.text : quiet ? colors.borderSubtle : `${palette.text}44`
       }`,
-      borderLeft: `3px solid ${quiet ? colors.borderStrong : palette.text}`,
-      background: active
-        ? palette.bg
-        : quiet
-          ? colors.bgInset
-          : palette.bg,
+      borderLeft: `2px solid ${quiet ? colors.borderStrong : palette.text}`,
+      background: active ? palette.bg : quiet ? 'transparent' : `${palette.bg}`,
       color: quiet ? colors.textMuted : palette.text,
-      borderRadius: radius.md,
-      padding: '7px 11px 6px 9px',
+      borderRadius: radius.sm,
+      padding: '3px 7px 3px 6px',
       fontFamily: font.mono,
       fontSize: 11,
+      lineHeight: 1.2,
       cursor: 'pointer',
       display: 'inline-flex',
-      flexDirection: 'column',
-      alignItems: 'flex-start',
-      gap: 2,
-      minWidth: 92,
-      opacity: quiet ? 0.55 : 1,
+      alignItems: 'baseline',
+      gap: 5,
+      whiteSpace: 'nowrap',
+      opacity: quiet ? 0.5 : 1,
       boxShadow: active ? `0 0 0 1px ${palette.text}33` : undefined,
       transition: 'opacity 0.15s ease, border-color 0.15s ease, background-color 0.15s ease',
     };
   };
 
-  const groupLabel: CSSProperties = {
-    fontFamily: font.mono,
-    fontSize: 10,
-    letterSpacing: '0.1em',
-    textTransform: 'uppercase',
-    color: colors.textMuted,
-    width: 52,
-    flexShrink: 0,
+  const chipWrap: CSSProperties = {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 4,
+    flex: 1,
+    minWidth: 0,
   };
 
   return (
     <div
       data-production-scoreboard
+      title="Клик по типу — фильтр и разбивка по стадиям"
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: spacing.sm,
+        gap: 6,
         margin: `${spacing.sm} ${spacing.md} 0`,
-        padding: `${spacing.md} ${spacing.md}`,
+        padding: `${spacing.sm} ${spacing.md}`,
         border: `1px solid ${colors.border}`,
         borderRadius: radius.lg,
         background: `linear-gradient(180deg, ${colors.bgElevated} 0%, ${colors.bgSecondary} 100%)`,
@@ -125,141 +125,134 @@ export const ProductionScoreboard = ({
         style={{
           display: 'flex',
           flexWrap: 'wrap',
-          alignItems: 'flex-end',
-          justifyContent: 'space-between',
-          gap: spacing.sm,
+          alignItems: 'center',
+          gap: '6px 10px',
+          minWidth: 0,
         }}
       >
-        <div>
-          <div
+        <span
+          style={{
+            fontFamily: font.mono,
+            fontSize: 9,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: colors.textMuted,
+            flexShrink: 0,
+          }}
+        >
+          Сводка
+        </span>
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'baseline',
+            gap: 5,
+            flexShrink: 0,
+          }}
+        >
+          <span
             style={{
-              fontFamily: font.mono,
-              fontSize: 10,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: colors.textMuted,
-              marginBottom: 2,
+              fontSize: 15,
+              fontWeight: font.weightBold,
+              color: colors.text,
+              letterSpacing: '-0.03em',
+              lineHeight: 1,
+              fontVariantNumeric: 'tabular-nums',
             }}
           >
-            Сводка смены
-          </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: spacing.sm }}>
-            <span
-              style={{
-                fontSize: 22,
-                fontWeight: font.weightBold,
-                color: colors.text,
-                letterSpacing: '-0.04em',
-                lineHeight: 1,
-              }}
-            >
-              {stats.totalPositions}
-            </span>
-            <span style={{ fontSize: font.sizeSm, color: colors.textSecondary }}>поз</span>
-            <span style={{ fontSize: font.sizeXs, color: colors.textMuted }}>
-              · {stats.totalDeals} сделок в фильтре
-            </span>
-          </div>
+            {stats.totalPositions}
+          </span>
+          <span style={{ fontSize: font.sizeXs, color: colors.textSecondary }}>поз</span>
+          <span
+            style={{
+              fontSize: font.sizeXs,
+              color: colors.textMuted,
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            · {stats.totalDeals} сд
+          </span>
+        </span>
+
+        <div style={chipWrap}>
+          {tipChips.map((tip) => {
+            const count = stats.byTip[tip];
+            const active = selectedTypes.includes(tip) || expandedTip === tip;
+            const empty = count.positions === 0;
+            const chipColor = getLineItemTypeColor(tip) as ChipColor;
+            return (
+              <button
+                key={tip}
+                type="button"
+                style={metricChipStyle(chipColor, active, empty)}
+                onClick={() => handleTipClick(tip)}
+                title={`${getLineItemTypeLabel(tip)}: ${formatCount(count)}`}
+              >
+                <span style={{ fontWeight: font.weightSemibold }}>{getLineItemTypeLabel(tip)}</span>
+                <span
+                  style={{
+                    fontWeight: font.weightBold,
+                    fontVariantNumeric: 'tabular-nums',
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  {formatChipValue(count)}
+                </span>
+              </button>
+            );
+          })}
         </div>
-        <div style={{ fontSize: font.sizeXs, color: colors.textMuted, fontFamily: font.mono }}>
-          клик тип — фильтр + стадии типа
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-        <span style={groupLabel}>Тип</span>
-        {tipChips.map((tip) => {
-          const count = stats.byTip[tip];
-          const active = selectedTypes.includes(tip) || expandedTip === tip;
-          const empty = count.positions === 0;
-          const chipColor = getLineItemTypeColor(tip) as ChipColor;
-          return (
-            <button
-              key={tip}
-              type="button"
-              style={metricChipStyle(chipColor, active, empty)}
-              onClick={() => handleTipClick(tip)}
-              title={`${getLineItemTypeLabel(tip)}: ${formatCount(count)}`}
-            >
-              <span style={{ fontWeight: font.weightSemibold, fontSize: 12, lineHeight: 1.2 }}>
-                {getLineItemTypeLabel(tip)}{' '}
-                <span style={{ fontWeight: font.weightBold }}>{count.positions}</span>
-              </span>
-              <span style={{ fontSize: 10, opacity: 0.8 }}>{count.deals} сд</span>
-            </button>
-          );
-        })}
-      </div>
-
-      <div
-        style={{
-          height: 1,
-          background: colors.borderSubtle,
-          margin: `2px 0`,
-        }}
-      />
-
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-        <span style={groupLabel}>Стадия</span>
-        {SCOREBOARD_STAGE_ORDER.map((stage) => {
-          const count = stats.byStage[stage];
-          const active = selectedStages.includes(stage);
-          const empty = count.positions === 0;
-          const chipColor = getStageColor(stage) as ChipColor;
-          return (
-            <button
-              key={stage}
-              type="button"
-              style={metricChipStyle(chipColor, active, empty)}
-              onClick={() => onToggleStage(stage)}
-              title={`${getStageLabel(stage)}: ${formatCount(count)}`}
-            >
-              <span style={{ fontWeight: font.weightSemibold, fontSize: 12, lineHeight: 1.2 }}>
-                {getStageLabel(stage)}{' '}
-                <span style={{ fontWeight: font.weightBold }}>{count.positions}</span>
-              </span>
-              <span style={{ fontSize: 10, opacity: 0.8 }}>{count.deals} сд</span>
-            </button>
-          );
-        })}
       </div>
 
       {expandedTip && breakdown ? (
-        <>
-          <div
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            gap: 4,
+            paddingLeft: 2,
+          }}
+        >
+          <span
             style={{
-              height: 1,
-              background: colors.borderSubtle,
-              margin: `2px 0`,
+              fontFamily: font.mono,
+              fontSize: 9,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: colors.textMuted,
+              marginRight: 4,
             }}
-          />
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-            <span style={{ ...groupLabel, width: 'auto', minWidth: 52 }}>
-              {getLineItemTypeLabel(expandedTip)} →
-            </span>
-            {SCOREBOARD_STAGE_ORDER.map((stage) => {
-              const count = breakdown[stage];
-              const active = selectedStages.includes(stage);
-              const empty = count.positions === 0;
-              const chipColor = getStageColor(stage) as ChipColor;
-              return (
-                <button
-                  key={`${expandedTip}-${stage}`}
-                  type="button"
-                  style={metricChipStyle(chipColor, active, empty)}
-                  onClick={() => onToggleStage(stage)}
-                  title={`${getLineItemTypeLabel(expandedTip)} / ${getStageLabel(stage)}: ${formatCount(count)}`}
+          >
+            {getLineItemTypeLabel(expandedTip)} →
+          </span>
+          {SCOREBOARD_STAGE_ORDER.map((stage) => {
+            const count = breakdown[stage];
+            const active = selectedStages.includes(stage);
+            const empty = count.positions === 0;
+            const chipColor = getStageColor(stage) as ChipColor;
+            return (
+              <button
+                key={`${expandedTip}-${stage}`}
+                type="button"
+                style={metricChipStyle(chipColor, active, empty)}
+                onClick={() => onToggleStage(stage)}
+                title={`${getLineItemTypeLabel(expandedTip)} / ${getStageLabel(stage)}: ${formatCount(count)}`}
+              >
+                <span style={{ fontWeight: font.weightSemibold }}>{getStageLabel(stage)}</span>
+                <span
+                  style={{
+                    fontWeight: font.weightBold,
+                    fontVariantNumeric: 'tabular-nums',
+                    letterSpacing: '-0.02em',
+                  }}
                 >
-                  <span style={{ fontWeight: font.weightSemibold, fontSize: 12, lineHeight: 1.2 }}>
-                    {getStageLabel(stage)}{' '}
-                    <span style={{ fontWeight: font.weightBold }}>{count.positions}</span>
-                  </span>
-                  <span style={{ fontSize: 10, opacity: 0.8 }}>{count.deals} сд</span>
-                </button>
-              );
-            })}
-          </div>
-        </>
+                  {formatChipValue(count)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       ) : null}
     </div>
   );
