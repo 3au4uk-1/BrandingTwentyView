@@ -1,0 +1,4027 @@
+[
+  {
+    "id": "0ae89004-6b83-4791-a5a5-eb39e023c4f7",
+    "name": "Овальная Фотобудка / Фотобудка Овальная - брендинг стенки напротив экрана",
+    "istochnik": "PARSER",
+    "stage": "OKLEYKA",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "289",
+    "opportunityId": "d2cf42bf-6243-475f-8f8b-81a5073f999b",
+    "amount": {
+      "amountMicros": 40000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "10334779-4daf-41d3-8f57-13d8c79bcbcc",
+    "name": "Теннисный стол / Стандартный - Брендинг",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "ca6027a1-6de4-4704-b0cf-1935cdd6ff65",
+    "amount": {
+      "amountMicros": 7200000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "105049cb-4fd5-42f9-b0a2-1b3c21a5ffa6",
+    "name": "Фотозона Полароид",
+    "istochnik": "PARSER",
+    "stage": "OKLEYKA",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "клеим в 12.00 25.07",
+    "opportunityId": "a8cfa0bd-e582-4df8-a821-6bf8e0a7787d",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.360.yandex.ru/d/RkJOb6rEPdK6hQ",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "299",
+      "blocknote": "[{\"id\":\"f3cee007-bbc6-438c-aaaf-673df5f2f44b\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"299\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "1157fbc4-6cc3-4fff-9352-7f3fda4a731e",
+    "name": "Доп шары для тира",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "БЕЛЫЕ, СИНИЕ, КРАСНЫЕ",
+    "opportunityId": "50ea04eb-4fca-4028-9c4d-f49d66b400d1",
+    "amount": {
+      "amountMicros": 2400000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "1cd54eaf-faac-4717-b075-85bd729009bf",
+    "name": "Теннисный стол",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 2,
+    "kommentariy": "подряд наши кончились",
+    "opportunityId": "a134d639-7f14-4577-95b8-424818db628f",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "1d969c95-9aa1-40d4-85ba-11ab7efd6c55",
+    "name": "Брендирование стенок",
+    "istochnik": "PARSER",
+    "stage": "V_RABOTE",
+    "tip": "PODRYAD",
+    "kolichestvo": 6,
+    "kommentariy": "стены для Пагоды 5х5 нужны во\n вторник 5 шт\n\n",
+    "opportunityId": "7cf24fa8-3b13-4e81-b669-8b9bb5ecdb20",
+    "amount": {
+      "amountMicros": 25550000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "272c0547-e51b-442a-9f25-3b650860fdb8",
+    "name": "полки+рейлы по референсу",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "PODRYAD",
+    "kolichestvo": 1,
+    "kommentariy": "закупает аренда",
+    "opportunityId": "2903b244-16e2-48f2-990b-9e3bc63621d4",
+    "amount": {
+      "amountMicros": 32500000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "27853e5f-8d3e-43dd-bb76-33375479cbe7",
+    "name": "Теннисный стол / Корпоративный",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "ca6027a1-6de4-4704-b0cf-1935cdd6ff65",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "288a403d-7da0-4bc5-a872-14e1994672ac",
+    "name": "Витрина ювелирная столб",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "NE_NASHE",
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "18e8cce1-ebb1-45e0-9716-a81678f78a43",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "294d17ff-c40d-4655-90ba-42cdf0a1560b",
+    "name": "Теннисный стол / Стандартный",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 4,
+    "kommentariy": "",
+    "opportunityId": "04d884a2-a8b4-412f-bf1a-4c7e6cf4fd0e",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "2a093b55-99a4-4578-a860-ba85b8124a87",
+    "name": "Холодильник 300л белый",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 2,
+    "kommentariy": "",
+    "opportunityId": "609ae755-330c-490b-b352-73237216434b",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "2d1fc40d-3281-4679-a72c-26e0635b33af",
+    "name": "Фотобудка овальная синяя шторка - печать фото",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "d2cf42bf-6243-475f-8f8b-81a5073f999b",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "2e08036c-5923-4768-b33a-3ab4bd7d14f9",
+    "name": "Силомер Пенальти",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "38ac3976-b76b-40e2-b4ea-4ebb178bf8b4",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "353662dc-69d4-4059-b768-887cdd2c4335",
+    "name": "Корнхол",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "BANNERA",
+    "kolichestvo": 1,
+    "kommentariy": "Юра Баннерщик",
+    "opportunityId": "50ea04eb-4fca-4028-9c4d-f49d66b400d1",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/EBvoVhZqDnHp-w",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "293",
+      "blocknote": "[{\"id\":\"ce137c68-a272-4406-9403-6267f07bd61b\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"293\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "3648c398-3a26-4631-849d-fca7164a0943",
+    "name": "АРЕНДА Ролл Ап / Roll-Up Wide Base (каплевидный). Размер конструкции: 100 х 200",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "BANNERA",
+    "kolichestvo": 4,
+    "kommentariy": "",
+    "opportunityId": "18e8cce1-ebb1-45e0-9716-a81678f78a43",
+    "amount": {
+      "amountMicros": 3500000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/Q4eiVPaoEc-geQ",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "263",
+      "blocknote": "[{\"id\":\"bc542671-d1e2-4957-8af7-cd9f823d4c45\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"263\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "3d8f3bea-9c3c-4138-81ae-4777551b797d",
+    "name": "Автомат баскетбол",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "d6eb4453-c52d-47be-ae3d-2083292eff0b",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "40e5c5cb-39fb-4a21-a529-e21f11a83db9",
+    "name": "Брендинг кикера XXL",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "МАРИО",
+    "opportunityId": "d2a245ba-7b49-496d-bb79-9d15336adee6",
+    "amount": {
+      "amountMicros": 25500000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "4713f2de-efa3-4c21-8910-7d71bf5e0a20",
+    "name": "Фотобудка квадратная белая шторка - печать фото",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "Расходников тут на все время работы",
+    "opportunityId": "d2a245ba-7b49-496d-bb79-9d15336adee6",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "49158fb1-be4a-4c7e-af12-66e109e42581",
+    "name": "Виндер высота флагштока 3.5м - печать флага - 1 шт. - ПЕЧАТЬ БРЕНДИНГ ОДНОСТОРОННИЙ",
+    "istochnik": "PARSER",
+    "stage": "V_RABOTE",
+    "tip": "PODRYAD",
+    "kolichestvo": 3,
+    "kommentariy": "Павел виндер \n",
+    "opportunityId": "18e8cce1-ebb1-45e0-9716-a81678f78a43",
+    "amount": {
+      "amountMicros": 11050000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "51a8d9ce-5798-43fc-ab14-de69f43756d8",
+    "name": "Автомат Хватайка белый 80х80см с монетоприёмником",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "d2a245ba-7b49-496d-bb79-9d15336adee6",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "537c4391-f2ea-43c5-8198-ec72572db75d",
+    "name": "покраска виндера в черный цвет",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "NE_NASHE",
+    "kolichestvo": 3,
+    "kommentariy": "",
+    "opportunityId": "18e8cce1-ebb1-45e0-9716-a81678f78a43",
+    "amount": {
+      "amountMicros": 3500000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "5d853ddd-8667-4c5c-b5df-a98fdb659ca2",
+    "name": "БРЕНДИНГ свободная запись ( КОМЕНТАРИЙ ОБЯЗАТЕЛЕН )",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "PODRYAD",
+    "kolichestvo": 1,
+    "kommentariy": "Фишки 150 красных и 150 черных с логотипом",
+    "opportunityId": "47643251-9218-413c-ae67-7e63b73b51d2",
+    "amount": {
+      "amountMicros": 53440000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "620318cd-48cc-408d-bad8-91ef1049189b",
+    "name": "Техническая Стойка администратора белый - внешняя оклейка корупса",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "PLENKA",
+    "kolichestvo": 4,
+    "kommentariy": "МАКЕТ ОК - ДЛЯ ЗАПУСКА",
+    "opportunityId": "0938dcd1-2520-4e41-b818-dbca45c96020",
+    "amount": {
+      "amountMicros": 14550000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://drive.google.com/drive/folders/1PF3utx3U01OqNDEOTgQvt74TlvLyJsVz?usp=sharing",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "246",
+      "blocknote": "[{\"id\":\"50ef2262-4628-4386-ab6e-962e08d8c8e7\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"246\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "63571a1c-2149-4b33-b02f-01b372f84df1",
+    "name": "Брендинг теннисного стола",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "d2a245ba-7b49-496d-bb79-9d15336adee6",
+    "amount": {
+      "amountMicros": 20400000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/auJZosda8ouhHw",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "272",
+      "blocknote": "[{\"id\":\"48a52332-c083-4a03-889f-2dbbfb64e1c8\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"272\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "64e1ba8a-18f1-40fd-860a-d5d4841380b7",
+    "name": "Брендирование хватайки",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "МАРИО",
+    "opportunityId": "d2a245ba-7b49-496d-bb79-9d15336adee6",
+    "amount": {
+      "amountMicros": 19050000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/04COjssZAC41xw",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "270",
+      "blocknote": "[{\"id\":\"83b10546-fc37-4e32-bf90-ad84242578d1\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"270\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "69e9329a-dde6-46e0-a292-47d474f7f8cb",
+    "name": "Кикер ХXL под брендинг",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "d2a245ba-7b49-496d-bb79-9d15336adee6",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/ngIWlF--YUnQEQ",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "273",
+      "blocknote": "[{\"id\":\"0e6995ac-6692-4ed8-bff3-8cffb0d6369f\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"273\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "6d137304-b1c4-43af-9e88-1d9cd576f674",
+    "name": "Pop Up Standart прямой 3х3 - брендированное полотно на поп ап",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "ОПЛАТА",
+    "opportunityId": "e9331b36-0fd5-46be-991b-5986036dc09d",
+    "amount": {
+      "amountMicros": 24700320000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "7313ffa0-f2b2-47a1-ba2c-68c5f6414c50",
+    "name": "Теннисный стол / Стандартный - Брендинг",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "04d884a2-a8b4-412f-bf1a-4c7e6cf4fd0e",
+    "amount": {
+      "amountMicros": 13500000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "76d45143-d1fd-4bf7-b73f-d6c8f0135655",
+    "name": "Теннисный стол / Корпоративный",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "50ea04eb-4fca-4028-9c4d-f49d66b400d1",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "7bf40aac-c7aa-42e1-84c1-bfe7b515580d",
+    "name": "Брендирование теннисного стола",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "PLENKA",
+    "kolichestvo": 2,
+    "kommentariy": "Макет от клиента",
+    "opportunityId": "ca6027a1-6de4-4704-b0cf-1935cdd6ff65",
+    "amount": {
+      "amountMicros": 19200000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://drive.google.com/drive/folders/17jzaf6SzWsWsTrl0AWnUXWRtNU6EVAXL?usp=sharing",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "236",
+      "blocknote": "[{\"id\":\"353f5654-8b93-460f-bd79-6049b8f04f1f\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"236\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "7c38a24e-2d1e-4618-af8e-1d7cbd4105ac",
+    "name": "Брендинг фотобудки",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "Внутри и снаружи",
+    "opportunityId": "d2a245ba-7b49-496d-bb79-9d15336adee6",
+    "amount": {
+      "amountMicros": 39100000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/vGDctCiWJFR_BQ",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "271",
+      "blocknote": "[{\"id\":\"eea2fd73-7071-4526-bcd0-992d0c9d6160\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"271\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "80bf6c39-8f8c-44ed-9a12-c5ebbdca5a54",
+    "name": "БРЕНДИНГ свободная запись ( КОМЕНТАРИЙ ОБЯЗАТЕЛЕН )",
+    "istochnik": "PARSER",
+    "stage": "OKLEYKA",
+    "tip": "PLENKA",
+    "kolichestvo": 2,
+    "kommentariy": "Брендинг верхней плашки фудтрака",
+    "opportunityId": "ad5474a6-31ca-4466-9ce2-5b20c06a7b7c",
+    "amount": {
+      "amountMicros": 9600000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/PpvwEKVTtD9ByQ",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "297",
+      "blocknote": "[{\"id\":\"0c0ea174-0abc-4894-9ee4-c89d3587aed1\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"297\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "815ef66e-d3a6-4fd0-a251-1c416af1e629",
+    "name": "БРЕНДИНГ свободная запись ( КОМЕНТАРИЙ ОБЯЗАТЕЛЕН )",
+    "istochnik": "PARSER",
+    "stage": "OTMENA",
+    "tip": null,
+    "kolichestvo": 2,
+    "kommentariy": "Пошив брендированной двусторонней шторки",
+    "opportunityId": "d2cf42bf-6243-475f-8f8b-81a5073f999b",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "82883494-e468-4d77-8d43-32a89a051286",
+    "name": "Брендинг шапки для холодильника",
+    "istochnik": "PARSER",
+    "stage": "OKLEYKA",
+    "tip": "PLENKA",
+    "kolichestvo": 2,
+    "kommentariy": "готов к печати",
+    "opportunityId": "609ae755-330c-490b-b352-73237216434b",
+    "amount": {
+      "amountMicros": 6700000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/ZQU-hmCarUynFA",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "284",
+      "blocknote": "[{\"id\":\"7baacb19-bac4-42c7-81ea-be6e43e23510\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"284\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "8534e87a-3440-43bf-808d-1b4a13652a68",
+    "name": "Киоск / Корнер - врехняя + нижняя часть Брендинг / оклейка",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "нижняя 5600, верхняя 9600",
+    "opportunityId": "d6eb4453-c52d-47be-ae3d-2083292eff0b",
+    "amount": {
+      "amountMicros": 14535000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/pONnhs0mZL9Obw",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "282",
+      "blocknote": "[{\"id\":\"5182ff17-1065-48aa-9e91-4623cd548470\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"282\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "865ee206-f952-402f-a100-385c7c5b24dc",
+    "name": "Спанбонд в рулоне ширина 210см",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 4,
+    "kommentariy": "",
+    "opportunityId": "74610515-f4d3-4451-9770-4427e7c93f84",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "868d67e0-1128-41eb-ae6e-5396ea4bd8ef",
+    "name": "Фудтрак - НЕ ОКЛЕЙКА! Брендированные плашки сверху и синзу (верхняя 244х73 см -2 шт. нижняя 93х48см - 1 шт.)",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "МАРИО",
+    "opportunityId": "80ccdcb0-69b0-49d8-b508-172820776097",
+    "amount": {
+      "amountMicros": 30400000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://drive.google.com/drive/folders/1KxTnWSTIuvkxt3MswinXleKWp32JXE_H?usp=sharing",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "249",
+      "blocknote": "[{\"id\":\"aa05f18c-9e3e-40ab-8bf3-bd56f74bb308\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"249\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "8b3ebf0f-90aa-4843-beca-4f2f595d9137",
+    "name": "Зеркало с наклейками",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "богатырь правит",
+    "opportunityId": "2903b244-16e2-48f2-990b-9e3bc63621d4",
+    "amount": {
+      "amountMicros": 7000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/2Dg9ptLTtMPpNw",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "314",
+      "blocknote": "[{\"id\":\"15eafa21-d795-4c57-bd11-fc374c6616fe\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"314\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "8b41b1e5-6d44-4cbe-a0ee-070131ee29fc",
+    "name": "МК Граффити (баннерное полотно с каркасом)  1,5х2 (8 штук) - 4 часа // 2 мастера",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "BANNERA",
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "d2cf42bf-6243-475f-8f8b-81a5073f999b",
+    "amount": {
+      "amountMicros": 312000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "912cd90f-beb3-43d1-9f85-9444d0e9ce4f",
+    "name": "Брендинг шторки",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "PODRYAD",
+    "kolichestvo": 1,
+    "kommentariy": "ГЛАВ ПРИНТ, готовность 23.07",
+    "opportunityId": "d2a245ba-7b49-496d-bb79-9d15336adee6",
+    "amount": {
+      "amountMicros": 20400000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "972e1ec7-ecec-4287-bdaa-7e020e71fb96",
+    "name": "Теннисный стол / Корпоративный  (Без согласование не брендировать)",
+    "istochnik": "PARSER",
+    "stage": null,
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "ca6027a1-6de4-4704-b0cf-1935cdd6ff65",
+    "amount": {
+      "amountMicros": 7200000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "980ed338-8c90-4b74-9c03-31aabb470861",
+    "name": "Брендирование киоска предсказателя",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "Полный / макет от клиента",
+    "opportunityId": "ca6027a1-6de4-4704-b0cf-1935cdd6ff65",
+    "amount": {
+      "amountMicros": 27200000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://drive.google.com/drive/folders/17eQ_oVDMq4e8KiP4nYyKx7v33TJQIsRz?usp=sharing",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "237",
+      "blocknote": "[{\"id\":\"913c0ab3-3497-4ed1-ad2a-b3b6e03b93ba\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"237\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "98d6f7c6-b546-45e6-a6ca-f457cb5afd12",
+    "name": "Овальная Фотобудка / Фотобудка Овальная - внешний брендинг корпуса баннерами",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "BANNERA",
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "d2cf42bf-6243-475f-8f8b-81a5073f999b",
+    "amount": {
+      "amountMicros": 10000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/duoiQTANFAlKeQ",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "289",
+      "blocknote": "[{\"id\":\"0fe5a062-f12c-4e25-8a94-f172d6a2cb19\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"289\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "a4ad0eef-ef12-4880-8d58-aa68e8750a13",
+    "name": "Капсулы для аппарата хватайка",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 500,
+    "kommentariy": "",
+    "opportunityId": "d2a245ba-7b49-496d-bb79-9d15336adee6",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "a4cccae2-23df-47ca-9676-b63869c9f3a4",
+    "name": "Бочка с квасом - Брендинг или перекрас",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "+стаканчики 0,2 и 0,5",
+    "opportunityId": "93d97ed3-03da-4bd7-9c5f-cf4a39176bb3",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "ad4a16c7-0b2d-47e8-bab0-365473c1fe34",
+    "name": "БРЕНДИНГ свободная запись ( КОМЕНТАРИЙ ОБЯЗАТЕЛЕН )",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "Брендирование силомера пенальти",
+    "opportunityId": "38ac3976-b76b-40e2-b4ea-4ebb178bf8b4",
+    "amount": {
+      "amountMicros": 20400000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://drive.google.com/drive/folders/1B3xYOpzpcPj5UPAM6454uC0fTUIq51rP?usp=sharing",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "277",
+      "blocknote": "[{\"id\":\"0fcb144c-119b-47fa-a026-c584b96984ae\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"277\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "af520b88-1b84-4cf5-855a-e0bf8e841823",
+    "name": "Брендинг теннисного стола",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "PLENKA",
+    "kolichestvo": 5,
+    "kommentariy": "5 штук",
+    "opportunityId": "04d884a2-a8b4-412f-bf1a-4c7e6cf4fd0e",
+    "amount": {
+      "amountMicros": 19200000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://drive.google.com/drive/folders/1nsMbr3SSN9OoEILzakeGTUyLshNXC4SQ?usp=sharing",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "281",
+      "blocknote": "[{\"id\":\"f495bc65-62b5-40cc-9200-231467bee0c9\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"281\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "b1bca415-647f-4d92-b642-ababfc0a22fe",
+    "name": "БРЕНДИНГ свободная запись ( КОМЕНТАРИЙ ОБЯЗАТЕЛЕН )",
+    "istochnik": "PARSER",
+    "stage": null,
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "полки+рейлы по референсу",
+    "opportunityId": "2903b244-16e2-48f2-990b-9e3bc63621d4",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "b5addff3-0e92-487c-8475-142cf2baf31b",
+    "name": "Теннисный стол / Стандартный (Без согласование не брендировать)",
+    "istochnik": "PARSER",
+    "stage": null,
+    "tip": null,
+    "kolichestvo": 4,
+    "kommentariy": "",
+    "opportunityId": "04d884a2-a8b4-412f-bf1a-4c7e6cf4fd0e",
+    "amount": {
+      "amountMicros": 13500000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "b653d765-35da-4d93-b63e-e5baab31d001",
+    "name": "Овальная Фотобудка / Фотобудка Овальная - брендинг/оклейка стенки с экраном пленкой",
+    "istochnik": "PARSER",
+    "stage": "OKLEYKA",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "d2cf42bf-6243-475f-8f8b-81a5073f999b",
+    "amount": {
+      "amountMicros": 13500000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/sOEEwO58Q4M8Bw",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "290",
+      "blocknote": "[{\"id\":\"df403871-de49-4251-9ccf-280fce08c6d5\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"290\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "bc5fe107-1eb4-4335-bdf4-83a08b3f45ee",
+    "name": "ПВХ ростовая",
+    "istochnik": "TWENTY_RUCHNAYA",
+    "stage": "V_PECHATI",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "18e8cce1-ebb1-45e0-9716-a81678f78a43",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "bd48cda0-c297-4bd0-91cd-fb146ef28f5d",
+    "name": "2 композиции для фотозоны цветы белые + зелень",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "NE_NASHE",
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "a8cfa0bd-e582-4df8-a821-6bf8e0a7787d",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "c2299745-a934-4833-a737-20fdcd9260e8",
+    "name": "Брендирование фишек для казино",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "PODRYAD",
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "47643251-9218-413c-ae67-7e63b73b51d2",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "c59e4b24-d75b-4df2-8caf-3c2e562eb5b2",
+    "name": "БРЕНДИНГ свободная запись ( КОМЕНТАРИЙ ОБЯЗАТЕЛЕН )",
+    "istochnik": "PARSER",
+    "stage": "OKLEYKA",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "Брендинг центрального окна фудтрака",
+    "opportunityId": "ad5474a6-31ca-4466-9ce2-5b20c06a7b7c",
+    "amount": {
+      "amountMicros": 8000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/_q1TEiD98wSbbA",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "298",
+      "blocknote": "[{\"id\":\"8acc1f69-6684-446d-bbae-8d9e5fa14396\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"298\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "c8bc67cf-89be-4166-9d1d-26e39f86457a",
+    "name": "БРЕНДИНГ свободная запись ( КОМЕНТАРИЙ ОБЯЗАТЕЛЕН )",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "Брендинг фото",
+    "opportunityId": "d2cf42bf-6243-475f-8f8b-81a5073f999b",
+    "amount": {
+      "amountMicros": 5000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "d268237a-68fc-44c3-8260-b136925abcfb",
+    "name": "Баннер угловой ШхГхВ - 3х1х2.5 с монтажом и закладной фанерой) - ДВУСТОРОННИЙ",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "BANNERA",
+    "kolichestvo": 1,
+    "kommentariy": "ДЛЯ РАСХОДА",
+    "opportunityId": "2903b244-16e2-48f2-990b-9e3bc63621d4",
+    "amount": {
+      "amountMicros": 113000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/2vstvtzVtHgLAw",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "310",
+      "blocknote": "[{\"id\":\"a9b2b5c3-a589-485e-812a-bcabcc4fc4a0\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"310\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "d28b1f03-43a7-42a4-854a-522186f33043",
+    "name": "Новая позиция",
+    "istochnik": "TWENTY_RUCHNAYA",
+    "stage": "NOVYY",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "18e8cce1-ebb1-45e0-9716-a81678f78a43",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "dadccd25-e1d6-489a-86bc-2d30bf8819c6",
+    "name": "Техническая Стойка администратора белый",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 4,
+    "kommentariy": "",
+    "opportunityId": "0938dcd1-2520-4e41-b818-dbca45c96020",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "dbf31351-b83e-425d-8739-7ce60544a740",
+    "name": "РОЛЛ АП КАПЛЕВИДНЫЙ - 2 ШТ - НОВЫЕ",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "BANNERA",
+    "kolichestvo": 2,
+    "kommentariy": "новые макеты допы",
+    "opportunityId": "18e8cce1-ebb1-45e0-9716-a81678f78a43",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/i/Mj_ZGwsK8fkGBg",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "307",
+      "blocknote": "[{\"id\":\"80fdc25f-2f5a-4fdf-99c5-761325e5e6d6\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"307\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "dbf36b13-421e-4253-92b5-92f58c6dd40d",
+    "name": "БРЕНДИНГ свободная запись ( КОМЕНТАРИЙ ОБЯЗАТЕЛЕН )",
+    "istochnik": "PARSER",
+    "stage": null,
+    "tip": "BANNERA",
+    "kolichestvo": 1,
+    "kommentariy": "Баннер угловой ШхГхВ - 3х1х2.5 с монтажом и закладной фанерой) - ДВУСТОРОННИЙ",
+    "opportunityId": "2903b244-16e2-48f2-990b-9e3bc63621d4",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "e0e01f6d-3f04-4efe-b0e6-d2ee87c5a3f1",
+    "name": "Спанбонд в рулоне ширина 210см",
+    "istochnik": "PARSER",
+    "stage": null,
+    "tip": null,
+    "kolichestvo": 3,
+    "kommentariy": "",
+    "opportunityId": "2903b244-16e2-48f2-990b-9e3bc63621d4",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "e24a8965-68b9-4f78-ac97-b38c74969002",
+    "name": "БРЕНДИНГ свободная запись ( КОМЕНТАРИЙ ОБЯЗАТЕЛЕН )",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "PODRYAD",
+    "kolichestvo": 1,
+    "kommentariy": "Велком скрин",
+    "opportunityId": "d2cf42bf-6243-475f-8f8b-81a5073f999b",
+    "amount": {
+      "amountMicros": 5000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "ed3fcd93-a185-434a-bb54-774bd8d8ee3c",
+    "name": "Фотозона Эльба",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "Конструктив, разработка+ монтаж",
+    "opportunityId": "74610515-f4d3-4451-9770-4427e7c93f84",
+    "amount": {
+      "amountMicros": 100440000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "edcc9a6e-320b-40f8-9432-214eafae1f45",
+    "name": "Теннисный стол / Корпоративный  (Без согласование не брендировать)",
+    "istochnik": "PARSER",
+    "stage": null,
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "50ea04eb-4fca-4028-9c4d-f49d66b400d1",
+    "amount": {
+      "amountMicros": 7200000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "edd13357-fc8d-41bd-b3f6-e71366046dcb",
+    "name": "Дротиковый тир",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "Шарики: синие, красные, белые",
+    "opportunityId": "50ea04eb-4fca-4028-9c4d-f49d66b400d1",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "f089a9be-531b-4dd5-b243-f200086db796",
+    "name": "БРЕНДИНГ свободная запись ( КОМЕНТАРИЙ ОБЯЗАТЕЛЕН )",
+    "istochnik": "PARSER",
+    "stage": "OKLEYKA",
+    "tip": "PLENKA",
+    "kolichestvo": 6,
+    "kommentariy": "КУБЫ",
+    "opportunityId": "2903b244-16e2-48f2-990b-9e3bc63621d4",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://drive.google.com/drive/folders/1loIbB6upj24yUrzTiuO5CbqhGJiCqCFe",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "f257f357-0fea-403d-93aa-168fbc03d1e6",
+    "name": "Витрина ювелирная столб - внешняя оклейка корупса",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "18e8cce1-ebb1-45e0-9716-a81678f78a43",
+    "amount": {
+      "amountMicros": 12750000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/N9VIKDtgJUBWRQ",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "308",
+      "blocknote": "[{\"id\":\"54167c3d-1642-4484-aa68-18141fe6c705\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"308\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "f8dc212b-97ed-4bd2-9da8-2cd42e1299d1",
+    "name": "Теннисный стол / Корпоративный",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "положить доп.мячи",
+    "opportunityId": "d2a245ba-7b49-496d-bb79-9d15336adee6",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "f9751ee9-4e2f-4759-89b8-9c0b12c32de7",
+    "name": "Теннисный стол / Корпоративный  (Без согласование не брендировать)",
+    "istochnik": "PARSER",
+    "stage": null,
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "положить доп.мячи",
+    "opportunityId": "d2a245ba-7b49-496d-bb79-9d15336adee6",
+    "amount": {
+      "amountMicros": 10400000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "f982a402-0771-4e7f-98b3-76050e08c727",
+    "name": "БРЕНДИНГ свободная запись ( КОМЕНТАРИЙ ОБЯЗАТЕЛЕН )",
+    "istochnik": "PARSER",
+    "stage": "OKLEYKA",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "ПВХ на торцы - 2 шт.",
+    "opportunityId": "2903b244-16e2-48f2-990b-9e3bc63621d4",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/i/PjvpUCv-NW9j_g",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "311",
+      "blocknote": "[{\"id\":\"16565029-db21-4ceb-86c9-0440d40b5818\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"311\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "fa525b33-726f-4f1b-85e6-76a3a305a29d",
+    "name": "Киоск предсказаний - печать фото",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "ca6027a1-6de4-4704-b0cf-1935cdd6ff65",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "fe4eefd0-ff97-44f9-9669-ac4587a2f78b",
+    "name": "БРЕНДИНГ свободная запись ( КОМЕНТАРИЙ ОБЯЗАТЕЛЕН )",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "Плашка ПВХ 120х90",
+    "opportunityId": "18e8cce1-ebb1-45e0-9716-a81678f78a43",
+    "amount": {
+      "amountMicros": 10200000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/nbhk8hKH5xwHQA",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "309",
+      "blocknote": "[{\"id\":\"688a8c80-407a-45f5-8757-390fb002948b\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"309\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "0f2fc6ce-0314-446e-9ba5-39494797ed2f",
+    "name": "Холодильник витрина 500л",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 3,
+    "kommentariy": "МАГА В  ВЫХОДНОЙ",
+    "opportunityId": "50062087-68f9-477d-9f69-a2201996f31d",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "13ffd263-93f0-48fd-84ca-d7ec2be38945",
+    "name": "Гольф дорожка белая 3 м VIP - Брендинг обязателен, нельзя удалять.",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "с препятствиями",
+    "opportunityId": "3d1fb9b9-e8eb-47c6-a9aa-1e8402e7e43a",
+    "amount": {
+      "amountMicros": 5310000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "1bab0f48-8605-4605-b233-c88025cedca0",
+    "name": "Холодильник витрина 500л",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "1be5e85c-9e3b-40cd-80ba-f821e3b3ef4b",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "24f74ddf-8b76-47b4-bfb8-0f442b8880d0",
+    "name": "БРЕНДИНГ свободная запись ( КОМЕНТАРИЙ ОБЯЗАТЕЛЕН )",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "PODRYAD",
+    "kolichestvo": 1,
+    "kommentariy": "Термо наклейки  (300 штук ) размер 10х10",
+    "opportunityId": "345f899e-a9d6-4b58-9ca8-c816de762a4a",
+    "amount": {
+      "amountMicros": 22000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "2a1eff2f-2ed9-4faa-bf70-f791431475aa",
+    "name": "Бортики 100х20см для гонки Мини-Z",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 21,
+    "kommentariy": "Фреза 45\n",
+    "opportunityId": "007de4b5-3e4a-40de-9a66-1950367dc297",
+    "amount": {
+      "amountMicros": 468000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "2a952751-4652-4207-8f55-c8f3cb8f73c8",
+    "name": "Киоск / Корнер - врехняя + нижняя часть Брендинг / оклейка",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "Проставить кол-во",
+    "opportunityId": "1be5e85c-9e3b-40cd-80ba-f821e3b3ef4b",
+    "amount": {
+      "amountMicros": 16150000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/iiK03XERv8VJxQ",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "283",
+      "blocknote": "[{\"id\":\"c5cf906a-c145-45ee-bd67-045cc87dfb4c\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"283\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "2cb37af2-e3ec-421e-a454-ffe8d9c892de",
+    "name": "Тележка парковая белая",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "c2a279fc-b42a-441e-a8ae-0d74e5da03b3",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "363d4731-2f2d-449a-8386-be88f6e132ea",
+    "name": "Подушка красная 30х30 см. с лого, пошив",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "PODRYAD",
+    "kolichestvo": 30,
+    "kommentariy": "у текстиля уже ",
+    "opportunityId": "8b4c0b50-42f0-4533-92a8-a1e851a35833",
+    "amount": {
+      "amountMicros": 825000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "44045457-355b-4208-9854-e98415f6b940",
+    "name": "Фотобудка овальная черная шторка - печать фото",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "Фото 5х15",
+    "opportunityId": "23c53124-90c5-4b23-827e-36399d1531f9",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://drive.google.com/drive/folders/1H0rJfdGB6jjNUDFp4OOWkxuhSLmvcJYM?usp=sharing",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "227",
+      "blocknote": "[{\"id\":\"ffa6d2e2-a78e-43c2-9d73-196725da295f\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"227\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "4f0f9ac3-5506-42fa-88f8-a853bd1b59ed",
+    "name": "Брендинг верхней плашки",
+    "istochnik": "PARSER",
+    "stage": null,
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "8b4c0b50-42f0-4533-92a8-a1e851a35833",
+    "amount": {
+      "amountMicros": 5000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "5415bc33-a94d-476b-8afe-52bf7537fe03",
+    "name": "БРЕНДИНГ свободная запись ( КОМЕНТАРИЙ ОБЯЗАТЕЛЕН )",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "PODRYAD",
+    "kolichestvo": 1,
+    "kommentariy": "разработка макета",
+    "opportunityId": "345f899e-a9d6-4b58-9ca8-c816de762a4a",
+    "amount": {
+      "amountMicros": 15000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "561451e4-78d3-48da-b314-be66cfda238b",
+    "name": "Тележка для попкорн аппарата",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "5926e7e4-f9d0-4e3d-b4a1-0fe2bc88104e",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "63b7bde3-48f3-475c-a1c8-aa4d5c59b02a",
+    "name": "Сладкая вата - Бабл Гам",
+    "istochnik": "PARSER",
+    "stage": "OTMENA",
+    "tip": null,
+    "kolichestvo": 35,
+    "kommentariy": "",
+    "opportunityId": "c2a279fc-b42a-441e-a8ae-0d74e5da03b3",
+    "amount": {
+      "amountMicros": 6407100000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "71fdaa0f-2c44-450e-99f4-83db361f70c5",
+    "name": "Сладкая вата - Клубничная.",
+    "istochnik": "PARSER",
+    "stage": "OTMENA",
+    "tip": null,
+    "kolichestvo": 35,
+    "kommentariy": "",
+    "opportunityId": "c2a279fc-b42a-441e-a8ae-0d74e5da03b3",
+    "amount": {
+      "amountMicros": 6407100000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "73658560-e54f-4ca9-846d-ca7f0432f3c5",
+    "name": "Брендинг парковой тележки",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "c2a279fc-b42a-441e-a8ae-0d74e5da03b3",
+    "amount": {
+      "amountMicros": 16328500000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://drive.google.com/drive/folders/1olJk0skxsRWYJ-aiVOn44CX4mK5-gDre?usp=sharing",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "226",
+      "blocknote": "[{\"id\":\"6c135c00-6248-469d-9799-7085fef02caa\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"226\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "7f216cc6-066b-4916-8b81-2398bf90b369",
+    "name": "Брендинг бочки для ваты",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "Богатырь",
+    "opportunityId": "c2a279fc-b42a-441e-a8ae-0d74e5da03b3",
+    "amount": {
+      "amountMicros": 5424000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "9ae23192-6bc8-416a-b072-58fad0470779",
+    "name": "Каркас 3х2,2м",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "в заказе нету брендинга \n",
+    "opportunityId": "28809497-6a40-4337-96a4-f4498fd748db",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "a7f8254b-0c62-47c0-89d9-845c835532f8",
+    "name": "Брендинг нижней плашки",
+    "istochnik": "PARSER",
+    "stage": null,
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "8b4c0b50-42f0-4533-92a8-a1e851a35833",
+    "amount": {
+      "amountMicros": 11000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "ad46c469-def8-43e2-bbf4-87280f8002a2",
+    "name": "ПВХ элементы объемные с оклейкой (+, квдрат, надпись, =, и сердечко)",
+    "istochnik": "PARSER",
+    "stage": null,
+    "tip": "PODRYAD",
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "8b4c0b50-42f0-4533-92a8-a1e851a35833",
+    "amount": {
+      "amountMicros": 49000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "b63beaa2-c0ac-42f4-a93f-d749da30a8a3",
+    "name": "Виндер 4.8м",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "PODRYAD",
+    "kolichestvo": 8,
+    "kommentariy": "Павел флаг",
+    "opportunityId": "8b4c0b50-42f0-4533-92a8-a1e851a35833",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "c66abaf5-4c47-4576-a492-d14b43102709",
+    "name": "Изготовление лыж",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "NE_NASHE",
+    "kolichestvo": 2,
+    "kommentariy": "",
+    "opportunityId": "0f8431f6-f5d8-4ccd-87d3-de511c662492",
+    "amount": {
+      "amountMicros": 28000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "c75dabae-6ac4-46b2-b074-879a13c5699b",
+    "name": "Корнхол",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "BANNERA",
+    "kolichestvo": 1,
+    "kommentariy": "будет брендинг",
+    "opportunityId": "0f8431f6-f5d8-4ccd-87d3-de511c662492",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "d877fb68-ee67-4ed5-a0b3-5ff761ea68fd",
+    "name": "Брендированные мешочки",
+    "istochnik": "PARSER",
+    "stage": "OTMENA",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "0f8431f6-f5d8-4ccd-87d3-de511c662492",
+    "amount": {
+      "amountMicros": 8000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "db0f4f61-6f70-462f-ba0e-fab1a9f59550",
+    "name": "БРЕНДИНГ свободная запись ( КОМЕНТАРИЙ ОБЯЗАТЕЛЕН )",
+    "istochnik": "PARSER",
+    "stage": "OTMENA",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "Корнхол + мешочки",
+    "opportunityId": "0f8431f6-f5d8-4ccd-87d3-de511c662492",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "dbeee12d-112e-40b3-9600-198b787bbd3d",
+    "name": "Брендинг крыши на парковую тележку",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "ГЛАВПРИНТ-ИЛЬЯ",
+    "opportunityId": "c2a279fc-b42a-441e-a8ae-0d74e5da03b3",
+    "amount": {
+      "amountMicros": 23052000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "de488412-8b26-44f0-9f53-84f1f9887f82",
+    "name": "Гольф дорожка белая 3 м VIP - Брендинг - брениднг игрового поля",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "МАГА В  ВЫХОДНОЙ",
+    "opportunityId": "3d1fb9b9-e8eb-47c6-a9aa-1e8402e7e43a",
+    "amount": {
+      "amountMicros": 22100000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://drive.google.com/drive/folders/1GwA9qieS84YqlF52Fwi2G_RgrG6gfLPf?usp=sharing",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "214",
+      "blocknote": "[{\"id\":\"8fca5c32-990c-4678-a4f7-6a1dd1b2698d\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"214\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "e79796d8-569b-485a-865a-5035ab3ecbdd",
+    "name": "Брендирование корнхола",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "BANNERA",
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "0f8431f6-f5d8-4ccd-87d3-de511c662492",
+    "amount": {
+      "amountMicros": 15300000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/i/ZPKp_0MMqYkmaA",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "242",
+      "blocknote": "[{\"id\":\"f8dd44cf-4df4-4c4c-bc7b-a44a50ac8e01\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"242\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "e86bc49e-8990-42b0-9cab-bad7878bf092",
+    "name": "Тележка с мороженым итальянская без крыши",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "ПОДРЯД КЛЕИЛ",
+    "opportunityId": "5926e7e4-f9d0-4e3d-b4a1-0fe2bc88104e",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://drive.google.com/drive/folders/1p5rQh75AtJ1u1WM32Zl9w1R4oe0pEeXW",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "251",
+      "blocknote": "[{\"id\":\"8f116d6d-c97a-4ed4-92c7-0591188c9db6\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"251\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "f97a7a2c-1a28-4f8b-81f4-cb8476db03a2",
+    "name": "Лототрон большой напольный сильные царапины стекла под брендинг",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "5ea99f56-4256-40da-96ce-e7eab94f1f8f",
+    "amount": {
+      "amountMicros": 17000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "fb3f444d-2970-44b1-8877-e563cc61b4e3",
+    "name": "Вывески из ПВХ с подсветкой",
+    "istochnik": "PARSER",
+    "stage": null,
+    "tip": "PODRYAD",
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "8b4c0b50-42f0-4533-92a8-a1e851a35833",
+    "amount": {
+      "amountMicros": 11000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "fcfce576-e29b-4874-a906-7bc2385d5a41",
+    "name": "Лототрон большой напольный сильные царапины стекла под брендинг - внешняя оклейка корпуса",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "ПОДРЯД, нужно переклеить 2 грани",
+    "opportunityId": "5ea99f56-4256-40da-96ce-e7eab94f1f8f",
+    "amount": {
+      "amountMicros": 22950000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://drive.google.com/drive/folders/1aannkQHfOvukP0B496_WIhQnxy7c_oks?usp=sharing",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "166",
+      "blocknote": "[{\"id\":\"4759d97b-eb6a-4b10-aeae-647116ccfc67\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"166\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "03a09ba2-a2dd-4d82-b8a6-fa6844fb8a13",
+    "name": "брендированная стена на арку 10 на 10",
+    "istochnik": null,
+    "stage": "NOVYY",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "ГЛАВ ПРИНТ - Стенка 10х10",
+    "opportunityId": "8c7bb176-5b8b-4d1d-b49b-e901945c3635",
+    "amount": {
+      "amountMicros": 62100000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/GECVRffTNfy-ig",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "0e1ee523-52f0-478b-a043-c224e622dff3",
+    "name": "Колесо фортуны",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "2acc9589-7075-47e0-8dca-01be8082bd51",
+    "amount": {
+      "amountMicros": 8400000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "1424906a-67bd-4a5d-94fa-fe042c9104a7",
+    "name": "БРЕНДИНГ свободная запись ( КОМЕНТАРИЙ ОБЯЗАТЕЛЕН )",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "Внешний брендинг панна, макет ок для запуска\n\n",
+    "opportunityId": "33e544bc-3c20-4ef8-b8e5-ca45b5eace91",
+    "amount": {
+      "amountMicros": 42400000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://drive.google.com/drive/folders/1EZJvZkY9bd-EFLR-ve3ywQGpIx09Wdyo?usp=sharing",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "252",
+      "blocknote": "[{\"id\":\"43499f5c-d698-4708-aa85-dafbfb33c525\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"252\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "2a722277-f145-4c38-a482-919b66f170a3",
+    "name": "Юбка (2 Бока 400х60 см, центр 600х60 см)",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "Глав принт, забираем 23.07 к 20.00",
+    "opportunityId": "24b8c0fb-075a-4522-a7aa-a650c84a893f",
+    "amount": {
+      "amountMicros": 25000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "3247b51f-5703-4af0-8382-c6bba2ee6126",
+    "name": "Трибуна белая",
+    "istochnik": null,
+    "stage": null,
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "реставрация?",
+    "opportunityId": "8c7bb176-5b8b-4d1d-b49b-e901945c3635",
+    "amount": {
+      "amountMicros": 3000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "3943921a-6b77-40d1-a784-98776be3a8c3",
+    "name": "БРЕНДИНГ свободная запись ( КОМЕНТАРИЙ ОБЯЗАТЕЛЕН )",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "Футбол панна - оклейка комплекта бортов с ДВУХ строн",
+    "opportunityId": "33e544bc-3c20-4ef8-b8e5-ca45b5eace91",
+    "amount": {
+      "amountMicros": 42400000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://drive.google.com/drive/folders/1eSGBkzrZTgmhF7wAnUZ6CR-0NhVogRx3?usp=sharing",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "253",
+      "blocknote": "[{\"id\":\"d4adb07f-3786-4e18-924b-fd3bbfd2a973\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"253\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "4ad68bae-aaf1-4e25-9e9f-fc87ed2d1b76",
+    "name": "Колесо фортуны D80 - Брендинг плашка + печать пленки",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "пленка - запущено - фреза запущено ",
+    "opportunityId": "2acc9589-7075-47e0-8dca-01be8082bd51",
+    "amount": {
+      "amountMicros": 12600000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/HChMNEY1Le_QsA",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "277",
+      "blocknote": "[{\"id\":\"edba93d8-bfbe-4d3e-9d12-693a9eb83110\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"277\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "55cb219f-7ddc-42a2-9c0b-27ab1f65dfef",
+    "name": "Спанбонд в рулоне ширина 210см",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 30,
+    "kommentariy": "",
+    "opportunityId": "24b8c0fb-075a-4522-a7aa-a650c84a893f",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "5e9f4a72-c1a1-4ecb-98fd-97dfc80865d7",
+    "name": "Виндер 3,5 м New",
+    "istochnik": null,
+    "stage": "NOVYY",
+    "tip": null,
+    "kolichestvo": 10,
+    "kommentariy": "не наше",
+    "opportunityId": "8c7bb176-5b8b-4d1d-b49b-e901945c3635",
+    "amount": {
+      "amountMicros": 1600000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "62167fb2-687c-4935-a9f7-4408a1dd2ad3",
+    "name": "ПВХ КАРТА + подложка",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "PODRYAD",
+    "kolichestvo": 1,
+    "kommentariy": "Артем магистральная, забираем 24",
+    "opportunityId": "24b8c0fb-075a-4522-a7aa-a650c84a893f",
+    "amount": {
+      "amountMicros": 28800000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "6af5b17d-4efc-4f42-95c9-a29a74e8762f",
+    "name": "Раус подиума с 4-х сторон спанбондом",
+    "istochnik": "PARSER",
+    "stage": "V_RABOTE",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "Спанбонд юра",
+    "opportunityId": "24b8c0fb-075a-4522-a7aa-a650c84a893f",
+    "amount": {
+      "amountMicros": 4300000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "76a6fbf0-97a0-4bbb-984d-d0a67de22047",
+    "name": "флаги односторонние на виндеры",
+    "istochnik": null,
+    "stage": "NOVYY",
+    "tip": null,
+    "kolichestvo": 10,
+    "kommentariy": "Павел Виндера - готовность 07.07",
+    "opportunityId": "8c7bb176-5b8b-4d1d-b49b-e901945c3635",
+    "amount": {
+      "amountMicros": 8500000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "83f6e4ed-c70b-440c-810a-7d52ee2745fa",
+    "name": "Холодильник витрина 500л",
+    "istochnik": "PARSER",
+    "stage": "NOVYY",
+    "tip": "RESTAVRACIYA",
+    "kolichestvo": 1,
+    "kommentariy": "вопрос",
+    "opportunityId": "997c2f00-d6b3-498e-a0ac-2d060f807771",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "8f3ac4c5-ca70-4879-b930-e84863692220",
+    "name": "Фалжковая лента",
+    "istochnik": "PARSER",
+    "stage": "V_RABOTE",
+    "tip": "PODRYAD",
+    "kolichestvo": 1,
+    "kommentariy": "Забираем у паши в 12.00",
+    "opportunityId": "24b8c0fb-075a-4522-a7aa-a650c84a893f",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "9260faef-4413-464c-a239-f1b8fc64fea1",
+    "name": "Тумба для спикера белый металл",
+    "istochnik": null,
+    "stage": null,
+    "tip": null,
+    "kolichestvo": 8,
+    "kommentariy": "",
+    "opportunityId": "8c7bb176-5b8b-4d1d-b49b-e901945c3635",
+    "amount": {
+      "amountMicros": 1200000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "a1b5d14c-76ba-442b-97fa-a300507b2ca4",
+    "name": "Техническая Колонна 100 см ПВХ под оклейку",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 5,
+    "kommentariy": "",
+    "opportunityId": "14c73ed5-018b-419f-9a1e-cb368f8fbfc4",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "a5d0ed71-9697-4396-a354-621aac53d821",
+    "name": "Задник (просто баннер объёмный 3.6х6 м)",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "BANNERA",
+    "kolichestvo": 1,
+    "kommentariy": "Глав принт, забираем 23.07 к 20.00",
+    "opportunityId": "24b8c0fb-075a-4522-a7aa-a650c84a893f",
+    "amount": {
+      "amountMicros": 62500000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "a6f8473d-c3db-4238-999c-82c32f3a9874",
+    "name": "Панно-футбол высокий",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "33e544bc-3c20-4ef8-b8e5-ca45b5eace91",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "a8dd20f9-a329-45dd-a329-4d4ba6d0fd44",
+    "name": "Холодильник 300л черный",
+    "istochnik": "PARSER",
+    "stage": "NOVYY",
+    "tip": "RESTAVRACIYA",
+    "kolichestvo": 2,
+    "kommentariy": "вопрос\n",
+    "opportunityId": "b577616c-b755-471b-99a5-6bee688f7b44",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "acf6ac63-037c-4e6a-8094-d113fe6f7f79",
+    "name": "Только печать баннера 2х2",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "BANNERA",
+    "kolichestvo": 1,
+    "kommentariy": "просто баннер отдаем Коле",
+    "opportunityId": "24b8c0fb-075a-4522-a7aa-a650c84a893f",
+    "amount": {
+      "amountMicros": 5780000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/gzb3yCVS8zWWvw",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "268",
+      "blocknote": "[{\"id\":\"0980addc-df4c-468e-a772-ac8a925d6b2d\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"268\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "b04b390e-97aa-464a-84c2-ef9f7faf66a4",
+    "name": "БАННЕРЩИКИ МОНТАЖ",
+    "istochnik": "PARSER",
+    "stage": "V_RABOTE",
+    "tip": "BANNERA",
+    "kolichestvo": 1,
+    "kommentariy": "Юра",
+    "opportunityId": "24b8c0fb-075a-4522-a7aa-a650c84a893f",
+    "amount": {
+      "amountMicros": 62000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "c16c761c-1b75-4c81-a78a-dc0470ca3d9a",
+    "name": "7стенд деревянный (стенд+баннер+монтаж)) - 61 шт",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "BANNERA",
+    "kolichestvo": 60,
+    "kommentariy": "Юра + 2 на сборку 23 в ночь на базу к нам",
+    "opportunityId": "24b8c0fb-075a-4522-a7aa-a650c84a893f",
+    "amount": {
+      "amountMicros": 4600000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/UgIz77zGeZKcuA",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "269",
+      "blocknote": "[{\"id\":\"4fdd530d-150a-440a-a8a7-f0da9e565141\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"269\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "d6ca0051-0fd0-481c-a131-8f16ac663dda",
+    "name": "Техническая Колонна 100 см ПВХ под оклейку - внешняя оклейка корупса",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 5,
+    "kommentariy": "макет ок для запуска",
+    "opportunityId": "14c73ed5-018b-419f-9a1e-cb368f8fbfc4",
+    "amount": {
+      "amountMicros": 11900000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://drive.google.com/drive/folders/1E9TolTP5ULoANBYVPfhxXFuwf3_B07kN?usp=sharing",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "232",
+      "blocknote": "[{\"id\":\"40854d10-6813-4495-8082-971dc41d0003\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"232\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "e839966c-1d7d-463d-a9c7-e7efc65fdedc",
+    "name": "Маленькие флажки - забираем у паши",
+    "istochnik": "PARSER",
+    "stage": "V_RABOTE",
+    "tip": "PODRYAD",
+    "kolichestvo": 1,
+    "kommentariy": "у паши в 12.00",
+    "opportunityId": "24b8c0fb-075a-4522-a7aa-a650c84a893f",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "e867ef87-7b8d-47d3-8a6e-79d8b99cdc7f",
+    "name": "Техническая Стойка администратора Visit широкая",
+    "istochnik": "PARSER",
+    "stage": "NOVYY",
+    "tip": "RESTAVRACIYA",
+    "kolichestvo": 2,
+    "kommentariy": "вопрос",
+    "opportunityId": "fc3c36a4-23a8-4f77-9622-1fac98223e2f",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "ee6dfa4d-fee0-4151-82c9-2d199e5fe854",
+    "name": "Cтойка администратора Visit - внешняя оклейка корупса",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "макет ок для запуска",
+    "opportunityId": "14c73ed5-018b-419f-9a1e-cb368f8fbfc4",
+    "amount": {
+      "amountMicros": 16150000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://drive.google.com/drive/folders/1uEI6WKX21YVrS8EKauDu5rdCiwqZGFsV?usp=sharing",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "233",
+      "blocknote": "[{\"id\":\"c9f13187-5d50-4936-8dff-5da51fff50d5\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"233\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "f22590b2-f940-49b5-ba9a-d0c50a3e7137",
+    "name": "Техническая Стойка администратора Visit широкая",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "14c73ed5-018b-419f-9a1e-cb368f8fbfc4",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "fe3f6a81-4cf1-423f-b875-1f79fe29d847",
+    "name": "Подготовка дизайн макета для резки пластика",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "24b8c0fb-075a-4522-a7aa-a650c84a893f",
+    "amount": {
+      "amountMicros": 12000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "00bd221e-371f-4f31-a02b-796170dbef0d",
+    "name": "Зашив 2х ног шатра",
+    "istochnik": null,
+    "stage": "V_PECHATI",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 22500000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "0449d40c-f1ae-4f62-b954-a1bf06c8306d",
+    "name": "Брендирование рауса",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "BANNERA",
+    "kolichestvo": 1,
+    "kommentariy": "4 рабочих дня",
+    "opportunityId": "89929874-4003-422a-a7a8-94aa12a7e222",
+    "amount": {
+      "amountMicros": 44800000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/AUBbgvNb14Xilg",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "109",
+      "blocknote": "[{\"id\":\"403cbc12-c5fe-4f29-b1fb-48bbb260859b\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"109\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "04bb9043-5686-41cc-a6b6-d75972b91270",
+    "name": "Техническая Стойка администратора Visit широкая",
+    "istochnik": null,
+    "stage": null,
+    "tip": null,
+    "kolichestvo": 2,
+    "kommentariy": "ДУБЛЬ",
+    "opportunityId": "ac8d44af-86b7-4c1c-9bf3-c0efdc67ddbe",
+    "amount": {
+      "amountMicros": 2680000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "163401eb-3415-4da5-b6eb-0568231efa21",
+    "name": "Баннерщики",
+    "istochnik": "PARSER",
+    "stage": null,
+    "tip": "BANNERA",
+    "kolichestvo": 1,
+    "kommentariy": "Гапутин + пол китая",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 480000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "2566878c-3c6c-411c-a54e-1f4e73862fdc",
+    "name": "Баннер (угол крыши односката)",
+    "istochnik": null,
+    "stage": "V_PECHATI",
+    "tip": null,
+    "kolichestvo": 2,
+    "kommentariy": "",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 32500000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "2a415c21-9c19-411c-85ac-5e774e59e385",
+    "name": "Баннерная крыша",
+    "istochnik": null,
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 2,
+    "kommentariy": "НЕ ОТ НАС",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 125000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "2a77c2d7-a89f-4ef6-9ded-2babe36ad8e4",
+    "name": "Матрешка объемная",
+    "istochnik": "PARSER",
+    "stage": "V_RABOTE",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "готово",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 71000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "3476827b-5404-483b-9a45-d06d57f7e13f",
+    "name": "Раус на диджейский стол",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "запущен",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 7000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "3d02c610-8149-419e-85b4-c0b3d129b994",
+    "name": "Баннер (стена) 3х10",
+    "istochnik": null,
+    "stage": "V_PECHATI",
+    "tip": null,
+    "kolichestvo": 3,
+    "kommentariy": "",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 81000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "40d6facc-73a6-4645-930f-41546100dff3",
+    "name": "Внешний баннер с дверью",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "BANNERA",
+    "kolichestvo": 1,
+    "kommentariy": "+1",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 31500000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "430a54fa-d384-4c48-808a-3f212920126b",
+    "name": "Баннер на брусе с объемом 300×200 см (Монтаж считаем ОТДЕЛЬНО)",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "BANNERA",
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "5cd1e988-26d5-45cc-aed7-42f6dca2a048",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "4e1df2cc-e3db-4fb1-893b-c351e093df17",
+    "name": "Каркас 3х2+ натяжка",
+    "istochnik": "PARSER",
+    "stage": "V_RABOTE",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "баннер от клиента",
+    "opportunityId": "5cd1e988-26d5-45cc-aed7-42f6dca2a048",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "526e91c1-3bf6-4d07-98c7-3acd56e871e9",
+    "name": "Баннерная крыша",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "BANNERA",
+    "kolichestvo": 1,
+    "kommentariy": "Влада",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 50300000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "5d2aae44-4706-4cfe-9fe1-b9c95141b0a3",
+    "name": "Каркас 3х2,2м",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "c876431b-87fb-4a88-8785-8c33ad6fa1ae",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "62fd079c-ce4f-4c18-aaca-503c492dddd9",
+    "name": "Фриз на крышу",
+    "istochnik": null,
+    "stage": "V_PECHATI",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 16587000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "63edd448-e594-44bb-8612-1f4144d0633c",
+    "name": "Настольный керлинг комплект ПРО - внешняя оклейка корпуса",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "Макеты - ок, ждем оплату",
+    "opportunityId": "76c9ec48-cade-4f33-a7fa-dd855c2dc9b6",
+    "amount": {
+      "amountMicros": 23800000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.yandex.ru/d/Xv7c_s7UfQwtvQ",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "131",
+      "blocknote": "[{\"id\":\"4fbe2180-7abc-4577-b9d3-e255d95221c6\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"131\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "7737753a-29fe-4bd9-8efb-c1f7708f11c3",
+    "name": "Разработка макета",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "c876431b-87fb-4a88-8785-8c33ad6fa1ae",
+    "amount": {
+      "amountMicros": 3000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "7bcccb14-a160-4a07-bd17-131f8d2f0f3b",
+    "name": "Спанбонд в рулоне ширина 210см",
+    "istochnik": "PARSER",
+    "stage": null,
+    "tip": null,
+    "kolichestvo": 100,
+    "kommentariy": "",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "7c81949f-8843-432e-8383-47e589c278eb",
+    "name": "Зашив 2х ног шатра",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "запущен",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 22500000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "7e824c39-ecfd-4245-8d1a-1057b314383d",
+    "name": "Виндер 3,5 м",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 2,
+    "kommentariy": "не наше",
+    "opportunityId": "5cd1e988-26d5-45cc-aed7-42f6dca2a048",
+    "amount": {
+      "amountMicros": 3040000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "83da12f6-ebb8-4f75-8140-9052269032dd",
+    "name": "Баннер (угол крыши односката)",
+    "istochnik": null,
+    "stage": "V_PECHATI",
+    "tip": null,
+    "kolichestvo": 2,
+    "kommentariy": "",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 32500000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "89fef2c5-27e3-479b-9a13-f19290afb6a9",
+    "name": "Изготовление шторы. 6х3м. Ткань габардин со швом по центру",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "BANNERA",
+    "kolichestvo": 1,
+    "kommentariy": "ЧЕРНЫЙ ЦВЕТ",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 8320000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "93538ba5-25d4-4f04-a1a4-e98c1572b16c",
+    "name": "Баннер (стена) 2,5х4",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "BANNERA",
+    "kolichestvo": 2,
+    "kommentariy": "+2",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 31500000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "966788c5-6ddf-4ba0-b6c0-49c6c35c1521",
+    "name": "Брендирование задника сцены",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "PODRYAD",
+    "kolichestvo": 1,
+    "kommentariy": "4 рабочих дня",
+    "opportunityId": "89929874-4003-422a-a7a8-94aa12a7e222",
+    "amount": {
+      "amountMicros": 72400000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "9d505ce5-0cbf-4c04-8785-361c82b57afb",
+    "name": "Холодильник 290л черный",
+    "istochnik": "PARSER",
+    "stage": null,
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "нет",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "a2214200-8d42-4f16-99ad-0175f6dd06dc",
+    "name": "Резное лого 1,5х3 на стену",
+    "istochnik": "PARSER",
+    "stage": "V_RABOTE",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "+",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 46300000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "a5d3c35c-d5d3-4074-ad84-653bc1e30d6e",
+    "name": "Фриз на крышу",
+    "istochnik": null,
+    "stage": "V_PECHATI",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 34500000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "a6af41db-d54c-4bc2-ac88-7f6ee22399ac",
+    "name": "Баннер (угол крыши односката)",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "BANNERA",
+    "kolichestvo": 2,
+    "kommentariy": "+0",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 16515000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "aca0dfaa-9e45-4e07-9160-ab03662e513f",
+    "name": "Раус + боковые части (закрытие ног)",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "+0,5",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 23040000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "bfa075d4-6765-4327-ad2e-4e5a5e7d09c5",
+    "name": "Баннер (стена) 3х10",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "BANNERA",
+    "kolichestvo": 3,
+    "kommentariy": "запущен",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 81000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "cde4c145-c308-4604-ab3d-50ed67716b3b",
+    "name": "Фриз на крышу",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "+0,5",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 16587000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "d36facaf-9ca5-4e22-b800-0fed96532319",
+    "name": "Прессвол на брусе 4х2.5",
+    "istochnik": null,
+    "stage": "V_RABOTE",
+    "tip": "BANNERA",
+    "kolichestvo": 1,
+    "kommentariy": "Мага",
+    "opportunityId": "ac8d44af-86b7-4c1c-9bf3-c0efdc67ddbe",
+    "amount": {
+      "amountMicros": 52470000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "dfbfcd94-580f-419e-aa5e-33d4be79ebdc",
+    "name": "Баннер",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "BANNERA",
+    "kolichestvo": 1,
+    "kommentariy": "люверсы",
+    "opportunityId": "c876431b-87fb-4a88-8785-8c33ad6fa1ae",
+    "amount": {
+      "amountMicros": 7700000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://drive.google.com/drive/folders/1e_qHuOVp_64QQ9DwSIkrSXWuCbpqE3qU?usp=sharing",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "62",
+      "blocknote": "[{\"id\":\"e01948e0-54b3-40ec-8a32-1d12dd89917d\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"62\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "ea84ee68-94c1-49e4-9443-4390936708a5",
+    "name": "пресс волл",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "BANNERA",
+    "kolichestvo": 1,
+    "kommentariy": "300*200 на люв",
+    "opportunityId": "bacf4582-e107-434b-a861-5628b3a5461b",
+    "amount": {
+      "amountMicros": 22000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "67",
+      "blocknote": "[{\"id\":\"4a089709-8c33-4040-95ed-d092e64570e3\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"67\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "f7636a2d-13a3-49c6-ad9f-c007b7e44455",
+    "name": "Баннер 2,5 х 1,5 м",
+    "istochnik": "PARSER",
+    "stage": "V_PECHATI",
+    "tip": "BANNERA",
+    "kolichestvo": 4,
+    "kommentariy": "+12",
+    "opportunityId": "201b8017-3902-42ec-b272-628fccdc8f10",
+    "amount": {
+      "amountMicros": 12000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "064eb750-5586-480b-a1b6-d1e8f4aa53b0",
+    "name": "Автомат Хватайка жёлтый 80х80см с монетоприёмником",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "не наше",
+    "opportunityId": "37929f6e-05b0-4ee9-8ff8-a5550a234dde",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "07012f36-6cc4-48d1-bd54-61706504beb4",
+    "name": "Брендинг хватайка",
+    "istochnik": "PARSER",
+    "stage": "OKLEYKA",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "",
+    "opportunityId": "37929f6e-05b0-4ee9-8ff8-a5550a234dde",
+    "amount": {
+      "amountMicros": 19000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "34, 38",
+      "blocknote": "[{\"id\":\"e454704d-984e-4bf7-8eaf-b04442172d9d\",\"type\":\"paragraph\",\"props\":{\"backgroundColor\":\"default\",\"textColor\":\"default\",\"textAlignment\":\"left\"},\"content\":[{\"type\":\"text\",\"text\":\"34, 38\",\"styles\":{}}],\"children\":[]}]"
+    }
+  },
+  {
+    "id": "091be527-49ba-4bc1-943a-285b6ae79a92",
+    "name": "Капсулы для аппарата хватайка",
+    "istochnik": "PARSER",
+    "stage": "GOTOVO",
+    "tip": null,
+    "kolichestvo": 100,
+    "kommentariy": "не наше",
+    "opportunityId": "37929f6e-05b0-4ee9-8ff8-a5550a234dde",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "14e0ba77-e8f5-43cc-9354-921f215d9baf",
+    "name": "Капсулы для аппарата хватайка",
+    "istochnik": "PARSER",
+    "stage": "OTMENA",
+    "tip": null,
+    "kolichestvo": 500,
+    "kommentariy": "не наше",
+    "opportunityId": "13934902-9a42-48b6-8565-e538ccf2ac08",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "14fbf41c-b5ee-4c7e-a77c-f7cb107e978c",
+    "name": "Брендирование автомата Хватайка",
+    "istochnik": "PARSER",
+    "stage": "OTMENA",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "нет макетов",
+    "opportunityId": "13934902-9a42-48b6-8565-e538ccf2ac08",
+    "amount": {
+      "amountMicros": 18000000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "7df687ae-5bee-4ce9-bcf3-6d859c81fa6b",
+    "name": "Брендинг верхней плашки корнера",
+    "istochnik": "PARSER",
+    "stage": "OKLEYKA",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "есть макет ",
+    "opportunityId": "37929f6e-05b0-4ee9-8ff8-a5550a234dde",
+    "amount": {
+      "amountMicros": 4800000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.360.yandex.ru/d/7yhgXpVzyMV2mg",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "83f776b2-e0e7-4613-a532-9861b90ffa2d",
+    "name": "Брендинг нижней плашки корнера",
+    "istochnik": "PARSER",
+    "stage": "OKLEYKA",
+    "tip": "PLENKA",
+    "kolichestvo": 1,
+    "kommentariy": "есть макет ",
+    "opportunityId": "37929f6e-05b0-4ee9-8ff8-a5550a234dde",
+    "amount": {
+      "amountMicros": 10400000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "https://disk.360.yandex.ru/d/7yhgXpVzyMV2mg",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "b478545b-098d-4b56-a699-e18f2326fa99",
+    "name": "Зашив рауса",
+    "istochnik": "PARSER",
+    "stage": "OTMENA",
+    "tip": "BANNERA",
+    "kolichestvo": 1,
+    "kommentariy": "только передняя часть",
+    "opportunityId": "126f429c-9a63-463a-93cc-a45dd23213f4",
+    "amount": {
+      "amountMicros": 4500000000,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  },
+  {
+    "id": "eae8d536-58a3-4fed-ab97-8bc2c07358a9",
+    "name": "Автомат Хватайка красный 80х80см с монетоприёмником",
+    "istochnik": "PARSER",
+    "stage": "OTMENA",
+    "tip": null,
+    "kolichestvo": 1,
+    "kommentariy": "будет брендинг",
+    "opportunityId": "13934902-9a42-48b6-8565-e538ccf2ac08",
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "ssylkaNaMakety": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    },
+    "plenka": {
+      "markdown": "",
+      "blocknote": null
+    }
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "3af2f268-9606-40c4-8944-8c8a70c8aff3",
+    "name": "Arenda",
+    "domainName": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "8814cccb-471e-4d05-90cb-261a9395ada8",
+    "name": "ProInteractive",
+    "domainName": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "d9a124be-d8ef-4dd6-b769-f6dc1dd34673",
+    "name": "Биржа Лидов",
+    "domainName": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
+    "name": "Art-Active",
+    "domainName": {
+      "primaryLinkLabel": "",
+      "primaryLinkUrl": "",
+      "secondaryLinks": []
+    }
+  }
+]
