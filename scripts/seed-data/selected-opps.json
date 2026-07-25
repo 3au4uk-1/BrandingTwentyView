@@ -90,122 +90,242 @@
     }
   },
   {
-    "id": "18e8cce1-ebb1-45e0-9716-a81678f78a43",
-    "name": "ПРО/26.07/ГОНКИ/СТЕНД/JOYZ#180362/Фест./Печ./Зайцева",
+    "id": "04f93fdf-b419-421f-a45c-95516f7e85b3",
+    "name": "ПРО/ДИАЛЕКТ RUNIT // Артем // 3-5 июля // 165199 // ПОСТОПЛАТА/Титова",
     "stage": "V_RABOTE",
     "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
-    "loadDate": "2026-07-25T01:00:00.000Z",
-    "closeDate": "2026-07-25T01:00:00.000Z",
+    "loadDate": "2026-07-03T01:00:00.000Z",
+    "closeDate": "2026-07-03T01:00:00.000Z",
     "stageZakreplen": false,
     "statusOplaty": "PREDOPLATA",
     "arrivalTime": "04:00",
     "readyTime": "",
-    "workTime": "11:11-11:11",
-    "dismantleTime": "26.07.2026 01:00",
+    "workTime": "07:00-20:00",
+    "dismantleTime": "06.07.2026 01:00",
     "ssylkaNaMakety": "",
     "oplata": null,
     "amount": {
-      "amountMicros": 119700000000,
+      "amountMicros": 64400000000,
       "currencyCode": "RUB"
     },
     "tonyLink": {
-      "primaryLinkLabel": "Tony #180362",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=180362",
+      "primaryLinkLabel": "Tony #165199",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=165199",
       "secondaryLinks": []
     },
     "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2009733",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2009733/?any",
+      "primaryLinkLabel": "Bitrix #1943817",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1943817/?any",
       "secondaryLinks": []
     }
   },
   {
-    "id": "2903b244-16e2-48f2-990b-9e3bc63621d4",
-    "name": "АРЕНДА/25-31.07/ВИП/ТЕРРИТОРИЯ СМЫСЛОВ/НОВЫЕ ЛЮДИ/СЕНЕЖ/180075/Авдеева",
+    "id": "29a3a567-02b0-4b56-8dad-e91df0be81bd",
+    "name": "АРТ/4 июля-5 июля/Корп лига/семейный фестиваль для ЦБ РФ 153724 постоплата 70/30/Черноморова",
     "stage": "V_RABOTE",
-    "companyId": "3af2f268-9606-40c4-8944-8c8a70c8aff3",
-    "loadDate": "2026-07-24T21:00:00.000Z",
-    "closeDate": "2026-07-24T21:00:00.000Z",
-    "stageZakreplen": false,
+    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
+    "loadDate": "2026-07-03T07:00:00.000Z",
+    "closeDate": "2026-07-04T07:00:00.000Z",
+    "stageZakreplen": true,
     "statusOplaty": "PREDOPLATA",
-    "arrivalTime": "00:00",
+    "arrivalTime": "10:00",
     "readyTime": "",
-    "workTime": "09:00-21:00",
-    "dismantleTime": "31.07.2026 21:00",
+    "workTime": "09:00-16:00",
+    "dismantleTime": "05.07.2026 01:00",
     "ssylkaNaMakety": "",
     "oplata": null,
     "amount": {
-      "amountMicros": 152500000000,
+      "amountMicros": 27200000000,
       "currencyCode": "RUB"
     },
     "tonyLink": {
-      "primaryLinkLabel": "Tony #180075",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=180075",
+      "primaryLinkLabel": "Tony #153724",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=153724",
       "secondaryLinks": []
     },
     "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2008685",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2008685/?any",
+      "primaryLinkLabel": "Bitrix #1936019",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1936019/?any",
       "secondaryLinks": []
     }
   },
   {
-    "id": "38ac3976-b76b-40e2-b4ea-4ebb178bf8b4",
-    "name": "ПРО/25-26.07 // ДДХ Макслер // Юлия // #177029/Пахомова",
+    "id": "416502f9-6d1d-4af7-85bb-259977b80fca",
+    "name": "Биржа Лидов/03-04.07/шатер 5х5 Денис/ 169972/Сардарян",
     "stage": "V_RABOTE",
-    "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
-    "loadDate": "2026-07-25T01:00:00.000Z",
-    "closeDate": "2026-07-25T01:00:00.000Z",
+    "companyId": "d9a124be-d8ef-4dd6-b769-f6dc1dd34673",
+    "loadDate": "2026-07-03T01:00:00.000Z",
+    "closeDate": "2026-07-03T01:00:00.000Z",
     "stageZakreplen": false,
-    "statusOplaty": "PREDOPLATA",
+    "statusOplaty": "NE_OPLACHENO",
     "arrivalTime": "04:00",
     "readyTime": "",
-    "workTime": "11:00-20:00",
-    "dismantleTime": "26.07.2026 01:00",
+    "workTime": "19:00-23:00",
+    "dismantleTime": "04.07.2026 01:00",
     "ssylkaNaMakety": "",
     "oplata": null,
     "amount": {
-      "amountMicros": 20400000000,
+      "amountMicros": 91540000000,
       "currencyCode": "RUB"
     },
     "tonyLink": {
-      "primaryLinkLabel": "Tony #177029",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=177029",
+      "primaryLinkLabel": "Tony #169972",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=169972",
       "secondaryLinks": []
     },
     "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #1928835",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1928835/?any",
+      "primaryLinkLabel": "Bitrix #1981361",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1981361/?any",
       "secondaryLinks": []
     }
   },
   {
-    "id": "609ae755-330c-490b-b352-73237216434b",
-    "name": "АРЕНДА/25.07/Ростик/Холодосы/178484/Лучинова",
+    "id": "19d37d08-319e-4b7e-8205-a52793826f6c",
+    "name": "Биржа Лидов/11.07/ВТБ Арена ЮЗЕФ ВАЖНО!/174025/Тома",
     "stage": "V_RABOTE",
-    "companyId": "3af2f268-9606-40c4-8944-8c8a70c8aff3",
-    "loadDate": "2026-07-24T21:00:00.000Z",
-    "closeDate": "2026-07-24T21:00:00.000Z",
+    "companyId": "d9a124be-d8ef-4dd6-b769-f6dc1dd34673",
+    "loadDate": "2026-07-10T21:00:00.000Z",
+    "closeDate": "2026-07-10T21:00:00.000Z",
     "stageZakreplen": false,
     "statusOplaty": "NE_OPLACHENO",
     "arrivalTime": "00:00",
     "readyTime": "",
-    "workTime": "13:00-20:00",
-    "dismantleTime": "25.07.2026 00:00",
+    "workTime": "13:00-22:00",
+    "dismantleTime": "12.07.2026 00:00",
     "ssylkaNaMakety": "",
     "oplata": null,
     "amount": {
-      "amountMicros": 13400000000,
+      "amountMicros": 125200000000,
       "currencyCode": "RUB"
     },
     "tonyLink": {
-      "primaryLinkLabel": "Tony #178484",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=178484",
+      "primaryLinkLabel": "Tony #174025",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=174025",
       "secondaryLinks": []
     },
     "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2008305",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2008305/?any",
+      "primaryLinkLabel": "Bitrix #1972849",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1972849/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "19efa44b-92ad-4be4-a75a-1c23ded3ffcd",
+    "name": "АРТ/1.08/Аскар Силомер и Чеканка/180488/Корп./Квиз/Шаров",
+    "stage": "V_RABOTE",
+    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
+    "loadDate": "2026-07-31T21:00:00.000Z",
+    "closeDate": "2026-07-31T21:00:00.000Z",
+    "stageZakreplen": false,
+    "statusOplaty": "OPLACHENO_POLNOSTYU",
+    "arrivalTime": "00:00",
+    "readyTime": "",
+    "workTime": "15:00-20:00",
+    "dismantleTime": "01.08.2026 00:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 35900000000,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #180488",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=180488",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #2009813",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2009813/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "4a79432a-21f4-4e4e-802b-4cd4cfc4a14a",
+    "name": "АРЕНДА/09.07/КАПУСТИН/СУЗДАЛЬ/ВИП/171202/Кочуренко",
+    "stage": "V_RABOTE",
+    "companyId": "3af2f268-9606-40c4-8944-8c8a70c8aff3",
+    "loadDate": "2026-07-09T01:00:00.000Z",
+    "closeDate": "2026-07-09T01:00:00.000Z",
+    "stageZakreplen": false,
+    "statusOplaty": "PREDOPLATA",
+    "arrivalTime": "04:00",
+    "readyTime": "",
+    "workTime": "10:00-17:00",
+    "dismantleTime": "09.07.2026 01:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #171202",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=171202",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1981141",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1981141/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "516c3794-7196-4b55-b7c6-e463ac0c85c1",
+    "name": "ПРО/ 02.08 фотобудка Людмила 173068/Бунакова",
+    "stage": "V_RABOTE",
+    "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
+    "loadDate": "2026-08-01T21:00:00.000Z",
+    "closeDate": "2026-08-01T21:00:00.000Z",
+    "stageZakreplen": false,
+    "statusOplaty": "PREDOPLATA",
+    "arrivalTime": "00:00",
+    "readyTime": "",
+    "workTime": "16:00-20:00",
+    "dismantleTime": "02.08.2026 23:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 27000000000,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #173068",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=173068",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1978773",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1978773/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "5d6c33c8-6b25-4706-87c2-02592499b4e4",
+    "name": "АРТ/Конф./Шатр./26.07 - 09.08 // ферма на долгосрок // 173266/Казурова",
+    "stage": "V_RABOTE",
+    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
+    "loadDate": "2026-07-26T01:00:00.000Z",
+    "closeDate": "2026-07-26T01:00:00.000Z",
+    "stageZakreplen": true,
+    "statusOplaty": "NE_OPLACHENO",
+    "arrivalTime": "04:00",
+    "readyTime": "",
+    "workTime": "10:00-20:00",
+    "dismantleTime": "12.08.2026 01:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 336400000000,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #173266",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=173266",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1978839",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1978839/?any",
       "secondaryLinks": []
     }
   },
@@ -270,408 +390,138 @@
     }
   },
   {
-    "id": "a8cfa0bd-e582-4df8-a821-6bf8e0a7787d",
-    "name": "АБА-Кейтеринг/24.07-27.07/ПРОМО АРТЕМ АБАШИН/181485/Теддер",
-    "stage": "V_RABOTE",
-    "companyId": null,
-    "loadDate": "2026-07-23T21:00:00.000Z",
-    "closeDate": "2026-07-23T21:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "NE_OPLACHENO",
-    "arrivalTime": "00:00",
-    "readyTime": "",
-    "workTime": "10:00-23:00",
-    "dismantleTime": "27.07.2026 00:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 0,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #181485",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=181485",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2014479",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2014479/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "ad5474a6-31ca-4466-9ce2-5b20c06a7b7c",
-    "name": "ПРО/СК ДИНАМО // Артем // 25 июля // 178882/Титова",
-    "stage": "V_RABOTE",
-    "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
-    "loadDate": "2026-07-25T03:00:00.000Z",
-    "closeDate": "2026-07-25T03:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "PREDOPLATA",
-    "arrivalTime": "06:00",
-    "readyTime": "",
-    "workTime": "12:00-19:00",
-    "dismantleTime": "25.07.2026 20:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 17600000000,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #178882",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=178882",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2003905",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2003905/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "d2cf42bf-6243-475f-8f8b-81a5073f999b",
-    "name": "ПРО/ДИНАМО - КРЫЛЬЯ СОВЕТОВ // Тимур // 25 июля // 180765 // 100% ПОСТОПЛАТА/Титова",
-    "stage": "V_RABOTE",
-    "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
-    "loadDate": "2026-07-25T00:00:00.000Z",
-    "closeDate": "2026-07-25T00:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "NE_OPLACHENO",
-    "arrivalTime": "03:00",
-    "readyTime": "",
-    "workTime": "12:00-16:00",
-    "dismantleTime": "25.07.2026 22:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 385500000000,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #180765",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=180765",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2011987",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2011987/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "24b8c0fb-075a-4522-a7aa-a650c84a893f",
-    "name": "АРЕНДА/24-25.07/ВИП/МОЛОДЫЕ ПРЕДПРИНИМАТЕЛИ/НОВЫЕ ЛЮДИ/ИЮЛЬКА/178941/Авдеева",
-    "stage": "V_RABOTE",
+    "id": "04c69643-0e52-4571-b283-332a3c05e6c8",
+    "name": "АРЕНДА/Основная/кейтеринг/05.07 / ВИП / НЕТВЕЛЛ / РАН-ИТ / 157332/Авдеева",
+    "stage": "GOTOVO",
     "companyId": "3af2f268-9606-40c4-8944-8c8a70c8aff3",
-    "loadDate": "2026-07-25T00:00:00.000Z",
-    "closeDate": "2026-07-24T16:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "NE_OPLACHENO",
-    "arrivalTime": "19:00",
-    "readyTime": "",
-    "workTime": "00:00-00:00",
-    "dismantleTime": "26.07.2026 02:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 476380000000,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #178941",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=178941",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2004235",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2004235/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "04d884a2-a8b4-412f-bf1a-4c7e6cf4fd0e",
-    "name": "АРТ/Корп./Спорт./24.07/Александра/теннисные столы/171794/Кицак",
-    "stage": "GOTOVO",
-    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
-    "loadDate": "2026-07-23T23:00:00.000Z",
-    "closeDate": "2026-07-23T23:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "OPLACHENO_POLNOSTYU",
-    "arrivalTime": "02:00",
-    "readyTime": "",
-    "workTime": "14:00-21:00",
-    "dismantleTime": "24.07.2026 01:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 163500000000,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #171794",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=171794",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #1971581",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1971581/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "0938dcd1-2520-4e41-b818-dbca45c96020",
-    "name": "АРТ/23.07/ Стойка/Татьяна  /178267 и 180757 и 179767/Конф./Шатр./Ивлева",
-    "stage": "GOTOVO",
-    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
-    "loadDate": "2026-07-22T23:00:00.000Z",
-    "closeDate": "2026-07-22T23:00:00.000Z",
+    "loadDate": "2026-07-03T23:00:00.000Z",
+    "closeDate": "2026-07-03T23:00:00.000Z",
     "stageZakreplen": false,
     "statusOplaty": "PREDOPLATA",
     "arrivalTime": "02:00",
     "readyTime": "",
-    "workTime": "10:00-22:00",
-    "dismantleTime": "23.07.2026 01:00",
+    "workTime": "04:00-19:00",
+    "dismantleTime": "05.07.2026 01:00",
     "ssylkaNaMakety": "",
     "oplata": null,
     "amount": {
-      "amountMicros": 58200000000,
+      "amountMicros": 0,
       "currencyCode": "RUB"
     },
     "tonyLink": {
-      "primaryLinkLabel": "Tony #178267",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=178267",
+      "primaryLinkLabel": "Tony #157332",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=157332",
       "secondaryLinks": []
     },
     "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2001299",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2001299/?any",
+      "primaryLinkLabel": "Bitrix #1922243",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1922243/?any",
       "secondaryLinks": []
     }
   },
   {
-    "id": "0f8431f6-f5d8-4ccd-87d3-de511c662492",
-    "name": "АРЕНДА/КАПУСТИН САМОВЫВОЗ/Корп./Меб./22.07-26.07/Москва 2.0/180471/Мариян",
+    "id": "2903b244-16e2-48f2-990b-9e3bc63621d4",
+    "name": "АРЕНДА/25-31.07/ВИП/ТЕРРИТОРИЯ СМЫСЛОВ/НОВЫЕ ЛЮДИ/СЕНЕЖ/180075/Авдеева",
     "stage": "GOTOVO",
     "companyId": "3af2f268-9606-40c4-8944-8c8a70c8aff3",
-    "loadDate": "2026-07-21T21:00:00.000Z",
-    "closeDate": "2026-07-21T21:00:00.000Z",
+    "loadDate": "2026-07-26T00:00:00.000Z",
+    "closeDate": "2026-07-24T21:00:00.000Z",
     "stageZakreplen": false,
     "statusOplaty": "PREDOPLATA",
     "arrivalTime": "00:00",
     "readyTime": "",
-    "workTime": "13:00-23:00",
-    "dismantleTime": "27.07.2026 00:00",
+    "workTime": "09:00-21:00",
+    "dismantleTime": "31.07.2026 21:00",
     "ssylkaNaMakety": "",
     "oplata": null,
     "amount": {
-      "amountMicros": 79300000000,
+      "amountMicros": 152500000000,
       "currencyCode": "RUB"
     },
     "tonyLink": {
-      "primaryLinkLabel": "Tony #180471",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=180471",
+      "primaryLinkLabel": "Tony #180075",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=180075",
       "secondaryLinks": []
     },
     "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2010463",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2010463/?any",
+      "primaryLinkLabel": "Bitrix #2008685",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2008685/?any",
       "secondaryLinks": []
     }
   },
   {
-    "id": "28809497-6a40-4337-96a4-f4498fd748db",
-    "name": "ПРО/24.07 // Т-БАНК Березки // Виктория // #178317/ПОСТОПЛАТА/Пахомова",
-    "stage": "GOTOVO",
-    "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
-    "loadDate": "2026-07-24T00:00:00.000Z",
-    "closeDate": "2026-07-24T00:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "NE_OPLACHENO",
-    "arrivalTime": "03:00",
-    "readyTime": "",
-    "workTime": "15:30-21:00",
-    "dismantleTime": "24.07.2026 01:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 0,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #178317",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=178317",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2007969",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2007969/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "47643251-9218-413c-ae67-7e63b73b51d2",
-    "name": "АРТ/24-25.07/Юстина/казино с родео/174412/181714/ДОП.ЗАКАЗ//Щербакова",
-    "stage": "GOTOVO",
-    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
-    "loadDate": "2026-07-25T01:00:00.000Z",
-    "closeDate": "2026-07-25T01:00:00.000Z",
-    "stageZakreplen": true,
-    "statusOplaty": "NE_OPLACHENO",
-    "arrivalTime": "04:00",
-    "readyTime": "",
-    "workTime": "14:00-01:00",
-    "dismantleTime": "26.07.2026 00:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 53440000000,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #181714",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=181714",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2015353",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2015353/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "50ea04eb-4fca-4028-9c4d-f49d66b400d1",
-    "name": "АРТ/24 июля // Федоскино Поляна // Анастасия  // 170199/Лоскутникова",
-    "stage": "GOTOVO",
-    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
-    "loadDate": "2026-07-24T00:00:00.000Z",
-    "closeDate": "2026-07-24T00:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "PREDOPLATA",
-    "arrivalTime": "03:00",
-    "readyTime": "",
-    "workTime": "12:00-16:00",
-    "dismantleTime": "24.07.2026 01:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 9600000000,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #170199",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=170199",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #1997361",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1997361/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "5926e7e4-f9d0-4e3d-b4a1-0fe2bc88104e",
-    "name": "ПРО/Александр// тележки// 23 и 24 июля/Корп./Кейт/179959/Скорнякова",
-    "stage": "GOTOVO",
-    "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
-    "loadDate": "2026-07-23T00:00:00.000Z",
-    "closeDate": "2026-07-23T00:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "NE_OPLACHENO",
-    "arrivalTime": "03:00",
-    "readyTime": "",
-    "workTime": "10:00-02:00",
-    "dismantleTime": "24.07.2026 03:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 0,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #179959",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=179959",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2007963",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2007963/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "74610515-f4d3-4451-9770-4427e7c93f84",
-    "name": "ПРО/24.07/Корпоратив Эльба/Майя/Корп./Компл//180171/Мякушкина",
-    "stage": "GOTOVO",
-    "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
-    "loadDate": "2026-07-24T00:00:00.000Z",
-    "closeDate": "2026-07-24T00:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "PREDOPLATA",
-    "arrivalTime": "03:00",
-    "readyTime": "",
-    "workTime": "13:00-23:00",
-    "dismantleTime": "24.07.2026 03:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 100440000000,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #180171",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=180171",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2008717",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2008717/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "80ccdcb0-69b0-49d8-b508-172820776097",
-    "name": "АРТ/24-25.07/анна/ фудтрак /день города кашира/180261/Фест./Кейт./Черноморова",
-    "stage": "GOTOVO",
-    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
-    "loadDate": "2026-07-24T01:00:00.000Z",
-    "closeDate": "2026-07-24T01:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "PREDOPLATA",
-    "arrivalTime": "04:00",
-    "readyTime": "",
-    "workTime": "09:00-23:00",
-    "dismantleTime": "25.07.2026 01:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 30400000000,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #180261",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=180261",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2009343",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2009343/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "93d97ed3-03da-4bd7-9c5f-cf4a39176bb3",
-    "name": "АРЕНДА/25.07 - 26.07 / Бочка Кваса / Александр/Иное/Кейт / 181334/Иное/Кейт./Солдатов",
+    "id": "7ff29099-8bd1-450f-a6e2-64c2acfbd612",
+    "name": "АРЕНДА/16.07-18.07/Марина/Стойка опять 2.0/172785/Лучинова",
     "stage": "GOTOVO",
     "companyId": "3af2f268-9606-40c4-8944-8c8a70c8aff3",
-    "loadDate": "2026-07-23T21:00:00.000Z",
-    "closeDate": "2026-07-23T21:00:00.000Z",
+    "loadDate": "2026-07-16T07:00:00.000Z",
+    "closeDate": "2026-07-16T07:00:00.000Z",
     "stageZakreplen": false,
     "statusOplaty": "PREDOPLATA",
-    "arrivalTime": "00:00",
+    "arrivalTime": "10:00",
     "readyTime": "",
-    "workTime": "13:00-22:30",
-    "dismantleTime": "26.07.2026 00:00",
+    "workTime": "15:00-20:00",
+    "dismantleTime": "18.07.2026 01:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 7800000000,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #172785",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=172785",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1977285",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1977285/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "baa83644-8b75-4fab-bcde-0d814b2b3d98",
+    "name": "АРЕНДА/16.07-18.07/Марина/Стойка опять 1.0/170385/Лучинова",
+    "stage": "GOTOVO",
+    "companyId": "3af2f268-9606-40c4-8944-8c8a70c8aff3",
+    "loadDate": "2026-07-16T01:00:00.000Z",
+    "closeDate": "2026-07-16T01:00:00.000Z",
+    "stageZakreplen": false,
+    "statusOplaty": "PREDOPLATA",
+    "arrivalTime": "04:00",
+    "readyTime": "",
+    "workTime": "16:00-20:00",
+    "dismantleTime": "18.07.2026 23:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 7800000000,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #170385",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=170385",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1977239",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1977239/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "d3d7ed8a-88e7-464e-8473-f4e6ee863ad5",
+    "name": "АРТ/5 июля/Ирина/ столы диваны/172697/Нестеров",
+    "stage": "GOTOVO",
+    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
+    "loadDate": "2026-07-05T01:00:00.000Z",
+    "closeDate": "2026-07-05T01:00:00.000Z",
+    "stageZakreplen": false,
+    "statusOplaty": "PREDOPLATA",
+    "arrivalTime": "04:00",
+    "readyTime": "",
+    "workTime": ":-:",
+    "dismantleTime": "05.07.2026 01:00",
     "ssylkaNaMakety": "",
     "oplata": null,
     "amount": {
@@ -679,43 +529,163 @@
       "currencyCode": "RUB"
     },
     "tonyLink": {
-      "primaryLinkLabel": "Tony #181334",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=181334",
+      "primaryLinkLabel": "Tony #172697",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=172697",
       "secondaryLinks": []
     },
     "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2014041",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2014041/?any",
+      "primaryLinkLabel": "Bitrix #1974143",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1974143/?any",
       "secondaryLinks": []
     }
   },
   {
-    "id": "5ea99f56-4256-40da-96ce-e7eab94f1f8f",
-    "name": "АРТ/18.07/Лототрон/Алена Петрова/179355/Дел.м./Меб./Ивлева",
-    "stage": "OTCHET_STAS",
-    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
-    "loadDate": "2026-07-18T04:00:00.000Z",
-    "closeDate": "2026-07-18T04:00:00.000Z",
-    "stageZakreplen": true,
-    "statusOplaty": "OPLACHENO_POLNOSTYU",
-    "arrivalTime": "07:00",
+    "id": "fbe49b32-6a2c-4c99-900d-a3770993cc0d",
+    "name": "АРЕНДА/16.07-18.07/Марина/Стойка опять 3.0/172791/Лучинова",
+    "stage": "GOTOVO",
+    "companyId": "3af2f268-9606-40c4-8944-8c8a70c8aff3",
+    "loadDate": "2026-07-16T01:00:00.000Z",
+    "closeDate": "2026-07-16T01:00:00.000Z",
+    "stageZakreplen": false,
+    "statusOplaty": "PREDOPLATA",
+    "arrivalTime": "04:00",
     "readyTime": "",
-    "workTime": "14:00-15:30",
-    "dismantleTime": "18.07.2026 22:00",
+    "workTime": "16:00-20:00",
+    "dismantleTime": "18.07.2026 01:00",
     "ssylkaNaMakety": "",
     "oplata": null,
     "amount": {
-      "amountMicros": 39950000000,
+      "amountMicros": 7800000000,
       "currencyCode": "RUB"
     },
     "tonyLink": {
-      "primaryLinkLabel": "Tony #179355",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=179355",
+      "primaryLinkLabel": "Tony #172791",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=172791",
       "secondaryLinks": []
     },
     "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2005135",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2005135/?any",
+      "primaryLinkLabel": "Bitrix #1977289",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1977289/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "fe97c218-5635-42c2-91ae-9a677dd27ac3",
+    "name": "АРТ/03.07/БАРНАЯ/СТОЙКА/НАТАЛЬЯ/173146/22.06ВИЗУАЛИЗАЦИЯФОТО СТОЙКИ/Терёхин",
+    "stage": "GOTOVO",
+    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
+    "loadDate": "2026-07-03T01:00:00.000Z",
+    "closeDate": "2026-07-03T01:00:00.000Z",
+    "stageZakreplen": true,
+    "statusOplaty": "PREDOPLATA",
+    "arrivalTime": "04:00",
+    "readyTime": "",
+    "workTime": "15:00-22:00",
+    "dismantleTime": "03.07.2026 01:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 14500000000,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #173146",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=173146",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1978643",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1978643/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "065686fd-6832-4443-b83b-c5a87ef82577",
+    "name": "АРЕНДА/01.07-02.07/Больше не казанчик/168190/Мариян",
+    "stage": "GOTOVO",
+    "companyId": "3af2f268-9606-40c4-8944-8c8a70c8aff3",
+    "loadDate": "2026-07-01T01:00:00.000Z",
+    "closeDate": "2026-07-01T01:00:00.000Z",
+    "stageZakreplen": false,
+    "statusOplaty": null,
+    "arrivalTime": "04:00",
+    "readyTime": "",
+    "workTime": "10:00-20:00",
+    "dismantleTime": "02.07.2026 01:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #168190",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=168190",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1955821",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1955821/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "ace3d752-46f9-4c11-9ca8-bb6256c77afe",
+    "name": "АРТ/1.07// выпускники юля сыр // 170779/Казурова",
+    "stage": "GOTOVO",
+    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
+    "loadDate": "2026-07-01T01:00:00.000Z",
+    "closeDate": "2026-07-01T01:00:00.000Z",
+    "stageZakreplen": false,
+    "statusOplaty": null,
+    "arrivalTime": "04:00",
+    "readyTime": "",
+    "workTime": "16:00-19:00",
+    "dismantleTime": "01.07.2026 01:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #170779",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=170779",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1958225",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1958225/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "cc6c1db0-123a-4a5e-9ed9-e74abb4b5201",
+    "name": "АРТ/30.06 / Мария частный детский праздник /173077/Маковецкая",
+    "stage": "GOTOVO",
+    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
+    "loadDate": "2026-06-30T01:00:00.000Z",
+    "closeDate": "2026-06-30T01:00:00.000Z",
+    "stageZakreplen": false,
+    "statusOplaty": null,
+    "arrivalTime": "04:00",
+    "readyTime": "08:30",
+    "workTime": "10:30-21:30",
+    "dismantleTime": "30.06.2026 01:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 0,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #173077",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=173077",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1977777",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1977777/?any",
       "secondaryLinks": []
     }
   },
@@ -750,122 +720,152 @@
     }
   },
   {
-    "id": "5cd1e988-26d5-45cc-aed7-42f6dca2a048",
-    "name": "АРТ/5.07/ Петр/ мебель 175343/Черноморова",
+    "id": "203218d1-38ea-4f98-9501-14995017667d",
+    "name": "АРЕНДА/03.07-04.07 / Анна / шезлонгеры / 160568/Авдеева",
     "stage": "OTCHET_STAS",
-    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
-    "loadDate": "2026-07-04T01:00:00.000Z",
-    "closeDate": "2026-07-05T01:00:00.000Z",
+    "companyId": "3af2f268-9606-40c4-8944-8c8a70c8aff3",
+    "loadDate": "2026-07-03T01:00:00.000Z",
+    "closeDate": "2026-07-03T01:00:00.000Z",
     "stageZakreplen": true,
     "statusOplaty": "PREDOPLATA",
     "arrivalTime": "04:00",
     "readyTime": "",
-    "workTime": "06:00-19:30",
-    "dismantleTime": "06.07.2026 01:00",
+    "workTime": "03:00-00:00",
+    "dismantleTime": "04.07.2026 01:00",
     "ssylkaNaMakety": "",
     "oplata": null,
     "amount": {
-      "amountMicros": 6080000000,
+      "amountMicros": 227740000000,
       "currencyCode": "RUB"
     },
     "tonyLink": {
-      "primaryLinkLabel": "Tony #175343",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=175343",
+      "primaryLinkLabel": "Tony #160568",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=160568",
       "secondaryLinks": []
     },
     "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #1989059",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1989059/?any",
+      "primaryLinkLabel": "Bitrix #1922793",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1922793/?any",
       "secondaryLinks": []
     }
   },
   {
-    "id": "89929874-4003-422a-a7a8-94aa12a7e222",
-    "name": "АРЕНДА/Фест./Шатр./11.07/сцена 6х4 с элеватором /178493/Полякова",
+    "id": "213cb2b6-c9bb-4c0a-ac22-22dd6ddbda11",
+    "name": "ПРО/02.07-06.07/Александра/Шатры и мебель/Доброфест/173675/ПОСТОПЛАТА /УЩЕРБ /Шунькин",
     "stage": "OTCHET_STAS",
-    "companyId": "3af2f268-9606-40c4-8944-8c8a70c8aff3",
-    "loadDate": "2026-07-10T01:00:00.000Z",
-    "closeDate": "2026-07-10T01:00:00.000Z",
+    "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
+    "loadDate": "2026-07-02T01:00:00.000Z",
+    "closeDate": "2026-07-02T01:00:00.000Z",
     "stageZakreplen": true,
     "statusOplaty": "NE_OPLACHENO",
     "arrivalTime": "04:00",
     "readyTime": "",
-    "workTime": "23:00-23:00",
-    "dismantleTime": "11.07.2026 01:00",
+    "workTime": "09:00-21:00",
+    "dismantleTime": "06.07.2026 01:00",
     "ssylkaNaMakety": "",
     "oplata": null,
     "amount": {
-      "amountMicros": 117200000000,
+      "amountMicros": 52470000000,
       "currencyCode": "RUB"
     },
     "tonyLink": {
-      "primaryLinkLabel": "Tony #178493",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=178493",
+      "primaryLinkLabel": "Tony #173675",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=173675",
       "secondaryLinks": []
     },
     "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #1992365",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1992365/?any",
+      "primaryLinkLabel": "Bitrix #2005201",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2005201/?any",
       "secondaryLinks": []
     }
   },
   {
-    "id": "bacf4582-e107-434b-a861-5628b3a5461b",
-    "name": "АРТ/10.07-11.07 /ДЕКОР ЛОФТ/Алина/170476/Ивлева",
+    "id": "3583a496-fb5c-462f-849c-d8dc56906f17",
+    "name": "АРТ/3 июля/Ольга/ много развлечений 172622/Черноморова",
     "stage": "OTCHET_STAS",
     "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
-    "loadDate": "2026-07-10T01:00:00.000Z",
-    "closeDate": "2026-07-10T01:00:00.000Z",
+    "loadDate": "2026-07-03T01:00:00.000Z",
+    "closeDate": "2026-07-03T01:00:00.000Z",
     "stageZakreplen": true,
     "statusOplaty": "OPLACHENO_POLNOSTYU",
     "arrivalTime": "04:00",
     "readyTime": "",
-    "workTime": "18:00-21:00",
-    "dismantleTime": "11.07.2026 02:00",
+    "workTime": "14:00-22:00",
+    "dismantleTime": "03.07.2026 01:00",
     "ssylkaNaMakety": "",
     "oplata": null,
     "amount": {
-      "amountMicros": 22000000000,
+      "amountMicros": 64650000000,
       "currencyCode": "RUB"
     },
     "tonyLink": {
-      "primaryLinkLabel": "Tony #170476",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=170476",
+      "primaryLinkLabel": "Tony #172622",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=172622",
       "secondaryLinks": []
     },
     "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #1965971",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1965971/?any",
+      "primaryLinkLabel": "Bitrix #1976615",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1976615/?any",
       "secondaryLinks": []
     }
   },
   {
-    "id": "c876431b-87fb-4a88-8785-8c33ad6fa1ae",
-    "name": "АРТ/10 июля / Яна / казино 154565/Юсупова",
+    "id": "51059606-9e0e-49f6-aeb9-b2dae7f3202a",
+    "name": "ПРО/3.07 // Б1 // Елена // #171987/Пахомова",
     "stage": "OTCHET_STAS",
-    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
-    "loadDate": "2026-07-10T01:00:00.000Z",
-    "closeDate": "2026-07-10T01:00:00.000Z",
+    "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
+    "loadDate": "2026-07-03T01:00:00.000Z",
+    "closeDate": "2026-07-03T01:00:00.000Z",
     "stageZakreplen": true,
-    "statusOplaty": "OPLACHENO_POLNOSTYU",
+    "statusOplaty": "PREDOPLATA",
     "arrivalTime": "04:00",
     "readyTime": "",
-    "workTime": "14:00-20:00",
-    "dismantleTime": "10.07.2026 01:00",
+    "workTime": "13:00-17:00",
+    "dismantleTime": "03.07.2026 01:00",
     "ssylkaNaMakety": "",
     "oplata": null,
     "amount": {
-      "amountMicros": 10700000000,
+      "amountMicros": 57000000000,
       "currencyCode": "RUB"
     },
     "tonyLink": {
-      "primaryLinkLabel": "Tony #154565",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=154565",
+      "primaryLinkLabel": "Tony #171987",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=171987",
       "secondaryLinks": []
     },
     "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #1895025",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1895025/?any",
+      "primaryLinkLabel": "Bitrix #1972527",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1972527/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "552a25e9-5dd5-40b5-b481-fc77398337ee",
+    "name": "ПРО/16-18.07 // Андрей // БАРНАУЛ // 170831 // ПОСТОПЛАТА /Гейдельберг",
+    "stage": "OTCHET_STAS",
+    "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
+    "loadDate": "2026-07-03T01:00:00.000Z",
+    "closeDate": "2026-07-03T01:00:00.000Z",
+    "stageZakreplen": true,
+    "statusOplaty": "PREDOPLATA",
+    "arrivalTime": "04:00",
+    "readyTime": "",
+    "workTime": ":-:",
+    "dismantleTime": "28.07.2026 01:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 24000000000,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #170831",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=170831",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1967813",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1967813/?any",
       "secondaryLinks": []
     }
   },
@@ -926,6 +926,66 @@
     "bitrixLink": {
       "primaryLinkLabel": "Bitrix #1985679",
       "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1985679/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "37929f6e-05b0-4ee9-8ff8-a5550a234dde",
+    "name": "ПРО/5.07/Вендинг Мещера/Екатерина/172410/Ершов",
+    "stage": "OTMENA",
+    "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
+    "loadDate": "2026-07-05T01:00:00.000Z",
+    "closeDate": "2026-07-05T01:00:00.000Z",
+    "stageZakreplen": false,
+    "statusOplaty": "PREDOPLATA",
+    "arrivalTime": "04:00",
+    "readyTime": "",
+    "workTime": "07:00-21:00",
+    "dismantleTime": "05.07.2026 01:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 34200000000,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #172410",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=172410",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1974087",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1974087/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "72a0a427-5e6d-4fa8-ba0c-8372ac66e8dc",
+    "name": "АРТ/4 июля / Валерия аэроклуб тур / тендер акрихина 154419/Юсупова",
+    "stage": "OTMENA",
+    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
+    "loadDate": "2026-07-03T21:00:00.000Z",
+    "closeDate": "2026-07-03T21:00:00.000Z",
+    "stageZakreplen": true,
+    "statusOplaty": "NE_OPLACHENO",
+    "arrivalTime": "00:00",
+    "readyTime": "",
+    "workTime": "13:00-16:00",
+    "dismantleTime": "04.07.2026 23:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 81900000000,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #154419",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=154419",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1969967",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1969967/?any",
       "secondaryLinks": []
     }
   },
@@ -1020,482 +1080,422 @@
     }
   },
   {
-    "id": "37929f6e-05b0-4ee9-8ff8-a5550a234dde",
-    "name": "ПРО/5.07/Вендинг Мещера/Екатерина/172410/Ершов",
-    "stage": "OTMENA",
-    "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
-    "loadDate": "2026-07-05T01:00:00.000Z",
+    "id": "717a826a-6805-4c53-9a7f-b0ffb524982d",
+    "name": "АРТ/04-05.07/Адраил/бои без правил/портфель/171303/Щербакова",
+    "stage": "OTCHET_STAS",
+    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
+    "loadDate": "2026-07-04T01:00:00.000Z",
     "closeDate": "2026-07-05T01:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "PREDOPLATA",
+    "stageZakreplen": true,
+    "statusOplaty": "OPLACHENO_POLNOSTYU",
     "arrivalTime": "04:00",
     "readyTime": "",
-    "workTime": "07:00-21:00",
+    "workTime": "13:00-00:00",
+    "dismantleTime": "06.07.2026 01:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 54250000000,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #171303",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=171303",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1978067",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1978067/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "75b2d4e4-cfc4-48e0-a478-3fcd5bb58395",
+    "name": "АРЕНДА/3.07/фортуна декабристов/Oxygen/173431/Оковалкова",
+    "stage": "OTCHET_STAS",
+    "companyId": "3af2f268-9606-40c4-8944-8c8a70c8aff3",
+    "loadDate": "2026-07-03T07:00:00.000Z",
+    "closeDate": "2026-07-03T07:00:00.000Z",
+    "stageZakreplen": true,
+    "statusOplaty": "OPLACHENO_POLNOSTYU",
+    "arrivalTime": "10:00",
+    "readyTime": "",
+    "workTime": "16:00-20:00",
+    "dismantleTime": "03.07.2026 06:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 56750000000,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #173431",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=173431",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1980005",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1980005/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "887bb116-9bbe-4cf4-a187-42f9121aa361",
+    "name": "ПРО/03.07/Татьяна/Фотобудка/Румянцево/168210/Шунькин",
+    "stage": "OTCHET_STAS",
+    "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
+    "loadDate": "2026-07-03T00:00:00.000Z",
+    "closeDate": "2026-07-03T00:00:00.000Z",
+    "stageZakreplen": true,
+    "statusOplaty": "PREDOPLATA",
+    "arrivalTime": "03:00",
+    "readyTime": "",
+    "workTime": "16:00-23:00",
+    "dismantleTime": "03.07.2026 00:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 3000000000,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #168210",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=168210",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1955361",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1955361/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "b6740e17-8154-4100-a261-14ceb6608241",
+    "name": "АРТ/4 июля // точка МСК // АРИНА // 157632 // ПОСТОПЛАТА/Лоскутникова",
+    "stage": "OTCHET_STAS",
+    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
+    "loadDate": "2026-07-02T21:00:00.000Z",
+    "closeDate": "2026-07-03T21:00:00.000Z",
+    "stageZakreplen": true,
+    "statusOplaty": "PREDOPLATA",
+    "arrivalTime": "00:00",
+    "readyTime": "",
+    "workTime": "13:00-21:00",
+    "dismantleTime": "05.07.2026 23:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 100600000000,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #157632",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=157632",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1920587",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1920587/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "b7637cdb-9605-4a5f-acbb-a212d19bf38a",
+    "name": "АРЕНДА/03-05.07/ВИП/БУДОМАТЫ/Скромный выпускной/169874/Белова-Андреева",
+    "stage": "OTCHET_STAS",
+    "companyId": "3af2f268-9606-40c4-8944-8c8a70c8aff3",
+    "loadDate": "2026-07-03T02:00:00.000Z",
+    "closeDate": "2026-07-03T02:00:00.000Z",
+    "stageZakreplen": true,
+    "statusOplaty": "PREDOPLATA",
+    "arrivalTime": "05:00",
+    "readyTime": "",
+    "workTime": ":-:",
     "dismantleTime": "05.07.2026 01:00",
     "ssylkaNaMakety": "",
     "oplata": null,
     "amount": {
-      "amountMicros": 34200000000,
+      "amountMicros": 261820000000,
       "currencyCode": "RUB"
     },
     "tonyLink": {
-      "primaryLinkLabel": "Tony #172410",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=172410",
+      "primaryLinkLabel": "Tony #169874",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=169874",
       "secondaryLinks": []
     },
     "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #1974087",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1974087/?any",
+      "primaryLinkLabel": "Bitrix #1964537",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1964537/?any",
       "secondaryLinks": []
     }
   },
   {
-    "id": "a134d639-7f14-4577-95b8-424818db628f",
-    "name": "Биржа Лидов/Фест./Фидж./24.07/Anastasiya/ Одинцово дартс,теннис и т д/171075/Сардарян",
-    "stage": "GOTOVO",
-    "companyId": "d9a124be-d8ef-4dd6-b769-f6dc1dd34673",
-    "loadDate": "2026-07-24T01:00:00.000Z",
-    "closeDate": "2026-07-24T01:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "NE_OPLACHENO",
-    "arrivalTime": "04:00",
-    "readyTime": "",
-    "workTime": "12:00-19:00",
-    "dismantleTime": "24.07.2026 00:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 0,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #171075",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=171075",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #1969159",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1969159/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "c2a279fc-b42a-441e-a8ae-0d74e5da03b3",
-    "name": "Биржа Лидов/БИРЖА ЛИДОВ/21.07/Доминика/корейские станции/Кочергина",
-    "stage": "GOTOVO",
-    "companyId": "d9a124be-d8ef-4dd6-b769-f6dc1dd34673",
-    "loadDate": null,
-    "closeDate": "2026-07-20T21:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "PREDOPLATA",
-    "arrivalTime": "00:00",
-    "readyTime": "17:00",
-    "workTime": ": - :",
-    "dismantleTime": "00:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 493301500000,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "",
-      "primaryLinkUrl": "",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #1984173",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1984173/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "ca6027a1-6de4-4704-b0cf-1935cdd6ff65",
-    "name": "АРТ/24-25 июля // ВАЖНО // Станислав// Яндекс // 171576 /Лоскутникова",
-    "stage": "GOTOVO",
-    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
-    "loadDate": "2026-07-24T02:00:00.000Z",
-    "closeDate": "2026-07-24T02:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "OPLACHENO_POLNOSTYU",
-    "arrivalTime": "05:00",
-    "readyTime": "",
-    "workTime": "10:00-23:00",
-    "dismantleTime": "26.07.2026 23:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 80000000000,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #171576",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=171576",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #1994971",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1994971/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "d2a245ba-7b49-496d-bb79-9d15336adee6",
-    "name": "АРЕНДА/24-25.07/ВИП/КОКШИК/Рубитех - праздник апероля/164605 /Белова-Андреева",
-    "stage": "GOTOVO",
-    "companyId": "3af2f268-9606-40c4-8944-8c8a70c8aff3",
-    "loadDate": "2026-07-24T01:00:00.000Z",
-    "closeDate": "2026-07-24T01:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "PREDOPLATA",
-    "arrivalTime": "04:00",
-    "readyTime": "",
-    "workTime": "16:00-00:00",
-    "dismantleTime": "25.07.2026 01:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 134850000000,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #164605",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=164605",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #1997927",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1997927/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "d6eb4453-c52d-47be-ae3d-2083292eff0b",
-    "name": "АРЕНДА/24.07/аля круиз/Валерия/174813/Корп./Фидж./Лучинова",
-    "stage": "GOTOVO",
-    "companyId": "3af2f268-9606-40c4-8944-8c8a70c8aff3",
-    "loadDate": "2026-07-24T01:00:00.000Z",
-    "closeDate": "2026-07-24T01:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "NE_OPLACHENO",
-    "arrivalTime": "04:00",
-    "readyTime": "",
-    "workTime": "16:00-00:00",
-    "dismantleTime": "24.07.2026 01:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 14535000000,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #174813",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=174813",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #1985893",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1985893/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "e9331b36-0fd5-46be-991b-5986036dc09d",
-    "name": "ПРО/25.07.-26.07/Мария/Фестиваль DDX/КОЛОМЕНСКОЕ/181576/ПОСТОПЛАТА /ДОПЛАТА ПО СЧЕТУ /Фест./Меб./Шунькин",
-    "stage": "GOTOVO",
+    "id": "cf80910b-cad4-4a46-a0b0-fc123dfde0c5",
+    "name": "ПРО/03.07/Сюзи/Корнер киоск/158095/Шунькин",
+    "stage": "OTCHET_STAS",
     "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
-    "loadDate": "2026-07-25T01:00:00.000Z",
-    "closeDate": "2026-07-25T01:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "NE_OPLACHENO",
-    "arrivalTime": "04:00",
-    "readyTime": "",
-    "workTime": "00:00-00:00",
-    "dismantleTime": "26.07.2026 01:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 24700320000,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #181576",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=181576",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2014899",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2014899/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "007de4b5-3e4a-40de-9a66-1950367dc297",
-    "name": "АРТ/23 июля / Софья / мебель/Корп./Меб. 178778 180580/Юсупова",
-    "stage": "GOTOVO",
-    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
-    "loadDate": "2026-07-22T21:00:00.000Z",
-    "closeDate": "2026-07-22T21:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "NE_OPLACHENO",
-    "arrivalTime": "00:00",
-    "readyTime": "Время работы: .",
-    "workTime": "10:00-01:00",
-    "dismantleTime": "24.07.2026 00:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 9828000000,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #178778",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=178778",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2003109",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2003109/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "14c73ed5-018b-419f-9a1e-cb368f8fbfc4",
-    "name": "АРТ/23.07/колонны/Ольга/178231/Корп./Меб./Кицак",
-    "stage": "GOTOVO",
-    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
-    "loadDate": "2026-07-23T02:00:00.000Z",
-    "closeDate": "2026-07-23T02:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "PREDOPLATA",
-    "arrivalTime": "05:00",
-    "readyTime": "",
-    "workTime": "13:00-00:00",
-    "dismantleTime": "23.07.2026 01:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 75650000000,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #178231",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=178231",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2001177",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2001177/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "1be5e85c-9e3b-40cd-80ba-f821e3b3ef4b",
-    "name": "АРЕНДА/Конф./Меб./24.07/Дмитрий/Прилавок/177125/Илларионов",
-    "stage": "GOTOVO",
-    "companyId": "3af2f268-9606-40c4-8944-8c8a70c8aff3",
-    "loadDate": "2026-07-23T23:00:00.000Z",
-    "closeDate": "2026-07-23T23:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "PREDOPLATA",
-    "arrivalTime": "02:00",
-    "readyTime": "",
-    "workTime": "14:00-19:30",
-    "dismantleTime": "24.07.2026 02:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 16150000000,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #177125",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=177125",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #1995755",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1995755/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "23c53124-90c5-4b23-827e-36399d1531f9",
-    "name": "ПРО/21.07 Арина фотобудка в спокойных тонах /177848/Корп./Фидж./Казарлыга",
-    "stage": "GOTOVO",
-    "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
-    "loadDate": "2026-07-21T00:00:00.000Z",
-    "closeDate": "2026-07-21T00:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "PREDOPLATA",
-    "arrivalTime": "03:00",
-    "readyTime": "",
-    "workTime": "17:00-23:00",
-    "dismantleTime": "21.07.2026 01:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 0,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #177848",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=177848",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2008145",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2008145/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "2acc9589-7075-47e0-8dca-01be8082bd51",
-    "name": "ПРО/Корп./Фидж./24.07/Арфа с дымом_Анна/174376/ ПОСТОПЛАТА/Скорнякова",
-    "stage": "GOTOVO",
-    "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
-    "loadDate": "2026-07-23T23:00:00.000Z",
-    "closeDate": "2026-07-23T23:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "PREDOPLATA",
-    "arrivalTime": "02:00",
-    "readyTime": "",
-    "workTime": "17:00-23:00",
-    "dismantleTime": "24.07.2026 02:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 21000000000,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #174376",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=174376",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #1982599",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1982599/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "33e544bc-3c20-4ef8-b8e5-ca45b5eace91",
-    "name": "АРТ/24 июля // Футбольные активности // Анастасия КЦ // 176143/Лоскутникова",
-    "stage": "GOTOVO",
-    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
-    "loadDate": "2026-07-23T23:00:00.000Z",
-    "closeDate": "2026-07-23T23:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "OPLACHENO_POLNOSTYU",
-    "arrivalTime": "02:00",
-    "readyTime": "",
-    "workTime": "15:00-19:00",
-    "dismantleTime": "24.07.2026 02:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 42400000000,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #176143",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=176143",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #1992031",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1992031/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "345f899e-a9d6-4b58-9ca8-c816de762a4a",
-    "name": "ПРО/20.07 // Т-Банк МК // Анастасия // #179449//ПОСТОПЛАТА/Пахомова",
-    "stage": "GOTOVO",
-    "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
-    "loadDate": "2026-07-20T07:00:00.000Z",
-    "closeDate": "2026-07-20T07:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "PREDOPLATA",
-    "arrivalTime": "10:00",
-    "readyTime": "",
-    "workTime": "14:00-17:00",
-    "dismantleTime": "20.07.2026 01:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 55000000000,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #179449",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=179449",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2006157",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2006157/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "3d1fb9b9-e8eb-47c6-a9aa-1e8402e7e43a",
-    "name": "ПРО/21.07/Екатерина/Тверской бульвар//179075/Шунькин",
-    "stage": "GOTOVO",
-    "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
-    "loadDate": "2026-07-20T23:00:00.000Z",
-    "closeDate": "2026-07-20T23:00:00.000Z",
-    "stageZakreplen": false,
-    "statusOplaty": "PREDOPLATA",
-    "arrivalTime": "02:00",
-    "readyTime": "",
-    "workTime": "14:00-20:00",
-    "dismantleTime": "21.07.2026 01:00",
-    "ssylkaNaMakety": "",
-    "oplata": null,
-    "amount": {
-      "amountMicros": 27410000000,
-      "currencyCode": "RUB"
-    },
-    "tonyLink": {
-      "primaryLinkLabel": "Tony #179075",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=179075",
-      "secondaryLinks": []
-    },
-    "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2004759",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2004759/?any",
-      "secondaryLinks": []
-    }
-  },
-  {
-    "id": "50062087-68f9-477d-9f69-a2201996f31d",
-    "name": "ПРО/20-23.07 // Евгений // холодильники // САМОВЫВОЗ // 179517/Гейдельберг",
-    "stage": "GOTOVO",
-    "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
-    "loadDate": "2026-07-20T01:00:00.000Z",
-    "closeDate": "2026-07-20T01:00:00.000Z",
+    "loadDate": "2026-07-03T01:00:00.000Z",
+    "closeDate": "2026-07-03T01:00:00.000Z",
     "stageZakreplen": true,
-    "statusOplaty": "NE_OPLACHENO",
+    "statusOplaty": "PREDOPLATA",
     "arrivalTime": "04:00",
-    "readyTime": "Время работы: : - :",
-    "workTime": "00:00-00:00",
-    "dismantleTime": "23.07.2026 01:00",
+    "readyTime": "",
+    "workTime": "13:00-18:00",
+    "dismantleTime": "03.07.2026 01:00",
     "ssylkaNaMakety": "",
     "oplata": null,
     "amount": {
-      "amountMicros": 0,
+      "amountMicros": 96500000000,
       "currencyCode": "RUB"
     },
     "tonyLink": {
-      "primaryLinkLabel": "Tony #179517",
-      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=179517",
+      "primaryLinkLabel": "Tony #158095",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=158095",
       "secondaryLinks": []
     },
     "bitrixLink": {
-      "primaryLinkLabel": "Bitrix #2006305",
-      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/2006305/?any",
+      "primaryLinkLabel": "Bitrix #1911149",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1911149/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "eb365d29-af76-4c74-843a-b143187acd0e",
+    "name": "ПРО/4.07 // Хватайка Крылатское // Ирина // #173610/Пахомова",
+    "stage": "OTCHET_STAS",
+    "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
+    "loadDate": "2026-07-04T01:00:00.000Z",
+    "closeDate": "2026-07-04T01:00:00.000Z",
+    "stageZakreplen": true,
+    "statusOplaty": "PREDOPLATA",
+    "arrivalTime": "04:00",
+    "readyTime": "",
+    "workTime": "19:00-23:59",
+    "dismantleTime": "05.07.2026 01:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 19040000000,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #173610",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=173610",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1980701",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1980701/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "2a9f5efa-ea03-41a4-bfc7-99ab7800a672",
+    "name": "АРТ/1-5 июля / Илья / веселые старты вднх 170706/Юсупова",
+    "stage": "OTCHET_STAS",
+    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
+    "loadDate": "2026-07-01T01:00:00.000Z",
+    "closeDate": "2026-07-01T01:00:00.000Z",
+    "stageZakreplen": true,
+    "statusOplaty": null,
+    "arrivalTime": "04:00",
+    "readyTime": "",
+    "workTime": "07:00-23:00",
+    "dismantleTime": "06.07.2026 01:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 53300000000,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #170706",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=170706",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1970055",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1970055/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "5cd1e988-26d5-45cc-aed7-42f6dca2a048",
+    "name": "АРТ/5.07/ Петр/ мебель 175343/Черноморова",
+    "stage": "OTCHET_STAS",
+    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
+    "loadDate": "2026-07-04T01:00:00.000Z",
+    "closeDate": "2026-07-05T01:00:00.000Z",
+    "stageZakreplen": true,
+    "statusOplaty": "PREDOPLATA",
+    "arrivalTime": "04:00",
+    "readyTime": "",
+    "workTime": "06:00-19:30",
+    "dismantleTime": "06.07.2026 01:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 6080000000,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #175343",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=175343",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1989059",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1989059/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "79ab9eb4-3698-4740-9ee3-78b79f1aeccb",
+    "name": "АРЕНДА/01-04.07/Киоск/172143/ГАРСИА/Гарсиа",
+    "stage": "OTCHET_STAS",
+    "companyId": "3af2f268-9606-40c4-8944-8c8a70c8aff3",
+    "loadDate": "2026-07-01T01:00:00.000Z",
+    "closeDate": "2026-07-01T01:00:00.000Z",
+    "stageZakreplen": true,
+    "statusOplaty": null,
+    "arrivalTime": "04:00",
+    "readyTime": "",
+    "workTime": "11:10-21:00",
+    "dismantleTime": "04.07.2026 01:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 32400000000,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #172143",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=172143",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1972715",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1972715/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "cdae0e33-9900-4656-a7c3-782f898707a4",
+    "name": "АРТ/30 июня - 02 июля // Лимонады в ЦМТ // Алексей // 174516/Силакова",
+    "stage": "GOTOVO",
+    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
+    "loadDate": "2026-06-30T01:00:00.000Z",
+    "closeDate": "2026-06-30T01:00:00.000Z",
+    "stageZakreplen": false,
+    "statusOplaty": null,
+    "arrivalTime": "04:00",
+    "readyTime": "",
+    "workTime": "09:00-18:00",
+    "dismantleTime": "02.07.2026 01:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 28000000000,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #174516",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=174516",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1985851",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1985851/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "d4782f32-4ee8-4814-a823-9a320d132438",
+    "name": "АРТ/01 июля // Умный квиз и олдскульное ТВ // Любовь // 173982/Лоскутникова",
+    "stage": "GOTOVO",
+    "companyId": "df0952a9-c780-4cd1-bd85-ba6f0bf76512",
+    "loadDate": "2026-06-30T02:00:00.000Z",
+    "closeDate": "2026-06-30T02:00:00.000Z",
+    "stageZakreplen": false,
+    "statusOplaty": null,
+    "arrivalTime": "05:00",
+    "readyTime": "",
+    "workTime": "17:00-23:00",
+    "dismantleTime": "01.07.2026 02:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 42300000000,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #173982",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=173982",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1982023",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1982023/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "e541d7fe-3142-419e-87ea-e5044dcef2ee",
+    "name": "ПРО/2.07 // ЗЕНИТ ЦДП Глэм // Виктория // #176253/Пахомова",
+    "stage": "OTCHET_STAS",
+    "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
+    "loadDate": "2026-07-02T01:00:00.000Z",
+    "closeDate": "2026-07-02T01:00:00.000Z",
+    "stageZakreplen": true,
+    "statusOplaty": "PREDOPLATA",
+    "arrivalTime": "04:00",
+    "readyTime": "",
+    "workTime": "09:00-19:00",
+    "dismantleTime": "02.07.2026 01:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 32000000000,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #176253",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=176253",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1991309",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1991309/?any",
+      "secondaryLinks": []
+    }
+  },
+  {
+    "id": "eca50a1e-7232-4ebb-88a8-819e14526e5d",
+    "name": "ПРО/01.07/Анастасия/Фотобудка/173660/Лопатина",
+    "stage": "OTCHET_STAS",
+    "companyId": "8814cccb-471e-4d05-90cb-261a9395ada8",
+    "loadDate": "2026-07-01T01:00:00.000Z",
+    "closeDate": "2026-07-01T01:00:00.000Z",
+    "stageZakreplen": true,
+    "statusOplaty": null,
+    "arrivalTime": "04:00",
+    "readyTime": "",
+    "workTime": "12:30-17:30",
+    "dismantleTime": "01.07.2026 01:00",
+    "ssylkaNaMakety": "",
+    "oplata": null,
+    "amount": {
+      "amountMicros": 51400000000,
+      "currencyCode": "RUB"
+    },
+    "tonyLink": {
+      "primaryLinkLabel": "Tony #173660",
+      "primaryLinkUrl": "https://crm.apihide.com/orders/orders_edit/?id=173660",
+      "secondaryLinks": []
+    },
+    "bitrixLink": {
+      "primaryLinkLabel": "Bitrix #1980629",
+      "primaryLinkUrl": "https://prointeractive.bitrix24.ru/crm/deal/details/1980629/?any",
       "secondaryLinks": []
     }
   }
