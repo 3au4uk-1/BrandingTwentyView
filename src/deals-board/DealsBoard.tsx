@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   DEFAULT_CHILD_COLUMNS,
@@ -14,7 +14,6 @@ import {
   resolveOpportunityLinkFieldNames,
 } from 'src/constants/opportunity-links';
 import { resolveOpportunityRestFieldNames } from 'src/constants/opportunity-rest-fields';
-import { OPPORTUNITY_RASHOD_REST_FIELDS } from 'src/constants/opportunity-rashod-fields';
 
 import { AnalyticsPanel } from './analytics/AnalyticsPanel';
 import { MarginStrip } from './analytics/MarginStrip';
@@ -31,6 +30,7 @@ import { GroupChipModeProvider } from './hooks/useGroupChipMode';
 import { useDealBoardViews, useUpdateDealBoardView } from './hooks/useDealBoardViews';
 import { useLineItems } from './hooks/useLineItems';
 import { useOpportunities } from './hooks/useOpportunities';
+import { useOpportunityRashodFields } from './hooks/useOpportunityRashodFields';
 import { useDealsBoardRealtimeSync } from './realtime/useDealsBoardRealtimeSync';
 import { crmFieldNamesFromColumns, fieldTypesByNameFromDescriptors, needsCompanyRelation } from './metadata/crm-field-names';
 import { mergeColumns } from './metadata/merge-columns';
@@ -79,7 +79,14 @@ import { filterLineItemsForSearch, normalizeSearchTerm } from './utils/search';
 import { ViewSettingsModal } from './ViewSettingsModal';
 import { ViewSwitcher } from './ViewSwitcher';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const EMPTY_FILTER_SESSION: Partial<FilterState> = {};
 
@@ -297,13 +304,14 @@ const DealsBoardContent = () => {
     [mergedParentColumns, parentFieldsQuery.data],
   );
 
-  const opportunityRestFieldNames = useMemo(() => {
-    const fromColumns = resolveOpportunityRestFieldNames(
-      mergedParentColumns,
-      parentFieldsQuery.data ?? [],
-    );
-    return [...new Set([...fromColumns, ...OPPORTUNITY_RASHOD_REST_FIELDS])];
-  }, [mergedParentColumns, parentFieldsQuery.data]);
+  const opportunityRestFieldNames = useMemo(
+    () =>
+      resolveOpportunityRestFieldNames(
+        mergedParentColumns,
+        parentFieldsQuery.data ?? [],
+      ),
+    [mergedParentColumns, parentFieldsQuery.data],
+  );
 
   const opportunityLinkFieldNames = useMemo(
     () => resolveOpportunityLinkFieldNames(mergedParentColumns, parentFieldsQuery.data ?? []),
@@ -414,6 +422,7 @@ const DealsBoardContent = () => {
 
   const visibleRecords = filteredBoardData.deals;
   const visibleTotalCount = hasLineItemFilters ? visibleRecords.length : totalCount;
+  const rashodQuery = useOpportunityRashodFields(visibleRecords);
 
   const handleFilterBarChange = (next: FilterState) => {
     setFilterSession({
@@ -449,7 +458,7 @@ const DealsBoardContent = () => {
     setPage(0);
   };
 
-  const handleToggleShowAllPositions = (opportunityId: string) => {
+  const handleToggleShowAllPositions = useCallback((opportunityId: string) => {
     setShowAllPositionOppIds((prev) => {
       const next = new Set(prev);
       if (next.has(opportunityId)) {
@@ -459,7 +468,7 @@ const DealsBoardContent = () => {
       }
       return next;
     });
-  };
+  }, []);
 
   useEffect(() => {
     if (effectiveShowAll) {
@@ -740,9 +749,10 @@ const DealsBoardContent = () => {
                   }}
                 >
                   <MarginStrip
-                    opportunities={visibleRecords}
+                    opportunities={rashodQuery.opportunities}
                     lineItems={visibleLineItems}
                     onOpenAnalytics={() => setBoardPane('analytics')}
+                    isExpenseLoading={rashodQuery.isLoading}
                   />
                   <ExpandModeToggle />
                   <GroupChipModeToggle />
@@ -877,7 +887,7 @@ const DealsBoardContent = () => {
               }}
             >
               <AnalyticsPanel
-                opportunities={visibleRecords}
+                opportunities={rashodQuery.opportunities}
                 lineItems={visibleLineItems}
                 onBack={() => setBoardPane('deals')}
               />

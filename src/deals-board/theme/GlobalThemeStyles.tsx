@@ -126,6 +126,10 @@ export const GlobalThemeStyles = ({ theme }: GlobalThemeStylesProps) => {
         border-radius: ${radius.sm};
       }
 
+      [data-deals-board] tr[data-deal-row]:hover > td {
+        background-color: ${colors.bgHover} !important;
+      }
+
       [data-layout="mobile"] [data-mobile-toolbar] {
         position: -webkit-sticky;
         position: sticky;

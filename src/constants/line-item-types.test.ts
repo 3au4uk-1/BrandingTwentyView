@@ -7,11 +7,12 @@ import {
 } from './line-item-types';
 
 describe('LINE_ITEM_TYPES', () => {
-  it('has banner, film, contractor, restoration and not-ours types', () => {
+  it('has banner, film, contractor, production, restoration and not-ours types', () => {
     expect(LINE_ITEM_TYPES.map((type) => type.value)).toEqual([
       'BANNERA',
       'PLENKA',
       'PODRYAD',
+      'PROIZVODSTVO',
       'RESTAVRACIYA',
       'NE_NASHE',
     ]);
@@ -19,9 +20,10 @@ describe('LINE_ITEM_TYPES', () => {
 
   it('resolves Russian labels', () => {
     expect(getLineItemTypeLabel('BANNERA')).toBe('Баннера');
-    expect(getLineItemTypeLabel('PLENKA')).toBe('Плёнка');
+    expect(getLineItemTypeLabel('PLENKA')).toBe('Оклейка');
     expect(getLineItemTypeLabel('PODRYAD')).toBe('Подряд');
-    expect(getLineItemTypeLabel('RESTAVRACIYA')).toBe('Реставрация');
+    expect(getLineItemTypeLabel('PROIZVODSTVO')).toBe('Производство');
+    expect(getLineItemTypeLabel('RESTAVRACIYA')).toBe('Рест. оклейка');
     expect(getLineItemTypeLabel('NE_NASHE')).toBe('Не наше');
   });
 
@@ -29,6 +31,7 @@ describe('LINE_ITEM_TYPES', () => {
     expect(getLineItemTypeColor('BANNERA')).toBe('blue');
     expect(getLineItemTypeColor('PLENKA')).toBe('green');
     expect(getLineItemTypeColor('PODRYAD')).toBe('purple');
+    expect(getLineItemTypeColor('PROIZVODSTVO')).toBe('orange');
     expect(getLineItemTypeColor('RESTAVRACIYA')).toBe('pink');
     expect(getLineItemTypeColor('NE_NASHE')).toBe('gray');
   });

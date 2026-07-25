@@ -12,6 +12,7 @@ type MarginStripProps = {
   opportunities: OpportunityRow[];
   lineItems: LineItemRow[];
   onOpenAnalytics: () => void;
+  isExpenseLoading?: boolean;
 };
 
 const formatShortMonth = (monthKey: string): string => {
@@ -28,6 +29,7 @@ export const MarginStrip = ({
   opportunities,
   lineItems,
   onOpenAnalytics,
+  isExpenseLoading = false,
 }: MarginStripProps) => {
   const theme = useTheme();
   const { colors, font, radius } = theme;
@@ -71,10 +73,11 @@ export const MarginStrip = ({
         cursor: 'pointer',
         fontFamily: font.family,
         color: colors.text,
+        opacity: isExpenseLoading ? 0.55 : 1,
         whiteSpace: 'nowrap',
         overflow: 'hidden',
         transition:
-          'background-color 0.2s cubic-bezier(0.25, 0.1, 0.25, 1), transform 0.15s cubic-bezier(0.25, 0.1, 0.25, 1)',
+          'background-color 0.2s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.2s cubic-bezier(0.25, 0.1, 0.25, 1), transform 0.15s cubic-bezier(0.25, 0.1, 0.25, 1)',
       }}
     >
       <span

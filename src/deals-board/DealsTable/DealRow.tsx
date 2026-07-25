@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 import { DynamicFieldCell } from '../cells/DynamicFieldCell';
 import type { LineItemQueryFilters } from '../api/line-items';
 import type { FieldDescriptor } from '../metadata/types';
@@ -18,6 +20,7 @@ import { LineItemsTable } from './LineItemsTable';
 
 type DealRowProps = {
   row: OpportunityRow;
+  companyName?: string;
   columns: ColumnConfig[];
   childColumns: ColumnConfig[];
   childGroups: ColumnGroupConfig[];
@@ -25,14 +28,12 @@ type DealRowProps = {
   childDescriptorByField: Map<string, FieldDescriptor>;
   lineItems: LineItemRow[];
   isExpanded: boolean;
-  isHovered: boolean;
-  onHoverChange: (hovered: boolean) => void;
   onToggleExpand: (id: string) => void;
   opportunityLinkFields: FieldDescriptor[];
   filters?: LineItemQueryFilters;
   hasLineItemFilters?: boolean;
   showAllPositions?: boolean;
-  onToggleShowAllPositions?: () => void;
+  onToggleShowAllPositions?: (opportunityId: string) => void;
   onChildColumnResizeStart: (
     event: MouseEvent | PointerEvent,
     field: string,
@@ -83,8 +84,9 @@ const ExpandToggleButton = ({
   );
 };
 
-export const DealRow = ({
+export const DealRow = memo(function DealRow({
   row,
+  companyName,
   columns,
   childColumns,
   childGroups,
@@ -92,8 +94,6 @@ export const DealRow = ({
   childDescriptorByField,
   lineItems,
   isExpanded,
-  isHovered,
-  onHoverChange,
   onToggleExpand,
   opportunityLinkFields,
   filters,
@@ -101,7 +101,7 @@ export const DealRow = ({
   showAllPositions = false,
   onToggleShowAllPositions,
   onChildColumnResizeStart,
-}: DealRowProps) => {
+}: DealRowProps) {
   const theme = useTheme();
   const { colors, font, zIndex, colorScheme } = theme;
   const stageValue = typeof row.stage === 'string' ? row.stage : null;
@@ -140,8 +140,7 @@ export const DealRow = ({
   return (
     <>
       <tr
-        onMouseEnter={() => onHoverChange(true)}
-        onMouseLeave={() => onHoverChange(false)}
+        data-deal-row=""
         style={{
           borderBottom: `1px solid ${colors.borderSubtle}`,
           backgroundColor: rowBg,
@@ -183,7 +182,7 @@ export const DealRow = ({
                 variant="parent"
                 lineItems={lineItems}
                 isExpanded={isExpanded}
-                companyName={row.companyName}
+                companyName={companyName}
                 row={row}
                 opportunityLinkFields={opportunityLinkFields}
                 onToggleExpand={onToggleExpand}
@@ -213,7 +212,11 @@ export const DealRow = ({
               filters={filters}
               hasLineItemFilters={hasLineItemFilters}
               showAllPositions={showAllPositions}
-              onToggleShowAllPositions={onToggleShowAllPositions}
+              onToggleShowAllPositions={
+                onToggleShowAllPositions
+                  ? () => onToggleShowAllPositions(row.id)
+                  : undefined
+              }
               onColumnResizeStart={onChildColumnResizeStart}
             />
           </td>
@@ -221,4 +224,4 @@ export const DealRow = ({
       ) : null}
     </>
   );
-};
+});

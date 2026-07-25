@@ -69,14 +69,13 @@ export type DealsDataTableProps = {
   onToggleShowAllPositions?: (opportunityId: string) => void;
   isExpanded: (id: string) => boolean;
   toggleExpand: (id: string) => void;
-  hoveredRowId: string | null;
-  onHoverRowChange: (rowId: string | null) => void;
   showDaySeparators: boolean;
   sort: DealBoardSort[];
   onSortChange: (next: DealBoardSort[]) => void;
 };
 
 const PINNED_LEFT_COLUMN_IDS = ['__expand', 'name'] as const;
+const EMPTY_LINE_ITEMS: LineItemRow[] = [];
 
 const getColumnFromHeader = (table: Table<OpportunityRow>, headerId: string): ColumnConfig => {
   const header = table.getFlatHeaders().find((item) => item.id === headerId);
@@ -111,8 +110,6 @@ export const DealsDataTable = ({
   onToggleShowAllPositions,
   isExpanded,
   toggleExpand,
-  hoveredRowId,
-  onHoverRowChange,
   showDaySeparators,
   sort,
   onSortChange,
@@ -288,30 +285,22 @@ export const DealsDataTable = ({
                   </tr>
                 ) : null}
                 <DealRow
-                  row={{
-                    ...row,
-                    companyName: row.companyName ?? companyNameMap.get(row.companyId ?? ''),
-                  }}
+                  row={row}
+                  companyName={row.companyName ?? companyNameMap.get(row.companyId ?? '')}
                   columns={tableColumns}
                   childColumns={childColumns}
                   childGroups={childGroups}
                   parentDescriptorByField={parentDescriptorByField}
                   childDescriptorByField={childDescriptorByField}
                   onChildColumnResizeStart={beginChildResize}
-                  lineItems={lineItemsByOpportunity.get(row.id) ?? []}
+                  lineItems={lineItemsByOpportunity.get(row.id) ?? EMPTY_LINE_ITEMS}
                   isExpanded={isExpanded(row.id)}
-                  isHovered={hoveredRowId === row.id}
-                  onHoverChange={(hovered) => onHoverRowChange(hovered ? row.id : null)}
                   onToggleExpand={toggleExpand}
                   opportunityLinkFields={opportunityLinkFields}
                   filters={lineItemFilters}
                   hasLineItemFilters={hasLineItemFilters}
                   showAllPositions={showAllPositionOppIds?.has(row.id) ?? false}
-                  onToggleShowAllPositions={
-                    onToggleShowAllPositions
-                      ? () => onToggleShowAllPositions(row.id)
-                      : undefined
-                  }
+                  onToggleShowAllPositions={onToggleShowAllPositions}
                 />
               </Fragment>
             );
