@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { computeProductionScoreboard, computeTipStageBreakdown } from './compute';
+import {
+  computeCategoryCardMetrics,
+  computeProductionScoreboard,
+  computeTipStageBreakdown,
+} from './compute';
 
 describe('computeProductionScoreboard', () => {
   it('counts positions and distinct deals per tip and stage', () => {
@@ -69,5 +73,31 @@ describe('computeTipStageBreakdown', () => {
     expect(breakdown.NOVYY).toEqual({ positions: 1, deals: 1 });
     expect(breakdown.V_RABOTE).toEqual({ positions: 1, deals: 1 });
     expect(breakdown.V_PECHATI.positions).toBe(0);
+  });
+});
+
+describe('computeCategoryCardMetrics', () => {
+  it('totals positions and splits print / work / ready per tip', () => {
+    const cards = computeCategoryCardMetrics([
+      { id: '1', opportunityId: 'a', name: 'a', tip: 'BANNERA', stage: 'V_PECHATI' },
+      { id: '2', opportunityId: 'a', name: 'b', tip: 'BANNERA', stage: 'V_RABOTE' },
+      { id: '3', opportunityId: 'b', name: 'c', tip: 'BANNERA', stage: 'GOTOVO' },
+      { id: '4', opportunityId: 'c', name: 'd', tip: 'BANNERA', stage: 'NOVYY' },
+      { id: '5', opportunityId: 'd', name: 'e', tip: 'PLENKA', stage: 'V_RABOTE' },
+    ]);
+
+    expect(cards.BANNERA).toEqual({
+      total: 4,
+      inPrint: 1,
+      inWork: 1,
+      ready: 1,
+    });
+    expect(cards.PLENKA).toEqual({
+      total: 1,
+      inPrint: 0,
+      inWork: 1,
+      ready: 0,
+    });
+    expect(cards.PODRYAD.total).toBe(0);
   });
 });

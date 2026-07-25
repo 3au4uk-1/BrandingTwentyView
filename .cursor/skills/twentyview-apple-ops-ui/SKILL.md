@@ -25,7 +25,7 @@ Quiet, readable ops UI — SF/system fonts, iOS HIG colors, low chrome. Not agen
 - Labels: sentence case — **no** mono + SCREAMING uppercase chrome
 - Deal (parent) rows: soft categorical wash (`palette.bg`) + left accent bar
 - Line-item rows: **no** stage wash — neutral elevated surface only; stage cue is the chip select
-- Scoreboard: no card border/gradient; types-first
+- Scoreboard: compact category cards (total + печать/работа/готово); click filters tip; no stage-filter row; no border/gradient
 - Margin control: compact toolbar chip (month + margin + ›); details in `title`
 - Deal stage: visible parent column by default; chip-like `ColoredStageSelect`
 

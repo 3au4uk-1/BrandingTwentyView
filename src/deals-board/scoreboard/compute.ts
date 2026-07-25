@@ -98,3 +98,37 @@ export const computeTipStageBreakdown = (
 
   return byStage;
 };
+
+/** Compact card metrics: total positions + print / work / ready (positions only). */
+export type CategoryCardMetrics = {
+  total: number;
+  inPrint: number;
+  inWork: number;
+  ready: number;
+};
+
+const emptyCardMetrics = (): CategoryCardMetrics => ({
+  total: 0,
+  inPrint: 0,
+  inWork: 0,
+  ready: 0,
+});
+
+export const computeCategoryCardMetrics = (
+  lineItems: LineItemRow[],
+): Record<LineItemType, CategoryCardMetrics> => {
+  const byTip = Object.fromEntries(
+    LINE_ITEM_TYPES.map((t) => [t.value, emptyCardMetrics()]),
+  ) as Record<LineItemType, CategoryCardMetrics>;
+
+  for (const item of lineItems) {
+    if (!item.tip || !(item.tip in byTip)) continue;
+    const card = byTip[item.tip];
+    card.total += 1;
+    if (item.stage === 'V_PECHATI') card.inPrint += 1;
+    else if (item.stage === 'V_RABOTE') card.inWork += 1;
+    else if (item.stage === 'GOTOVO') card.ready += 1;
+  }
+
+  return byTip;
+};

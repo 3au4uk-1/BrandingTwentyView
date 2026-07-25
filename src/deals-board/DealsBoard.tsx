@@ -871,9 +871,7 @@ const DealsBoardContent = () => {
           <ProductionScoreboard
             lineItems={visibleLineItems}
             selectedTypes={mergedFilters.types ?? []}
-            selectedStages={mergedFilters.stages ?? []}
             onToggleType={(tip) => toggleScoreboardClause('tip', tip)}
-            onToggleStage={(stage) => toggleScoreboardClause('stage', stage)}
           />
 
           {boardPane === 'analytics' ? (
