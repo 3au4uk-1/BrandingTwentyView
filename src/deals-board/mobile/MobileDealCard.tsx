@@ -124,7 +124,7 @@ export const MobileDealCard = ({
         borderLeft: `3px solid ${stageStyles.accentColor}`,
         borderRadius: radius.lg,
         marginBottom: spacing.md,
-        backgroundColor: colors.bgElevated,
+        backgroundColor: stageStyles.backgroundColor || colors.bgElevated,
         overflow: 'hidden',
         boxShadow: colors.shadow,
       }}

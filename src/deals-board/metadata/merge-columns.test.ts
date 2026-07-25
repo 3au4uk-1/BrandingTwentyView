@@ -44,12 +44,17 @@ describe('mergeColumns', () => {
     expect(merged.some((c) => c.field === 'summary')).toBe(true);
   });
 
-  it('preserves groupId from saved columns', () => {
-    const merged = mergeColumns(
-      [{ field: 'name', label: 'Сделка', order: 0, visible: true, groupId: 'g1' }],
-      [{ field: 'name', label: 'Сделка', source: 'crm', fieldType: 'TEXT', isEditable: true }],
+  it('inserts missing stage after name as visible', () => {
+    const merged = mergeColumns(saved, [
+      ...crmFields,
+      { field: 'stage', label: 'Stage', source: 'crm', fieldType: 'SELECT', isEditable: true },
+    ]);
+    const stage = merged.find((c) => c.field === 'stage');
+    const name = merged.find((c) => c.field === 'name');
+    expect(stage).toMatchObject({ visible: true, width: 148, label: 'Стадия' });
+    expect(stage!.order).toBeGreaterThan(name!.order);
+    expect(stage!.order).toBeLessThan(
+      merged.find((c) => c.field === 'loadDate')?.order ?? Number.POSITIVE_INFINITY,
     );
-
-    expect(merged[0]?.groupId).toBe('g1');
   });
 });

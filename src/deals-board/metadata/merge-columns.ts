@@ -64,15 +64,18 @@ export const mergeColumns = (
   for (const descriptor of crmDescriptors) {
     if (savedByField.has(descriptor.field)) continue;
 
+    const isStage = descriptor.field === 'stage';
+    const isTipDetail = descriptor.field === 'tipDetail';
+    const nameOrder = merged.find((column) => column.field === 'name')?.order;
+    const stageInsertOrder =
+      typeof nameOrder === 'number' ? nameOrder + 0.5 : nextOrder++;
+
     merged.push({
       field: descriptor.field,
       label: resolveLabel(descriptor.field, descriptor.label),
-      order: nextOrder++,
-      visible: descriptor.field === 'tipDetail',
-      width:
-        descriptor.field === 'tipDetail'
-          ? 140
-          : defaultWidthForFieldType(descriptor.fieldType, descriptor.field),
+      order: isStage ? stageInsertOrder : nextOrder++,
+      visible: isStage || isTipDetail,
+      width: isStage ? 148 : isTipDetail ? 140 : defaultWidthForFieldType(descriptor.fieldType, descriptor.field),
     });
   }
 

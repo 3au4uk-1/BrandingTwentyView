@@ -3,10 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { getStageRowStyles } from './stage-row-styles';
 
 describe('getStageRowStyles', () => {
-  it('returns accent bar styles for a known stage (no full-row background)', () => {
+  it('returns soft wash + accent bar for a known stage', () => {
     const styles = getStageRowStyles('GOTOVO', 'dark');
 
-    expect(styles).not.toHaveProperty('backgroundColor');
+    expect(styles.backgroundColor).toContain('rgba');
     expect(styles.accentColor).toBe('#30d158');
     expect(styles.boxShadow).toContain('#30d158');
   });
@@ -15,5 +15,6 @@ describe('getStageRowStyles', () => {
     const styles = getStageRowStyles(undefined, 'light');
 
     expect(styles.accentColor).toBe('#3a3a3c');
+    expect(styles.backgroundColor).toContain('rgba');
   });
 });

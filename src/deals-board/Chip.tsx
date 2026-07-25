@@ -15,7 +15,7 @@ export type ChipColor =
 export const getChipPalette = (color: ChipColor, scheme: ColorScheme) =>
   CHIP_PALETTE[color]?.[scheme] ?? CHIP_PALETTE.gray[scheme];
 
-/** Soft categorical tints — closer to iOS system fills than loud Tailwind. */
+/** Soft categorical tints — readable stage cues without rainbow wash. */
 const CHIP_PALETTE: Record<
   ChipColor,
   { light: { bg: string; text: string }; dark: { bg: string; text: string } }

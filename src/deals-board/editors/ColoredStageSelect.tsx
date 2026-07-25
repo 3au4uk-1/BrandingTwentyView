@@ -19,8 +19,8 @@ type ColoredStageSelectProps = {
   style?: CSSProperties;
 };
 
-const getStageAccent = (color: string, scheme: ThemeTokens['colorScheme']) =>
-  getChipPalette((color as ChipColor) || 'gray', scheme).text;
+const getStagePalette = (color: string, scheme: ThemeTokens['colorScheme']) =>
+  getChipPalette((color as ChipColor) || 'gray', scheme);
 
 export const ColoredStageSelect = ({
   theme,
@@ -31,8 +31,8 @@ export const ColoredStageSelect = ({
   style,
 }: ColoredStageSelectProps) => {
   const selectedStage = stages.find((stage) => stage.value === value);
-  const selectedAccent = getStageAccent(selectedStage?.color ?? 'gray', theme.colorScheme);
-  const { colors, font } = theme;
+  const selectedPalette = getStagePalette(selectedStage?.color ?? 'gray', theme.colorScheme);
+  const { font, radius } = theme;
 
   return (
     <Select
@@ -43,28 +43,34 @@ export const ColoredStageSelect = ({
       style={{
         flex: 1,
         minWidth: 0,
-        fontSize: font.sizeSm,
-        padding: '4px 8px',
-        fontWeight: font.weightMedium,
-        letterSpacing: '-0.01em',
-        backgroundColor: colors.bgInset,
-        color: selectedAccent,
-        borderColor: colors.borderSubtle,
+        height: 28,
+        padding: '0 10px',
+        borderRadius: radius.pill,
+        border: 'none',
+        fontSize: font.sizeXs,
+        fontWeight: font.weightSemibold,
+        letterSpacing: '-0.015em',
+        backgroundColor: selectedPalette.bg,
+        color: selectedPalette.text,
+        boxShadow: `inset 0 0 0 1px ${selectedPalette.text}22`,
         ...style,
       }}
     >
-      {stages.map((stage) => (
-        <option
-          key={stage.value}
-          value={stage.value}
-          style={{
-            backgroundColor: colors.bgElevated,
-            color: getStageAccent(stage.color, theme.colorScheme),
-          }}
-        >
-          {stage.label}
-        </option>
-      ))}
+      {stages.map((stage) => {
+        const optionPalette = getStagePalette(stage.color, theme.colorScheme);
+        return (
+          <option
+            key={stage.value}
+            value={stage.value}
+            style={{
+              backgroundColor: theme.colors.bgElevated,
+              color: optionPalette.text,
+            }}
+          >
+            {stage.label}
+          </option>
+        );
+      })}
     </Select>
   );
 };

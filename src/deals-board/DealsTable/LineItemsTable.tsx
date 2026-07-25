@@ -27,7 +27,6 @@ import {
   sortLineItemsByOrder,
 } from '../utils/line-item-order';
 import { resolveFieldValue } from '../utils/resolve-field-value';
-import { getStageRowStyles } from '../utils/stage-row-styles';
 
 import type { ColumnConfig, ColumnGroupConfig, LineItemRow } from '../types';
 import { ResizableColumnHeader } from './ResizableColumnHeader';
@@ -67,7 +66,7 @@ export const LineItemsTable = ({
 }: LineItemsTableProps) => {
   const theme = useTheme();
   const queryClient = useQueryClient();
-  const { colorScheme, colors, font, spacing, radius } = theme;
+  const { colors, font, spacing, radius } = theme;
   const layout = buildChildLayoutColumns(columns, groups);
   const { ungrouped, groupEntries } = partitionUngroupedAndGroups(layout);
   const tableStyle = getTableLayoutStyle(
@@ -241,19 +240,18 @@ export const LineItemsTable = ({
           </thead>
           <tbody>
             {displayItems.map((item, rowIndex) => {
-              const stageStyles = getStageRowStyles(item.stage, colorScheme);
               const canMoveUp = rowIndex > 0;
               const canMoveDown = rowIndex < displayItems.length - 1;
 
               return (
                 <tr
                   key={item.id}
+                  data-line-item-row=""
                   style={{
                     borderBottom:
                       rowIndex < displayItems.length - 1 ? `1px solid ${colors.borderSubtle}` : 'none',
                     backgroundColor: colors.bgElevated,
                     transition: 'background-color 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)',
-                    boxShadow: stageStyles.boxShadow,
                   }}
                 >
                   <td

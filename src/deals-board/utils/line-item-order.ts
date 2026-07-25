@@ -57,3 +57,61 @@ export const moveItemInOrder = (
   next.splice(toIndex, 0, fromId);
   return next;
 };
+
+/** Top → bottom bands after manual stage change. Unknown stages sit in the mid band. */
+const STAGE_BAND_RANK: Readonly<Record<string, number>> = {
+  NOVYY: 0,
+  V_PECHATI: 1,
+  OKLEYKA: 2,
+  V_RABOTE: 3,
+  GOTOVO: 4,
+  OTMENA: 5,
+};
+
+const MID_BAND_FALLBACK = 2.5;
+
+export const stageBandRank = (stage: string | null | undefined): number => {
+  if (!stage) return MID_BAND_FALLBACK;
+  return STAGE_BAND_RANK[stage] ?? MID_BAND_FALLBACK;
+};
+
+/** Stable within-band: keep prior poryadok / encounter order. */
+export const sortLineItemsByStageBands = (items: LineItemRow[]): LineItemRow[] => {
+  const decorated = items.map((item, index) => ({ item, index }));
+  decorated.sort((left, right) => {
+    const rankDiff = stageBandRank(left.item.stage) - stageBandRank(right.item.stage);
+    if (rankDiff !== 0) return rankDiff;
+
+    const leftOrder =
+      typeof left.item.poryadok === 'number' && Number.isFinite(left.item.poryadok)
+        ? left.item.poryadok
+        : left.index;
+    const rightOrder =
+      typeof right.item.poryadok === 'number' && Number.isFinite(right.item.poryadok)
+        ? right.item.poryadok
+        : right.index;
+    if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+    return left.index - right.index;
+  });
+  return decorated.map((entry) => entry.item);
+};
+
+/**
+ * Project `changedId` to `nextStage`, sort by stage bands, return poryadok patches.
+ * Call only after a successful manual stage change (not ▲▼ reorder).
+ */
+export const planStageBandPoryadokPatches = (
+  siblings: LineItemRow[],
+  changedId: string,
+  nextStage: string,
+): PoryadokPatch[] => {
+  const projected = siblings.map((item) =>
+    item.id === changedId ? { ...item, stage: nextStage } : item,
+  );
+  const ordered = sortLineItemsByStageBands(projected);
+  const byId = new Map(projected.map((item) => [item.id, item]));
+  return planPoryadokPatches(
+    ordered.map((item) => item.id),
+    byId,
+  );
+};

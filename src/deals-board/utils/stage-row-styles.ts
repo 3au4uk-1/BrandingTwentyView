@@ -15,7 +15,9 @@ export const getStageRowStyles = (
   const palette = getChipPalette(color as ChipColor, colorScheme);
 
   return {
+    /** Soft stage wash — readable, not a loud full-row paint. */
+    backgroundColor: palette.bg,
     accentColor: palette.text,
-    boxShadow: `inset 2px 0 0 ${palette.text}`,
+    boxShadow: `inset 3px 0 0 ${palette.text}`,
   };
 };

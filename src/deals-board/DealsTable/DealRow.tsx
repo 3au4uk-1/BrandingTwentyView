@@ -106,7 +106,7 @@ export const DealRow = memo(function DealRow({
   const { colors, font, zIndex, colorScheme } = theme;
   const stageValue = typeof row.stage === 'string' ? row.stage : null;
   const stageStyles = getStageRowStyles(stageValue, colorScheme, 'parent');
-  const rowBg = colors.bg;
+  const rowBg = stageStyles.backgroundColor || colors.bg;
   const rowAccentShadow = isExpanded
     ? `inset 3px 0 0 ${stageStyles.accentColor}`
     : stageStyles.boxShadow;

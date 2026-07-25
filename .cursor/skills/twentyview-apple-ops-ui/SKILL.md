@@ -23,15 +23,17 @@ Quiet, readable ops UI — SF/system fonts, iOS HIG colors, low chrome. Not agen
 - Radius: 6 / 10 / 14 / pill
 - Motion: `cubic-bezier(0.25, 0.1, 0.25, 1)`; active `scale(0.98)`
 - Labels: sentence case — **no** mono + SCREAMING uppercase chrome
-- Stage rows: solid row bg + **left accent bar only** (no loud row fills; sticky columns stay opaque)
+- Deal (parent) rows: soft categorical wash (`palette.bg`) + left accent bar
+- Line-item rows: **no** stage wash — neutral elevated surface only; stage cue is the chip select
 - Scoreboard: no card border/gradient; types-first
 - Margin control: compact toolbar chip (month + margin + ›); details in `title`
+- Deal stage: visible parent column by default; chip-like `ColoredStageSelect`
 
 ## Anti-patterns (do not reintroduce)
 
 - Backdrop-blur on non-sticky toolbar
 - Heavy gradients on scoreboard / finance
-- Colored full-row stage washes
+- Loud saturated full-row paints (prefer soft `rgba` chip washes)
 - Inter / Roboto / purple glow / multi-shadow stacks
 - Competing design skills (brutalist, gpt-taste, brandkit) unless user explicitly asks
 
