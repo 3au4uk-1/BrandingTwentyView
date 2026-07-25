@@ -45,7 +45,7 @@ export const Modal = ({
 
   const { colors, radius, font, spacing, zIndex } = theme;
   const overlayBg =
-    theme.colorScheme === 'dark' ? 'rgba(0, 0, 0, 0.72)' : 'rgba(24, 24, 27, 0.32)';
+    theme.colors.overlay;
 
   const handleBackdropMouseDown = (event: MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -86,7 +86,7 @@ export const Modal = ({
           zIndex: 1,
           width: '100%',
           maxWidth: '440px',
-          border: `1px solid ${colors.border}`,
+          border: `1px solid ${colors.borderSubtle}`,
           borderRadius: radius.lg,
           backgroundColor: colors.bgElevated,
           color: colors.text,
@@ -96,7 +96,15 @@ export const Modal = ({
         }}
       >
         <div style={{ padding: `${spacing.lg} ${spacing.lg} ${spacing.md}` }}>
-          <div style={{ fontSize: font.sizeLg, fontWeight: font.weightSemibold }}>{title}</div>
+          <div
+            style={{
+              fontSize: 17,
+              fontWeight: font.weightSemibold,
+              letterSpacing: '-0.02em',
+            }}
+          >
+            {title}
+          </div>
           {description ? (
             <p
               style={{

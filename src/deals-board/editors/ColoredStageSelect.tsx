@@ -19,13 +19,8 @@ type ColoredStageSelectProps = {
   style?: CSSProperties;
 };
 
-const SELECT_SURFACE = {
-  background: '#18181b',
-  border: '#3f3f46',
-} as const;
-
-const getStageAccent = (color: string) =>
-  getChipPalette((color as ChipColor) || 'gray', 'dark').text;
+const getStageAccent = (color: string, scheme: ThemeTokens['colorScheme']) =>
+  getChipPalette((color as ChipColor) || 'gray', scheme).text;
 
 export const ColoredStageSelect = ({
   theme,
@@ -36,7 +31,8 @@ export const ColoredStageSelect = ({
   style,
 }: ColoredStageSelectProps) => {
   const selectedStage = stages.find((stage) => stage.value === value);
-  const selectedAccent = getStageAccent(selectedStage?.color ?? 'gray');
+  const selectedAccent = getStageAccent(selectedStage?.color ?? 'gray', theme.colorScheme);
+  const { colors, font } = theme;
 
   return (
     <Select
@@ -47,13 +43,13 @@ export const ColoredStageSelect = ({
       style={{
         flex: 1,
         minWidth: 0,
-        fontSize: theme.font.sizeSm,
+        fontSize: font.sizeSm,
         padding: '4px 8px',
-        fontWeight: theme.font.weightMedium,
-        colorScheme: 'dark',
-        backgroundColor: SELECT_SURFACE.background,
+        fontWeight: font.weightMedium,
+        letterSpacing: '-0.01em',
+        backgroundColor: colors.bgInset,
         color: selectedAccent,
-        borderColor: SELECT_SURFACE.border,
+        borderColor: colors.borderSubtle,
         ...style,
       }}
     >
@@ -62,8 +58,8 @@ export const ColoredStageSelect = ({
           key={stage.value}
           value={stage.value}
           style={{
-            backgroundColor: SELECT_SURFACE.background,
-            color: getStageAccent(stage.color),
+            backgroundColor: colors.bgElevated,
+            color: getStageAccent(stage.color, theme.colorScheme),
           }}
         >
           {stage.label}

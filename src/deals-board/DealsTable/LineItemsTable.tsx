@@ -251,8 +251,8 @@ export const LineItemsTable = ({
                   style={{
                     borderBottom:
                       rowIndex < displayItems.length - 1 ? `1px solid ${colors.borderSubtle}` : 'none',
-                    backgroundColor: stageStyles.backgroundColor,
-                    transition: 'background-color 0.12s ease',
+                    backgroundColor: colors.bgElevated,
+                    transition: 'background-color 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)',
                     boxShadow: stageStyles.boxShadow,
                   }}
                 >

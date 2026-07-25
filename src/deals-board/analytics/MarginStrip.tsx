@@ -30,7 +30,7 @@ export const MarginStrip = ({
   onOpenAnalytics,
 }: MarginStripProps) => {
   const theme = useTheme();
-  const { colors, font, spacing, radius } = theme;
+  const { colors, font, radius } = theme;
   const monthKey = getMonthKey();
   const finance = useMemo(
     () => computeMonthlyFinance(opportunities, lineItems, monthKey),
@@ -49,110 +49,88 @@ export const MarginStrip = ({
       ? colors.successMuted
       : finance.marginRub < 0
         ? colors.dangerMuted
-        : colors.bgInset;
-
-  const title = [
-    formatShortMonth(monthKey),
-    `${finance.dealCount} сд`,
-    `${finance.positionCount} поз`,
-  ].join(' · ');
+        : colors.bgTertiary;
 
   return (
     <button
       type="button"
       data-margin-strip
       onClick={onOpenAnalytics}
-      title={`Финансы месяца · оборот ${formatRub(finance.turnoverRub)} · расход ${formatRub(finance.expenseRub)} · маржа ${formatRub(finance.marginRub)}${finance.marginPct !== null ? ` (${finance.marginPct.toFixed(0)}%)` : ''} · открыть аналитику`}
+      title={`Финансы · ${formatShortMonth(monthKey)} · оборот ${formatRub(finance.turnoverRub)} · расход ${formatRub(finance.expenseRub)} · маржа ${formatRub(finance.marginRub)}${finance.marginPct !== null ? ` (${finance.marginPct.toFixed(0)}%)` : ''} · ${finance.dealCount} сд · ${finance.positionCount} поз`}
       style={{
         display: 'inline-flex',
         alignItems: 'center',
         gap: 8,
         maxWidth: '100%',
         height: 30,
-        padding: `0 ${spacing.sm} 0 8px`,
+        padding: `0 6px 0 10px`,
         margin: 0,
-        border: `1px solid ${colors.border}`,
+        border: 'none',
         borderRadius: radius.pill,
-        background: `linear-gradient(180deg, ${colors.bgElevated} 0%, ${colors.bgSecondary} 100%)`,
-        boxShadow: colors.shadow,
+        background: colors.bgTertiary,
         cursor: 'pointer',
-        fontFamily: 'inherit',
+        fontFamily: font.family,
         color: colors.text,
         whiteSpace: 'nowrap',
         overflow: 'hidden',
+        transition:
+          'background-color 0.2s cubic-bezier(0.25, 0.1, 0.25, 1), transform 0.15s cubic-bezier(0.25, 0.1, 0.25, 1)',
       }}
     >
       <span
         style={{
-          fontFamily: font.mono,
-          fontSize: 9,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
+          fontSize: font.sizeXs,
+          fontWeight: font.weightMedium,
           color: colors.textMuted,
+          letterSpacing: '-0.01em',
           flexShrink: 0,
         }}
       >
-        {title}
-      </span>
-
-      <span
-        aria-hidden
-        style={{ width: 1, height: 14, background: colors.borderSubtle, flexShrink: 0 }}
-      />
-
-      <span
-        style={{
-          display: 'inline-flex',
-          alignItems: 'baseline',
-          gap: 6,
-          fontSize: 11,
-          fontVariantNumeric: 'tabular-nums',
-          minWidth: 0,
-          overflow: 'hidden',
-        }}
-      >
-        <span style={{ color: colors.textMuted }}>Обр</span>
-        <span style={{ fontWeight: font.weightSemibold }}>{formatRub(finance.turnoverRub)}</span>
-        <span style={{ color: colors.textMuted }}>Расх</span>
-        <span style={{ fontWeight: font.weightSemibold }}>{formatRub(finance.expenseRub)}</span>
+        {formatShortMonth(monthKey)}
       </span>
 
       <span
         style={{
           display: 'inline-flex',
           alignItems: 'baseline',
-          gap: 4,
+          gap: 5,
           height: 22,
-          padding: '0 7px',
+          padding: '0 8px',
           borderRadius: radius.pill,
           background: marginBg,
-          border: `1px solid ${marginColor}44`,
           color: marginColor,
-          fontSize: 11,
-          fontWeight: font.weightBold,
+          fontSize: font.sizeXs,
+          fontWeight: font.weightSemibold,
           fontVariantNumeric: 'tabular-nums',
+          letterSpacing: '-0.015em',
           flexShrink: 0,
         }}
       >
-        <span style={{ fontWeight: font.weightSemibold, opacity: 0.85 }}>Маржа</span>
         {formatRub(finance.marginRub)}
         {finance.marginPct !== null ? (
-          <span style={{ fontWeight: font.weightMedium, opacity: 0.8 }}>
+          <span style={{ fontWeight: font.weightMedium, opacity: 0.72 }}>
             {finance.marginPct.toFixed(0)}%
           </span>
         ) : null}
       </span>
 
       <span
+        aria-hidden
         style={{
-          fontFamily: font.mono,
-          fontSize: 10,
-          letterSpacing: '0.04em',
+          width: 22,
+          height: 22,
+          borderRadius: radius.pill,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: colors.bgElevated,
           color: colors.accentText,
+          fontSize: 13,
+          fontWeight: font.weightMedium,
           flexShrink: 0,
         }}
       >
-        →
+        ›
       </span>
     </button>
   );

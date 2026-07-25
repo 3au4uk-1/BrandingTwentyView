@@ -15,49 +15,50 @@ export type ChipColor =
 export const getChipPalette = (color: ChipColor, scheme: ColorScheme) =>
   CHIP_PALETTE[color]?.[scheme] ?? CHIP_PALETTE.gray[scheme];
 
+/** Soft categorical tints — closer to iOS system fills than loud Tailwind. */
 const CHIP_PALETTE: Record<
   ChipColor,
   { light: { bg: string; text: string }; dark: { bg: string; text: string } }
 > = {
   gray: {
-    light: { bg: 'rgba(113, 113, 122, 0.12)', text: '#52525b' },
-    dark: { bg: 'rgba(161, 161, 170, 0.16)', text: '#d4d4d8' },
+    light: { bg: 'rgba(120, 120, 128, 0.12)', text: '#636366' },
+    dark: { bg: 'rgba(120, 120, 128, 0.24)', text: '#ebebf5' },
   },
   white: {
-    light: { bg: 'rgba(0, 0, 0, 0.06)', text: '#3f3f46' },
-    dark: { bg: 'rgba(255, 255, 255, 0.14)', text: '#fafafa' },
+    light: { bg: 'rgba(0, 0, 0, 0.05)', text: '#3a3a3c' },
+    dark: { bg: 'rgba(255, 255, 255, 0.12)', text: '#f5f5f7' },
   },
   blue: {
-    light: { bg: 'rgba(37, 99, 235, 0.1)', text: '#2563eb' },
-    dark: { bg: 'rgba(59, 130, 246, 0.18)', text: '#93c5fd' },
+    light: { bg: 'rgba(0, 122, 255, 0.12)', text: '#007aff' },
+    dark: { bg: 'rgba(10, 132, 255, 0.22)', text: '#64d2ff' },
   },
   green: {
-    light: { bg: 'rgba(22, 163, 74, 0.1)', text: '#16a34a' },
-    dark: { bg: 'rgba(34, 197, 94, 0.16)', text: '#86efac' },
+    light: { bg: 'rgba(52, 199, 89, 0.14)', text: '#248a3d' },
+    dark: { bg: 'rgba(48, 209, 88, 0.2)', text: '#30d158' },
   },
   greenDark: {
-    light: { bg: 'rgba(4, 120, 87, 0.14)', text: '#047857' },
-    dark: { bg: 'rgba(6, 78, 59, 0.45)', text: '#059669' },
+    light: { bg: 'rgba(36, 138, 61, 0.14)', text: '#1b6b30' },
+    dark: { bg: 'rgba(48, 209, 88, 0.14)', text: '#30d158' },
   },
   yellow: {
-    light: { bg: 'rgba(217, 119, 6, 0.1)', text: '#b45309' },
-    dark: { bg: 'rgba(245, 158, 11, 0.16)', text: '#fcd34d' },
+    light: { bg: 'rgba(255, 159, 10, 0.14)', text: '#c93400' },
+    dark: { bg: 'rgba(255, 214, 10, 0.18)', text: '#ffd60a' },
   },
   orange: {
-    light: { bg: 'rgba(234, 88, 12, 0.1)', text: '#ea580c' },
-    dark: { bg: 'rgba(249, 115, 22, 0.16)', text: '#fdba74' },
+    light: { bg: 'rgba(255, 149, 0, 0.14)', text: '#c93400' },
+    dark: { bg: 'rgba(255, 159, 10, 0.2)', text: '#ff9f0a' },
   },
   purple: {
-    light: { bg: 'rgba(124, 58, 237, 0.1)', text: '#7c3aed' },
-    dark: { bg: 'rgba(168, 85, 247, 0.16)', text: '#d8b4fe' },
+    light: { bg: 'rgba(175, 82, 222, 0.12)', text: '#8944ab' },
+    dark: { bg: 'rgba(191, 90, 242, 0.22)', text: '#bf5af2' },
   },
   pink: {
-    light: { bg: 'rgba(219, 39, 119, 0.1)', text: '#db2777' },
-    dark: { bg: 'rgba(236, 72, 153, 0.16)', text: '#f9a8d4' },
+    light: { bg: 'rgba(255, 45, 85, 0.12)', text: '#d70015' },
+    dark: { bg: 'rgba(255, 55, 95, 0.2)', text: '#ff375f' },
   },
   red: {
-    light: { bg: 'rgba(220, 38, 38, 0.1)', text: '#dc2626' },
-    dark: { bg: 'rgba(239, 68, 68, 0.16)', text: '#fca5a5' },
+    light: { bg: 'rgba(255, 59, 48, 0.12)', text: '#d70015' },
+    dark: { bg: 'rgba(255, 69, 58, 0.2)', text: '#ff453a' },
   },
 };
 
@@ -82,7 +83,8 @@ export const Chip = ({ text, color = 'gray', theme }: ChipProps) => {
         fontSize: theme?.font.sizeXs ?? '11px',
         fontWeight: theme?.font.weightMedium ?? 500,
         fontFamily: theme?.font.family ?? 'inherit',
-        lineHeight: 1.4,
+        letterSpacing: '-0.01em',
+        lineHeight: 1.35,
         whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis',

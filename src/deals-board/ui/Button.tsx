@@ -37,7 +37,7 @@ const getVariantStyles = (theme: ThemeTokens, variant: ButtonVariant): CSSProper
       return {
         backgroundColor: colors.bgElevated,
         color: colors.text,
-        border: `1px solid ${colors.border}`,
+        border: `1px solid ${colors.borderSubtle}`,
       };
   }
 };
@@ -74,7 +74,8 @@ export const Button = ({
         opacity: disabled ? 0.5 : 1,
         whiteSpace: 'nowrap',
         lineHeight: 1.2,
-        transition: 'background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease',
+        transition:
+          'background-color 0.2s cubic-bezier(0.25, 0.1, 0.25, 1), border-color 0.2s cubic-bezier(0.25, 0.1, 0.25, 1), transform 0.15s cubic-bezier(0.25, 0.1, 0.25, 1)',
         ...getVariantStyles(theme, variant),
         ...style,
       }}

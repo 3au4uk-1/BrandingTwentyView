@@ -106,14 +106,30 @@ export const AnalyticsPanel = ({
             style={{
               padding: spacing.md,
               borderRadius: radius.lg,
-              border: `1px solid ${colors.border}`,
-              backgroundColor: colors.bgElevated,
+              border: `1px solid ${colors.borderSubtle}`,
+              backgroundColor: colors.bgSecondary,
             }}
           >
-            <div style={{ fontSize: font.sizeXs, color: colors.textSecondary, marginBottom: 4 }}>
+            <div
+              style={{
+                fontSize: font.sizeXs,
+                fontWeight: font.weightMedium,
+                color: colors.textMuted,
+                marginBottom: 6,
+                letterSpacing: '-0.01em',
+              }}
+            >
               {card.label}
             </div>
-            <div style={{ fontSize: font.sizeLg, fontWeight: font.weightSemibold, color: card.color }}>
+            <div
+              style={{
+                fontSize: 22,
+                fontWeight: font.weightSemibold,
+                color: card.color,
+                letterSpacing: '-0.03em',
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
               {card.value}
             </div>
           </div>

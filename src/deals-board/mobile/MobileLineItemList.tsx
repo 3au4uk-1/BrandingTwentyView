@@ -75,10 +75,9 @@ export const MobileLineItemList = ({
         <div
           style={{
             fontSize: font.sizeXs,
-            fontWeight: font.weightSemibold,
+            fontWeight: font.weightMedium,
             color: colors.textMuted,
-            letterSpacing: '0.04em',
-            textTransform: 'uppercase',
+            letterSpacing: '-0.01em',
           }}
         >
           Позиции · {items.length}

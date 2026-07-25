@@ -75,34 +75,34 @@ export const ProductionScoreboard = ({
     const quiet = empty && !active;
 
     return {
-      border: `1px solid ${
-        active ? palette.text : quiet ? colors.borderSubtle : `${palette.text}44`
-      }`,
-      borderLeft: `2px solid ${quiet ? colors.borderStrong : palette.text}`,
-      background: active ? palette.bg : quiet ? 'transparent' : `${palette.bg}`,
+      border: 'none',
+      background: active ? palette.bg : quiet ? 'transparent' : palette.bg,
       color: quiet ? colors.textMuted : palette.text,
-      borderRadius: radius.sm,
-      padding: '3px 7px 3px 6px',
-      fontFamily: font.mono,
-      fontSize: 11,
+      borderRadius: radius.pill,
+      padding: '5px 10px',
+      fontFamily: font.family,
+      fontSize: font.sizeSm,
       lineHeight: 1.2,
+      letterSpacing: '-0.01em',
       cursor: 'pointer',
       display: 'inline-flex',
       alignItems: 'baseline',
-      gap: 5,
+      gap: 6,
       whiteSpace: 'nowrap',
-      opacity: quiet ? 0.5 : 1,
-      boxShadow: active ? `0 0 0 1px ${palette.text}33` : undefined,
-      transition: 'opacity 0.15s ease, border-color 0.15s ease, background-color 0.15s ease',
+      opacity: quiet ? 0.35 : 1,
+      boxShadow: active ? `inset 0 0 0 1.5px ${palette.text}` : undefined,
+      transition:
+        'opacity 0.2s cubic-bezier(0.25, 0.1, 0.25, 1), background-color 0.2s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)',
     };
   };
 
   const chipWrap: CSSProperties = {
     display: 'flex',
     flexWrap: 'wrap',
-    gap: 4,
+    gap: 6,
     flex: 1,
     minWidth: 0,
+    alignItems: 'center',
   };
 
   return (
@@ -112,13 +112,12 @@ export const ProductionScoreboard = ({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 6,
+        gap: 8,
         margin: `${spacing.sm} ${spacing.md} 0`,
-        padding: `${spacing.sm} ${spacing.md}`,
-        border: `1px solid ${colors.border}`,
-        borderRadius: radius.lg,
-        background: `linear-gradient(180deg, ${colors.bgElevated} 0%, ${colors.bgSecondary} 100%)`,
-        boxShadow: colors.shadow,
+        padding: `6px ${spacing.sm}`,
+        border: 'none',
+        borderRadius: radius.md,
+        background: 'transparent',
       }}
     >
       <div
@@ -126,34 +125,32 @@ export const ProductionScoreboard = ({
           display: 'flex',
           flexWrap: 'wrap',
           alignItems: 'center',
-          gap: '6px 10px',
+          gap: '8px 12px',
           minWidth: 0,
         }}
       >
         <span
           style={{
-            fontFamily: font.mono,
-            fontSize: 9,
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-            color: colors.textMuted,
-            flexShrink: 0,
-          }}
-        >
-          Сводка
-        </span>
-        <span
-          style={{
             display: 'inline-flex',
             alignItems: 'baseline',
-            gap: 5,
+            gap: 6,
             flexShrink: 0,
           }}
         >
           <span
             style={{
-              fontSize: 15,
-              fontWeight: font.weightBold,
+              fontSize: font.sizeXs,
+              fontWeight: font.weightMedium,
+              color: colors.textMuted,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Сводка
+          </span>
+          <span
+            style={{
+              fontSize: 17,
+              fontWeight: font.weightSemibold,
               color: colors.text,
               letterSpacing: '-0.03em',
               lineHeight: 1,
@@ -188,10 +185,10 @@ export const ProductionScoreboard = ({
                 onClick={() => handleTipClick(tip)}
                 title={`${getLineItemTypeLabel(tip)}: ${formatCount(count)}`}
               >
-                <span style={{ fontWeight: font.weightSemibold }}>{getLineItemTypeLabel(tip)}</span>
+                <span style={{ fontWeight: font.weightMedium }}>{getLineItemTypeLabel(tip)}</span>
                 <span
                   style={{
-                    fontWeight: font.weightBold,
+                    fontWeight: font.weightSemibold,
                     fontVariantNumeric: 'tabular-nums',
                     letterSpacing: '-0.02em',
                   }}
@@ -210,21 +207,20 @@ export const ProductionScoreboard = ({
             display: 'flex',
             flexWrap: 'wrap',
             alignItems: 'center',
-            gap: 4,
-            paddingLeft: 2,
+            gap: 6,
+            paddingTop: 2,
+            borderTop: `1px solid ${colors.borderSubtle}`,
           }}
         >
           <span
             style={{
-              fontFamily: font.mono,
-              fontSize: 9,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
+              fontSize: font.sizeXs,
+              fontWeight: font.weightMedium,
               color: colors.textMuted,
-              marginRight: 4,
+              marginRight: 2,
             }}
           >
-            {getLineItemTypeLabel(expandedTip)} →
+            {getLineItemTypeLabel(expandedTip)}
           </span>
           {SCOREBOARD_STAGE_ORDER.map((stage) => {
             const count = breakdown[stage];
@@ -239,10 +235,10 @@ export const ProductionScoreboard = ({
                 onClick={() => onToggleStage(stage)}
                 title={`${getLineItemTypeLabel(expandedTip)} / ${getStageLabel(stage)}: ${formatCount(count)}`}
               >
-                <span style={{ fontWeight: font.weightSemibold }}>{getStageLabel(stage)}</span>
+                <span style={{ fontWeight: font.weightMedium }}>{getStageLabel(stage)}</span>
                 <span
                   style={{
-                    fontWeight: font.weightBold,
+                    fontWeight: font.weightSemibold,
                     fontVariantNumeric: 'tabular-nums',
                     letterSpacing: '-0.02em',
                   }}

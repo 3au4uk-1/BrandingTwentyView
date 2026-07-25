@@ -689,8 +689,8 @@ const DealsBoardContent = () => {
           <div data-deals-board-toolbar>
             <header
               style={{
-                borderBottom: `1px solid ${colors.border}`,
-                backgroundColor: colors.bgSecondary,
+                borderBottom: `1px solid ${colors.borderSubtle}`,
+                backgroundColor: 'transparent',
               }}
             >
               <div
@@ -766,6 +766,7 @@ const DealsBoardContent = () => {
                       fontSize: font.sizeSm,
                       fontWeight: font.weightSemibold,
                       color: colors.text,
+                      letterSpacing: '-0.02em',
                       whiteSpace: 'nowrap',
                     }}
                   >

@@ -106,9 +106,9 @@ export const DealRow = ({
   const { colors, font, zIndex, colorScheme } = theme;
   const stageValue = typeof row.stage === 'string' ? row.stage : null;
   const stageStyles = getStageRowStyles(stageValue, colorScheme, 'parent');
-  const rowBg = stageStyles.backgroundColor;
+  const rowBg = colors.bg;
   const rowAccentShadow = isExpanded
-    ? `inset 4px 0 0 ${stageStyles.accentColor}`
+    ? `inset 3px 0 0 ${stageStyles.accentColor}`
     : stageStyles.boxShadow;
   const expandColumnWidth = getColumnWidth(PARENT_EXPAND_COLUMN);
   const hasExpandColumn = columns.some((column) => column.field === PARENT_EXPAND_COLUMN_FIELD);
@@ -145,7 +145,7 @@ export const DealRow = ({
         style={{
           borderBottom: `1px solid ${colors.borderSubtle}`,
           backgroundColor: rowBg,
-          transition: 'background-color 0.12s ease',
+          transition: 'background-color 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)',
           boxShadow: rowAccentShadow,
         }}
       >
