@@ -79,17 +79,9 @@ export const mergeColumns = (
     });
   }
 
-  const sorted = merged.sort((a, b) => a.order - b.order);
-  const stageCol = sorted.find((column) => column.field === 'stage');
-  const tipDetailCol = sorted.find((column) => column.field === 'tipDetail');
-  if (stageCol && tipDetailCol) {
-    tipDetailCol.order = stageCol.order + 0.5;
-    tipDetailCol.visible = true;
-    return sorted.sort((a, b) => a.order - b.order).map((column, index) => ({
-      ...column,
-      order: index,
-    }));
-  }
-
-  return sorted;
+  // Preserve saved order (including tipDetail). Only missing tipDetail is seeded
+  // near stage above — do not re-pin on every merge or ↑↓ in ColumnPicker is undone.
+  return merged
+    .sort((a, b) => a.order - b.order)
+    .map((column, index) => ({ ...column, order: index }));
 };

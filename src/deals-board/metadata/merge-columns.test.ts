@@ -57,4 +57,41 @@ describe('mergeColumns', () => {
       merged.find((c) => c.field === 'loadDate')?.order ?? Number.POSITIVE_INFINITY,
     );
   });
+
+  it('preserves saved tipDetail order relative to stage', () => {
+    const childFields: FieldDescriptor[] = [
+      { field: 'name', label: 'Name', source: 'crm', fieldType: 'TEXT', isEditable: true },
+      { field: 'stage', label: 'Stage', source: 'crm', fieldType: 'SELECT', isEditable: true },
+      { field: 'tip', label: 'Tip', source: 'crm', fieldType: 'SELECT', isEditable: true },
+      {
+        field: 'tipDetail',
+        label: 'Detail',
+        source: 'crm',
+        fieldType: 'SELECT',
+        isEditable: true,
+      },
+    ];
+    const childSaved: ColumnConfig[] = [
+      { field: 'name', label: 'Name', order: 0, visible: true },
+      { field: 'tip', label: 'Тип', order: 1, visible: true },
+      { field: 'stage', label: 'Стадия', order: 2, visible: true },
+      { field: 'tipDetail', label: 'Уточнение', order: 3, visible: true },
+    ];
+
+    const reordered: ColumnConfig[] = [
+      { field: 'name', label: 'Name', order: 0, visible: true },
+      { field: 'stage', label: 'Стадия', order: 1, visible: true },
+      { field: 'tip', label: 'Тип', order: 2, visible: true },
+      { field: 'tipDetail', label: 'Уточнение', order: 3, visible: true },
+    ];
+
+    const merged = mergeColumns(reordered, childFields);
+    expect(merged.map((c) => c.field)).toEqual(['name', 'stage', 'tip', 'tipDetail']);
+    expect(mergeColumns(childSaved, childFields).map((c) => c.field)).toEqual([
+      'name',
+      'tip',
+      'stage',
+      'tipDetail',
+    ]);
+  });
 });
