@@ -1,5 +1,7 @@
+import { FREZA_FIELD_GROUP_ID } from 'src/constants/freza-field-group';
 import { PRINT_FIELD_GROUP_ID } from 'src/constants/print-field-group';
 
+import { FrezaPanelChip } from '../editors/FrezaPanelChip';
 import { PrintPanelChip } from '../editors/PrintPanelChip';
 import { RestorationMaketChip } from '../editors/RestorationMaketChip';
 import { useGroupChipMode } from '../hooks/useGroupChipMode';
@@ -34,7 +36,15 @@ export const GroupChipsCell = ({
   const showRestorationChip =
     item.tip === 'RESTAVRACIYA' || Boolean(item.ssylkaNaMakety?.primaryLinkUrl);
 
-  if (groups.length === 0 && !showRestorationChip) {
+  const hasPrintGroup = groups.some((entry) => entry.group.id === PRINT_FIELD_GROUP_ID);
+  const otherGroups = groups.filter(
+    (entry) =>
+      entry.group.id !== PRINT_FIELD_GROUP_ID && entry.group.id !== FREZA_FIELD_GROUP_ID,
+  );
+
+  const showQueueChips = hasPrintGroup;
+
+  if (!showQueueChips && !showRestorationChip && otherGroups.length === 0) {
     return null;
   }
 
@@ -48,11 +58,14 @@ export const GroupChipsCell = ({
         minWidth: 0,
       }}
     >
-      {groups.map(({ group, members }) => {
-        if (group.id === PRINT_FIELD_GROUP_ID) {
-          return <PrintPanelChip key={group.id} item={item} />;
-        }
+      {showQueueChips ? (
+        <>
+          <PrintPanelChip item={item} />
+          <FrezaPanelChip item={item} />
+        </>
+      ) : null}
 
+      {otherGroups.map(({ group, members }) => {
         const active = isExpanded(item.id, group.id);
         const label = formatGroupChipLabel(
           group.name,

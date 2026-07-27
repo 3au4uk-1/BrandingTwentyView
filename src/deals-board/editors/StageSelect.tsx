@@ -96,6 +96,7 @@ export const StageSelect = ({ objectName, recordId, value }: StageSelectProps) =
       value={selectedValue}
       onChange={(nextValue) => void handleChange(nextValue)}
       disabled={updateMutation.isPending}
+      appearance="filled"
       style={{ width: '100%' }}
     />
   );

@@ -36,7 +36,7 @@ export default defineObject({
       universalIdentifier: DEAL_LINE_ITEM_TIP_FIELD_UNIVERSAL_IDENTIFIER,
       name: 'tip',
       type: FieldType.SELECT,
-      label: 'Тип',
+      label: 'Категория',
       icon: 'IconTag',
       options: LINE_ITEM_TYPES.map((type, position) => ({
         value: type.value,

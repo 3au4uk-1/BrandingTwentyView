@@ -5,7 +5,7 @@ import { VIRTUAL_PARENT_DEFAULTS } from './virtual-columns';
 
 /** Prefer app constants when CRM metadata labels are mojibake / wrong encoding. */
 const LABEL_OVERRIDES: Record<string, string> = {
-  tip: 'Тип',
+  tip: 'Категория',
   stage: 'Стадия',
   tipDetail: 'Уточнение',
   kolichestvo: 'Кол-во',
@@ -13,6 +13,7 @@ const LABEL_OVERRIDES: Record<string, string> = {
   kommentariy: 'Комментарий',
   plenka: 'Плёнка',
   ssylkaNaMakety: 'Макеты',
+  prevyuOkleyki: 'Превью',
 };
 
 const descriptorMap = (descriptors: FieldDescriptor[]) =>
@@ -66,6 +67,7 @@ export const mergeColumns = (
 
     const isStage = descriptor.field === 'stage';
     const isTipDetail = descriptor.field === 'tipDetail';
+    const isPrevyu = descriptor.field === 'prevyuOkleyki';
     const nameOrder = merged.find((column) => column.field === 'name')?.order;
     const stageInsertOrder =
       typeof nameOrder === 'number' ? nameOrder + 0.5 : nextOrder++;
@@ -74,8 +76,14 @@ export const mergeColumns = (
       field: descriptor.field,
       label: resolveLabel(descriptor.field, descriptor.label),
       order: isStage ? stageInsertOrder : nextOrder++,
-      visible: isStage || isTipDetail,
-      width: isStage ? 148 : isTipDetail ? 140 : defaultWidthForFieldType(descriptor.fieldType, descriptor.field),
+      visible: isStage || isTipDetail || isPrevyu,
+      width: isStage
+        ? 148
+        : isTipDetail
+          ? 140
+          : isPrevyu
+            ? 100
+            : defaultWidthForFieldType(descriptor.fieldType, descriptor.field),
     });
   }
 
