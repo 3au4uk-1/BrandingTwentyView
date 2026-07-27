@@ -15,6 +15,8 @@ type ModalProps = {
   footer?: ReactNode;
   /** Where to mount the overlay. Default: document.body. Use "root" for nested cell editors. */
   portalTarget?: 'body' | 'root' | 'inline';
+  /** Extra z-index on top of theme.zIndex.modal (nested modals). */
+  zIndexOffset?: number;
 };
 
 export const Modal = ({
@@ -26,6 +28,7 @@ export const Modal = ({
   children,
   footer,
   portalTarget = 'body',
+  zIndexOffset = 0,
 }: ModalProps) => {
   const portalHostRef = usePortalHost();
 
@@ -58,7 +61,7 @@ export const Modal = ({
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: zIndex.modal,
+        zIndex: zIndex.modal + zIndexOffset,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

@@ -1,5 +1,3 @@
-import { getTipDetailLabel } from 'src/constants/tip-detail';
-
 import type { LineItemRow, OpportunityRow } from '../types';
 
 export type OkleykaMessageContext = {
@@ -10,42 +8,55 @@ export type OkleykaMessageContext = {
   >;
 };
 
-const formatLoadDate = (loadDate: string | undefined): string => {
-  if (!loadDate) return '—';
-  const date = new Date(loadDate);
-  if (Number.isNaN(date.getTime())) return loadDate;
-  return date.toLocaleDateString('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
+export type OkleykaMessageDraft = {
+  order: string;
+  booking: string;
+  film: string;
+  equipment: string;
+  comment: string;
 };
 
-const resolveFilm = (lineItem: OkleykaMessageContext['lineItem']): string => {
-  if (typeof lineItem.tipDetail === 'string' && lineItem.tipDetail) {
-    return getTipDetailLabel(lineItem.tipDetail);
-  }
-  const markdown = lineItem.plenka?.markdown?.trim();
-  if (markdown) {
-    const first = markdown.split(/\r?\n/)[0]?.trim();
-    if (first) return first.slice(0, 80);
-  }
-  return '—';
+export const extractBookingId = (name: string | undefined): string => {
+  if (!name) return '';
+  const match = name.match(/\d{5,6}/);
+  return match?.[0] ?? '';
 };
 
-export const buildOkleykaMessage = ({
+const firstPlenkaLine = (plenka: { markdown?: string } | null | undefined): string => {
+  const first = plenka?.markdown?.trim().split(/\r?\n/)[0]?.trim() ?? '';
+  return first.slice(0, 80);
+};
+
+export const buildOkleykaDraft = ({
   opportunity,
   lineItem,
-}: OkleykaMessageContext): string => {
+}: OkleykaMessageContext): OkleykaMessageDraft => {
   const qty =
     typeof lineItem.kolichestvo === 'number' && Number.isFinite(lineItem.kolichestvo)
       ? lineItem.kolichestvo
       : 1;
+  const film = firstPlenkaLine(lineItem.plenka) || '—';
 
-  return [
-    `Заказ: ${opportunity.name || '—'}`,
-    `Бронь: ${formatLoadDate(opportunity.loadDate)}`,
-    `Плёнка: ${resolveFilm(lineItem)}`,
-    `Оборудование: ${lineItem.name || '—'} × ${qty}`,
-  ].join('\n');
+  return {
+    order: opportunity.name || '—',
+    booking: extractBookingId(opportunity.name) || '—',
+    film,
+    equipment: `${lineItem.name || '—'} × ${qty}`,
+    comment: lineItem.kommentariy?.trim() ?? '',
+  };
 };
+
+export const formatOkleykaMessage = (draft: OkleykaMessageDraft): string => {
+  const lines = [
+    `Заказ: ${draft.order || '—'}`,
+    `Бронь: ${draft.booking || '—'}`,
+    `Плёнка: ${draft.film || '—'}`,
+    `Оборудование: ${draft.equipment || '—'}`,
+  ];
+  const comment = draft.comment.trim();
+  if (comment) lines.push(`Комментарий: ${comment}`);
+  return lines.join('\n');
+};
+
+export const buildOkleykaMessage = (ctx: OkleykaMessageContext): string =>
+  formatOkleykaMessage(buildOkleykaDraft(ctx));

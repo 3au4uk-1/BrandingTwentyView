@@ -18,13 +18,10 @@ export type LineItemListStatus = {
   dealTwentyId: string | null;
 };
 
+import { getTwentyFunctionsBaseUrl } from '../utils/twenty-functions-base-url';
+
 const readProcessEnv = (): Record<string, string | undefined> =>
   globalThis.process?.env ?? {};
-
-const getFunctionsBaseUrl = (): string | null => {
-  const baseUrl = readProcessEnv().TWENTY_FUNCTIONS_URL?.trim().replace(/\/$/, '');
-  return baseUrl || null;
-};
 
 const getAppAccessToken = (): string | null => {
   const token = readProcessEnv().TWENTY_APP_ACCESS_TOKEN?.trim();
@@ -32,7 +29,7 @@ const getAppAccessToken = (): string | null => {
 };
 
 export const isCrmparserConfigured = (): boolean =>
-  Boolean(getFunctionsBaseUrl() && getAppAccessToken());
+  Boolean(getTwentyFunctionsBaseUrl() && getAppAccessToken());
 
 const formatCrmparserProxyError = (status: number, body: unknown): string => {
   const record = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
@@ -52,7 +49,7 @@ const formatCrmparserProxyError = (status: number, body: unknown): string => {
 };
 
 async function logicFunctionFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const baseUrl = getFunctionsBaseUrl();
+  const baseUrl = getTwentyFunctionsBaseUrl();
   const token = getAppAccessToken();
   if (!baseUrl || !token) {
     throw new Error('Crmparser proxy not configured');

@@ -1,23 +1,68 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildOkleykaMessage } from './okleyka-message';
+import {
+  buildOkleykaDraft,
+  buildOkleykaMessage,
+  extractBookingId,
+  formatOkleykaMessage,
+} from './okleyka-message';
 
-describe('buildOkleykaMessage', () => {
-  it('builds a copyable block', () => {
-    const text = buildOkleykaMessage({
+describe('extractBookingId', () => {
+  it('takes first 5–6 digit run from deal name', () => {
+    expect(
+      extractBookingId('АРЕНДА/28-30.07/рулетка Алина тг/180288/Полякова'),
+    ).toBe('180288');
+    expect(extractBookingId('АРЕНДА/26.07/Екатерина/Ретро-игры/179512Фест./Фидж.')).toBe(
+      '179512',
+    );
+  });
+
+  it('returns empty when missing', () => {
+    expect(extractBookingId('АРЕНДА/28-30.07/без брони')).toBe('');
+    expect(extractBookingId(undefined)).toBe('');
+  });
+});
+
+describe('buildOkleykaDraft / formatOkleykaMessage', () => {
+  it('uses plenka first line and booking from name, not loadDate/tipDetail', () => {
+    const draft = buildOkleykaDraft({
       opportunity: {
-        name: 'ПРО/01.08/тест',
+        name: 'АРЕНДА/28-30.07/x/180288/y',
         loadDate: '2026-08-01T10:00:00.000Z',
       },
       lineItem: {
-        name: 'Автомат Хватайка',
-        kolichestvo: 2,
+        name: 'Фотобудка квадратная',
+        kolichestvo: 1,
         tipDetail: 'NASHI',
+        plenka: { markdown: '324\nOracal detail' },
+        kommentariy: 'угол слева',
       },
     });
-    expect(text).toContain('Заказ: ПРО/01.08/тест');
-    expect(text).toContain('Бронь:');
-    expect(text).toContain('Плёнка: Наши');
-    expect(text).toContain('Оборудование: Автомат Хватайка × 2');
+    expect(draft).toEqual({
+      order: 'АРЕНДА/28-30.07/x/180288/y',
+      booking: '180288',
+      film: '324',
+      equipment: 'Фотобудка квадратная × 1',
+      comment: 'угол слева',
+    });
+    expect(formatOkleykaMessage(draft)).toBe(
+      [
+        'Заказ: АРЕНДА/28-30.07/x/180288/y',
+        'Бронь: 180288',
+        'Плёнка: 324',
+        'Оборудование: Фотобудка квадратная × 1',
+        'Комментарий: угол слева',
+      ].join('\n'),
+    );
+  });
+
+  it('omits comment line when empty', () => {
+    const text = buildOkleykaMessage({
+      opportunity: { name: 'ПРО/01.08/тест/12345' },
+      lineItem: { name: 'Автомат', kolichestvo: 2, plenka: { markdown: '312' } },
+    });
+    expect(text).not.toContain('Комментарий:');
+    expect(text).toContain('Плёнка: 312');
+    expect(text).toContain('Бронь: 12345');
   });
 });

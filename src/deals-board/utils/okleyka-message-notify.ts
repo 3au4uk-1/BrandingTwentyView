@@ -1,4 +1,13 @@
-type OkleykaMessageHandler = (message: string) => void;
+import type { LineItemRow, OpportunityRow } from '../types';
+
+export type OkleykaNotifyPayload = {
+  opportunityId: string;
+  lineItemId: string;
+  opportunity: Pick<OpportunityRow, 'id' | 'name' | 'loadDate'>;
+  lineItem: LineItemRow;
+};
+
+type OkleykaMessageHandler = (payload: OkleykaNotifyPayload) => void;
 
 let handler: OkleykaMessageHandler | null = null;
 
@@ -8,6 +17,6 @@ export const registerOkleykaMessageHandler = (
   handler = next;
 };
 
-export const notifyOkleykaMessage = (message: string): void => {
-  handler?.(message);
+export const notifyOkleykaMessage = (payload: OkleykaNotifyPayload): void => {
+  handler?.(payload);
 };

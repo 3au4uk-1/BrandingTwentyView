@@ -305,6 +305,21 @@ export const updateLineItem = async (
   await client.patch(`/rest/dealLineItems/${id}`, data);
 };
 
+export const fetchLineItemById = async (id: string): Promise<LineItemRow | null> => {
+  const client = getRestClient();
+  const response = await client.get<unknown>(`/rest/dealLineItems/${id}`);
+  if (!response || typeof response !== 'object') return null;
+  const body = response as Record<string, unknown>;
+  const record =
+    (body.data as Record<string, unknown> | undefined)?.dealLineItem ??
+    body.dealLineItem ??
+    body.data ??
+    body;
+  if (!record || typeof record !== 'object') return null;
+  const row = record as LineItemRow;
+  return typeof row.id === 'string' ? row : null;
+};
+
 type LineItemCreateClient = Pick<RestApiClient, 'post' | 'patch' | 'get'>;
 
 const CREATED_LINE_ITEM_RESPONSE_KEYS = [

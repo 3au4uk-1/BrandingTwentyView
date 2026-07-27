@@ -13,6 +13,7 @@ import { DealStageSelect } from '../editors/DealStageSelect';
 import { CurrencyAmountCell } from '../editors/CurrencyAmountCell';
 import { DatePickerModal } from '../editors/DatePickerModal';
 import { LinkCell } from '../editors/LinkCell';
+import { PrevyuOkleykiCell } from '../editors/PrevyuOkleykiCell';
 import {
   PrintProgressCell,
   shouldRenderPrintProgress,
@@ -28,7 +29,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
 import { ChevronRightIcon, ExternalLinkIcon } from '../ui/Icons';
 import type { FieldDescriptor } from '../metadata/types';
-import type { LineItemRow } from '../types';
+import type { LineItemFileRef, LineItemRow } from '../types';
 
 import { DealSummaryChips } from '../DealsTable/DealSummaryChips';
 
@@ -303,6 +304,24 @@ export const renderFieldOverride = (props: FieldOverrideProps): ReactNode | null
         <LinkCell
           itemId={recordId}
           value={value as { primaryLinkUrl?: string; primaryLinkLabel?: string } | undefined}
+        />
+      );
+    case 'prevyuOkleyki':
+      return (
+        <PrevyuOkleykiCell
+          itemId={recordId}
+          opportunityId={
+            typeof props.row?.opportunityId === 'string'
+              ? props.row.opportunityId
+              : undefined
+          }
+          stage={
+            typeof props.row?.stage === 'string' || props.row?.stage === null
+              ? (props.row.stage as string | null)
+              : undefined
+          }
+          value={value as LineItemFileRef[] | null | undefined}
+          row={props.row}
         />
       );
     case 'plenka':

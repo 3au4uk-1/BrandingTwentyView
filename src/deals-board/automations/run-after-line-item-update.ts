@@ -4,7 +4,6 @@ import { updateLineItem } from '../api/line-items';
 import type { LineItemRow, OpportunityRow } from '../types';
 import { planBrandingFreeNameRename } from './branding-free-name';
 import { planHvataykaAutomation } from './hvatayka';
-import { buildOkleykaMessage } from './okleyka-message';
 import { planRestorationMaketAuto } from './restoration-maket';
 import { planTipFromName } from './tip-from-name';
 import { notifyOkleykaMessage } from '../utils/okleyka-message-notify';
@@ -149,12 +148,16 @@ export const runAfterLineItemUpdate = async (
   ) {
     const opportunity = findOpportunityInCache(queryClient, opportunityId);
     if (opportunity) {
-      notifyOkleykaMessage(
-        buildOkleykaMessage({
-          opportunity,
-          lineItem: current,
-        }),
-      );
+      notifyOkleykaMessage({
+        opportunityId,
+        lineItemId: id,
+        opportunity: {
+          id: opportunity.id,
+          name: opportunity.name,
+          loadDate: opportunity.loadDate,
+        },
+        lineItem: current,
+      });
     }
   }
 
