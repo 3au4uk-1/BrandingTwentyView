@@ -20,10 +20,10 @@ describe('LINE_ITEM_TYPES', () => {
 
   it('resolves Russian labels', () => {
     expect(getLineItemTypeLabel('BANNERA')).toBe('Баннера');
-    expect(getLineItemTypeLabel('PLENKA')).toBe('Оклейка');
+    expect(getLineItemTypeLabel('PLENKA')).toBe('Плёнка');
     expect(getLineItemTypeLabel('PODRYAD')).toBe('Подряд');
     expect(getLineItemTypeLabel('PROIZVODSTVO')).toBe('Производство');
-    expect(getLineItemTypeLabel('RESTAVRACIYA')).toBe('Рест. оклейка');
+    expect(getLineItemTypeLabel('RESTAVRACIYA')).toBe('Рест. плёнка');
     expect(getLineItemTypeLabel('NE_NASHE')).toBe('Не наше');
   });
 

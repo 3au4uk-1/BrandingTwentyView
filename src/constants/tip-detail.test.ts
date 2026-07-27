@@ -7,8 +7,9 @@ import {
 import { nextTipDetailForTipChange } from 'src/deals-board/editors/TipDetailSelect';
 
 describe('tipDetail options', () => {
-  it('returns banner people for BANNERA', () => {
+  it('returns кто едет? + people for BANNERA', () => {
     expect(getTipDetailOptionsForTip('BANNERA').map((o) => o.value)).toEqual([
+      'KTO_EDET',
       'YURA',
       'MAGA',
       'TOPILSKIY',
@@ -20,19 +21,28 @@ describe('tipDetail options', () => {
     expect(getTipDetailOptionsForTip('PODRYAD')).toHaveLength(6);
   });
 
-  it('returns empty for RESTAVRACIYA', () => {
-    expect(getTipDetailOptionsForTip('RESTAVRACIYA')).toEqual([]);
+  it('returns Наши / Не наши for RESTAVRACIYA', () => {
+    expect(getTipDetailOptionsForTip('RESTAVRACIYA').map((o) => o.value)).toEqual([
+      'NASHI',
+      'NE_NASHI',
+    ]);
   });
 
   it('validates tipDetail against tip', () => {
     expect(isTipDetailValidForTip('BANNERA', 'YURA')).toBe(true);
+    expect(isTipDetailValidForTip('BANNERA', 'KTO_EDET')).toBe(true);
     expect(isTipDetailValidForTip('BANNERA', 'GLAV_PRINT')).toBe(false);
   });
 });
 
 describe('nextTipDetailForTipChange', () => {
-  it('defaults PLENKA to NASHI', () => {
+  it('defaults PLENKA and RESTAVRACIYA to NASHI', () => {
     expect(nextTipDetailForTipChange('PLENKA', null)).toBe('NASHI');
+    expect(nextTipDetailForTipChange('RESTAVRACIYA', null)).toBe('NASHI');
+  });
+
+  it('defaults BANNERA to кто едет?', () => {
+    expect(nextTipDetailForTipChange('BANNERA', null)).toBe('KTO_EDET');
   });
 
   it('clears incompatible detail when tip changes', () => {

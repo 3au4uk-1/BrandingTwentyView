@@ -1,9 +1,9 @@
 export const LINE_ITEM_TYPES = [
   { value: 'BANNERA', label: 'Баннера', color: 'green' },
-  { value: 'PLENKA', label: 'Оклейка', color: 'blue' },
+  { value: 'PLENKA', label: 'Плёнка', color: 'blue' },
   { value: 'PODRYAD', label: 'Подряд', color: 'purple' },
   { value: 'PROIZVODSTVO', label: 'Производство', color: 'orange' },
-  { value: 'RESTAVRACIYA', label: 'Рест. оклейка', color: 'pink' },
+  { value: 'RESTAVRACIYA', label: 'Рест. плёнка', color: 'pink' },
   /** Deprecated as a tip — prefer PLENKA + tipDetail NE_NASHI. Still readable. */
   { value: 'NE_NASHE', label: 'Не наше', color: 'gray' },
 ] as const;

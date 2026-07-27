@@ -2,6 +2,7 @@ import type { LineItemType } from './line-item-types';
 
 /** TipDetail options — flat CRM SELECT; UI filters by tip. */
 export const TIP_DETAIL_OPTIONS = [
+  { value: 'KTO_EDET', label: 'кто едет?', color: 'yellow' },
   { value: 'NASHI', label: 'Наши', color: 'green' },
   { value: 'NE_NASHI', label: 'Не наши', color: 'gray' },
   { value: 'YURA', label: 'Юра', color: 'blue' },
@@ -23,13 +24,16 @@ export type TipDetailValue = (typeof TIP_DETAIL_OPTIONS)[number]['value'];
 
 export const TIP_DETAIL_BY_TIP: Partial<Record<LineItemType, readonly TipDetailValue[]>> = {
   PLENKA: ['NASHI', 'NE_NASHI'],
-  BANNERA: ['YURA', 'MAGA', 'TOPILSKIY'],
+  RESTAVRACIYA: ['NASHI', 'NE_NASHI'],
+  BANNERA: ['KTO_EDET', 'YURA', 'MAGA', 'TOPILSKIY'],
   PODRYAD: ['GLAV_PRINT', 'PASHA_VINDER', 'ZARYA', 'LIZA_SUKNO', 'KUVALDIN_KLISHE', 'SVOE'],
   PROIZVODSTVO: ['ROLL_UP', 'POP_UP', 'PROMO_STOYKA', 'PROIZVODSTVO_DRUGOE'],
 };
 
 export const DEFAULT_TIP_DETAIL_BY_TIP: Partial<Record<LineItemType, TipDetailValue>> = {
+  BANNERA: 'KTO_EDET',
   PLENKA: 'NASHI',
+  RESTAVRACIYA: 'NASHI',
 };
 
 export const getTipDetailOptionsForTip = (tip: string | null | undefined) => {

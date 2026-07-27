@@ -6,7 +6,7 @@ export const DEAL_PREFIX_LABELS: Record<Exclude<DealPrefix, 'OTHER'>, string> = 
   PRO: 'ПРО',
   ARENDA: 'Аренда',
   ART: 'АРТ',
-  BIRZHA: 'Биржа',
+  BIRZHA: 'Биржа лидов',
   BS: 'БС',
 };
 

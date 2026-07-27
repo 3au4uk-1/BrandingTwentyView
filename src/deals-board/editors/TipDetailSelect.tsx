@@ -9,6 +9,11 @@ import {
 } from 'src/constants/tip-detail';
 
 import { useUpdateLineItem } from '../hooks/useLineItems';
+import { useObjectFields } from '../metadata/useObjectFields';
+import {
+  appendUnknownCrmTipDetails,
+  mergeAppOptionsWithCrmLabels,
+} from '../taxonomy/merge-crm-labels';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
 import { ColoredStageSelect } from './ColoredStageSelect';
@@ -22,8 +27,15 @@ type TipDetailSelectProps = {
 export const TipDetailSelect = ({ recordId, tip, value }: TipDetailSelectProps) => {
   const theme = useTheme();
   const updateMutation = useUpdateLineItem();
-  const options = useMemo(() => getTipDetailOptionsForTip(tip), [tip]);
+  const { data: fields } = useObjectFields('dealLineItem');
+  const tipDetailField = fields?.find((field) => field.field === 'tipDetail');
   const selectedValue = typeof value === 'string' ? value : '';
+
+  const options = useMemo(() => {
+    const appOptions = getTipDetailOptionsForTip(tip);
+    const withLabels = mergeAppOptionsWithCrmLabels(appOptions, tipDetailField?.options);
+    return appendUnknownCrmTipDetails(withLabels, tipDetailField?.options, selectedValue);
+  }, [tip, tipDetailField?.options, selectedValue]);
 
   if (options.length === 0) {
     return (
@@ -52,7 +64,10 @@ export const TipDetailSelect = ({ recordId, tip, value }: TipDetailSelectProps) 
       theme={theme}
       stages={[{ value: '', label: EMPTY_VALUE, color: 'gray' }, ...options]}
       value={
-        isTipDetailValidForTip(tip, selectedValue) ? selectedValue : ''
+        isTipDetailValidForTip(tip, selectedValue) ||
+        options.some((option) => option.value === selectedValue)
+          ? selectedValue
+          : ''
       }
       onChange={(nextValue) => void handleChange(nextValue)}
       disabled={updateMutation.isPending}

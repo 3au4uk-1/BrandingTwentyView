@@ -5,8 +5,10 @@ import {
 } from 'src/constants/line-item-types';
 
 import { useUpdateLineItem } from '../hooks/useLineItems';
+import { useObjectFields } from '../metadata/useObjectFields';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
+import { mergeAppOptionsWithCrmLabels } from '../taxonomy/merge-crm-labels';
 import { ColoredStageSelect } from './ColoredStageSelect';
 import { nextTipDetailForTipChange } from './TipDetailSelect';
 
@@ -19,10 +21,13 @@ type TypeSelectProps = {
 export const TypeSelect = ({ recordId, value, tipDetail }: TypeSelectProps) => {
   const theme = useTheme();
   const updateMutation = useUpdateLineItem();
+  const { data: fields } = useObjectFields('dealLineItem');
   const selectedValue = value ?? '';
 
-  const pickerOptions =
+  const tipField = fields?.find((field) => field.field === 'tip');
+  const baseOptions =
     value === 'NE_NASHE' ? LINE_ITEM_TYPES : LINE_ITEM_TYPES_FOR_PICKER;
+  const pickerOptions = mergeAppOptionsWithCrmLabels(baseOptions, tipField?.options);
 
   const handleChange = async (nextValue: string) => {
     const normalizedNext = (nextValue || null) as LineItemType | null;
@@ -40,7 +45,7 @@ export const TypeSelect = ({ recordId, value, tipDetail }: TypeSelectProps) => {
       });
     } catch (error) {
       window.alert(
-        `Не удалось обновить тип.${error instanceof Error ? ` ${error.message}` : ''}`,
+        `Не удалось обновить категорию.${error instanceof Error ? ` ${error.message}` : ''}`,
       );
     }
   };

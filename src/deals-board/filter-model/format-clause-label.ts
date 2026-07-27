@@ -10,7 +10,7 @@ const OPLATA_LABELS: Record<string, string> = {
 
 const FIELD_LABELS: Record<string, string> = {
   stage: 'Стадия',
-  tip: 'Тип',
+  tip: 'Категория',
   companyId: 'Компания',
   oplata: 'Оплата',
 };
