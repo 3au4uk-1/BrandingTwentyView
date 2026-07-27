@@ -28,8 +28,8 @@ describe('LINE_ITEM_TYPES', () => {
   });
 
   it('assigns distinct colors', () => {
-    expect(getLineItemTypeColor('BANNERA')).toBe('blue');
-    expect(getLineItemTypeColor('PLENKA')).toBe('green');
+    expect(getLineItemTypeColor('BANNERA')).toBe('green');
+    expect(getLineItemTypeColor('PLENKA')).toBe('blue');
     expect(getLineItemTypeColor('PODRYAD')).toBe('purple');
     expect(getLineItemTypeColor('PROIZVODSTVO')).toBe('orange');
     expect(getLineItemTypeColor('RESTAVRACIYA')).toBe('pink');

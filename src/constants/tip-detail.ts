@@ -10,7 +10,7 @@ export const TIP_DETAIL_OPTIONS = [
   { value: 'GLAV_PRINT', label: 'Глав принт', color: 'purple' },
   { value: 'PASHA_VINDER', label: 'Паша виндер', color: 'blue' },
   { value: 'ZARYA', label: 'Заря', color: 'yellow' },
-  { value: 'LIZA_SUKNO', label: 'Лиза сукно', color: 'pink' },
+  { value: 'LIZA_SUKNO', label: 'Лиза сукно', color: 'purple' },
   { value: 'KUVALDIN_KLISHE', label: 'Кувалдин клише', color: 'orange' },
   { value: 'SVOE', label: 'Своё', color: 'gray' },
   { value: 'ROLL_UP', label: 'Ролл-ап', color: 'blue' },

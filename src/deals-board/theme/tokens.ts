@@ -82,13 +82,13 @@ const FONT_SIZES = {
   family: FONT_FAMILY,
   mono: FONT_MONO,
   sizeXs: '11px',
-  sizeSm: '12px',
-  sizeMd: '13px',
-  sizeLg: '15px',
-  weightNormal: 400,
-  weightMedium: 500,
-    weightSemibold: 600,
-    weightBold: 700,
+  sizeSm: '13px',
+  sizeMd: '14px',
+  sizeLg: '16px',
+  weightNormal: 500,
+  weightMedium: 600,
+  weightSemibold: 700,
+  weightBold: 700,
 } as const;
 const LAYOUT = { toolbarHeight: '44px', rowHeight: '46px', childRowHeight: '40px' } as const;
 const Z_INDEX = { sticky: 4, dropdown: 30, modal: 40 } as const;

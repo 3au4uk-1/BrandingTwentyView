@@ -17,6 +17,8 @@ type ColoredStageSelectProps = {
   onChange: (value: string) => void;
   disabled?: boolean;
   style?: CSSProperties;
+  /** filled = soft tint bg; ghost = transparent bg, colored text only */
+  appearance?: 'filled' | 'ghost';
 };
 
 const getStagePalette = (color: string, scheme: ThemeTokens['colorScheme']) =>
@@ -29,10 +31,12 @@ export const ColoredStageSelect = ({
   onChange,
   disabled,
   style,
+  appearance = 'ghost',
 }: ColoredStageSelectProps) => {
   const selectedStage = stages.find((stage) => stage.value === value);
   const selectedPalette = getStagePalette(selectedStage?.color ?? 'gray', theme.colorScheme);
-  const { font, radius } = theme;
+  const { font, radius, colors } = theme;
+  const isGhost = appearance === 'ghost';
 
   return (
     <Select
@@ -50,9 +54,11 @@ export const ColoredStageSelect = ({
         fontSize: font.sizeXs,
         fontWeight: font.weightSemibold,
         letterSpacing: '-0.015em',
-        backgroundColor: selectedPalette.bg,
+        backgroundColor: isGhost ? colors.bgElevated : selectedPalette.bg,
         color: selectedPalette.text,
-        boxShadow: `inset 0 0 0 1px ${selectedPalette.text}22`,
+        boxShadow: isGhost
+          ? `inset 0 0 0 1px ${colors.borderSubtle}`
+          : `inset 0 0 0 1px ${selectedPalette.text}22`,
         ...style,
       }}
     >

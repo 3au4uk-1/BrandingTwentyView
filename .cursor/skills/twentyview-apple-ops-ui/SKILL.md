@@ -24,9 +24,12 @@ Quiet, readable ops UI — SF/system fonts, iOS HIG colors, low chrome. Not agen
 - Radius: 6 / 10 / 14 / pill
 - Motion: `cubic-bezier(0.25, 0.1, 0.25, 1)`; active `scale(0.98)`
 - Labels: sentence case — **no** mono + SCREAMING uppercase chrome
-- Deal (parent) rows: soft categorical wash (`palette.bg`) + left accent bar
-- Line-item rows: **no** stage wash — neutral elevated surface only; stage cue is the chip select
-- Scoreboard: compact category cards (total + печать/работа/готово); click filters tip; no stage-filter row; no border/gradient
+- Deal (parent) rows: saturated stage wash (TwentyServer-like) + left accent; Новый = neutral
+- Line-item rows: same stage wash on full row
+- Category/tip selects: ghost — colored text, no fill; tip colors: Баннера green, Плёнка blue, Подряд purple, Производство orange, Рест. pink
+- Stage colors: Новый none · В печати yellow · Оклейка blue · В работе purple · Готово green · Отмена red
+- Scoreboard: collapsible (flag toggle), compact cards, unicode tip icons
+- Typography: base weight 500+, slightly larger sm/md
 - Margin control: compact toolbar chip (month + margin + ›); details in `title`
 - Deal stage: visible parent column by default; chip-like `ColoredStageSelect`
 

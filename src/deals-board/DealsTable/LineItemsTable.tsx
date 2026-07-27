@@ -27,6 +27,7 @@ import {
   sortLineItemsByOrder,
 } from '../utils/line-item-order';
 import { resolveFieldValue } from '../utils/resolve-field-value';
+import { getStageRowStyles } from '../utils/stage-row-styles';
 
 import type { ColumnConfig, ColumnGroupConfig, LineItemRow } from '../types';
 import { ResizableColumnHeader } from './ResizableColumnHeader';
@@ -66,7 +67,7 @@ export const LineItemsTable = ({
 }: LineItemsTableProps) => {
   const theme = useTheme();
   const queryClient = useQueryClient();
-  const { colors, font, spacing, radius } = theme;
+  const { colors, font, spacing, radius, colorScheme } = theme;
   const layout = buildChildLayoutColumns(columns, groups);
   const { ungrouped, groupEntries } = partitionUngroupedAndGroups(layout);
   const tableStyle = getTableLayoutStyle(
@@ -242,6 +243,9 @@ export const LineItemsTable = ({
             {displayItems.map((item, rowIndex) => {
               const canMoveUp = rowIndex > 0;
               const canMoveDown = rowIndex < displayItems.length - 1;
+              const stageValue = typeof item.stage === 'string' ? item.stage : null;
+              const stageStyles = getStageRowStyles(stageValue, colorScheme, 'child');
+              const rowBg = stageStyles.backgroundColor || colors.bgElevated;
 
               return (
                 <tr
@@ -250,7 +254,8 @@ export const LineItemsTable = ({
                   style={{
                     borderBottom:
                       rowIndex < displayItems.length - 1 ? `1px solid ${colors.borderSubtle}` : 'none',
-                    backgroundColor: colors.bgElevated,
+                    backgroundColor: rowBg,
+                    boxShadow: stageStyles.boxShadow,
                     transition: 'background-color 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)',
                   }}
                 >

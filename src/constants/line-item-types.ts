@@ -1,6 +1,6 @@
 export const LINE_ITEM_TYPES = [
-  { value: 'BANNERA', label: 'Баннера', color: 'blue' },
-  { value: 'PLENKA', label: 'Оклейка', color: 'green' },
+  { value: 'BANNERA', label: 'Баннера', color: 'green' },
+  { value: 'PLENKA', label: 'Оклейка', color: 'blue' },
   { value: 'PODRYAD', label: 'Подряд', color: 'purple' },
   { value: 'PROIZVODSTVO', label: 'Производство', color: 'orange' },
   { value: 'RESTAVRACIYA', label: 'Рест. оклейка', color: 'pink' },
