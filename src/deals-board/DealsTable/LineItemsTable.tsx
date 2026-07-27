@@ -22,7 +22,6 @@ import {
 } from '../utils/column-groups';
 import { findActiveGroupMembers } from '../utils/active-group';
 import {
-  moveItemInOrder,
   planPoryadokPatches,
   sortLineItemsByOrder,
 } from '../utils/line-item-order';
@@ -30,9 +29,104 @@ import { resolveFieldValue } from '../utils/resolve-field-value';
 import { getStageRowStyles } from '../utils/stage-row-styles';
 
 import type { ColumnConfig, ColumnGroupConfig, LineItemRow } from '../types';
+import { lineItemDragSession } from './line-item-drag-session';
 import { ResizableColumnHeader } from './ResizableColumnHeader';
 
 const GROUP_ZONE_MIN_WIDTH = 280;
+const DEFAULT_ROW_HEIGHT_PX = 40;
+
+type DragSession = {
+  fromId: string;
+  fromIndex: number;
+  startY: number;
+  startIds: string[];
+  startRowsById: Map<string, LineItemRow>;
+  rowHeight: number;
+  lastToIndex: number;
+  pointerId: number | null;
+};
+
+type DragListeners = {
+  doc: Document;
+  view: Window | null;
+  onPointerMove: (event: PointerEvent) => void;
+  onMouseMove: (event: MouseEvent) => void;
+  onPointerUp: (event: Event) => void;
+  onMouseUp: (event: Event) => void;
+  onPointerCancel: (event: Event) => void;
+};
+
+/** Same pattern as ResizableColumnHeader: native listeners (sandbox-safe). */
+const OrderDragHandle = ({
+  itemId,
+  isActive,
+  disabled,
+  onDragStart,
+}: {
+  itemId: string;
+  isActive: boolean;
+  disabled: boolean;
+  onDragStart: (event: MouseEvent | PointerEvent, itemId: string, handle: HTMLElement) => void;
+}) => {
+  const theme = useTheme();
+  const { colors, radius } = theme;
+  const handleRef = useRef<HTMLDivElement | null>(null);
+  const onDragStartRef = useRef(onDragStart);
+  onDragStartRef.current = onDragStart;
+
+  useEffect(() => {
+    const handle = handleRef.current;
+    if (!handle || disabled) return;
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.button !== 0) return;
+      onDragStartRef.current(event, itemId, handle);
+    };
+    const onMouseDown = (event: MouseEvent) => {
+      if (event.button !== 0) return;
+      onDragStartRef.current(event, itemId, handle);
+    };
+
+    if (typeof window !== 'undefined' && 'PointerEvent' in window) {
+      handle.addEventListener('pointerdown', onPointerDown);
+      return () => handle.removeEventListener('pointerdown', onPointerDown);
+    }
+
+    handle.addEventListener('mousedown', onMouseDown);
+    return () => handle.removeEventListener('mousedown', onMouseDown);
+  }, [disabled, itemId]);
+
+  return (
+    <div
+      ref={handleRef}
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      aria-label="Перетащить для изменения порядка"
+      title="Перетащить"
+      style={{
+        width: 22,
+        height: 28,
+        padding: 0,
+        border: 'none',
+        borderRadius: radius.sm,
+        background: isActive ? colors.bgTertiary : 'transparent',
+        color: colors.textSecondary,
+        cursor: disabled ? 'default' : isActive ? 'grabbing' : 'grab',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 14,
+        lineHeight: 1,
+        letterSpacing: '-1px',
+        opacity: disabled ? 0.4 : 0.85,
+        touchAction: 'none',
+        userSelect: 'none',
+      }}
+    >
+      ⠿
+    </div>
+  );
+};
 
 type LineItemsTableProps = {
   opportunityId: string;
@@ -78,20 +172,31 @@ export const LineItemsTable = ({
   const { isExpanded, toggle } = useLineItemGroupExpand();
   const isCreatingRef = useRef(false);
   const [orderedItems, setOrderedItems] = useState<LineItemRow[] | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const tbodyRef = useRef<HTMLTableSectionElement | null>(null);
+  const dragSessionRef = useRef<DragSession | null>(null);
+  const dragListenersRef = useRef<DragListeners | null>(null);
+  const displayItemsRef = useRef<LineItemRow[]>([]);
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
   const [statusMessage, setStatusMessage] = useState<{
     kind: 'warning' | 'error';
     text: string;
   } | null>(null);
   const isHiddenByFilters = isDefaultLineItemHiddenByFilters(filters);
+  const isDragging = draggingId !== null;
 
   const sortedItems = useMemo(() => sortLineItemsByOrder(items), [items]);
   const displayItems = orderedItems ?? sortedItems;
+  displayItemsRef.current = displayItems;
   const itemsOrderSignature = useMemo(
     () => items.map((item) => `${item.id}:${item.poryadok ?? ''}`).join('|'),
     [items],
   );
 
   useEffect(() => {
+    if (dragSessionRef.current) return;
     setOrderedItems(null);
   }, [itemsOrderSignature]);
 
@@ -119,10 +224,11 @@ export const LineItemsTable = ({
   };
 
   const commitOrder = async (nextIds: string[]) => {
-    const byId = new Map(displayItems.map((item) => [item.id, item]));
+    const sourceRows = itemsRef.current;
+    const byId = new Map(sourceRows.map((item) => [item.id, item]));
     const nextRows = nextIds
       .map((id, index) => {
-        const row = byId.get(id);
+        const row = byId.get(id) ?? displayItemsRef.current.find((item) => item.id === id);
         return row ? { ...row, poryadok: index } : null;
       })
       .filter((row): row is LineItemRow => row !== null);
@@ -130,6 +236,8 @@ export const LineItemsTable = ({
     setOrderedItems(nextRows);
 
     const patches = planPoryadokPatches(nextIds, byId);
+    if (patches.length === 0) return;
+
     try {
       await Promise.all(patches.map((patch) => updateLineItem(patch.id, patch.data)));
       await queryClient.invalidateQueries({ queryKey: ['lineItems'] });
@@ -142,22 +250,203 @@ export const LineItemsTable = ({
     }
   };
 
-  const moveByOffset = async (fromId: string, offset: -1 | 1) => {
-    const currentIds = displayItems.map((item) => item.id);
-    const fromIndex = currentIds.indexOf(fromId);
-    const toIndex = fromIndex + offset;
-    if (fromIndex < 0 || toIndex < 0 || toIndex >= currentIds.length) return;
-    const toId = currentIds[toIndex];
-    if (!toId) return;
-    const nextIds = moveItemInOrder(currentIds, fromId, toId);
-    if (nextIds) await commitOrder(nextIds);
+  const applyLiveFromClientY = (clientY: number) => {
+    const session = dragSessionRef.current;
+    if (!session) return;
+
+    const rowHeight = session.rowHeight > 0 ? session.rowHeight : DEFAULT_ROW_HEIGHT_PX;
+    const steps = Math.round((clientY - session.startY) / rowHeight);
+    const toIndex = Math.max(
+      0,
+      Math.min(session.startIds.length - 1, session.fromIndex + steps),
+    );
+    if (toIndex === session.lastToIndex) return;
+    session.lastToIndex = toIndex;
+
+    const nextIds = [...session.startIds];
+    nextIds.splice(session.fromIndex, 1);
+    nextIds.splice(toIndex, 0, session.fromId);
+
+    const highlightId =
+      toIndex === session.fromIndex ? null : session.startIds[toIndex] ?? null;
+    setDragOverId(highlightId);
+
+    setOrderedItems(
+      nextIds
+        .map((id, index) => {
+          const row = session.startRowsById.get(id);
+          return row ? { ...row, poryadok: index } : null;
+        })
+        .filter((row): row is LineItemRow => row !== null),
+    );
   };
+
+  const detachDragListeners = () => {
+    const listeners = dragListenersRef.current;
+    if (!listeners) return;
+    const { doc, view, onPointerMove, onMouseMove, onPointerUp, onMouseUp, onPointerCancel } =
+      listeners;
+    doc.removeEventListener('pointermove', onPointerMove, true);
+    doc.removeEventListener('mousemove', onMouseMove, true);
+    doc.removeEventListener('pointerup', onPointerUp, true);
+    doc.removeEventListener('mouseup', onMouseUp, true);
+    doc.removeEventListener('pointercancel', onPointerCancel, true);
+    if (view) {
+      view.removeEventListener('pointermove', onPointerMove, true);
+      view.removeEventListener('mousemove', onMouseMove, true);
+      view.removeEventListener('pointerup', onPointerUp, true);
+      view.removeEventListener('mouseup', onMouseUp, true);
+      view.removeEventListener('pointercancel', onPointerCancel, true);
+    }
+    dragListenersRef.current = null;
+  };
+
+  const cancelPointerDrag = () => {
+    dragSessionRef.current = null;
+    setDraggingId(null);
+    setDragOverId(null);
+    setOrderedItems(null);
+    detachDragListeners();
+    lineItemDragSession.set(null);
+  };
+
+  const endPointerDrag = async () => {
+    const session = dragSessionRef.current;
+    if (!session) return;
+    dragSessionRef.current = null;
+    setDraggingId(null);
+    setDragOverId(null);
+    detachDragListeners();
+    lineItemDragSession.set(null);
+    const nextIds = displayItemsRef.current.map((item) => item.id);
+    await commitOrder(nextIds);
+  };
+
+  const startPointerDrag = (
+    event: MouseEvent | PointerEvent,
+    fromId: string,
+    handle: HTMLElement,
+  ) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+
+    const startIds = displayItemsRef.current.map((item) => item.id);
+    const fromIndex = startIds.indexOf(fromId);
+    if (fromIndex < 0) return;
+
+    detachDragListeners();
+    lineItemDragSession.set(null);
+
+    const rowEl = tbodyRef.current?.querySelector<HTMLElement>(
+      `tr[data-line-item-id="${fromId}"]`,
+    );
+    const rowHeight = rowEl?.getBoundingClientRect().height || DEFAULT_ROW_HEIGHT_PX;
+
+    dragSessionRef.current = {
+      fromId,
+      fromIndex,
+      startY: event.clientY,
+      startIds,
+      startRowsById: new Map(displayItemsRef.current.map((item) => [item.id, item])),
+      rowHeight,
+      lastToIndex: fromIndex,
+      pointerId: 'pointerId' in event ? event.pointerId : null,
+    };
+    setDraggingId(fromId);
+    setDragOverId(null);
+    setStatusMessage(null);
+
+    lineItemDragSession.set({
+      onMove: applyLiveFromClientY,
+      onEnd: () => {
+        void endPointerDrag();
+      },
+      onCancel: cancelPointerDrag,
+    });
+
+    // Twenty sandbox: setPointerCapture often missing; global `window` may not
+    // receive moves. Mirror column-resize: ownerDocument + board scroll container.
+    const doc = handle.ownerDocument;
+    const view = doc.defaultView;
+
+    const onPointerMove = (moveEvent: PointerEvent) => {
+      const session = dragSessionRef.current;
+      if (!session) return;
+      if (session.pointerId !== null && moveEvent.pointerId !== session.pointerId) return;
+      moveEvent.preventDefault();
+      applyLiveFromClientY(moveEvent.clientY);
+    };
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      if (!dragSessionRef.current) return;
+      applyLiveFromClientY(moveEvent.clientY);
+    };
+    const onUp = () => {
+      void endPointerDrag();
+    };
+    const onCancel = () => {
+      cancelPointerDrag();
+    };
+
+    dragListenersRef.current = {
+      doc,
+      view,
+      onPointerMove,
+      onMouseMove,
+      onPointerUp: onUp,
+      onMouseUp: onUp,
+      onPointerCancel: onCancel,
+    };
+
+    doc.addEventListener('pointermove', onPointerMove, true);
+    doc.addEventListener('mousemove', onMouseMove, true);
+    doc.addEventListener('pointerup', onUp, true);
+    doc.addEventListener('mouseup', onUp, true);
+    doc.addEventListener('pointercancel', onCancel, true);
+    if (view) {
+      view.addEventListener('pointermove', onPointerMove, true);
+      view.addEventListener('mousemove', onMouseMove, true);
+      view.addEventListener('pointerup', onUp, true);
+      view.addEventListener('mouseup', onUp, true);
+      view.addEventListener('pointercancel', onCancel, true);
+    }
+  };
+
+  useEffect(
+    () => () => {
+      detachDragListeners();
+      lineItemDragSession.set(null);
+    },
+    [],
+  );
 
   return (
     <div
+      onPointerMove={(event) => {
+        if (!isDragging) return;
+        applyLiveFromClientY(event.clientY);
+      }}
+      onMouseMove={(event) => {
+        if (!isDragging) return;
+        applyLiveFromClientY(event.clientY);
+      }}
+      onPointerUp={() => {
+        if (!isDragging) return;
+        void endPointerDrag();
+      }}
+      onPointerCancel={() => {
+        if (!isDragging) return;
+        cancelPointerDrag();
+      }}
+      onMouseUp={() => {
+        if (!isDragging) return;
+        void endPointerDrag();
+      }}
       style={{
-        padding: `${spacing.sm} ${spacing.md} ${spacing.sm} 40px`,
+        padding: `${spacing.sm} ${spacing.md} ${spacing.sm} ${spacing.sm}`,
         borderTop: `1px solid ${colors.borderSubtle}`,
+        userSelect: isDragging ? 'none' : undefined,
+        cursor: isDragging ? 'grabbing' : undefined,
       }}
     >
       {hasLineItemFilters && onToggleShowAllPositions ? (
@@ -174,9 +463,9 @@ export const LineItemsTable = ({
       ) : null}
       <div
         style={{
-          borderLeft: `3px solid ${colors.borderStrong}`,
-          paddingLeft: spacing.lg,
-          marginLeft: spacing.sm,
+          borderLeft: `3px solid ${colors.borderSubtle}`,
+          paddingLeft: spacing.md,
+          marginLeft: 0,
           borderRadius: `0 ${radius.md} ${radius.md} 0`,
           backgroundColor: colors.bgInset,
           boxShadow: `inset 0 1px 0 ${colors.borderSubtle}`,
@@ -187,11 +476,11 @@ export const LineItemsTable = ({
             ...tableStyle,
             borderCollapse: 'collapse',
             tableLayout: 'fixed',
+            width: '100%',
             backgroundColor: colors.bgElevated,
-            border: `1px solid ${colors.border}`,
+            border: `1px solid ${colors.borderSubtle}`,
             borderRadius: radius.md,
             overflow: 'hidden',
-            boxShadow: colors.shadow,
           }}
         >
           <colgroup>
@@ -239,24 +528,30 @@ export const LineItemsTable = ({
               </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody ref={tbodyRef}>
             {displayItems.map((item, rowIndex) => {
-              const canMoveUp = rowIndex > 0;
-              const canMoveDown = rowIndex < displayItems.length - 1;
               const stageValue = typeof item.stage === 'string' ? item.stage : null;
               const stageStyles = getStageRowStyles(stageValue, colorScheme, 'child');
               const rowBg = stageStyles.backgroundColor || colors.bgElevated;
+              const isDragging = draggingId === item.id;
+              const isDropTarget = dragOverId === item.id && draggingId !== null && draggingId !== item.id;
 
               return (
                 <tr
                   key={item.id}
                   data-line-item-row=""
+                  data-line-item-id={item.id}
                   style={{
                     borderBottom:
                       rowIndex < displayItems.length - 1 ? `1px solid ${colors.borderSubtle}` : 'none',
                     backgroundColor: rowBg,
-                    boxShadow: stageStyles.boxShadow,
-                    transition: 'background-color 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)',
+                    boxShadow: isDropTarget
+                      ? `inset 0 2px 0 ${colors.accent}`
+                      : stageStyles.boxShadow,
+                    opacity: isDragging ? 0.55 : 1,
+                    transition: draggingId
+                      ? 'opacity 0.12s ease'
+                      : 'background-color 0.2s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.15s ease',
                   }}
                 >
                   <td
@@ -267,61 +562,15 @@ export const LineItemsTable = ({
                       textAlign: 'center',
                       color: colors.textMuted,
                       userSelect: 'none',
+                      touchAction: 'none',
                     }}
                   >
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: 2,
-                      }}
-                    >
-                      <button
-                        type="button"
-                        aria-label="Выше"
-                        title="Выше"
-                        disabled={!canMoveUp}
-                        onClick={() => void moveByOffset(item.id, -1)}
-                        style={{
-                          width: 22,
-                          height: 16,
-                          padding: 0,
-                          border: `1px solid ${colors.border}`,
-                          borderRadius: radius.sm,
-                          background: colors.bgElevated,
-                          color: canMoveUp ? colors.text : colors.textMuted,
-                          cursor: canMoveUp ? 'pointer' : 'default',
-                          fontSize: 10,
-                          lineHeight: 1,
-                          opacity: canMoveUp ? 1 : 0.4,
-                        }}
-                      >
-                        ▲
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Ниже"
-                        title="Ниже"
-                        disabled={!canMoveDown}
-                        onClick={() => void moveByOffset(item.id, 1)}
-                        style={{
-                          width: 22,
-                          height: 16,
-                          padding: 0,
-                          border: `1px solid ${colors.border}`,
-                          borderRadius: radius.sm,
-                          background: colors.bgElevated,
-                          color: canMoveDown ? colors.text : colors.textMuted,
-                          cursor: canMoveDown ? 'pointer' : 'default',
-                          fontSize: 10,
-                          lineHeight: 1,
-                          opacity: canMoveDown ? 1 : 0.4,
-                        }}
-                      >
-                        ▼
-                      </button>
-                    </div>
+                    <OrderDragHandle
+                      itemId={item.id}
+                      isActive={isDragging}
+                      disabled={false}
+                      onDragStart={startPointerDrag}
+                    />
                   </td>
                   {ungrouped.map((entry) => {
                     const width = getColumnWidth(entry);

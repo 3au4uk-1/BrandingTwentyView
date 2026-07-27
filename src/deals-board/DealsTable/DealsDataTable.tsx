@@ -32,6 +32,7 @@ import {
   dealBoardSortToSortingState,
   sortingStateToDealBoardSort,
 } from './parent-table-sort';
+import { lineItemDragSession } from './line-item-drag-session';
 import { ResizableColumnHeader } from './ResizableColumnHeader';
 
 export type DealsDataTableProps = {
@@ -152,17 +153,29 @@ export const DealsDataTable = ({
     <div
       ref={scrollRef}
       onPointerMove={(event) => {
-        if (!isResizing) return;
-        onPointerMove(event.clientX);
+        if (isResizing) onPointerMove(event.clientX);
+        if (lineItemDragSession.isActive()) lineItemDragSession.move(event.clientY);
       }}
-      onPointerUp={onPointerEnd}
-      onPointerCancel={onPointerEnd}
+      onPointerUp={() => {
+        onPointerEnd();
+        if (lineItemDragSession.isActive()) lineItemDragSession.end();
+      }}
+      onPointerCancel={() => {
+        onPointerEnd();
+        if (lineItemDragSession.isActive()) lineItemDragSession.cancel();
+      }}
       onMouseMove={(event) => {
-        if (!isResizing) return;
-        onPointerMove(event.clientX);
+        if (isResizing) onPointerMove(event.clientX);
+        if (lineItemDragSession.isActive()) lineItemDragSession.move(event.clientY);
       }}
-      onMouseUp={onPointerEnd}
-      onMouseLeave={onPointerEnd}
+      onMouseUp={() => {
+        onPointerEnd();
+        if (lineItemDragSession.isActive()) lineItemDragSession.end();
+      }}
+      onMouseLeave={() => {
+        onPointerEnd();
+        if (lineItemDragSession.isActive()) lineItemDragSession.end();
+      }}
       style={{
         flex: 1,
         minHeight: 0,
