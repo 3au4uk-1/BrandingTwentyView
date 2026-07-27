@@ -37,7 +37,7 @@ const BUILDER_FIELDS: BuilderField[] = [
   {
     level: 'lineItem',
     field: 'tip',
-    label: 'Тип',
+    label: 'Категория',
     kind: 'multi-select',
     options: LINE_ITEM_TYPES,
   },
@@ -77,11 +77,19 @@ export type FilterBarProps = {
   onReset: () => void;
   parentFields?: FieldDescriptor[];
   childFields?: FieldDescriptor[];
+  /** compact-top = dates + filter + chips only (search lives in BoardToolbar) */
+  layout?: 'default' | 'compact-top';
 };
 
 const newClauseId = (): string => crypto.randomUUID();
 
-export const FilterBar = ({ value, viewClauses, onChange, onReset }: FilterBarProps) => {
+export const FilterBar = ({
+  value,
+  viewClauses,
+  onChange,
+  onReset,
+  layout = 'default',
+}: FilterBarProps) => {
   const theme = useTheme();
   const { colors, radius, font, spacing, zIndex } = theme;
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
@@ -606,18 +614,22 @@ export const FilterBar = ({ value, viewClauses, onChange, onReset }: FilterBarPr
         </button>
       ))}
 
-      <Input
-        theme={theme}
-        type="search"
-        value={value.search ?? ''}
-        onChange={(event) => onChange({ ...value, search: event.target.value })}
-        placeholder="Поиск сделок и позиций..."
-        style={{ minWidth: '140px', flex: '1 1 180px', maxWidth: '240px', padding: '5px 10px' }}
-      />
+      {layout === 'compact-top' ? null : (
+        <>
+          <Input
+            theme={theme}
+            type="search"
+            value={value.search ?? ''}
+            onChange={(event) => onChange({ ...value, search: event.target.value })}
+            placeholder="Поиск сделок и позиций..."
+            style={{ minWidth: '140px', flex: '1 1 180px', maxWidth: '240px', padding: '5px 10px' }}
+          />
 
-      <Button theme={theme} variant="ghost" size="sm" onClick={onReset}>
-        Сбросить
-      </Button>
+          <Button theme={theme} variant="ghost" size="sm" onClick={onReset}>
+            Сбросить
+          </Button>
+        </>
+      )}
     </div>
   );
 };

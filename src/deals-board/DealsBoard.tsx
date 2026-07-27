@@ -16,15 +16,12 @@ import {
 import { resolveOpportunityRestFieldNames } from 'src/constants/opportunity-rest-fields';
 
 import { AnalyticsPanel } from './analytics/AnalyticsPanel';
-import { MarginStrip } from './analytics/MarginStrip';
+import { BoardToolbar } from './BoardToolbar';
 import { useShouldUseMobileLayout } from './hooks/useShouldUseMobileLayout';
 import { useHostHeightLock } from './hooks/useHostHeightLock';
 import { DESKTOP_BOARD_HEIGHT_CSS } from './utils/desktop-layout';
 import { MobileDealsBoard } from './mobile/MobileDealsBoard';
-import { ToolbarSettingsCluster } from './ToolbarSettingsCluster';
 import { DealsTable } from './DealsTable/DealsTable';
-import { ExpandModeToggle } from './ExpandModeToggle';
-import { GroupChipModeToggle } from './GroupChipModeToggle';
 import { ExpandModeProvider } from './hooks/useExpandMode';
 import { GroupChipModeProvider } from './hooks/useGroupChipMode';
 import { useDealBoardViews, useUpdateDealBoardView } from './hooks/useDealBoardViews';
@@ -36,7 +33,6 @@ import { crmFieldNamesFromColumns, fieldTypesByNameFromDescriptors, needsCompany
 import { mergeColumns } from './metadata/merge-columns';
 import { useObjectFields } from './metadata/useObjectFields';
 import { VIRTUAL_PARENT_FIELD_DESCRIPTORS } from './metadata/virtual-columns';
-import { FilterBar } from './FilterBar';
 import { filterDealsAndLineItems } from './filter-model/apply-line-item-filters';
 import { clausesToDealBoardFilters } from './filter-model/clauses-to-deal-board-filters';
 import {
@@ -52,9 +48,8 @@ import {
 } from './filter-model/session';
 import { toggleInClauseValue } from './filter-model/toggle-in-clause';
 import type { FilterState } from './filter-model/types';
-import { AttentionStrip } from './attention/AttentionStrip';
+import { BoardInsightPanel } from './BoardInsightPanel';
 import { computeAttention } from './attention/compute';
-import { ProductionScoreboard } from './scoreboard/ProductionScoreboard';
 import type {
   ColumnGroupConfig,
   DealBoardSort,
@@ -66,7 +61,7 @@ import { getTodayInputDateMsk } from './utils/working-days';
 import { ThemeProvider, useTheme } from './theme/ThemeContext';
 import { CancelOtmenaProvider } from './ui/CancelOtmenaPopup';
 import { ManualSyncErrorToastProvider } from './ui/ManualSyncErrorToast';
-import { OkleykaMessageToastProvider } from './ui/OkleykaMessageToast';
+import { OkleykaMessageDialogProvider } from './ui/OkleykaMessageDialog';
 import { PortalHostProvider } from './ui/PortalHostContext';
 import { DEALS_BOARD_ROOT_ID } from './utils/dom';
 import { resolveActiveDealBoardView } from './utils/resolve-active-view';
@@ -80,8 +75,6 @@ import { applyPrintGroupSeed } from './utils/column-groups';
 import { asArray } from './utils/parse-json-field';
 import { filterLineItemsForSearch, normalizeSearchTerm } from './utils/search';
 import { ViewSettingsModal } from './ViewSettingsModal';
-import { ViewSwitcher } from './ViewSwitcher';
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -639,7 +632,7 @@ const DealsBoardContent = () => {
     <PortalHostProvider hostRef={rootRef}>
       <CancelOtmenaProvider>
       <ManualSyncErrorToastProvider>
-      <OkleykaMessageToastProvider>
+      <OkleykaMessageDialogProvider>
       <div
         ref={rootRef}
         id={DEALS_BOARD_ROOT_ID}
@@ -734,143 +727,88 @@ const DealsBoardContent = () => {
         </>
       ) : (
         <>
-          <div data-deals-board-toolbar>
-            <header
-              style={{
-                borderBottom: `1px solid ${colors.borderSubtle}`,
-                backgroundColor: 'transparent',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: spacing.md,
-                  padding: `${spacing.sm} ${spacing.md}`,
-                  minHeight: layout.toolbarHeight,
-                  flexWrap: 'wrap',
-                }}
-              >
-                <ViewSwitcher
-                  views={views}
-                  activeViewId={activeView?.id}
-                  onSelectView={setActiveViewId}
-                  onCreateView={() => setIsCreateModalOpen(true)}
-                />
-
-                <div
-                  style={{
-                    width: '1px',
-                    alignSelf: 'stretch',
-                    backgroundColor: colors.borderSubtle,
-                    flexShrink: 0,
-                    minHeight: '28px',
-                  }}
-                />
-
-                <FilterBar
-                  value={filterBarValue}
-                  viewClauses={viewClauses}
-                  onChange={handleFilterBarChange}
-                  onReset={handleFilterReset}
-                  parentFields={parentFieldsQuery.data ?? []}
-                  childFields={childFieldsQuery.data ?? []}
-                />
-
-                <div
-                  style={{
-                    marginLeft: 'auto',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: spacing.sm,
-                    flexShrink: 0,
-                    minWidth: 0,
-                  }}
-                >
-                  {!opportunitiesQuery.isLoading ? (
-                    <span
-                      style={{
-                        fontSize: font.sizeXs,
-                        color: colors.textMuted,
-                        fontVariantNumeric: 'tabular-nums',
-                        whiteSpace: 'nowrap',
-                      }}
-                      title={activeView?.name}
-                    >
-                      {visibleTotalCount} сд
-                    </span>
-                  ) : null}
-                  <MarginStrip
-                    opportunities={rashodQuery.opportunities}
-                    lineItems={visibleLineItems}
-                    onOpenAnalytics={() => setBoardPane('analytics')}
-                    isExpenseLoading={rashodQuery.isLoading}
-                  />
-                  <ExpandModeToggle />
-                  <GroupChipModeToggle />
-                  <ToolbarSettingsCluster
-                    disabled={!activeView}
-                    onEditView={() => {
-                      if (activeView) {
-                        setEditViewDraft(activeView);
-                      }
-                    }}
-                    parentColumns={mergedParentColumns}
-                    childColumns={mergedChildColumns}
-                    childGroups={activeView?.childGroups ?? []}
-                    onParentColumnsSave={(columns) => saveActiveViewColumns('parent', columns)}
-                    onChildColumnsSave={(columns, groups) =>
-                      saveActiveViewColumns('child', columns, groups)
-                    }
-                  />
-                </div>
-              </div>
-            </header>
-
-            {metadataFieldsWarning ? (
-              <div
-                style={{
-                  padding: `${spacing.xs} ${spacing.md}`,
-                  fontSize: font.sizeSm,
-                  color: colors.warning,
-                  backgroundColor: colors.warningMuted,
-                  borderBottom: `1px solid ${colors.border}`,
-                  flexShrink: 0,
-                }}
-              >
-                {metadataFieldsWarning}
-              </div>
-            ) : null}
-
-            {lineItemsWarning ? (
-              <div
-                style={{
-                  padding: `${spacing.xs} ${spacing.md}`,
-                  fontSize: font.sizeSm,
-                  color: colors.warning,
-                  backgroundColor: colors.warningMuted,
-                  borderBottom: `1px solid ${colors.border}`,
-                  flexShrink: 0,
-                }}
-              >
-                Позиции сделок не загрузились: {lineItemsWarning}
-              </div>
-            ) : null}
-          </div>
-
-          <AttentionStrip
-            stats={attentionStats}
-            activeTip={attentionTip}
-            onToggleTip={(tip) =>
-              setAttentionTip((current) => (current === tip ? null : tip))
+          <BoardToolbar
+            views={views}
+            activeViewId={activeView?.id}
+            onSelectView={setActiveViewId}
+            onCreateView={() => setIsCreateModalOpen(true)}
+            filterValue={filterBarValue}
+            viewClauses={viewClauses}
+            onFilterChange={handleFilterBarChange}
+            onFilterReset={handleFilterReset}
+            parentFields={parentFieldsQuery.data ?? []}
+            childFields={childFieldsQuery.data ?? []}
+            deals={filteredBoardData.deals}
+            lineItems={visibleLineItems}
+            dealCount={visibleTotalCount}
+            isLoading={opportunitiesQuery.isLoading}
+            onOpenAnalytics={() => setBoardPane('analytics')}
+            settingsDisabled={!activeView}
+            onEditView={() => {
+              if (activeView) setEditViewDraft(activeView);
+            }}
+            parentColumns={mergedParentColumns}
+            childColumns={mergedChildColumns}
+            childGroups={activeView?.childGroups ?? []}
+            onParentColumnsSave={(columns) => saveActiveViewColumns('parent', columns)}
+            onChildColumnsSave={(columns, groups) =>
+              saveActiveViewColumns('child', columns, groups)
             }
           />
 
-          <ProductionScoreboard
+          {metadataFieldsWarning ? (
+            <div
+              style={{
+                padding: `${spacing.xs} ${spacing.md}`,
+                fontSize: font.sizeSm,
+                color: colors.warning,
+                backgroundColor: colors.warningMuted,
+                borderBottom: `1px solid ${colors.border}`,
+                flexShrink: 0,
+              }}
+            >
+              {metadataFieldsWarning}
+            </div>
+          ) : null}
+
+          {lineItemsWarning ? (
+            <div
+              style={{
+                padding: `${spacing.xs} ${spacing.md}`,
+                fontSize: font.sizeSm,
+                color: colors.warning,
+                backgroundColor: colors.warningMuted,
+                borderBottom: `1px solid ${colors.border}`,
+                flexShrink: 0,
+              }}
+            >
+              Позиции сделок не загрузились: {lineItemsWarning}
+            </div>
+          ) : null}
+
+          <BoardInsightPanel
             lineItems={visibleLineItems}
             deals={filteredBoardData.deals}
             selectedTypes={mergedFilters.types ?? []}
             onToggleType={(tip) => toggleScoreboardClause('tip', tip)}
+            attentionStats={attentionStats}
+            attentionTip={attentionTip}
+            onToggleAttentionTip={(tip) =>
+              setAttentionTip((current) => (current === tip ? null : tip))
+            }
+            summaryTitle={
+              filterBarValue.datePreset === 'today'
+                ? 'Сводка на сегодня'
+                : filterBarValue.datePreset === 'tomorrow'
+                  ? 'Сводка на завтра'
+                  : filterBarValue.datePreset === 'dayAfterTomorrow'
+                    ? 'Сводка на послезавтра'
+                    : filterBarValue.datePreset === 'week'
+                      ? 'Сводка на неделю'
+                      : filterBarValue.datePreset === 'month'
+                        ? 'Сводка на месяц'
+                        : 'Сводка'
+            }
           />
 
           {boardPane === 'analytics' ? (
@@ -953,7 +891,7 @@ const DealsBoardContent = () => {
         onSaved={(view) => setActiveViewId(view.id)}
       />
     </div>
-      </OkleykaMessageToastProvider>
+      </OkleykaMessageDialogProvider>
       </ManualSyncErrorToastProvider>
       </CancelOtmenaProvider>
     </PortalHostProvider>

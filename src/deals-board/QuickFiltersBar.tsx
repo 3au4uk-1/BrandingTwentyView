@@ -288,7 +288,7 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
             color: selectedTypes.length ? colors.accentText : colors.textSecondary,
           }}
         >
-          Тип{selectedTypes.length ? ` · ${selectedTypes.length}` : ''}
+          Категория{selectedTypes.length ? ` · ${selectedTypes.length}` : ''}
         </button>
 
         {isTypeFilterOpen ? (

@@ -53,8 +53,8 @@ const CHIP_PALETTE: Record<
     dark: { bg: 'rgba(191, 90, 242, 0.22)', text: '#bf5af2' },
   },
   pink: {
-    light: { bg: 'rgba(255, 45, 85, 0.12)', text: '#d70015' },
-    dark: { bg: 'rgba(255, 55, 95, 0.2)', text: '#ff375f' },
+    light: { bg: 'rgba(255, 45, 85, 0.1)', text: '#c9346a' },
+    dark: { bg: 'rgba(255, 55, 95, 0.14)', text: '#ff8aa8' },
   },
   red: {
     light: { bg: 'rgba(255, 59, 48, 0.12)', text: '#d70015' },
