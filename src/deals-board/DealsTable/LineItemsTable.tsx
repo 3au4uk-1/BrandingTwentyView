@@ -207,7 +207,7 @@ export const LineItemsTable = ({
                 aria-label="Порядок"
                 style={{
                   width: 28,
-                  padding: '6px 4px',
+                  padding: '8px 4px',
                   color: colors.textMuted,
                   fontSize: font.sizeXs,
                 }}
@@ -227,7 +227,7 @@ export const LineItemsTable = ({
                 style={{
                   minWidth: `${GROUP_ZONE_MIN_WIDTH}px`,
                   maxWidth: '50%',
-                  padding: '6px 10px',
+                  padding: '8px 12px',
                   color: colors.textSecondary,
                   fontSize: font.sizeXs,
                   fontWeight: font.weightMedium,
@@ -328,7 +328,7 @@ export const LineItemsTable = ({
                           width: `${width}px`,
                           maxWidth: `${width}px`,
                           minWidth: `${width}px`,
-                          padding: '6px 10px',
+                          padding: '8px 12px',
                           fontSize: font.sizeSm,
                           color: colors.textSecondary,
                           whiteSpace: 'nowrap',
@@ -356,7 +356,7 @@ export const LineItemsTable = ({
                     style={{
                       minWidth: `${GROUP_ZONE_MIN_WIDTH}px`,
                       maxWidth: '50%',
-                      padding: '6px 10px',
+                      padding: '8px 12px',
                       fontSize: font.sizeSm,
                       color: colors.textSecondary,
                       verticalAlign: 'middle',

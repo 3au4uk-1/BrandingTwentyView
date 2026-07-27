@@ -72,6 +72,7 @@ export type DealsDataTableProps = {
   showDaySeparators: boolean;
   sort: DealBoardSort[];
   onSortChange: (next: DealBoardSort[]) => void;
+  attentionOpportunityIds?: Set<string> | null;
 };
 
 const PINNED_LEFT_COLUMN_IDS = ['__expand', 'name'] as const;
@@ -113,6 +114,7 @@ export const DealsDataTable = ({
   showDaySeparators,
   sort,
   onSortChange,
+  attentionOpportunityIds = null,
 }: DealsDataTableProps) => {
   const theme = useTheme();
   const { colors, font, spacing, zIndex } = theme;
@@ -301,6 +303,7 @@ export const DealsDataTable = ({
                   hasLineItemFilters={hasLineItemFilters}
                   showAllPositions={showAllPositionOppIds?.has(row.id) ?? false}
                   onToggleShowAllPositions={onToggleShowAllPositions}
+                  attentionHighlighted={attentionOpportunityIds?.has(row.id) ?? false}
                 />
               </Fragment>
             );

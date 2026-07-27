@@ -90,7 +90,7 @@ const FONT_SIZES = {
     weightSemibold: 600,
     weightBold: 700,
 } as const;
-const LAYOUT = { toolbarHeight: '44px', rowHeight: '40px', childRowHeight: '36px' } as const;
+const LAYOUT = { toolbarHeight: '44px', rowHeight: '46px', childRowHeight: '40px' } as const;
 const Z_INDEX = { sticky: 4, dropdown: 30, modal: 40 } as const;
 
 export const getTheme = (colorScheme: ColorScheme): ThemeTokens => {
@@ -98,17 +98,17 @@ export const getTheme = (colorScheme: ColorScheme): ThemeTokens => {
     return {
       colorScheme,
       colors: {
-        bg: '#000000',
-        bgSecondary: '#1c1c1e',
-        bgTertiary: '#2c2c2e',
-        bgElevated: '#3a3a3c',
-        bgHover: '#48484a',
-        bgActive: '#48484a',
-        bgInset: '#1c1c1e',
-        bgNested: '#161618',
-        border: 'rgba(84, 84, 88, 0.55)',
-        borderSubtle: 'rgba(84, 84, 88, 0.28)',
-        borderStrong: 'rgba(84, 84, 88, 0.72)',
+        bg: '#1c1c1e',
+        bgSecondary: '#2c2c2e',
+        bgTertiary: '#3a3a3c',
+        bgElevated: '#48484a',
+        bgHover: '#636366',
+        bgActive: '#636366',
+        bgInset: '#2c2c2e',
+        bgNested: '#242426',
+        border: 'rgba(84, 84, 88, 0.42)',
+        borderSubtle: 'rgba(84, 84, 88, 0.22)',
+        borderStrong: 'rgba(84, 84, 88, 0.58)',
         text: '#f5f5f7',
         textSecondary: 'rgba(235, 235, 245, 0.6)',
         textMuted: 'rgba(235, 235, 245, 0.36)',

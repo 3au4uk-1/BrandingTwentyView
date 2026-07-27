@@ -19,7 +19,8 @@ Quiet, readable ops UI — SF/system fonts, iOS HIG colors, low chrome. Not agen
 
 - Font: `-apple-system, BlinkMacSystemFont, "SF Pro Text", …` + SF Mono only for dense numbers when needed
 - Accent: system blue (`#007AFF` light / `#0A84FF` dark)
-- Dark surfaces: `#000` → `#1c1c1e` → `#2c2c2e` → `#3a3a3c` (real elevation)
+- Dark surfaces: `#1c1c1e` → `#2c2c2e` → `#3a3a3c` → `#48484a` (quiet gray canvas, not OLED black)
+- Density: parent row ~46px, child ~40px; soft borders; attention strip > green “all clear”
 - Radius: 6 / 10 / 14 / pill
 - Motion: `cubic-bezier(0.25, 0.1, 0.25, 1)`; active `scale(0.98)`
 - Labels: sentence case — **no** mono + SCREAMING uppercase chrome

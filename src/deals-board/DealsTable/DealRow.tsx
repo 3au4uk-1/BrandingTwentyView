@@ -41,6 +41,7 @@ type DealRowProps = {
     scaleSource?: HTMLElement | null,
     captureTarget?: HTMLElement | null,
   ) => void;
+  attentionHighlighted?: boolean;
 };
 
 const ExpandToggleButton = ({
@@ -101,15 +102,21 @@ export const DealRow = memo(function DealRow({
   showAllPositions = false,
   onToggleShowAllPositions,
   onChildColumnResizeStart,
+  attentionHighlighted = false,
 }: DealRowProps) {
   const theme = useTheme();
   const { colors, font, zIndex, colorScheme } = theme;
   const stageValue = typeof row.stage === 'string' ? row.stage : null;
   const stageStyles = getStageRowStyles(stageValue, colorScheme, 'parent');
   const rowBg = stageStyles.backgroundColor || colors.bg;
-  const rowAccentShadow = isExpanded
-    ? `inset 3px 0 0 ${stageStyles.accentColor}`
-    : stageStyles.boxShadow;
+  const attentionAccent = attentionHighlighted
+    ? `inset 3px 0 0 ${colors.warning}`
+    : null;
+  const rowAccentShadow = attentionAccent
+    ? attentionAccent
+    : isExpanded
+      ? `inset 3px 0 0 ${stageStyles.accentColor}`
+      : stageStyles.boxShadow;
   const expandColumnWidth = getColumnWidth(PARENT_EXPAND_COLUMN);
   const hasExpandColumn = columns.some((column) => column.field === PARENT_EXPAND_COLUMN_FIELD);
 
@@ -155,7 +162,7 @@ export const DealRow = memo(function DealRow({
               width: `${getColumnWidth(column)}px`,
               maxWidth: `${getColumnWidth(column)}px`,
               minWidth: `${getColumnWidth(column)}px`,
-              padding: column.field === PARENT_EXPAND_COLUMN_FIELD ? '7px 4px' : '7px 12px',
+              padding: column.field === PARENT_EXPAND_COLUMN_FIELD ? '10px 4px' : '10px 14px',
               fontSize: font.sizeSm,
               whiteSpace: 'nowrap',
               overflow: 'hidden',

@@ -64,6 +64,7 @@ type DealsTableProps = {
   isLoading?: boolean;
   isViewLoading?: boolean;
   errorMessage?: string;
+  attentionOpportunityIds?: Set<string> | null;
 };
 
 export const DealsTable = ({
@@ -94,6 +95,7 @@ export const DealsTable = ({
   isLoading = false,
   isViewLoading = false,
   errorMessage,
+  attentionOpportunityIds = null,
 }: DealsTableProps) => {
   const theme = useTheme();
   const { colors, font, spacing } = theme;
@@ -324,6 +326,7 @@ export const DealsTable = ({
         hasLineItemFilters={hasLineItemFilters}
         showAllPositionOppIds={showAllPositionOppIds}
         onToggleShowAllPositions={onToggleShowAllPositions}
+        attentionOpportunityIds={attentionOpportunityIds}
         isExpanded={isExpanded}
         toggleExpand={toggleExpand}
         showDaySeparators={showDaySeparators}

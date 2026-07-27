@@ -8,7 +8,12 @@ import {
 
 import { getChipPalette, type ChipColor } from '../Chip';
 import { useTheme } from '../theme/ThemeContext';
-import type { LineItemRow } from '../types';
+import type { LineItemRow, OpportunityRow } from '../types';
+import {
+  countDealsByPrefix,
+  DEAL_PREFIX_LABELS,
+  DEAL_PREFIX_ORDER,
+} from '../utils/deal-prefix';
 import {
   computeCategoryCardMetrics,
   computeProductionScoreboard,
@@ -18,12 +23,14 @@ import {
 
 type ProductionScoreboardProps = {
   lineItems: LineItemRow[];
+  deals: OpportunityRow[];
   selectedTypes: LineItemType[];
   onToggleType: (tip: LineItemType) => void;
 };
 
 export const ProductionScoreboard = ({
   lineItems,
+  deals,
   selectedTypes,
   onToggleType,
 }: ProductionScoreboardProps) => {
@@ -32,6 +39,7 @@ export const ProductionScoreboard = ({
 
   const stats = useMemo(() => computeProductionScoreboard(lineItems), [lineItems]);
   const cards = useMemo(() => computeCategoryCardMetrics(lineItems), [lineItems]);
+  const prefixCounts = useMemo(() => countDealsByPrefix(deals), [deals]);
 
   const tipCards = useMemo(() => {
     const tips = [...SCOREBOARD_TIP_ORDER];
@@ -73,9 +81,8 @@ export const ProductionScoreboard = ({
       title="Клик по категории — фильтр по типу"
       style={{
         display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'stretch',
-        gap: 8,
+        flexDirection: 'column',
+        gap: 6,
         margin: `${spacing.sm} ${spacing.md} 0`,
         padding: `4px 0`,
         minWidth: 0,
@@ -84,109 +91,144 @@ export const ProductionScoreboard = ({
       <div
         style={{
           display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          gap: 2,
-          flexShrink: 0,
-          padding: '4px 2px',
-          minWidth: 72,
+          flexWrap: 'wrap',
+          alignItems: 'stretch',
+          gap: 8,
+          minWidth: 0,
         }}
       >
-        <span
+        <div
           style={{
-            fontSize: font.sizeXs,
-            fontWeight: font.weightMedium,
-            color: colors.textMuted,
-            letterSpacing: '-0.01em',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: 2,
+            flexShrink: 0,
+            padding: '4px 2px',
+            minWidth: 72,
           }}
         >
-          Сводка
-        </span>
-        <span
-          style={{
-            fontSize: 17,
-            fontWeight: font.weightSemibold,
-            color: colors.text,
-            letterSpacing: '-0.03em',
-            lineHeight: 1,
-            fontVariantNumeric: 'tabular-nums',
-          }}
-        >
-          {stats.totalPositions}
           <span
             style={{
               fontSize: font.sizeXs,
               fontWeight: font.weightMedium,
-              color: colors.textSecondary,
-              marginLeft: 4,
+              color: colors.textMuted,
+              letterSpacing: '-0.01em',
             }}
           >
-            поз
+            Сводка
           </span>
-        </span>
-        <span
-          style={{
-            fontSize: font.sizeXs,
-            color: colors.textMuted,
-            fontVariantNumeric: 'tabular-nums',
-          }}
-        >
-          {stats.totalDeals} сд
-        </span>
-      </div>
-
-      {tipCards.map((tip) => {
-        const metrics = cards[tip];
-        const active = selectedTypes.includes(tip);
-        return (
-          <button
-            key={tip}
-            type="button"
-            style={cardStyle(tip, metrics, active)}
-            onClick={() => onToggleType(tip)}
-            title={`${getLineItemTypeLabel(tip)}: ${metrics.total} поз · печать ${metrics.inPrint} · работа ${metrics.inWork} · готово ${metrics.ready}`}
+          <span
+            style={{
+              fontSize: 17,
+              fontWeight: font.weightSemibold,
+              color: colors.text,
+              letterSpacing: '-0.03em',
+              lineHeight: 1,
+              fontVariantNumeric: 'tabular-nums',
+            }}
           >
+            {stats.totalPositions}
             <span
               style={{
                 fontSize: font.sizeXs,
                 fontWeight: font.weightMedium,
                 color: colors.textSecondary,
-                letterSpacing: '-0.01em',
+                marginLeft: 4,
               }}
             >
-              {getLineItemTypeLabel(tip)}
+              поз
             </span>
-            <span
-              style={{
-                fontSize: 20,
-                fontWeight: font.weightSemibold,
-                letterSpacing: '-0.03em',
-                lineHeight: 1,
-                fontVariantNumeric: 'tabular-nums',
-                color: colors.text,
-              }}
+          </span>
+          <span
+            style={{
+              fontSize: font.sizeXs,
+              color: colors.textMuted,
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            {stats.totalDeals} сд
+          </span>
+        </div>
+
+        {tipCards.map((tip) => {
+          const metrics = cards[tip];
+          const active = selectedTypes.includes(tip);
+          return (
+            <button
+              key={tip}
+              type="button"
+              style={cardStyle(tip, metrics, active)}
+              onClick={() => onToggleType(tip)}
+              title={`${getLineItemTypeLabel(tip)}: ${metrics.total} поз · печать ${metrics.inPrint} · работа ${metrics.inWork} · готово ${metrics.ready}`}
             >
-              {metrics.total}
+              <span
+                style={{
+                  fontSize: font.sizeXs,
+                  fontWeight: font.weightMedium,
+                  color: colors.textSecondary,
+                  letterSpacing: '-0.01em',
+                }}
+              >
+                {getLineItemTypeLabel(tip)}
+              </span>
+              <span
+                style={{
+                  fontSize: 20,
+                  fontWeight: font.weightSemibold,
+                  letterSpacing: '-0.03em',
+                  lineHeight: 1,
+                  fontVariantNumeric: 'tabular-nums',
+                  color: colors.text,
+                }}
+              >
+                {metrics.total}
+              </span>
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: font.weightMedium,
+                  color: colors.textMuted,
+                  fontVariantNumeric: 'tabular-nums',
+                  letterSpacing: '-0.01em',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                печать {metrics.inPrint}
+                <span style={{ opacity: 0.45 }}> · </span>
+                работа {metrics.inWork}
+                <span style={{ opacity: 0.45 }}> · </span>
+                готово {metrics.ready}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          gap: '4px 10px',
+          padding: `0 2px`,
+          color: colors.textMuted,
+          fontSize: font.sizeXs,
+          fontVariantNumeric: 'tabular-nums',
+        }}
+        title="Сделки по префиксу названия (только счёт)"
+      >
+        {DEAL_PREFIX_ORDER.map((prefix) => {
+          const count = prefixCounts[prefix];
+          if (count <= 0) return null;
+          return (
+            <span key={prefix} style={{ whiteSpace: 'nowrap' }}>
+              <span style={{ color: colors.textSecondary }}>{DEAL_PREFIX_LABELS[prefix]}</span>{' '}
+              <span style={{ fontWeight: font.weightSemibold, color: colors.text }}>{count}</span>
             </span>
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: font.weightMedium,
-                color: colors.textMuted,
-                fontVariantNumeric: 'tabular-nums',
-                letterSpacing: '-0.01em',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              печать {metrics.inPrint}
-              <span style={{ opacity: 0.45 }}> · </span>
-              работа {metrics.inWork}
-              <span style={{ opacity: 0.45 }}> · </span>
-              готово {metrics.ready}
-            </span>
-          </button>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 };

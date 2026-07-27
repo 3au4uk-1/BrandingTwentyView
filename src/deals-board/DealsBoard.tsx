@@ -7,7 +7,7 @@ import {
 } from 'src/constants/column-definitions';
 import { FUTURE_DEALS_VIEW_NAME } from 'src/constants/future-deals-view';
 import { MOBILE_VIEW_NAME } from 'src/constants/mobile-view';
-import { APP_DISPLAY_NAME } from 'src/constants/universal-identifiers';
+import type { LineItemType } from 'src/constants/line-item-types';
 
 import {
   resolveOpportunityLinkFieldDescriptors,
@@ -52,6 +52,8 @@ import {
 } from './filter-model/session';
 import { toggleInClauseValue } from './filter-model/toggle-in-clause';
 import type { FilterState } from './filter-model/types';
+import { AttentionStrip } from './attention/AttentionStrip';
+import { computeAttention } from './attention/compute';
 import { ProductionScoreboard } from './scoreboard/ProductionScoreboard';
 import type {
   ColumnGroupConfig,
@@ -60,6 +62,7 @@ import type {
   LineItemRow,
   OpportunityRow,
 } from './types';
+import { getTodayInputDateMsk } from './utils/working-days';
 import { ThemeProvider, useTheme } from './theme/ThemeContext';
 import { CancelOtmenaProvider } from './ui/CancelOtmenaPopup';
 import { ManualSyncErrorToastProvider } from './ui/ManualSyncErrorToast';
@@ -92,7 +95,7 @@ const EMPTY_FILTER_SESSION: Partial<FilterState> = {};
 
 const DealsBoardContent = () => {
   const theme = useTheme();
-  const { colors, font, spacing, radius, layout } = theme;
+  const { colors, font, spacing, layout } = theme;
   const rootRef = useRef<HTMLDivElement | null>(null);
   const mobileLayoutActive = useShouldUseMobileLayout(rootRef);
   const lockedHostHeight = useHostHeightLock(rootRef, !mobileLayoutActive);
@@ -111,6 +114,7 @@ const DealsBoardContent = () => {
   const [sortSession, setSortSession] = useState<DealBoardSort[] | undefined>(undefined);
   const [showAllPositionOppIds, setShowAllPositionOppIds] = useState<Set<string>>(() => new Set());
   const [boardPane, setBoardPane] = useState<'deals' | 'analytics'>('deals');
+  const [attentionTip, setAttentionTip] = useState<LineItemType | null>(null);
   const views = asArray<DealBoardViewRecord>(viewsQuery.data);
   const hasPrintGroupMigrationAttemptedRef = useRef(false);
 
@@ -168,6 +172,7 @@ const DealsBoardContent = () => {
     setFilterSession(EMPTY_FILTER_SESSION);
     setSortSession(undefined);
     setShowAllPositionOppIds(new Set());
+    setAttentionTip(null);
   }, [activeView?.id]);
 
   const viewClauses = useMemo(
@@ -420,8 +425,41 @@ const DealsBoardContent = () => {
     return filterLineItemsForSearch(flat, search, recordsById);
   }, [filteredBoardData.lineItemsByOppId, mergedFilters.search, recordsById]);
 
-  const visibleRecords = filteredBoardData.deals;
-  const visibleTotalCount = hasLineItemFilters ? visibleRecords.length : totalCount;
+  const attentionStats = useMemo(() => {
+    const oppsById = new Map(records.map((record) => [record.id, record]));
+    return computeAttention(getTodayInputDateMsk(), lineItems, oppsById);
+  }, [lineItems, records]);
+
+  const attentionHighlightOppIds = useMemo(() => {
+    if (!attentionTip) return null;
+    const ids = new Set<string>();
+    for (const item of attentionStats.items) {
+      if (item.tip === attentionTip) ids.add(item.opportunityId);
+    }
+    return ids;
+  }, [attentionStats.items, attentionTip]);
+
+  const tableRecords = useMemo(() => {
+    if (!attentionHighlightOppIds) return filteredBoardData.deals;
+    return records.filter((deal) => attentionHighlightOppIds.has(deal.id));
+  }, [attentionHighlightOppIds, filteredBoardData.deals, records]);
+
+  const tableLineItems = useMemo(() => {
+    if (!attentionTip) return visibleLineItems;
+    const lineIds = new Set(
+      attentionStats.items
+        .filter((item) => item.tip === attentionTip)
+        .map((item) => item.lineItemId),
+    );
+    return lineItems.filter((item) => lineIds.has(item.id));
+  }, [attentionStats.items, attentionTip, lineItems, visibleLineItems]);
+
+  const visibleRecords = tableRecords;
+  const visibleTotalCount = attentionTip
+    ? tableRecords.length
+    : hasLineItemFilters
+      ? filteredBoardData.deals.length
+      : totalCount;
   const rashodQuery = useOpportunityRashodFields(visibleRecords);
 
   const handleFilterBarChange = (next: FilterState) => {
@@ -451,6 +489,7 @@ const DealsBoardContent = () => {
     setFilterSession(EMPTY_FILTER_SESSION);
     setSortSession(undefined);
     setShowAllPositionOppIds(new Set());
+    setAttentionTip(null);
   };
 
   const handleSortChange = (next: DealBoardSort[]) => {
@@ -748,6 +787,19 @@ const DealsBoardContent = () => {
                     minWidth: 0,
                   }}
                 >
+                  {!opportunitiesQuery.isLoading ? (
+                    <span
+                      style={{
+                        fontSize: font.sizeXs,
+                        color: colors.textMuted,
+                        fontVariantNumeric: 'tabular-nums',
+                        whiteSpace: 'nowrap',
+                      }}
+                      title={activeView?.name}
+                    >
+                      {visibleTotalCount} сд
+                    </span>
+                  ) : null}
                   <MarginStrip
                     opportunities={rashodQuery.opportunities}
                     lineItems={visibleLineItems}
@@ -756,84 +808,22 @@ const DealsBoardContent = () => {
                   />
                   <ExpandModeToggle />
                   <GroupChipModeToggle />
-                </div>
-              </div>
-
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: spacing.md,
-                  padding: `6px ${spacing.md}`,
-                  borderTop: `1px solid ${colors.borderSubtle}`,
-                  minHeight: '32px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, minWidth: 0 }}>
-                  <span
-                    style={{
-                      fontSize: font.sizeSm,
-                      fontWeight: font.weightSemibold,
-                      color: colors.text,
-                      letterSpacing: '-0.02em',
-                      whiteSpace: 'nowrap',
+                  <ToolbarSettingsCluster
+                    disabled={!activeView}
+                    onEditView={() => {
+                      if (activeView) {
+                        setEditViewDraft(activeView);
+                      }
                     }}
-                  >
-                    {APP_DISPLAY_NAME}
-                  </span>
-                  {activeView ? (
-                    <>
-                      <span style={{ color: colors.textMuted, fontSize: font.sizeXs }}>/</span>
-                      <span
-                        style={{
-                          fontSize: font.sizeSm,
-                          color: colors.textSecondary,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {activeView.name}
-                      </span>
-                      {!opportunitiesQuery.isLoading ? (
-                        <span
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            padding: '1px 7px',
-                            borderRadius: radius.pill,
-                            fontSize: font.sizeXs,
-                            fontWeight: font.weightMedium,
-                            fontFamily: font.mono,
-                            color: colors.textMuted,
-                            backgroundColor: colors.bgTertiary,
-                            border: `1px solid ${colors.borderSubtle}`,
-                            flexShrink: 0,
-                          }}
-                        >
-                          {visibleTotalCount}
-                        </span>
-                      ) : null}
-                    </>
-                  ) : null}
-                </div>
-
-                <ToolbarSettingsCluster
-                  disabled={!activeView}
-                  onEditView={() => {
-                    if (activeView) {
-                      setEditViewDraft(activeView);
+                    parentColumns={mergedParentColumns}
+                    childColumns={mergedChildColumns}
+                    childGroups={activeView?.childGroups ?? []}
+                    onParentColumnsSave={(columns) => saveActiveViewColumns('parent', columns)}
+                    onChildColumnsSave={(columns, groups) =>
+                      saveActiveViewColumns('child', columns, groups)
                     }
-                  }}
-                  parentColumns={mergedParentColumns}
-                  childColumns={mergedChildColumns}
-                  childGroups={activeView?.childGroups ?? []}
-                  onParentColumnsSave={(columns) => saveActiveViewColumns('parent', columns)}
-                  onChildColumnsSave={(columns, groups) =>
-                    saveActiveViewColumns('child', columns, groups)
-                  }
-                />
+                  />
+                </div>
               </div>
             </header>
 
@@ -868,8 +858,17 @@ const DealsBoardContent = () => {
             ) : null}
           </div>
 
+          <AttentionStrip
+            stats={attentionStats}
+            activeTip={attentionTip}
+            onToggleTip={(tip) =>
+              setAttentionTip((current) => (current === tip ? null : tip))
+            }
+          />
+
           <ProductionScoreboard
             lineItems={visibleLineItems}
+            deals={filteredBoardData.deals}
             selectedTypes={mergedFilters.types ?? []}
             onToggleType={(tip) => toggleScoreboardClause('tip', tip)}
           />
@@ -909,11 +908,12 @@ const DealsBoardContent = () => {
               childDescriptorByField={childDescriptorByField}
               opportunityLinkFields={opportunityLinkFields}
               records={visibleRecords}
-              lineItems={visibleLineItems}
+              lineItems={tableLineItems}
               lineItemFilters={lineItemQueryFilters}
               hasLineItemFilters={hasLineItemFilters}
               showAllPositionOppIds={showAllPositionOppIds}
               onToggleShowAllPositions={handleToggleShowAllPositions}
+              attentionOpportunityIds={attentionHighlightOppIds}
               totalCount={visibleTotalCount}
               page={page}
               totalPages={totalPages}
