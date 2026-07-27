@@ -3,15 +3,17 @@
  */
 const fs = require('fs');
 const path = require('path');
-
-const mcp = JSON.parse(
-  fs.readFileSync(path.join(process.env.USERPROFILE, '.cursor', 'mcp.json'), 'utf8'),
-);
+const { LOCAL_GRAPHQL, getLocalToken } = require('./lib/tokens');
 
 const LOCAL = {
-  url: 'http://localhost:2020/graphql',
-  token: mcp.mcpServers.twentylocal.headers.Authorization.replace(/^Bearer\s+/i, ''),
+  url: LOCAL_GRAPHQL,
+  token: getLocalToken(),
 };
+
+if (!LOCAL.token) {
+  console.error('Missing local token');
+  process.exit(1);
+}
 
 const RULES = [
   { tip: 'RESTAVRACIYA', needles: ['реставрац'] },

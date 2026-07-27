@@ -5,9 +5,9 @@
 const fs = require('fs');
 const path = require('path');
 const { randomUUID } = require('crypto');
+const { getLocalToken } = require('./lib/tokens');
 
-const { OPPORTUNITY_STAGES } = (() => {
-  // Keep in sync with src/constants/stages.ts
+const { OPPORTUNITY_STAGES } = (() => {  // Keep in sync with src/constants/stages.ts
   return {
     OPPORTUNITY_STAGES: [
       { value: 'NOVYY', label: 'Новый', color: 'gray' },
@@ -20,14 +20,9 @@ const { OPPORTUNITY_STAGES } = (() => {
   };
 })();
 
-const cfg = JSON.parse(
-  fs.readFileSync(path.join(process.env.USERPROFILE, '.twenty', 'config.json'), 'utf8'),
-);
-const token =
-  cfg.remotes?.localhost?.appAccessToken ||
-  cfg.remotes?.localhost?.twentyCLIAccessToken;
+const token = getLocalToken();
 if (!token) {
-  console.error('No localhost token in ~/.twenty/config.json');
+  console.error('No localhost token in ~/.twenty/config.json or mcp.json');
   process.exit(1);
 }
 

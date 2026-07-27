@@ -5,20 +5,27 @@
 const fs = require("fs");
 const path = require("path");
 const { randomUUID } = require("crypto");
+const { LOCAL_GRAPHQL, SERVER_GRAPHQL, getLocalToken, getServerToken } = require("./lib/tokens");
 
 const SEED = path.join(__dirname, "seed-data");
-const mcp = JSON.parse(
-  fs.readFileSync(path.join(process.env.USERPROFILE, ".cursor", "mcp.json"), "utf8"),
-);
 
 const SERVER = {
-  url: "https://twenty.dosugmayak.ru/graphql",
-  token: mcp.mcpServers.twentyserver.headers.Authorization.replace(/^Bearer\s+/i, ""),
+  url: SERVER_GRAPHQL,
+  token: getServerToken(),
 };
 const LOCAL = {
-  url: "http://localhost:2020/graphql",
-  token: mcp.mcpServers.twentylocal.headers.Authorization.replace(/^Bearer\s+/i, ""),
+  url: LOCAL_GRAPHQL,
+  token: getLocalToken(),
 };
+
+if (!SERVER.token) {
+  console.error("Missing twentyserver token in ~/.cursor/mcp.json");
+  process.exit(1);
+}
+if (!LOCAL.token) {
+  console.error("Missing local token in ~/.twenty/config.json or mcp.json");
+  process.exit(1);
+}
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
