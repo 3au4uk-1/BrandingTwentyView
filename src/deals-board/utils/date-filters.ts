@@ -4,7 +4,6 @@ import type { FilterClause } from '../filter-model/types';
 import { hasLineItemFilterClauses } from '../filter-model/has-line-item-filter-clauses';
 import type { DealBoardFilters, DealBoardSort } from '../types';
 import { OPPORTUNITY_EVENT_DATE_FIELD } from './resolve-opportunity-date';
-import { sortsByDateField } from './sort-opportunities';
 
 export { hasLineItemFilterClauses };
 
@@ -16,6 +15,13 @@ export type DatePreset =
   | 'month'
   | 'future'
   | 'custom';
+
+const TIGHT_DATE_PRESETS: ReadonlySet<DatePreset> = new Set([
+  'today',
+  'tomorrow',
+  'dayAfterTomorrow',
+  'week',
+]);
 
 export type LocalDayBounds = {
   gte: string;
@@ -193,9 +199,21 @@ export const buildOpportunityDateFilter = (
 
 export const shouldFetchAllOpportunities = (
   filters: DealBoardFilters,
-  sort?: DealBoardSort[],
+  _sort?: DealBoardSort[],
   clauses?: FilterClause[],
-): boolean =>
-  (sort ? sortsByDateField(sort) : false) ||
-  Boolean(buildOpportunityDateFilter(filters)) ||
-  Boolean(clauses?.length && hasLineItemFilterClauses(clauses));
+): boolean => {
+  if (clauses?.length && hasLineItemFilterClauses(clauses)) {
+    return true;
+  }
+
+  const preset = filters.datePreset;
+  if (preset && TIGHT_DATE_PRESETS.has(preset)) {
+    return false;
+  }
+
+  if (preset === 'custom') {
+    return true;
+  }
+
+  return Boolean(buildOpportunityDateFilter(filters));
+};

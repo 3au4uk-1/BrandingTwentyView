@@ -25,6 +25,7 @@ describe('buildCreateLineItemInput', () => {
       opportunityId: 'deal-1',
       stage: 'NOVYY',
       kolichestvo: 1,
+      poryadok: 0,
       amount: {
         amountMicros: 0,
         currencyCode: 'RUB',
@@ -44,6 +45,7 @@ describe('buildCreateLineItemInput', () => {
       opportunityId: 'deal-1',
       stage: 'NOVYY',
       kolichestvo: 1,
+      poryadok: 0,
       amount: {
         amountMicros: 0,
         currencyCode: 'RUB',

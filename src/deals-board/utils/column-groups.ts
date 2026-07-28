@@ -34,7 +34,7 @@ export const partitionUngroupedAndGroups = (
 };
 
 export const buildDefaultChildGroups = (): ColumnGroupConfig[] => [
-  { id: PRINT_FIELD_GROUP_ID, name: 'Печать', order: 0 },
+  { id: PRINT_FIELD_GROUP_ID, name: 'Печать Плёнки', order: 0 },
 ];
 
 export const applyPrintGroupSeed = (

@@ -131,9 +131,8 @@ export const ViewSwitcher = ({
               padding: '6px 10px 4px',
               fontSize: font.sizeXs,
               color: colors.textMuted,
-              fontWeight: font.weightSemibold,
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
+              fontWeight: font.weightMedium,
+              letterSpacing: '-0.01em',
             }}
           >
             Общие
@@ -152,9 +151,8 @@ export const ViewSwitcher = ({
               padding: '6px 10px 4px',
               fontSize: font.sizeXs,
               color: colors.textMuted,
-              fontWeight: font.weightSemibold,
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
+              fontWeight: font.weightMedium,
+              letterSpacing: '-0.01em',
             }}
           >
             Личные

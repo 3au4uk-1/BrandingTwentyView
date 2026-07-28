@@ -34,7 +34,7 @@ export const BottomSheet = ({
   const portalHostRef = usePortalHost();
   const { colors, radius, font, spacing, zIndex } = theme;
   const overlayBg =
-    theme.colorScheme === 'dark' ? 'rgba(0, 0, 0, 0.72)' : 'rgba(24, 24, 27, 0.32)';
+    theme.colors.overlay;
 
   useEffect(() => {
     if (!isOpen) return;

@@ -71,6 +71,7 @@ export const DealStageSelect = ({
         value={selectedValue}
         onChange={(nextValue) => void handleChange(nextValue)}
         disabled={updateMutation.isPending}
+        appearance="filled"
       />
       {isPinned ? (
         <Button

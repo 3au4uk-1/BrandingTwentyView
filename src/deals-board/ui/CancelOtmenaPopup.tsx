@@ -61,8 +61,7 @@ export const CancelOtmenaProvider = ({ children }: CancelOtmenaProviderProps) =>
         justifyContent: 'center',
         padding: spacing.lg,
         boxSizing: 'border-box',
-        backgroundColor:
-          theme.colorScheme === 'dark' ? 'rgba(0, 0, 0, 0.72)' : 'rgba(24, 24, 27, 0.32)',
+        backgroundColor: theme.colors.overlay,
       }}
     >
       <div

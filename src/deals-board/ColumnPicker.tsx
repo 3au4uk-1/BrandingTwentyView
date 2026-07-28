@@ -79,13 +79,25 @@ export const ColumnPicker = ({
     return () => window.removeEventListener('mousedown', onMouseDown);
   }, [isOpen]);
 
+  // Sync draft from props only when closed (or on open). While open, keep local
+  // reorder/visibility edits — otherwise refetch/mergeColumns identity churn resets ↑↓.
   useEffect(() => {
+    if (isOpen) return;
     setDraftColumns(sortColumns(columns));
-  }, [columns]);
+  }, [columns, isOpen]);
 
   useEffect(() => {
+    if (isOpen) return;
     setDraftGroups(target === 'child' ? sortGroups(groups) : []);
-  }, [groups, target]);
+  }, [groups, target, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setDraftColumns(sortColumns(columns));
+    setDraftGroups(target === 'child' ? sortGroups(groups) : []);
+    // Intentionally only when the panel opens — not on every columns/groups identity change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- snapshot props at open
+  }, [isOpen]);
 
   const canInteract = !isSaving;
   const triggerLabel = useMemo(

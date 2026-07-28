@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import { OPPORTUNITY_DATE_FILTER_FIELD } from 'src/constants/date-filter-field';
 
@@ -106,5 +106,6 @@ export const useOpportunities = (params: {
       };
     },
     enabled: params.enabled !== false,
+    placeholderData: keepPreviousData,
   });
 };

@@ -71,6 +71,8 @@ export type OpportunityRow = {
   [key: string]: unknown;
 };
 
+export type LineItemFileRef = { fileId: string; label?: string };
+
 export type LineItemRow = {
   id: string;
   opportunityId: string;
@@ -79,8 +81,11 @@ export type LineItemRow = {
   amount?: { amountMicros: number; currencyCode: string };
   kommentariy?: string;
   tip?: LineItemType | null;
+  tipDetail?: string | null;
+  poryadok?: number | null;
   stage?: LineItemStage | null;
   ssylkaNaMakety?: { primaryLinkUrl?: string; primaryLinkLabel?: string };
   plenka?: { markdown?: string };
+  prevyuOkleyki?: LineItemFileRef[] | null;
   [key: string]: unknown;
 };

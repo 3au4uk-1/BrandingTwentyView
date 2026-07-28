@@ -1,5 +1,11 @@
 import { useState, type MouseEvent as ReactMouseEvent } from 'react';
 
+import {
+  STANDARD_RESTORATION_MAKETS,
+  toSsylkaNaMakety,
+  type StandardRestorationMaket,
+} from 'src/constants/standard-restoration-makets';
+
 import { useUpdateLineItem } from '../hooks/useLineItems';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
@@ -15,9 +21,10 @@ type LinkCellProps = {
 
 export const LinkCell = ({ itemId, value }: LinkCellProps) => {
   const theme = useTheme();
-  const { colors, font, spacing } = theme;
+  const { colors, font, spacing, radius } = theme;
   const updateMutation = useUpdateLineItem();
   const [isEditing, setIsEditing] = useState(false);
+  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [draftValue, setDraftValue] = useState(value?.primaryLinkUrl ?? '');
 
   const openEditor = (event: ReactMouseEvent<HTMLButtonElement>) => {
@@ -52,7 +59,22 @@ export const LinkCell = ({ itemId, value }: LinkCellProps) => {
     }
   };
 
+  const applyMaket = async (maket: StandardRestorationMaket) => {
+    try {
+      await updateMutation.mutateAsync({
+        id: itemId,
+        data: { ssylkaNaMakety: toSsylkaNaMakety(maket) },
+      });
+      setIsCatalogOpen(false);
+    } catch (error) {
+      window.alert(
+        `Не удалось подставить макет.${error instanceof Error ? ` ${error.message}` : ''}`,
+      );
+    }
+  };
+
   const url = value?.primaryLinkUrl?.trim();
+  const label = value?.primaryLinkLabel?.trim();
 
   return (
     <>
@@ -62,7 +84,7 @@ export const LinkCell = ({ itemId, value }: LinkCellProps) => {
             href={url}
             target="_blank"
             rel="noreferrer"
-            title={url}
+            title={label || url}
             onClick={(event) => event.stopPropagation()}
             style={{
               display: 'inline-flex',
@@ -101,6 +123,31 @@ export const LinkCell = ({ itemId, value }: LinkCellProps) => {
           }}
         >
           {url ? '✎' : EMPTY_VALUE}
+        </button>
+
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            setIsCatalogOpen(true);
+          }}
+          onMouseDown={(event) => event.stopPropagation()}
+          title="Стандартный макет реставрации"
+          style={{
+            border: `1px solid ${colors.border}`,
+            borderRadius: radius.pill,
+            background: 'transparent',
+            padding: '1px 6px',
+            margin: 0,
+            cursor: 'pointer',
+            color: colors.textSecondary,
+            fontSize: font.sizeXs,
+            fontFamily: 'inherit',
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
+          }}
+        >
+          Станд.
         </button>
       </div>
 
@@ -145,6 +192,63 @@ export const LinkCell = ({ itemId, value }: LinkCellProps) => {
           }}
           style={{ width: '100%', padding: '6px 8px', fontSize: font.sizeSm }}
         />
+      </Modal>
+
+      <Modal
+        theme={theme}
+        isOpen={isCatalogOpen}
+        title="Стандартные макеты"
+        description="Демо-ссылки — заменим на боевые, когда будут готовы."
+        onClose={() => setIsCatalogOpen(false)}
+        portalTarget="root"
+        footer={
+          <Button theme={theme} variant="ghost" size="sm" onClick={() => setIsCatalogOpen(false)}>
+            Закрыть
+          </Button>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
+          {STANDARD_RESTORATION_MAKETS.map((maket) => (
+            <button
+              key={maket.id}
+              type="button"
+              disabled={updateMutation.isPending}
+              onClick={() => void applyMaket(maket)}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                gap: 2,
+                width: '100%',
+                padding: spacing.sm,
+                border: `1px solid ${colors.border}`,
+                borderRadius: radius.md,
+                background: colors.bg,
+                color: colors.text,
+                cursor: updateMutation.isPending ? 'default' : 'pointer',
+                textAlign: 'left',
+                fontFamily: 'inherit',
+              }}
+            >
+              <span style={{ fontSize: font.sizeSm, fontWeight: font.weightSemibold }}>
+                {maket.label}
+                {maket.isDefault ? ' · по умолчанию' : ''}
+              </span>
+              <span
+                style={{
+                  fontSize: font.sizeXs,
+                  color: colors.textMuted,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: '100%',
+                }}
+              >
+                {maket.url}
+              </span>
+            </button>
+          ))}
+        </div>
       </Modal>
     </>
   );

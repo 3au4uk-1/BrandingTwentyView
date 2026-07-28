@@ -28,9 +28,11 @@ export const isCancelledOpportunity = (stage?: string | null): boolean =>
 export const isDuplicateOpportunity = (stage?: string | null): boolean =>
   stage === DUPLICATE_OPPORTUNITY_STAGE;
 
-/** Opportunities collapsed by default in smart expand mode (manual expand still allowed). */
+/** Opportunities collapsed by default in smart expand mode. */
 export const isSmartCollapsedOpportunity = (stage?: string | null): boolean =>
-  isCancelledOpportunity(stage) || isDuplicateOpportunity(stage);
+  stage === CANCELLED_OPPORTUNITY_STAGE ||
+  stage === 'GOTOVO' ||
+  isDuplicateOpportunity(stage);
 
 export const hasActiveLineItems = (items: ReadonlyArray<Pick<LineItemRow, 'stage'>>): boolean =>
   items.some((item) => !DONE_STAGES.includes(resolveLineItemStage(item.stage)));
@@ -42,8 +44,7 @@ export const shouldAutoExpandDeal = (
 ): boolean =>
   mode === 'smart' &&
   items.length > 0 &&
-  !isSmartCollapsedOpportunity(opportunityStage) &&
-  hasActiveLineItems(items);
+  !isSmartCollapsedOpportunity(opportunityStage);
 
 export const computeIsExpanded = (
   opportunityId: string,
@@ -69,7 +70,7 @@ export const computeIsExpanded = (
       return false;
     }
 
-    return hasActiveLineItems(items);
+    return items.length > 0;
   }
 
   return overrides.expanded.includes(opportunityId);
