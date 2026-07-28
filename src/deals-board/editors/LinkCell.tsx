@@ -1,11 +1,11 @@
 import { useState, type MouseEvent as ReactMouseEvent } from 'react';
 
 import {
-  STANDARD_RESTORATION_MAKETS,
   toSsylkaNaMakety,
-  type StandardRestorationMaket,
+  type RestorationMaketCatalogEntry,
 } from 'src/constants/standard-restoration-makets';
 
+import { useRestorationTemplatesCatalog } from '../hooks/useRestorationTemplatesCatalog';
 import { useUpdateLineItem } from '../hooks/useLineItems';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
@@ -23,6 +23,7 @@ export const LinkCell = ({ itemId, value }: LinkCellProps) => {
   const theme = useTheme();
   const { colors, font, spacing, radius } = theme;
   const updateMutation = useUpdateLineItem();
+  const { entries: catalogEntries } = useRestorationTemplatesCatalog();
   const [isEditing, setIsEditing] = useState(false);
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [draftValue, setDraftValue] = useState(value?.primaryLinkUrl ?? '');
@@ -59,7 +60,7 @@ export const LinkCell = ({ itemId, value }: LinkCellProps) => {
     }
   };
 
-  const applyMaket = async (maket: StandardRestorationMaket) => {
+  const applyMaket = async (maket: RestorationMaketCatalogEntry) => {
     try {
       await updateMutation.mutateAsync({
         id: itemId,
@@ -198,7 +199,7 @@ export const LinkCell = ({ itemId, value }: LinkCellProps) => {
         theme={theme}
         isOpen={isCatalogOpen}
         title="Стандартные макеты"
-        description="Демо-ссылки — заменим на боевые, когда будут готовы."
+        description="Шаблоны из CRM или запасной список, если каталог пуст."
         onClose={() => setIsCatalogOpen(false)}
         portalTarget="root"
         footer={
@@ -208,7 +209,7 @@ export const LinkCell = ({ itemId, value }: LinkCellProps) => {
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
-          {STANDARD_RESTORATION_MAKETS.map((maket) => (
+          {catalogEntries.map((maket) => (
             <button
               key={maket.id}
               type="button"

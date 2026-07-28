@@ -7,20 +7,24 @@ import {
   type ListName,
 } from './api/crmparser';
 import { lineItemListStatusQueryKey } from './hooks/useLineItemListStatus';
-import { LINE_ITEM_LIST_ACTIONS } from './line-item-list-actions';
+import { filterActionsForBoardStream } from './line-item-list-actions';
 import { useTheme } from './theme/ThemeContext';
 import { BottomSheet } from './ui/BottomSheet';
 import { SettingsIcon } from './ui/Icons';
+import type { BoardStream } from 'src/constants/product-stream';
+import { BOARD_STREAM } from 'src/constants/product-stream';
 
 type LineItemListMenuProps = {
   lineItemId: string;
   listStatus: LineItemListStatus | null | undefined;
+  boardStream?: BoardStream;
   presentation?: 'inline' | 'sheet';
 };
 
 export const LineItemListMenu = ({
   lineItemId,
   listStatus,
+  boardStream = BOARD_STREAM.BRANDING,
   presentation = 'inline',
 }: LineItemListMenuProps) => {
   const theme = useTheme();
@@ -29,6 +33,7 @@ export const LineItemListMenu = ({
   const [isOpen, setIsOpen] = useState(false);
   const [busyList, setBusyList] = useState<ListName | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const listActions = filterActionsForBoardStream(boardStream);
 
   const handleAction = async (list: ListName) => {
     setBusyList(list);
@@ -47,7 +52,7 @@ export const LineItemListMenu = ({
 
   const renderSheetActions = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm }}>
-      {LINE_ITEM_LIST_ACTIONS.map(({ list, label, isActive }) => {
+      {listActions.map(({ list, label, isActive }) => {
         const active = isActive(listStatus);
         const disabled = active || busyList !== null;
         return (
@@ -175,7 +180,7 @@ export const LineItemListMenu = ({
             gap: 2,
           }}
         >
-          {LINE_ITEM_LIST_ACTIONS.map(({ list, label, shortLabel, isActive }) => {
+          {listActions.map(({ list, label, shortLabel, isActive }) => {
             const active = isActive(listStatus);
             const disabled = active || busyList !== null;
             return (

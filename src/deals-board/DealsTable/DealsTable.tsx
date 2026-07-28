@@ -33,6 +33,7 @@ import {
 } from '../utils/columns';
 import { shouldShowDaySeparators } from '../utils/day-separators';
 import { getEffectiveOpportunitySort } from '../utils/sort-opportunities';
+import type { BoardStream } from 'src/constants/product-stream';
 import { DealsDataTable } from './DealsDataTable';
 import { withParentExpandColumn } from './build-parent-columns';
 
@@ -65,6 +66,7 @@ type DealsTableProps = {
   isViewLoading?: boolean;
   errorMessage?: string;
   attentionOpportunityIds?: Set<string> | null;
+  boardStream?: BoardStream;
 };
 
 export const DealsTable = ({
@@ -96,6 +98,7 @@ export const DealsTable = ({
   isViewLoading = false,
   errorMessage,
   attentionOpportunityIds = null,
+  boardStream,
 }: DealsTableProps) => {
   const theme = useTheme();
   const { colors, font, spacing } = theme;
@@ -332,6 +335,7 @@ export const DealsTable = ({
         showDaySeparators={showDaySeparators}
         sort={effectiveSort}
         onSortChange={onSortChange}
+        boardStream={boardStream}
       />
 
       <div

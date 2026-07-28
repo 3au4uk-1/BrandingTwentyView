@@ -14,6 +14,7 @@ import type {
 import { getColumnWidth } from '../utils/columns';
 import { resolveFieldValue } from '../utils/resolve-field-value';
 import { getStageRowStyles } from '../utils/stage-row-styles';
+import type { BoardStream } from 'src/constants/product-stream';
 import { PARENT_EXPAND_COLUMN } from './build-parent-columns';
 import { PARENT_EXPAND_COLUMN_FIELD } from './parent-table-sort';
 import { LineItemsTable } from './LineItemsTable';
@@ -42,6 +43,7 @@ type DealRowProps = {
     captureTarget?: HTMLElement | null,
   ) => void;
   attentionHighlighted?: boolean;
+  boardStream?: BoardStream;
 };
 
 const ExpandToggleButton = ({
@@ -103,6 +105,7 @@ export const DealRow = memo(function DealRow({
   onToggleShowAllPositions,
   onChildColumnResizeStart,
   attentionHighlighted = false,
+  boardStream,
 }: DealRowProps) {
   const theme = useTheme();
   const { colors, font, zIndex, colorScheme } = theme;
@@ -225,6 +228,7 @@ export const DealRow = memo(function DealRow({
                   : undefined
               }
               onColumnResizeStart={onChildColumnResizeStart}
+              boardStream={boardStream}
             />
           </td>
         </tr>

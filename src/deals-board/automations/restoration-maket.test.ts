@@ -30,4 +30,33 @@ describe('planRestorationMaketAuto', () => {
   it('ignores other tip changes', () => {
     expect(planRestorationMaketAuto('PLENKA', 'BANNERA', null)).toBeNull();
   });
+
+  it('uses keyword catalog match when tip becomes RESTAVRACIYA', () => {
+    const catalog = [
+      {
+        id: 'd',
+        label: 'Default',
+        url: 'https://d',
+        isDefault: true,
+      },
+      {
+        id: 'h',
+        label: 'Hvatayka rest',
+        url: 'https://hvatayka',
+        matchKeywords: 'хватайка',
+        priority: 5,
+      },
+    ];
+    expect(
+      planRestorationMaketAuto('PLENKA', 'RESTAVRACIYA', null, {
+        lineItemName: 'Автомат Хватайка белый',
+        catalog,
+      }),
+    ).toEqual({
+      ssylkaNaMakety: {
+        primaryLinkUrl: 'https://hvatayka',
+        primaryLinkLabel: 'Hvatayka rest',
+      },
+    });
+  });
 });

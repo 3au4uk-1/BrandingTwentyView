@@ -2,6 +2,7 @@ import {
   DEFAULT_CHILD_COLUMNS,
   DEFAULT_PARENT_COLUMNS,
 } from 'src/constants/column-definitions';
+import { normalizeBoardKind } from 'src/constants/product-stream';
 
 import {
   parseChildColumnsPayload,
@@ -17,6 +18,7 @@ const VIEW_FIELDS = {
   id: true,
   name: true,
   visibility: true,
+  boardKind: true,
   parentColumns: true,
   childColumns: true,
   filters: true,
@@ -28,6 +30,7 @@ type RawViewNode = {
   id: string;
   name: string;
   visibility: string;
+  boardKind?: string | null;
   parentColumns: unknown;
   childColumns: unknown;
   filters: unknown;
@@ -76,6 +79,7 @@ const mapViewRecord = (node: RawViewNode): DealBoardViewRecord => {
     id: node.id,
     name: node.name,
     visibility: node.visibility as DealBoardViewRecord['visibility'],
+    boardKind: normalizeBoardKind(node.boardKind),
     parentColumns: parseColumns(node.parentColumns, DEFAULT_PARENT_COLUMNS),
     childColumns,
     childGroups,

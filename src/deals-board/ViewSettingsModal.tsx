@@ -5,6 +5,7 @@ import {
   DEFAULT_PARENT_COLUMNS,
 } from 'src/constants/column-definitions';
 import { VIEW_VISIBILITY, type ViewVisibility } from 'src/constants/view-visibility';
+import type { BoardKind } from 'src/constants/product-stream';
 
 import { useCreateDealBoardView, useUpdateDealBoardView } from './hooks/useDealBoardViews';
 import { useTheme } from './theme/ThemeContext';
@@ -15,6 +16,7 @@ import type { DealBoardFilters, DealBoardViewRecord } from './types';
 
 type ViewSettingsModalProps = {
   isOpen: boolean;
+  boardKind: BoardKind;
   initialView?: DealBoardViewRecord;
   filtersToPersist?: DealBoardFilters;
   onClose: () => void;
@@ -23,6 +25,7 @@ type ViewSettingsModalProps = {
 
 export const ViewSettingsModal = ({
   isOpen,
+  boardKind,
   initialView,
   filtersToPersist,
   onClose,
@@ -67,6 +70,7 @@ export const ViewSettingsModal = ({
         const created = await createViewMutation.mutateAsync({
           name: trimmedName,
           visibility,
+          boardKind,
           parentColumns: DEFAULT_PARENT_COLUMNS,
           childColumns: DEFAULT_CHILD_COLUMNS,
           childGroups: [],

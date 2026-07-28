@@ -9,6 +9,7 @@ import { Fragment, useMemo, type CSSProperties, type RefObject } from 'react';
 
 import type { LineItemQueryFilters } from '../api/line-items';
 import type { FieldDescriptor } from '../metadata/types';
+import type { BoardStream } from 'src/constants/product-stream';
 import { useTheme } from '../theme/ThemeContext';
 import type {
   ColumnConfig,
@@ -74,6 +75,7 @@ export type DealsDataTableProps = {
   sort: DealBoardSort[];
   onSortChange: (next: DealBoardSort[]) => void;
   attentionOpportunityIds?: Set<string> | null;
+  boardStream?: BoardStream;
 };
 
 const PINNED_LEFT_COLUMN_IDS = ['__expand', 'name'] as const;
@@ -116,6 +118,7 @@ export const DealsDataTable = ({
   sort,
   onSortChange,
   attentionOpportunityIds = null,
+  boardStream,
 }: DealsDataTableProps) => {
   const theme = useTheme();
   const { colors, font, spacing, zIndex } = theme;
@@ -317,6 +320,7 @@ export const DealsDataTable = ({
                   showAllPositions={showAllPositionOppIds?.has(row.id) ?? false}
                   onToggleShowAllPositions={onToggleShowAllPositions}
                   attentionHighlighted={attentionOpportunityIds?.has(row.id) ?? false}
+                  boardStream={boardStream}
                 />
               </Fragment>
             );

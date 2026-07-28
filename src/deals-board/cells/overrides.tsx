@@ -2,6 +2,9 @@ import type { MouseEvent, ReactNode } from 'react';
 
 import { getOpportunityLinkButtonLabel } from 'src/constants/opportunity-links';
 
+import type { BoardStream } from 'src/constants/product-stream';
+import { BOARD_STREAM } from 'src/constants/product-stream';
+
 import type { LineItemType } from 'src/constants/line-item-types';
 import type { LineItemStage } from 'src/constants/stages';
 
@@ -50,6 +53,7 @@ export type FieldOverrideProps = {
   onToggleExpand?: (id: string) => void;
   hideExpandButton?: boolean;
   listMenuPresentation?: 'inline' | 'sheet';
+  boardStream?: BoardStream;
   touchFriendly?: boolean;
   visibleFields?: readonly string[];
 };
@@ -146,7 +150,12 @@ const ParentNameCell = ({
   );
 };
 
-const ChildNameCell = ({ value, recordId, listMenuPresentation }: FieldOverrideProps) => {
+const ChildNameCell = ({
+  value,
+  recordId,
+  listMenuPresentation,
+  boardStream = BOARD_STREAM.BRANDING,
+}: FieldOverrideProps) => {
   const theme = useTheme();
   const { data: listStatus } = useLineItemListStatus(recordId);
   const showListMenu = isCrmparserConfigured();
@@ -166,12 +175,17 @@ const ChildNameCell = ({ value, recordId, listMenuPresentation }: FieldOverrideP
         <Chip text="реставрация · 0 ₽" color="yellow" theme={theme} />
       ) : null}
       {listStatus?.blacklisted ? <Chip text="блеклист" color="red" theme={theme} /> : null}
+      {listStatus?.decorBlacklisted ? (
+        <Chip text="блеклист декор" color="red" theme={theme} />
+      ) : null}
+      {listStatus?.mkBlacklisted ? <Chip text="блеклист МК" color="red" theme={theme} /> : null}
       {listStatus?.podryadMatch ? <Chip text="подряд" color="blue" theme={theme} /> : null}
       {listStatus?.bannerMatch ? <Chip text="баннер" color="green" theme={theme} /> : null}
       {showListMenu && recordId ? (
         <LineItemListMenu
           lineItemId={recordId}
           listStatus={listStatus}
+          boardStream={boardStream}
           presentation={listMenuPresentation ?? 'inline'}
         />
       ) : null}

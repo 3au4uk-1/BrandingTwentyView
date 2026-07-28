@@ -8,6 +8,7 @@ import type {
   LineItemRow,
   OpportunityRow,
 } from '../types';
+import type { BoardStream } from 'src/constants/product-stream';
 
 export type MobileDealsBoardProps = {
   activeView?: DealBoardViewRecord;
@@ -20,6 +21,7 @@ export type MobileDealsBoardProps = {
   opportunityLinkFields: FieldDescriptor[];
   records: OpportunityRow[];
   lineItems: LineItemRow[];
+  boardStream?: BoardStream;
   lineItemFilters?: LineItemQueryFilters;
   totalCount: number;
   page: number;

@@ -174,6 +174,7 @@ export const runAfterLineItemUpdate = async (
       tipBeforeNameInfer,
       nextTip,
       current.ssylkaNaMakety,
+      { lineItemName: current.name },
     );
     if (plan) {
       await applyFollowUpPatch(queryClient, id, plan);

@@ -1,3 +1,5 @@
+import { BOARD_STREAM, type BoardStream } from 'src/constants/product-stream';
+
 import type { LineItemListStatus, ListName } from './api/crmparser';
 
 export type LineItemListAction = {
@@ -32,4 +34,31 @@ export const LINE_ITEM_LIST_ACTIONS: LineItemListAction[] = [
     shortLabel: 'БН',
     isActive: (status) => Boolean(status?.bannerMatch),
   },
+  {
+    list: 'decor_blacklist',
+    label: 'В блеклист декор',
+    shortLabel: 'БД',
+    isActive: (status) => Boolean(status?.decorBlacklisted),
+  },
+  {
+    list: 'mk_blacklist',
+    label: 'В блеклист МК',
+    shortLabel: 'БМ',
+    isActive: (status) => Boolean(status?.mkBlacklisted),
+  },
 ];
+
+const BRANDING_BOARD_LISTS = new Set<ListName>([
+  'blacklist',
+  'restoration',
+  'podryad',
+  'banner',
+]);
+
+const DECOR_MK_BOARD_LISTS = new Set<ListName>(['decor_blacklist', 'mk_blacklist']);
+
+export function filterActionsForBoardStream(boardStream: BoardStream): LineItemListAction[] {
+  const allowedLists =
+    boardStream === BOARD_STREAM.DECOR_MK ? DECOR_MK_BOARD_LISTS : BRANDING_BOARD_LISTS;
+  return LINE_ITEM_LIST_ACTIONS.filter((action) => allowedLists.has(action.list));
+}

@@ -1,5 +1,7 @@
 import { defineObject, FieldType } from 'twenty-sdk/define';
+import { BOARD_KIND } from 'src/constants/product-stream';
 import {
+  DEAL_BOARD_VIEW_BOARD_KIND_FIELD_UNIVERSAL_IDENTIFIER,
   DEAL_BOARD_VIEW_CHILD_COLUMNS_FIELD_UNIVERSAL_IDENTIFIER,
   DEAL_BOARD_VIEW_FILTERS_FIELD_UNIVERSAL_IDENTIFIER,
   DEAL_BOARD_VIEW_IS_DEFAULT_FIELD_UNIVERSAL_IDENTIFIER,
@@ -59,6 +61,17 @@ export default defineObject({
       type: FieldType.BOOLEAN,
       label: 'По умолчанию',
       defaultValue: false,
+    },
+    {
+      universalIdentifier: DEAL_BOARD_VIEW_BOARD_KIND_FIELD_UNIVERSAL_IDENTIFIER,
+      name: 'boardKind',
+      type: FieldType.SELECT,
+      label: 'Тип доски',
+      defaultValue: `'${BOARD_KIND.REALIZACIYA}'`,
+      options: [
+        { value: BOARD_KIND.REALIZACIYA, label: 'Реализация', position: 0, color: 'blue' },
+        { value: BOARD_KIND.DECOR_MK, label: 'МК и Декор', position: 1, color: 'purple' },
+      ],
     },
   ],
 });

@@ -17,6 +17,7 @@ import type {
   LineItemRow,
   OpportunityRow,
 } from '../types';
+import type { BoardStream } from 'src/constants/product-stream';
 import {
   getOpportunityStageColor,
   getOpportunityStageLabel,
@@ -42,6 +43,7 @@ type MobileDealCardProps = {
   isExpanded: boolean;
   onToggleExpand: (id: string) => void;
   lineItemFilters?: LineItemQueryFilters;
+  boardStream?: BoardStream;
 };
 
 const renderParentField = (
@@ -84,6 +86,7 @@ export const MobileDealCard = ({
   isExpanded,
   onToggleExpand,
   lineItemFilters,
+  boardStream,
 }: MobileDealCardProps) => {
   const theme = useTheme();
   const { colors, font, spacing, radius, colorScheme } = theme;
@@ -283,6 +286,7 @@ export const MobileDealCard = ({
             groups={childGroups}
             descriptorByField={childDescriptorByField}
             filters={lineItemFilters}
+            boardStream={boardStream}
           />
         </div>
       ) : null}
