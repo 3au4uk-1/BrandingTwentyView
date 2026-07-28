@@ -9,14 +9,22 @@ export type ManualLineItemSyncBody = {
 };
 
 export type LineItemListStatus = {
+  known?: boolean;
   blacklisted: boolean;
   restorationMatch: boolean;
   podryadMatch: boolean;
   bannerMatch: boolean;
-  pattern: string;
-  dealId: number;
+  pattern: string | null;
+  dealId: number | null;
   dealTwentyId: string | null;
 };
+
+type BatchStatusesResponse = {
+  statuses: Record<string, LineItemListStatus>;
+};
+
+const BATCH_WINDOW_MS = 32;
+const MAX_BATCH_IDS = 500;
 
 const readProcessEnv = (): Record<string, string | undefined> =>
   globalThis.process?.env ?? {};
@@ -78,17 +86,102 @@ async function logicFunctionFetch<T>(path: string, init?: RequestInit): Promise<
   return body;
 }
 
+type BatchWaiter = {
+  resolve: (value: LineItemListStatus | null) => void;
+  reject: (reason?: unknown) => void;
+};
+
+type PendingBatch = {
+  ids: Set<string>;
+  waiters: Map<string, BatchWaiter[]>;
+  timer: ReturnType<typeof setTimeout> | null;
+};
+
+let pendingBatch: PendingBatch | null = null;
+
+const flushListStatusBatch = async () => {
+  const batch = pendingBatch;
+  pendingBatch = null;
+  if (!batch) return;
+
+  if (batch.timer) {
+    clearTimeout(batch.timer);
+    batch.timer = null;
+  }
+
+  const ids = [...batch.ids].slice(0, MAX_BATCH_IDS);
+  try {
+    const statuses = await fetchLineItemsListStatusBatch(ids);
+    for (const id of ids) {
+      const status = statuses[id] ?? null;
+      for (const waiter of batch.waiters.get(id) ?? []) {
+        waiter.resolve(status);
+      }
+    }
+    for (const [id, waiters] of batch.waiters) {
+      if (ids.includes(id)) continue;
+      for (const waiter of waiters) waiter.resolve(null);
+    }
+  } catch (error) {
+    for (const waiters of batch.waiters.values()) {
+      for (const waiter of waiters) waiter.reject(error);
+    }
+  }
+};
+
+/** @internal test helper */
+export const resetListStatusBatcherForTests = () => {
+  if (pendingBatch?.timer) clearTimeout(pendingBatch.timer);
+  pendingBatch = null;
+};
+
+export async function fetchLineItemsListStatusBatch(
+  lineItemIds: string[],
+): Promise<Record<string, LineItemListStatus>> {
+  if (!isCrmparserConfigured()) return {};
+  const ids = [...new Set(lineItemIds.map((id) => id.trim()).filter(Boolean))].slice(
+    0,
+    MAX_BATCH_IDS,
+  );
+  if (ids.length === 0) return {};
+
+  try {
+    const body = await logicFunctionFetch<BatchStatusesResponse>(
+      `/crmparser/line-items/list-status`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ ids }),
+      },
+    );
+    return body.statuses ?? {};
+  } catch {
+    return {};
+  }
+}
+
 export async function fetchLineItemListStatus(
   lineItemId: string,
 ): Promise<LineItemListStatus | null> {
   if (!isCrmparserConfigured()) return null;
-  try {
-    return await logicFunctionFetch<LineItemListStatus>(
-      `/crmparser/line-items/${encodeURIComponent(lineItemId)}/list-status`,
-    );
-  } catch {
-    return null;
-  }
+  const id = lineItemId.trim();
+  if (!id) return null;
+
+  return new Promise<LineItemListStatus | null>((resolve, reject) => {
+    if (!pendingBatch) {
+      pendingBatch = {
+        ids: new Set(),
+        waiters: new Map(),
+        timer: setTimeout(() => {
+          void flushListStatusBatch();
+        }, BATCH_WINDOW_MS),
+      };
+    }
+
+    pendingBatch.ids.add(id);
+    const waiters = pendingBatch.waiters.get(id) ?? [];
+    waiters.push({ resolve, reject });
+    pendingBatch.waiters.set(id, waiters);
+  }).catch(() => null);
 }
 
 export async function addLineItemToList(lineItemId: string, list: ListName) {
