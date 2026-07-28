@@ -27,6 +27,7 @@ import { ExpandModeProvider } from './hooks/useExpandMode';
 import { GroupChipModeProvider } from './hooks/useGroupChipMode';
 import { useDealBoardViews, useUpdateDealBoardView } from './hooks/useDealBoardViews';
 import { useLineItems } from './hooks/useLineItems';
+import { usePrefetchLineItemListStatuses } from './hooks/useLineItemListStatus';
 import { useOpportunities } from './hooks/useOpportunities';
 import { useDealsBoardRealtimeSync } from './realtime/useDealsBoardRealtimeSync';
 import { crmFieldNamesFromColumns, fieldTypesByNameFromDescriptors, needsCompanyRelation } from './metadata/crm-field-names';
@@ -501,6 +502,12 @@ const DealsBoardContent = () => {
     showAllPositionOppIds,
     visibleLineItems,
   ]);
+
+  const listStatusLineItemIds = useMemo(
+    () => displayLineItems.map((item) => item.id).filter(Boolean),
+    [displayLineItems],
+  );
+  usePrefetchLineItemListStatuses(listStatusLineItemIds);
 
   const loadError = viewsQuery.error ?? opportunitiesQuery.error ?? null;
   const metadataFieldsError =
