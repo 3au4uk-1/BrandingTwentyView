@@ -35,10 +35,18 @@ jobs:
         run: |
           echo "Deploying to ${{ env.TWENTY_DEPLOY_URL }} (ref=${{ github.ref_name }})"
 
-      # Staging DB clone already has the same app version installed — bump so publish is accepted.
-      - name: Bump patch version on staging
+      # Staging DB clone already has the same app version installed — use a unique version per run.
+      - name: Set unique staging version
         if: github.ref == 'refs/heads/staging'
-        run: npm version patch --no-git-tag-version
+        run: |
+          node -e "
+          const fs = require('fs');
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const base = String(pkg.version).replace(/-staging\.\d+$/, '');
+          pkg.version = base + '-staging.' + process.env.GITHUB_RUN_NUMBER;
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          console.log('version ->', pkg.version);
+          "
 
       - name: Deploy
         uses: twentyhq/twenty/.github/actions/deploy-twenty-app@main
