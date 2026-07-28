@@ -11,6 +11,7 @@ import { beginSessionClauses, commitSessionClauses } from './filter-model/sessio
 import type { FilterClause, FilterState } from './filter-model/types';
 import { useCompanies } from './hooks/useCompanies';
 import type { FieldDescriptor } from './metadata/types';
+import { createId } from './utils/create-id';
 import { getPresetRange } from './utils/date-filters';
 import { useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
@@ -79,7 +80,7 @@ export type FilterBarProps = {
   childFields?: FieldDescriptor[];
 };
 
-const newClauseId = (): string => crypto.randomUUID();
+const newClauseId = (): string => createId();
 
 export const FilterBar = ({ value, viewClauses, onChange, onReset }: FilterBarProps) => {
   const theme = useTheme();

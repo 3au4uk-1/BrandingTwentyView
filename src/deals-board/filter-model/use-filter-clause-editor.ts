@@ -6,6 +6,7 @@ import { LINE_ITEM_STAGES } from 'src/constants/stages';
 
 import { fetchCompanyNames } from '../api/companies';
 import { useCompanies } from '../hooks/useCompanies';
+import { createId } from '../utils/create-id';
 import { beginSessionClauses, commitSessionClauses } from './session';
 import type { FilterClause, FilterState } from './types';
 
@@ -50,7 +51,7 @@ export const FILTER_BUILDER_FIELDS: FilterBuilderField[] = [
   },
 ];
 
-const newClauseId = (): string => crypto.randomUUID();
+const newClauseId = (): string => createId();
 
 type UseFilterClauseEditorOptions = {
   companySearchEnabled?: boolean;

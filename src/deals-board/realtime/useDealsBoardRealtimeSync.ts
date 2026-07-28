@@ -10,14 +10,9 @@ import {
 import { ON_EVENT_SUBSCRIPTION } from './on-event-subscription';
 import type { EventSubscriptionPayload } from './types';
 import { getMetadataGraphqlUrl, resolveAccessToken } from './twenty-runtime';
+import { createId } from '../utils/create-id';
 
-const createEventStreamId = (): string => {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
-  }
-
-  return `deals-board-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-};
+const createEventStreamId = (): string => createId();
 
 const extractSubscriptionPayload = (
   data: unknown,

@@ -1,10 +1,11 @@
 import type { DealBoardFilters } from '../types';
+import { createId } from '../utils/create-id';
 
 import type { FilterClause } from './types';
 
 type LegacyFilters = DealBoardFilters & { clauses?: FilterClause[] };
 
-const newClauseId = (): string => crypto.randomUUID();
+const newClauseId = (): string => createId();
 
 const pushInClause = (
   clauses: FilterClause[],

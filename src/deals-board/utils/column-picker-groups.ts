@@ -1,4 +1,5 @@
 import type { ColumnConfig, ColumnGroupConfig } from '../types';
+import { createId } from './create-id';
 
 export const assignColumnGroup = (
   columns: ColumnConfig[],
@@ -26,7 +27,7 @@ export const createGroup = (
 ): ColumnGroupConfig[] => [
   ...groups,
   {
-    id: crypto.randomUUID(),
+    id: createId(),
     name: name?.trim() || `Печать ${groups.length + 1}`,
     order: groups.length,
   },
