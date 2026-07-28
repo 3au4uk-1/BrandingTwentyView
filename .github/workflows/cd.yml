@@ -35,13 +35,20 @@ jobs:
         run: |
           echo "Deploying to ${{ env.TWENTY_DEPLOY_URL }} (ref=${{ github.ref_name }})"
 
+      # Staging DB clone already has the same app version installed — bump so publish is accepted.
+      - name: Bump patch version on staging
+        if: github.ref == 'refs/heads/staging'
+        run: npm version patch --no-git-tag-version
+
       - name: Deploy
         uses: twentyhq/twenty/.github/actions/deploy-twenty-app@main
         with:
           api-url: ${{ env.TWENTY_DEPLOY_URL }}
           api-key: ${{ secrets.TWENTY_DEPLOY_API_KEY }}
 
+      # Staging clone may already have the app; install can fail on field UUID collisions.
       - name: Install
+        continue-on-error: ${{ github.ref == 'refs/heads/staging' }}
         uses: twentyhq/twenty/.github/actions/install-twenty-app@main
         with:
           api-url: ${{ env.TWENTY_DEPLOY_URL }}
