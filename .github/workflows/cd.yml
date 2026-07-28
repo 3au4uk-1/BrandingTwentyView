@@ -35,17 +35,25 @@ jobs:
         run: |
           echo "Deploying to ${{ env.TWENTY_DEPLOY_URL }} (ref=${{ github.ref_name }})"
 
-      # Staging DB clone already has the same app version installed — use a unique version per run.
-      - name: Set unique staging version
-        if: github.ref == 'refs/heads/staging'
+      # Twenty rejects deploy unless package.json version is strictly higher than the
+      # currently installed app. Prereleases like 0.5.3-staging.N are LOWER than 0.5.3
+      # (semver), so we always rewrite to major.minor.<run_number> for this job only.
+      - name: Auto-bump version for deploy
         run: |
           node -e "
           const fs = require('fs');
           const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-          const base = String(pkg.version).replace(/-staging\.\d+$/, '');
-          pkg.version = base + '-staging.' + process.env.GITHUB_RUN_NUMBER;
+          const base = String(pkg.version).replace(/[-+].*$/, '');
+          const parts = base.split('.').map((n) => parseInt(n, 10) || 0);
+          const major = parts[0] ?? 0;
+          const minor = parts[1] ?? 0;
+          const run = parseInt(process.env.GITHUB_RUN_NUMBER, 10);
+          if (!Number.isFinite(run) || run < 1) {
+            throw new Error('GITHUB_RUN_NUMBER missing or invalid: ' + process.env.GITHUB_RUN_NUMBER);
+          }
+          pkg.version = major + '.' + minor + '.' + run;
           fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
-          console.log('version ->', pkg.version);
+          console.log('version ->', pkg.version, '(from', base + ')');
           "
 
       - name: Deploy
