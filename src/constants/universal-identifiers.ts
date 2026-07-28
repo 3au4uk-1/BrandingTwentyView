@@ -54,7 +54,11 @@ export const DEAL_BOARD_VIEW_SORT_FIELD_UNIVERSAL_IDENTIFIER =
 export const DEAL_BOARD_VIEW_IS_DEFAULT_FIELD_UNIVERSAL_IDENTIFIER =
   'd658fa25-31d3-4f66-9741-03572428f018';
 
-/** dealLineItem fields (workspace UUIDs, owned by warehouse app metadata). */
+/**
+ * dealLineItem field UUIDs for *new* app-owned fields only.
+ * Do not re-declare tip/stage/amount/… via defineObject — on prod/staging those
+ * already belong to the workspace "Custom" app; recreating them breaks install.
+ */
 export const DEAL_LINE_ITEM_NAME_FIELD_UNIVERSAL_IDENTIFIER =
   'e6dad64b-d01d-4799-b7a6-72457f135481';
 export const DEAL_LINE_ITEM_STAGE_FIELD_UNIVERSAL_IDENTIFIER =
@@ -104,7 +108,13 @@ export const DEAL_LINE_ITEM_OPPORTUNITY_FIELD_UNIVERSAL_IDENTIFIER =
 export const OPPORTUNITY_DEAL_LINE_ITEMS_FIELD_UNIVERSAL_IDENTIFIER =
   'e1f9d0ff-2b56-4a3c-ad7a-b3577db5193a';
 
-/** Opportunity custom fields (local stub / warehouse UUIDs). */
+/**
+ * Opportunity field UUID constants (names match CRM).
+ * Do not ship defineField manifests for these — on staging/prod they already
+ * exist under the workspace "Custom" app with *different* UUIDs; recreating
+ * them causes NOT_AVAILABLE name collisions during install.
+ */
+
 export const OPPORTUNITY_LOAD_DATE_FIELD_UNIVERSAL_IDENTIFIER =
   '465e0562-9452-46e6-a4a7-ad755ec91d91';
 export const OPPORTUNITY_STAGE_ZAKREPLEN_FIELD_UNIVERSAL_IDENTIFIER =
