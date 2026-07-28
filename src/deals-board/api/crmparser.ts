@@ -1,6 +1,12 @@
 import { getTwentyFunctionsBaseUrl } from '../utils/twenty-functions-base-url';
 
-export type ListName = 'blacklist' | 'restoration' | 'podryad' | 'banner';
+export type ListName =
+  | 'blacklist'
+  | 'restoration'
+  | 'podryad'
+  | 'banner'
+  | 'decor_blacklist'
+  | 'mk_blacklist';
 
 export type ManualLineItemSyncBody = {
   opportunityId: string;
@@ -13,6 +19,8 @@ export type ManualLineItemSyncBody = {
 export type LineItemListStatus = {
   known?: boolean;
   blacklisted: boolean;
+  decorBlacklisted?: boolean;
+  mkBlacklisted?: boolean;
   restorationMatch: boolean;
   podryadMatch: boolean;
   bannerMatch: boolean;

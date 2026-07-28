@@ -5,6 +5,7 @@ import { SelectCell } from '../editors/SelectCell';
 import { TextCell } from '../editors/TextCell';
 import type { FieldDescriptor, BoardObjectName } from '../metadata/types';
 import type { LineItemRow } from '../types';
+import type { BoardStream } from 'src/constants/product-stream';
 
 import { formatReadOnlyValue } from './format-read-only-value';
 import { renderFieldOverride } from './overrides';
@@ -24,6 +25,7 @@ export type DynamicFieldCellProps = {
   onToggleExpand?: (id: string) => void;
   hideExpandButton?: boolean;
   listMenuPresentation?: 'inline' | 'sheet';
+  boardStream?: BoardStream;
   touchFriendly?: boolean;
   visibleFields?: readonly string[];
 };
@@ -104,6 +106,7 @@ export const DynamicFieldCell = (props: DynamicFieldCellProps) => {
     onToggleExpand: props.onToggleExpand,
     hideExpandButton: props.hideExpandButton,
     listMenuPresentation: props.listMenuPresentation,
+    boardStream: props.boardStream,
     touchFriendly: props.touchFriendly,
     visibleFields: props.visibleFields,
   });

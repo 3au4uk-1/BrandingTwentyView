@@ -17,6 +17,7 @@ import { findActiveGroupMembers } from '../utils/active-group';
 import { resolveFieldValue } from '../utils/resolve-field-value';
 import { getStageLabel, getStageColor } from 'src/constants/stages';
 import type { ColumnConfig, ColumnGroupConfig, LineItemRow } from '../types';
+import type { BoardStream } from 'src/constants/product-stream';
 
 import { MobileFieldStack } from './MobileFieldStack';
 import {
@@ -31,6 +32,7 @@ type MobileLineItemRowProps = {
   groups: ColumnGroupConfig[];
   descriptorByField: Map<string, FieldDescriptor>;
   isLast: boolean;
+  boardStream?: BoardStream;
 };
 
 export const MobileLineItemRow = ({
@@ -39,6 +41,7 @@ export const MobileLineItemRow = ({
   groups,
   descriptorByField,
   isLast,
+  boardStream,
 }: MobileLineItemRowProps) => {
   const theme = useTheme();
   const { colors, font, spacing } = theme;
@@ -73,6 +76,7 @@ export const MobileLineItemRow = ({
       visibleFields={flatVisibleFields}
       listMenuPresentation="sheet"
       touchFriendly
+      boardStream={boardStream}
     />
   );
 
@@ -202,6 +206,7 @@ export const MobileLineItemRow = ({
                 descriptorByField={descriptorByField}
                 listMenuPresentation="sheet"
                 touchFriendly
+                boardStream={boardStream}
               />
             </div>
           ) : null}

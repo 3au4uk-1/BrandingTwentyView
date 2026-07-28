@@ -7,6 +7,12 @@ import {
 } from 'src/constants/column-definitions';
 import { FUTURE_DEALS_VIEW_NAME } from 'src/constants/future-deals-view';
 import { MOBILE_VIEW_NAME } from 'src/constants/mobile-view';
+import {
+  BOARD_STREAM,
+  boardStreamToBoardKind,
+  filterLineItemsByBoardStream,
+  type BoardStream,
+} from 'src/constants/product-stream';
 import type { LineItemType } from 'src/constants/line-item-types';
 
 import {
@@ -87,7 +93,8 @@ const queryClient = new QueryClient({
 
 const EMPTY_FILTER_SESSION: Partial<FilterState> = {};
 
-const DealsBoardContent = () => {
+const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
+  const boardKind = boardStreamToBoardKind(boardStream);
   const theme = useTheme();
   const { colors, font, spacing, layout } = theme;
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -97,7 +104,7 @@ const DealsBoardContent = () => {
     ? `${lockedHostHeight}px`
     : DESKTOP_BOARD_HEIGHT_CSS;
   const [accumulatedRecords, setAccumulatedRecords] = useState<OpportunityRow[]>([]);
-  const viewsQuery = useDealBoardViews();
+  const viewsQuery = useDealBoardViews(boardKind);
   const updateViewMutation = useUpdateDealBoardView();
   useDealsBoardRealtimeSync(!viewsQuery.isLoading);
   const [activeViewId, setActiveViewId] = useState<string>();
@@ -382,30 +389,49 @@ const DealsBoardContent = () => {
     !opportunitiesQuery.isLoading,
   );
   const lineItems = asArray<LineItemRow>(lineItemsQuery.data);
+  const streamFilteredLineItems = useMemo(
+    () => filterLineItemsByBoardStream(lineItems, boardStream),
+    [boardStream, lineItems],
+  );
 
   const lineItemsByOppId = useMemo(() => {
     const grouped: Record<string, LineItemRow[]> = {};
-    for (const item of lineItems) {
+    for (const item of streamFilteredLineItems) {
       (grouped[item.opportunityId] ??= []).push(item);
     }
     return grouped;
-  }, [lineItems]);
+  }, [streamFilteredLineItems]);
+
+  const streamFilteredRecords = useMemo(() => {
+    if (lineItemsQuery.isLoading) {
+      return records;
+    }
+
+    const oppIdsWithItems = new Set(Object.keys(lineItemsByOppId));
+    return records.filter((record) => oppIdsWithItems.has(record.id));
+  }, [lineItemsByOppId, lineItemsQuery.isLoading, records]);
 
   const filteredBoardData = useMemo(() => {
     if (!hasLineItemFilters) {
       return {
-        deals: records,
+        deals: streamFilteredRecords,
         lineItemsByOppId,
       };
     }
 
     return filterDealsAndLineItems({
-      deals: records,
+      deals: streamFilteredRecords,
       lineItemsByOppId,
       clauses: effectiveClauses,
       showAllPositionOppIds,
     });
-  }, [effectiveClauses, hasLineItemFilters, lineItemsByOppId, records, showAllPositionOppIds]);
+  }, [
+    effectiveClauses,
+    hasLineItemFilters,
+    lineItemsByOppId,
+    showAllPositionOppIds,
+    streamFilteredRecords,
+  ]);
 
   const recordsById = useMemo(
     () => new Map(filteredBoardData.deals.map((record) => [record.id, record])),
@@ -420,9 +446,9 @@ const DealsBoardContent = () => {
   }, [filteredBoardData.lineItemsByOppId, mergedFilters.search, recordsById]);
 
   const attentionStats = useMemo(() => {
-    const oppsById = new Map(records.map((record) => [record.id, record]));
-    return computeAttention(getTodayInputDateMsk(), lineItems, oppsById);
-  }, [lineItems, records]);
+    const oppsById = new Map(streamFilteredRecords.map((record) => [record.id, record]));
+    return computeAttention(getTodayInputDateMsk(), streamFilteredLineItems, oppsById);
+  }, [streamFilteredLineItems, streamFilteredRecords]);
 
   const attentionHighlightOppIds = useMemo(() => {
     if (!attentionTip) return null;
@@ -435,8 +461,8 @@ const DealsBoardContent = () => {
 
   const tableRecords = useMemo(() => {
     if (!attentionHighlightOppIds) return filteredBoardData.deals;
-    return records.filter((deal) => attentionHighlightOppIds.has(deal.id));
-  }, [attentionHighlightOppIds, filteredBoardData.deals, records]);
+    return streamFilteredRecords.filter((deal) => attentionHighlightOppIds.has(deal.id));
+  }, [attentionHighlightOppIds, filteredBoardData.deals, streamFilteredRecords]);
 
   const tableLineItems = useMemo(() => {
     if (!attentionTip) return visibleLineItems;
@@ -445,8 +471,8 @@ const DealsBoardContent = () => {
         .filter((item) => item.tip === attentionTip)
         .map((item) => item.lineItemId),
     );
-    return lineItems.filter((item) => lineIds.has(item.id));
-  }, [attentionStats.items, attentionTip, lineItems, visibleLineItems]);
+    return streamFilteredLineItems.filter((item) => lineIds.has(item.id));
+  }, [attentionStats.items, attentionTip, streamFilteredLineItems, visibleLineItems]);
 
   const visibleRecords = tableRecords;
   const visibleTotalCount = attentionTip
@@ -533,11 +559,16 @@ const DealsBoardContent = () => {
     mobileLayoutActive && mobileRecords.length > 0 && !opportunitiesQuery.isLoading,
   );
   const mobileLineItems = asArray<LineItemRow>(mobileLineItemsQuery.data);
+  const streamFilteredMobileLineItems = useMemo(
+    () => filterLineItemsByBoardStream(mobileLineItems, boardStream),
+    [boardStream, mobileLineItems],
+  );
 
   const displayLineItems = useMemo(() => {
     if (!mobileLayoutActive) return visibleLineItems;
 
-    const sourceItems = mobileLineItems.length > 0 ? mobileLineItems : lineItems;
+    const sourceItems =
+      streamFilteredMobileLineItems.length > 0 ? streamFilteredMobileLineItems : streamFilteredLineItems;
     let scoped = sourceItems;
 
     if (hasLineItemFilters) {
@@ -562,9 +593,9 @@ const DealsBoardContent = () => {
   }, [
     effectiveClauses,
     hasLineItemFilters,
-    lineItems,
     mobileLayoutActive,
-    mobileLineItems,
+    streamFilteredLineItems,
+    streamFilteredMobileLineItems,
     mobileRecords,
     mergedFilters.search,
     showAllPositionOppIds,
@@ -703,6 +734,7 @@ const DealsBoardContent = () => {
           opportunityLinkFields={opportunityLinkFields}
           records={mobileRecords}
           lineItems={displayLineItems}
+          boardStream={boardStream}
           lineItemFilters={lineItemQueryFilters}
           totalCount={visibleTotalCount}
           page={page}
@@ -859,6 +891,7 @@ const DealsBoardContent = () => {
               showAllPositionOppIds={showAllPositionOppIds}
               onToggleShowAllPositions={handleToggleShowAllPositions}
               attentionOpportunityIds={attentionHighlightOppIds}
+              boardStream={boardStream}
               totalCount={visibleTotalCount}
               page={page}
               totalPages={totalPages}
@@ -885,6 +918,7 @@ const DealsBoardContent = () => {
 
       <ViewSettingsModal
         isOpen={isCreateModalOpen}
+        boardKind={boardKind}
         filtersToPersist={persistedViewFilters}
         onClose={() => setIsCreateModalOpen(false)}
         onSaved={(view) => setActiveViewId(view.id)}
@@ -892,6 +926,7 @@ const DealsBoardContent = () => {
 
       <ViewSettingsModal
         isOpen={Boolean(editViewDraft)}
+        boardKind={boardKind}
         initialView={editViewDraft}
         filtersToPersist={persistedViewFilters}
         onClose={() => setEditViewDraft(undefined)}
@@ -905,13 +940,17 @@ const DealsBoardContent = () => {
   );
 };
 
-export const DealsBoard = () => {
+export const DealsBoard = ({
+  boardStream = BOARD_STREAM.BRANDING,
+}: {
+  boardStream?: BoardStream;
+} = {}) => {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <ExpandModeProvider>
           <GroupChipModeProvider>
-            <DealsBoardContent />
+            <DealsBoardContent boardStream={boardStream} />
           </GroupChipModeProvider>
         </ExpandModeProvider>
       </ThemeProvider>

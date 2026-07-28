@@ -1,4 +1,6 @@
 import type { LineItemType } from 'src/constants/line-item-types';
+import type { BoardKind } from 'src/constants/product-stream';
+import type { ProductStream } from 'src/constants/product-stream';
 import type { LineItemStage } from 'src/constants/stages';
 import type { ViewVisibility } from 'src/constants/view-visibility';
 
@@ -47,6 +49,7 @@ export type DealBoardViewRecord = {
   id: string;
   name: string;
   visibility: ViewVisibility;
+  boardKind?: BoardKind;
   parentColumns: ColumnConfig[];
   childColumns: ColumnConfig[];
   childGroups: ColumnGroupConfig[];
@@ -87,5 +90,6 @@ export type LineItemRow = {
   ssylkaNaMakety?: { primaryLinkUrl?: string; primaryLinkLabel?: string };
   plenka?: { markdown?: string };
   prevyuOkleyki?: LineItemFileRef[] | null;
+  productStream?: ProductStream | null;
   [key: string]: unknown;
 };

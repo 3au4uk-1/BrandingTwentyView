@@ -1,16 +1,21 @@
-export type StandardRestorationMaket = {
+export type RestorationMaketCatalogEntry = {
   id: string;
   label: string;
   url: string;
-  /** Used for auto-fill when tip → RESTAVRACIYA and link empty. */
+  matchKeywords?: string;
+  priority?: number;
   isDefault?: boolean;
+  isActive?: boolean;
 };
+
+/** @deprecated Use RestorationMaketCatalogEntry */
+export type StandardRestorationMaket = RestorationMaketCatalogEntry;
 
 /**
  * Demo catalog — replace URLs with real Cloud/Drive links when ready.
  * Kept in code (wave 4 decision A) so the board works without a CRM directory object.
  */
-export const STANDARD_RESTORATION_MAKETS: StandardRestorationMaket[] = [
+export const STANDARD_RESTORATION_MAKETS: RestorationMaketCatalogEntry[] = [
   {
     id: '3ad70671-7add-4936-93ae-76e719162357',
     label: 'Стандарт реставрации',
@@ -37,13 +42,59 @@ export type MaketLinkValue = {
 export const isMaketLinkEmpty = (value: MaketLinkValue | null | undefined): boolean =>
   !value?.primaryLinkUrl?.trim();
 
-export const getDefaultRestorationMaket = (): StandardRestorationMaket => {
+export const parseMatchKeywords = (raw: string | null | undefined): string[] => {
+  if (!raw?.trim()) return [];
+  return raw
+    .split(/[,;]+/)
+    .map((part) => part.trim().toLowerCase())
+    .filter(Boolean);
+};
+
+export const scoreTemplateAgainstName = (
+  entry: RestorationMaketCatalogEntry,
+  lineItemName: string,
+): number => {
+  const name = lineItemName.toLowerCase();
+  const keywords = parseMatchKeywords(entry.matchKeywords);
+  return keywords.filter((keyword) => name.includes(keyword)).length;
+};
+
+export const pickRestorationMaket = (
+  catalog: RestorationMaketCatalogEntry[],
+  lineItemName?: string | null,
+): RestorationMaketCatalogEntry | null => {
+  const active = catalog.filter((entry) => entry.isActive !== false);
+
+  if (lineItemName?.trim()) {
+    const scored = active
+      .map((entry) => ({
+        entry,
+        score: scoreTemplateAgainstName(entry, lineItemName),
+      }))
+      .filter(({ score }) => score > 0);
+
+    if (scored.length > 0) {
+      scored.sort((a, b) => {
+        const priorityDiff = (b.entry.priority ?? 0) - (a.entry.priority ?? 0);
+        if (priorityDiff !== 0) return priorityDiff;
+        const scoreDiff = b.score - a.score;
+        if (scoreDiff !== 0) return scoreDiff;
+        return a.entry.label.localeCompare(b.entry.label);
+      });
+      return scored[0]!.entry;
+    }
+  }
+
+  return active.find((entry) => entry.isDefault === true) ?? null;
+};
+
+export const getDefaultRestorationMaket = (): RestorationMaketCatalogEntry => {
   const found = STANDARD_RESTORATION_MAKETS.find((maket) => maket.isDefault);
   return found ?? STANDARD_RESTORATION_MAKETS[0]!;
 };
 
 export const toSsylkaNaMakety = (
-  maket: StandardRestorationMaket,
+  maket: RestorationMaketCatalogEntry,
 ): { primaryLinkUrl: string; primaryLinkLabel: string } => ({
   primaryLinkUrl: maket.url,
   primaryLinkLabel: maket.label,

@@ -12,6 +12,7 @@ import { GroupFieldStrip } from '../cells/GroupFieldStrip';
 import { useCreateLineItem } from '../hooks/useLineItems';
 import { useLineItemGroupExpand } from '../hooks/useLineItemGroupExpand';
 import type { FieldDescriptor } from '../metadata/types';
+import type { BoardStream } from 'src/constants/product-stream';
 import { useTheme } from '../theme/ThemeContext';
 import { Button } from '../ui/Button';
 import { getColumnWidth, getTableLayoutStyle, sumColumnWidths } from '../utils/columns';
@@ -145,6 +146,7 @@ type LineItemsTableProps = {
     scaleSource?: HTMLElement | null,
     captureTarget?: HTMLElement | null,
   ) => void;
+  boardStream?: BoardStream;
 };
 
 export const LineItemsTable = ({
@@ -158,6 +160,7 @@ export const LineItemsTable = ({
   showAllPositions = false,
   onToggleShowAllPositions,
   onColumnResizeStart,
+  boardStream,
 }: LineItemsTableProps) => {
   const theme = useTheme();
   const queryClient = useQueryClient();
@@ -602,6 +605,7 @@ export const LineItemsTable = ({
                           variant="child"
                           row={item}
                           visibleFields={getVisibleFieldsForChildLayoutEntry(layout, entry)}
+                          boardStream={boardStream}
                         />
                       </td>
                     );
@@ -642,6 +646,7 @@ export const LineItemsTable = ({
                           }
                           item={item}
                           descriptorByField={descriptorByField}
+                          boardStream={boardStream}
                         />
                       </div>
                     </div>
