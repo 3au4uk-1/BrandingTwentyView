@@ -1,6 +1,7 @@
+import { createId } from '../utils/create-id';
 import type { FilterClause } from './types';
 
-const newClauseId = (): string => crypto.randomUUID();
+const newClauseId = (): string => createId();
 
 /** Toggle a string value inside an `in` clause for the given level/field. */
 export const toggleInClauseValue = (
