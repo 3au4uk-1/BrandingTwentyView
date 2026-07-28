@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - staging
   pull_request:
     types: [labeled]
 
@@ -11,8 +12,8 @@ permissions:
   contents: read
 
 env:
-  # Set repository variable TWENTY_DEPLOY_URL (Settings → Secrets and variables → Actions → Variables)
-  TWENTY_DEPLOY_URL: ${{ vars.TWENTY_DEPLOY_URL }}
+  # main → prod Twenty; staging → twenty-staging (public URL, not a secret)
+  TWENTY_DEPLOY_URL: ${{ github.ref == 'refs/heads/staging' && 'https://twenty-staging.dosugmayak.ru' || vars.TWENTY_DEPLOY_URL }}
 
 concurrency:
   group: cd-${{ github.ref }}
@@ -29,6 +30,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Resolve deploy target
+        run: |
+          echo "Deploying to ${{ env.TWENTY_DEPLOY_URL }} (ref=${{ github.ref_name }})"
 
       - name: Deploy
         uses: twentyhq/twenty/.github/actions/deploy-twenty-app@main
