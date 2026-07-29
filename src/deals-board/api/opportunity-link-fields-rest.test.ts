@@ -90,4 +90,35 @@ describe('enrichOpportunityRowsWithRestFields', () => {
     await expect(enrichOpportunityRowsWithRestFields(records, [])).resolves.toBe(records);
     expect(RestApiClient).not.toHaveBeenCalled();
   });
+
+  it('fetches REST chunks in parallel when more than one chunk is needed', async () => {
+    const callOrder: number[] = [];
+    const get = vi.fn().mockImplementation(async () => {
+      const order = callOrder.length;
+      callOrder.push(order);
+      await new Promise((resolve) => setTimeout(resolve, 10 - order));
+      return {
+        data: {
+          opportunities: [{ id: `opp-${order + 1}`, tonyLink: { primaryLinkUrl: `https://tony.example/${order + 1}` } }],
+        },
+      };
+    });
+
+    vi.mocked(RestApiClient).mockImplementation(
+      () =>
+        ({
+          get,
+        }) as unknown as RestApiClient,
+    );
+
+    const records = Array.from({ length: 51 }, (_, index) => ({
+      id: `opp-${index + 1}`,
+      name: `Deal ${index + 1}`,
+    }));
+
+    await enrichOpportunityRowsWithRestFields(records, ['tonyLink']);
+
+    expect(get).toHaveBeenCalledTimes(2);
+    expect(callOrder).toEqual([0, 1]);
+  });
 });

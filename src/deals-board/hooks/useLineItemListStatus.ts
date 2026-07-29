@@ -25,7 +25,10 @@ export const useLineItemListStatus = (lineItemId: string | undefined) =>
   });
 
 /** Prefetch list-status for all visible line items in one batch and seed per-id cache. */
-export const usePrefetchLineItemListStatuses = (lineItemIds: string[]) => {
+export const usePrefetchLineItemListStatuses = (
+  lineItemIds: string[],
+  enabled = true,
+) => {
   const queryClient = useQueryClient();
   const idsKey = useMemo(() => {
     const unique = [...new Set(lineItemIds.map((id) => id.trim()).filter(Boolean))];
@@ -43,7 +46,7 @@ export const usePrefetchLineItemListStatuses = (lineItemIds: string[]) => {
       }
       return statuses;
     },
-    enabled: Boolean(idsKey) && isCrmparserConfigured(),
+    enabled: enabled && Boolean(idsKey) && isCrmparserConfigured(),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
     retry: false,

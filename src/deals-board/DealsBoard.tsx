@@ -642,7 +642,14 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     () => displayLineItems.map((item) => item.id).filter(Boolean),
     [displayLineItems],
   );
-  usePrefetchLineItemListStatuses(listStatusLineItemIds);
+  const activeLineItemsLoading = mobileLayoutActive
+    ? mobileLineItemsQuery.isLoading
+    : lineItemsQuery.isLoading;
+  const listStatusReady =
+    !opportunitiesQuery.isLoading &&
+    !activeLineItemsLoading &&
+    listStatusLineItemIds.length > 0;
+  usePrefetchLineItemListStatuses(listStatusLineItemIds, listStatusReady);
 
   const loadError = viewsQuery.error ?? opportunitiesQuery.error ?? null;
   const metadataFieldsError =

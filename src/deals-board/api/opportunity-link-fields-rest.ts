@@ -48,18 +48,23 @@ export const enrichOpportunityRowsWithRestFields = async (
   const client = getRestClient();
   const restDataById = new Map<string, Record<string, unknown>>();
 
-  for (const chunk of chunkIds(
-    records.map((record) => record.id),
-    ID_CHUNK_SIZE,
-  )) {
-    const response = await client.get<unknown>('/rest/opportunities', {
-      query: {
-        limit: chunk.length,
-        filter: `id[in]:${JSON.stringify(chunk)}`,
-      },
-    });
+  const chunkResults = await Promise.all(
+    chunkIds(
+      records.map((record) => record.id),
+      ID_CHUNK_SIZE,
+    ).map(async (chunk) => {
+      const response = await client.get<unknown>('/rest/opportunities', {
+        query: {
+          limit: chunk.length,
+          filter: `id[in]:${JSON.stringify(chunk)}`,
+        },
+      });
+      return normalizeRestListResponse<Record<string, unknown>>(response, 'opportunities');
+    }),
+  );
 
-    for (const item of normalizeRestListResponse<Record<string, unknown>>(response, 'opportunities')) {
+  for (const items of chunkResults) {
+    for (const item of items) {
       if (typeof item.id === 'string') {
         restDataById.set(item.id, item);
       }
