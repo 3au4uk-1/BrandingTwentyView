@@ -109,6 +109,22 @@ const alignMobileViewWithFutureDeals = async (
   });
 };
 
+const viewNeedsShowAllCleared = (view: DealBoardViewRecord): boolean =>
+  view.filters.showAll === true &&
+  (view.name === FUTURE_DEALS_VIEW_NAME ||
+    view.name === MOBILE_VIEW_NAME ||
+    view.filters.datePreset === 'future');
+
+const clearShowAllOnHeavyViews = async (views: DealBoardViewRecord[]): Promise<void> => {
+  await Promise.all(
+    views.filter(viewNeedsShowAllCleared).map((view) =>
+      updateDealBoardView(view.id, {
+        filters: { ...view.filters, showAll: false },
+      }),
+    ),
+  );
+};
+
 export const useDealBoardViews = (boardKind: BoardKind = BOARD_KIND.REALIZACIYA) => {
   const queryClient = useQueryClient();
   const hasSeedAttemptedRef = useRef(false);
@@ -116,6 +132,7 @@ export const useDealBoardViews = (boardKind: BoardKind = BOARD_KIND.REALIZACIYA)
   const hasMobileSeedAttemptedRef = useRef(false);
   const hasMobileAlignAttemptedRef = useRef(false);
   const hasDefaultMigrationAttemptedRef = useRef(false);
+  const hasShowAllClearAttemptedRef = useRef(false);
   const seedDefaultViewMutation = useMutation({
     mutationFn: async () => {
       await createDealBoardView(createDefaultViewSeed(boardKind));
@@ -176,6 +193,16 @@ export const useDealBoardViews = (boardKind: BoardKind = BOARD_KIND.REALIZACIYA)
     },
   });
 
+  const clearShowAllMutation = useMutation({
+    mutationFn: clearShowAllOnHeavyViews,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: dealBoardViewsQueryKey() });
+    },
+    onError: () => {
+      hasShowAllClearAttemptedRef.current = false;
+    },
+  });
+
   const query = useQuery({
     queryKey: dealBoardViewsQueryKey(),
     queryFn: fetchDealBoardViews,
@@ -187,6 +214,8 @@ export const useDealBoardViews = (boardKind: BoardKind = BOARD_KIND.REALIZACIYA)
   const mobileView = query.data?.find((view) => view.name === MOBILE_VIEW_NAME);
   const isMobileViewAligned =
     !mobileView || hasFutureDealsViewMechanics(mobileView);
+  const hasViewsNeedingShowAllClear =
+    query.data?.some(viewNeedsShowAllCleared) ?? false;
 
   useEffect(() => {
     if (!query.isSuccess || viewCount > 0 || hasSeedAttemptedRef.current) {
@@ -286,6 +315,28 @@ export const useDealBoardViews = (boardKind: BoardKind = BOARD_KIND.REALIZACIYA)
     viewCount,
   ]);
 
+  useEffect(() => {
+    if (
+      !query.isSuccess ||
+      viewCount === 0 ||
+      !hasViewsNeedingShowAllClear ||
+      hasShowAllClearAttemptedRef.current ||
+      clearShowAllMutation.isPending
+    ) {
+      return;
+    }
+
+    hasShowAllClearAttemptedRef.current = true;
+    clearShowAllMutation.mutate(query.data ?? []);
+  }, [
+    clearShowAllMutation.isPending,
+    clearShowAllMutation.mutate,
+    hasViewsNeedingShowAllClear,
+    query.data,
+    query.isSuccess,
+    viewCount,
+  ]);
+
   return {
     ...query,
     isSeedingDefault:
@@ -293,7 +344,8 @@ export const useDealBoardViews = (boardKind: BoardKind = BOARD_KIND.REALIZACIYA)
       ensureFutureViewMutation.isPending ||
       ensureMobileViewMutation.isPending ||
       alignMobileViewMutation.isPending ||
-      promoteFutureDefaultMutation.isPending,
+      promoteFutureDefaultMutation.isPending ||
+      clearShowAllMutation.isPending,
   };
 };
 
