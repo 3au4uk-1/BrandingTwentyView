@@ -119,6 +119,52 @@ describe('fetchDealsBoardPage', () => {
     );
   });
 
+  it('falls back on 404 (undeployed LF)', async () => {
+    globalThis.process = {
+      env: {
+        TWENTY_FUNCTIONS_URL: 'https://twenty.test/functions',
+        TWENTY_APP_ACCESS_TOKEN: 'app-token',
+      },
+    } as NodeJS.Process;
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+        json: async () => ({ error: 'not found' }),
+      }),
+    );
+
+    const legacyPayload = {
+      opportunities: [{ id: 'o-legacy' }],
+      totalCount: 1,
+      lineItemsByOppId: {},
+    };
+    const legacy = vi.fn().mockResolvedValue(legacyPayload);
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    await expect(fetchDealsBoardPage(request, legacy)).resolves.toEqual(legacyPayload);
+    expect(legacy).toHaveBeenCalledOnce();
+    expect(warnSpy).toHaveBeenCalled();
+  });
+
+  it('falls back when proxy is not configured', async () => {
+    globalThis.process = { env: {} } as NodeJS.Process;
+
+    const legacyPayload = {
+      opportunities: [{ id: 'o-legacy' }],
+      totalCount: 1,
+      lineItemsByOppId: {},
+    };
+    const legacy = vi.fn().mockResolvedValue(legacyPayload);
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    await expect(fetchDealsBoardPage(request, legacy)).resolves.toEqual(legacyPayload);
+    expect(legacy).toHaveBeenCalledOnce();
+    expect(warnSpy).toHaveBeenCalled();
+  });
+
   it('falls back on 503', async () => {
     globalThis.process = {
       env: {

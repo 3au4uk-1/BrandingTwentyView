@@ -37,9 +37,14 @@ const getAppAccessToken = (): string | null => {
   return token || null;
 };
 
-const createDealsBoardPageError = (message: string, status?: number): Error & { status?: number } => {
-  const error = new Error(message) as Error & { status?: number };
+const createDealsBoardPageError = (
+  message: string,
+  status?: number,
+  code?: string,
+): Error & { status?: number; code?: string } => {
+  const error = new Error(message) as Error & { status?: number; code?: string };
   if (typeof status === 'number') error.status = status;
+  if (typeof code === 'string') error.code = code;
   return error;
 };
 
@@ -49,7 +54,7 @@ const postDealsBoardPage = async (
   const baseUrl = getTwentyFunctionsBaseUrl();
   const token = getAppAccessToken();
   if (!baseUrl || !token) {
-    throw createDealsBoardPageError('Deals board page proxy not configured');
+    throw createDealsBoardPageError('Deals board page proxy not configured', undefined, 'NOT_CONFIGURED');
   }
 
   const response = await fetch(`${baseUrl}/deals-board/page`, {

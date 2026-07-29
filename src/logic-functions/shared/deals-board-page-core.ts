@@ -69,9 +69,22 @@ export const groupLineItemsByOpportunityId = <T extends LineItemRowLike>(
   return grouped;
 };
 
+const isNotConfiguredError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
+
+  const record = error as { code?: unknown; message?: unknown };
+  if (record.code === 'NOT_CONFIGURED') return true;
+  if (typeof record.message === 'string' && /not configured/i.test(record.message)) return true;
+
+  return false;
+};
+
 export const shouldUseDealsBoardPageFallback = (error: unknown): boolean => {
+  if (isNotConfiguredError(error)) return true;
+
   const status = getErrorStatus(error);
   if (typeof status === 'number') {
+    if (status === 404) return true;
     return status >= 500;
   }
 

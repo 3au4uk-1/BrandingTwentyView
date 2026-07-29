@@ -51,7 +51,18 @@ describe('shouldUseDealsBoardPageFallback', () => {
     expect(shouldUseDealsBoardPageFallback({ status: 503 })).toBe(true);
   });
 
+  it('falls back on 404 (route unavailable / undeployed LF)', () => {
+    expect(shouldUseDealsBoardPageFallback({ status: 404 })).toBe(true);
+  });
+
   it('does not fall back on 400', () => {
     expect(shouldUseDealsBoardPageFallback({ status: 400 })).toBe(false);
+  });
+
+  it('falls back when proxy is not configured', () => {
+    expect(
+      shouldUseDealsBoardPageFallback(new Error('Deals board page proxy not configured')),
+    ).toBe(true);
+    expect(shouldUseDealsBoardPageFallback({ code: 'NOT_CONFIGURED' })).toBe(true);
   });
 });
