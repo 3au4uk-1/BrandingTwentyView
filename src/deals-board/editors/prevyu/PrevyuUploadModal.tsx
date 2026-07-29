@@ -1,103 +1,91 @@
-import {
-  type ChangeEvent as ReactChangeEvent,
-  type ClipboardEvent as ReactClipboardEvent,
-  type DragEvent as ReactDragEvent,
-  useEffect,
-  useRef,
-} from 'react';
+import { useEffect, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
-import {
-  collectImageFilesFromDataTransfer,
-  resolvePrevyuFileUrls,
-} from '../../api/files-field';
 import { useTheme } from '../../theme/ThemeContext';
-import type { LineItemFileRef } from '../../types';
 import { Button } from '../../ui/Button';
 import { Modal } from '../../ui/Modal';
 import { openRecordSidePanel } from '../../utils/open-record-side-panel';
-import { usePrevyuMediaActions } from './usePrevyuMediaActions';
+import {
+  PREVYU_UPLOAD_CHANNEL,
+  resolvePrevyuUploadPageUrl,
+} from '../../utils/prevyu-upload-page-url';
 
 export type PrevyuUploadModalProps = {
   itemId: string;
   itemName?: string;
-  files: LineItemFileRef[] | null | undefined;
   isOpen: boolean;
   onClose: () => void;
 };
 
 /**
- * In-board upload modal (Remote DOM experiment).
- * Real file input under the drop zone (no programmatic .click()).
- * Paste/DnD on a focusable zone. Side panel only via explicit footer button.
+ * Modal shell in the board + iframe to logic-function HTML (main thread).
+ * Upload/paste happen outside Remote DOM; board refreshes via BroadcastChannel /
+ * postMessage / invalidate on close.
  */
 export const PrevyuUploadModal = ({
   itemId,
   itemName,
-  files,
   isOpen,
   onClose,
 }: PrevyuUploadModalProps) => {
   const theme = useTheme();
-  const { colors, font, spacing, radius } = theme;
-  const pasteZoneRef = useRef<HTMLDivElement>(null);
-  const {
-    isPending,
-    lastError,
-    clearError,
-    addFiles,
-    addFromDataTransfer,
-    addFromClipboard,
-    makeFirst,
-    removeFile,
-  } = usePrevyuMediaActions({
-    itemId,
-    files,
-    remoteDomFallback: 'message',
-  });
-  const urls = resolvePrevyuFileUrls(files);
-  const list = files ?? [];
+  const { colors, font, spacing } = theme;
+  const queryClient = useQueryClient();
+  const iframeUrl = useMemo(
+    () => (isOpen ? resolvePrevyuUploadPageUrl(itemId) : null),
+    [isOpen, itemId],
+  );
+
+  const refreshLineItems = () => {
+    void queryClient.invalidateQueries({ queryKey: ['lineItems'] });
+  };
 
   useEffect(() => {
     if (!isOpen) return;
-    clearError();
-    const node = pasteZoneRef.current;
-    if (node && typeof node.focus === 'function') {
-      try {
-        node.focus();
-      } catch {
-        // Remote DOM focus may be unavailable
+
+    const onMessage = (event: MessageEvent) => {
+      const data = event.data;
+      if (!data || typeof data !== 'object') return;
+      const payload = data as { type?: string; lineItemId?: string };
+      if (payload.type !== 'prevyu-upload' && payload.type !== 'uploaded') return;
+      if (payload.lineItemId && payload.lineItemId !== itemId) return;
+      refreshLineItems();
+    };
+
+    const view = typeof window !== 'undefined' ? window : undefined;
+    view?.addEventListener?.('message', onMessage);
+
+    let channel: BroadcastChannel | null = null;
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        channel = new BroadcastChannel(PREVYU_UPLOAD_CHANNEL);
+        channel.onmessage = (event) => {
+          const data = event.data as { type?: string; lineItemId?: string } | null;
+          if (!data || data.type !== 'uploaded') return;
+          if (data.lineItemId && data.lineItemId !== itemId) return;
+          refreshLineItems();
+        };
       }
+    } catch {
+      channel = null;
     }
-  }, [isOpen, clearError]);
 
-  const handleFileChange = (event: ReactChangeEvent<HTMLInputElement>) => {
-    const selected = event.target.files;
-    if (selected?.length) {
-      void addFiles(Array.from(selected));
-    }
-    event.target.value = '';
-  };
+    const poll = view?.setInterval?.(() => refreshLineItems(), 4000);
 
-  const handlePaste = (event: ReactClipboardEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const fromEvent = collectImageFilesFromDataTransfer(event.clipboardData);
-    if (fromEvent.length) {
-      void addFiles(fromEvent);
-      return;
-    }
-    void addFromClipboard();
-  };
+    return () => {
+      view?.removeEventListener?.('message', onMessage);
+      try {
+        channel?.close();
+      } catch {
+        // ignore
+      }
+      if (poll != null) view?.clearInterval?.(poll);
+    };
+  }, [isOpen, itemId, queryClient]);
 
-  const handleDragOver = (event: ReactDragEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-  };
-
-  const handleDrop = (event: ReactDragEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    void addFromDataTransfer(event.dataTransfer);
+  const handleClose = () => {
+    refreshLineItems();
+    onClose();
   };
 
   return (
@@ -107,10 +95,10 @@ export const PrevyuUploadModal = ({
       title="Превью"
       description={
         itemName
-          ? `${itemName} — вставьте скриншот (Ctrl+V), перетащите файл или выберите с диска.`
-          : 'Вставьте скриншот (Ctrl+V), перетащите файл или выберите с диска.'
+          ? `${itemName} — загрузка в отдельном контексте (вне Remote DOM).`
+          : 'Загрузка в отдельном контексте (вне Remote DOM).'
       }
-      onClose={onClose}
+      onClose={handleClose}
       portalTarget="root"
       footer={
         <div
@@ -132,179 +120,42 @@ export const PrevyuUploadModal = ({
           >
             Открыть в карточке
           </Button>
-          <Button theme={theme} variant="secondary" size="sm" onClick={onClose}>
+          <Button theme={theme} variant="secondary" size="sm" onClick={handleClose}>
             Готово
           </Button>
         </div>
       }
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>
-        <div
-          ref={pasteZoneRef}
-          tabIndex={0}
-          data-prevyu-upload-zone
-          onPaste={handlePaste}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
+      {iframeUrl ? (
+        <iframe
+          title="prevyu-upload"
+          src={iframeUrl}
           style={{
-            position: 'relative',
-            minHeight: 120,
-            border: `1px dashed ${colors.borderStrong}`,
-            borderRadius: radius.md,
+            display: 'block',
+            width: '100%',
+            height: 420,
+            border: `1px solid ${colors.borderSubtle}`,
+            borderRadius: 8,
             backgroundColor: colors.bgInset,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: spacing.xs,
-            padding: spacing.lg,
-            outline: 'none',
-            cursor: 'pointer',
+          }}
+        />
+      ) : (
+        <div
+          role="alert"
+          style={{
+            padding: spacing.md,
+            borderRadius: 8,
+            border: `1px solid ${colors.danger}`,
+            backgroundColor: colors.dangerMuted,
+            color: colors.danger,
+            fontSize: font.sizeSm,
+            lineHeight: 1.4,
           }}
         >
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            disabled={isPending}
-            onChange={handleFileChange}
-            title="Выбрать файл"
-            style={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              opacity: 0,
-              cursor: isPending ? 'wait' : 'pointer',
-              fontSize: 0,
-            }}
-          />
-          <span
-            style={{
-              position: 'relative',
-              zIndex: 1,
-              pointerEvents: 'none',
-              fontSize: font.sizeSm,
-              fontWeight: font.weightSemibold,
-              color: colors.text,
-              textAlign: 'center',
-            }}
-          >
-            {isPending ? 'Загрузка…' : 'Ctrl+V / перетащить / выбрать файл'}
-          </span>
-          <span
-            style={{
-              position: 'relative',
-              zIndex: 1,
-              pointerEvents: 'none',
-              fontSize: font.sizeXs,
-              color: colors.textMuted,
-              textAlign: 'center',
-            }}
-          >
-            До 6 изображений
-          </span>
+          Не задан TWENTY_FUNCTIONS_URL — iframe загрузки недоступен. Используйте «Открыть в
+          карточке».
         </div>
-
-        {lastError ? (
-          <div
-            role="alert"
-            style={{
-              padding: spacing.sm,
-              borderRadius: radius.sm,
-              border: `1px solid ${colors.danger}`,
-              backgroundColor: colors.dangerMuted,
-              color: colors.danger,
-              fontSize: font.sizeSm,
-              lineHeight: 1.4,
-            }}
-          >
-            {lastError}
-          </div>
-        ) : null}
-
-        {list.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
-            <div
-              style={{
-                fontSize: font.sizeXs,
-                color: colors.textMuted,
-                fontWeight: font.weightSemibold,
-              }}
-            >
-              Загружено · {list.length}
-            </div>
-            {list.map((file, index) => {
-              const url = urls[index];
-              return (
-                <div
-                  key={file.fileId}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: spacing.sm,
-                    minWidth: 0,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: radius.sm,
-                      overflow: 'hidden',
-                      border: `1px solid ${colors.borderSubtle}`,
-                      backgroundColor: colors.bgInset,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {url ? (
-                      <img
-                        src={url}
-                        alt=""
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    ) : null}
-                  </div>
-                  <span
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      fontSize: font.sizeXs,
-                      color: colors.textMuted,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {file.label || file.fileId}
-                    {index === 0 ? ' · первое' : ''}
-                  </span>
-                  {index > 0 ? (
-                    <Button
-                      theme={theme}
-                      variant="ghost"
-                      size="sm"
-                      disabled={isPending}
-                      onClick={() => void makeFirst(file.fileId)}
-                    >
-                      В начало
-                    </Button>
-                  ) : null}
-                  <Button
-                    theme={theme}
-                    variant="ghost"
-                    size="sm"
-                    disabled={isPending}
-                    onClick={() => void removeFile(file.fileId)}
-                  >
-                    Удалить
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-        ) : null}
-      </div>
+      )}
     </Modal>
   );
 };

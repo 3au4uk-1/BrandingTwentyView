@@ -38,6 +38,13 @@ export const DEAL_LINE_ITEM_STOIMOST_FREZY_FIELD_UNIVERSAL_IDENTIFIER =
 export const DEAL_LINE_ITEM_PREVYU_OKLEYKI_FIELD_UNIVERSAL_IDENTIFIER =
   'eadd9fe7-1abf-4289-9b7d-ce56959c13d3';
 
+/** GET HTML paste page for prevyu upload (iframe / main-thread). */
+export const PREVYU_UPLOAD_PAGE_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER =
+  'e7b3c1a4-5d6e-4f8a-9b0c-1d2e3f4a5b6c';
+/** POST image bytes → FILES field + PATCH line item. */
+export const PREVYU_UPLOAD_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER =
+  'f8c4d2b5-6e7f-4a9b-8c1d-2e3f4a5b6c7d';
+
 export const DEAL_BOARD_VIEW_OBJECT_UNIVERSAL_IDENTIFIER =
   'bcec2a9e-be61-45d3-b7df-0de50bb63d4f';
 
