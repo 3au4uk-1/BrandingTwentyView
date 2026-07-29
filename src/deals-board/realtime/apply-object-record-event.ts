@@ -125,6 +125,10 @@ export const applyObjectRecordEvent = (
         }
       }
 
+      if (event.objectNameSingular === 'opportunity') {
+        queryClient.invalidateQueries({ queryKey: ['deals-board-page'] });
+      }
+
       return;
     }
   }
