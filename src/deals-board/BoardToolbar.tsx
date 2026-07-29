@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 
 import { currencyToRub, formatRub, type CurrencyAmount } from './analytics/compute';
 import { FilterBar } from './FilterBar';
@@ -22,6 +22,7 @@ import {
   DEAL_PREFIX_ORDER,
   type DealPrefix,
 } from './utils/deal-prefix';
+import { addSearchTerm } from './utils/search';
 import { Input } from './ui/Input';
 import { Button } from './ui/Button';
 
@@ -56,6 +57,7 @@ type BoardToolbarProps = {
   childGroups: ColumnGroupConfig[];
   onParentColumnsSave: (columns: ColumnConfig[]) => Promise<void>;
   onChildColumnsSave: (columns: ColumnConfig[], groups: ColumnGroupConfig[]) => Promise<void>;
+  activeFilterCount?: number;
 };
 
 export const BoardToolbar = ({
@@ -81,6 +83,7 @@ export const BoardToolbar = ({
   childGroups,
   onParentColumnsSave,
   onChildColumnsSave,
+  activeFilterCount = 0,
 }: BoardToolbarProps) => {
   const theme = useTheme();
   const { colors, font, spacing, radius, colorScheme } = theme;
@@ -93,6 +96,39 @@ export const BoardToolbar = ({
         .reduce((sum, item) => sum + currencyToRub(item.amount as CurrencyAmount | undefined), 0),
     [lineItems],
   );
+
+  const searchTerms = filterValue.searchTerms ?? [];
+  const draftSearch = filterValue.search ?? '';
+  const showReset = activeFilterCount > 0 || searchTerms.length > 0 || draftSearch.length > 0;
+
+  const commitDraftTerm = () => {
+    const nextTerms = addSearchTerm(searchTerms, draftSearch);
+    if (nextTerms.length === searchTerms.length && !draftSearch.trim()) return;
+    onFilterChange({
+      ...filterValue,
+      searchTerms: nextTerms,
+      search: '',
+    });
+  };
+
+  const removeTerm = (term: string) => {
+    onFilterChange({
+      ...filterValue,
+      searchTerms: searchTerms.filter((value) => value.toLowerCase() !== term.toLowerCase()),
+    });
+  };
+
+  const onSearchKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      commitDraftTerm();
+      return;
+    }
+    if (event.key === 'Backspace' && !draftSearch && searchTerms.length > 0) {
+      event.preventDefault();
+      removeTerm(searchTerms[searchTerms.length - 1]!);
+    }
+  };
 
   return (
     <header
@@ -142,24 +178,89 @@ export const BoardToolbar = ({
           />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, minWidth: 0 }}>
-          <Input
-            theme={theme}
-            type="search"
-            value={filterValue.search ?? ''}
-            onChange={(event) =>
-              onFilterChange({ ...filterValue, search: event.target.value })
-            }
-            placeholder="Поиск сделок, клиентов, позиций..."
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: spacing.sm,
+            minWidth: 0,
+            flexWrap: 'wrap',
+          }}
+        >
+          <div
             style={{
               flex: 1,
               minWidth: 0,
-              height: 34,
-              padding: '0 12px',
-              fontSize: font.sizeSm,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              flexWrap: 'wrap',
+              minHeight: 34,
+              padding: '4px 8px',
+              borderRadius: radius.md,
+              border: `1px solid ${colors.border}`,
+              backgroundColor: colors.bgElevated,
             }}
-          />
-          {(filterValue.search ?? '').length > 0 ? (
+          >
+            {searchTerms.map((term) => (
+              <button
+                key={term}
+                type="button"
+                onClick={() => removeTerm(term)}
+                title={`Убрать «${term}»`}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '2px 8px',
+                  borderRadius: radius.pill,
+                  border: `1px solid ${colors.border}`,
+                  backgroundColor: colors.accentMuted,
+                  color: colors.accentText,
+                  fontSize: font.sizeXs,
+                  fontFamily: font.family,
+                  cursor: 'pointer',
+                  maxWidth: 180,
+                }}
+              >
+                <span
+                  style={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {term}
+                </span>
+                <span aria-hidden="true">×</span>
+              </button>
+            ))}
+            <Input
+              theme={theme}
+              type="search"
+              value={draftSearch}
+              onChange={(event) =>
+                onFilterChange({ ...filterValue, search: event.target.value })
+              }
+              onKeyDown={onSearchKeyDown}
+              placeholder={
+                searchTerms.length > 0
+                  ? 'Ещё слово + Enter…'
+                  : 'Поиск: слово + Enter для нескольких, или просто текст'
+              }
+              style={{
+                flex: 1,
+                minWidth: 140,
+                height: 26,
+                padding: '0 4px',
+                border: 'none',
+                background: 'transparent',
+                boxShadow: 'none',
+                fontSize: font.sizeSm,
+              }}
+            />
+          </div>
+          {showReset ? (
             <Button theme={theme} variant="ghost" size="sm" onClick={onFilterReset}>
               Сбросить
             </Button>

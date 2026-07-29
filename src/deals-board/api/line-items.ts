@@ -278,21 +278,25 @@ const fetchLineItemOpportunityIdsPage = async (
 };
 
 export const fetchLineItemOpportunityIdsBySearch = async (
-  search: string,
+  search: string | string[],
   filters?: LineItemQueryFilters,
 ): Promise<string[]> => {
-  const term = search.trim();
-  if (!term) return [];
+  const terms = (Array.isArray(search) ? search : [search])
+    .map((term) => term.trim())
+    .filter(Boolean);
+  if (!terms.length) return [];
 
   const client = getRestClient();
   const allIds = new Set<string>();
-  let after: string | undefined;
 
-  do {
-    const page = await fetchLineItemOpportunityIdsPage(client, term, filters, after);
-    page.opportunityIds.forEach((id) => allIds.add(id));
-    after = page.nextCursor;
-  } while (after);
+  for (const term of terms) {
+    let after: string | undefined;
+    do {
+      const page = await fetchLineItemOpportunityIdsPage(client, term, filters, after);
+      page.opportunityIds.forEach((id) => allIds.add(id));
+      after = page.nextCursor;
+    } while (after);
+  }
 
   return [...allIds];
 };

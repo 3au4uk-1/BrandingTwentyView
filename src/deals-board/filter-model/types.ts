@@ -11,10 +11,14 @@ export type FilterClause = {
 };
 
 export type FilterState = {
-  datePreset?: DealBoardDatePreset;
+  /** `null` = explicitly cleared (do not fall back to saved view). */
+  datePreset?: DealBoardDatePreset | null;
   dateFrom?: string;
   dateTo?: string;
   clauses: FilterClause[];
   sessionClauses?: FilterClause[];
+  /** Draft text in the search input (before Enter). */
   search?: string;
+  /** Active keyword chips; OR-matched against deals/positions. */
+  searchTerms?: string[];
 };

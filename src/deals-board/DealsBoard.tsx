@@ -41,6 +41,7 @@ import { mergeColumns } from './metadata/merge-columns';
 import { useObjectFields } from './metadata/useObjectFields';
 import { VIRTUAL_PARENT_FIELD_DESCRIPTORS } from './metadata/virtual-columns';
 import { filterDealsAndLineItems } from './filter-model/apply-line-item-filters';
+import { CLEAR_FILTER_SESSION } from './filter-model/clear-filter-session';
 import { clausesToDealBoardFilters } from './filter-model/clauses-to-deal-board-filters';
 import {
   buildPersistedFiltersFromSession,
@@ -48,6 +49,7 @@ import {
 } from './filter-model/filter-session-bridge';
 import { hasLineItemFilterClauses } from './filter-model/has-line-item-filter-clauses';
 import { migrateLegacyFilters } from './filter-model/migrate-legacy-filters';
+import { resolveSessionOverride } from './filter-model/resolve-session-override';
 import {
   beginSessionClauses,
   commitSessionClauses,
@@ -80,7 +82,7 @@ import {
 } from './utils/pagination';
 import { applyPrintGroupSeed } from './utils/column-groups';
 import { asArray } from './utils/parse-json-field';
-import { filterLineItemsForSearch, normalizeSearchTerm } from './utils/search';
+import { filterLineItemsForSearch, resolveSearchTerms } from './utils/search';
 import { ViewSettingsModal } from './ViewSettingsModal';
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -90,8 +92,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-const EMPTY_FILTER_SESSION: Partial<FilterState> = {};
 
 const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
   const boardKind = boardStreamToBoardKind(boardStream);
@@ -111,7 +111,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
   const [page, setPage] = useState(0);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editViewDraft, setEditViewDraft] = useState<DealBoardViewRecord>();
-  const [filterSession, setFilterSession] = useState<Partial<FilterState>>(EMPTY_FILTER_SESSION);
+  const [filterSession, setFilterSession] = useState<Partial<FilterState>>({});
   const [sortSession, setSortSession] = useState<DealBoardSort[] | undefined>(undefined);
   const [showAllPositionOppIds, setShowAllPositionOppIds] = useState<Set<string>>(() => new Set());
   const [boardPane, setBoardPane] = useState<'deals' | 'analytics'>('deals');
@@ -170,7 +170,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
   useEffect(() => {
     setPage(0);
     setAccumulatedRecords([]);
-    setFilterSession(EMPTY_FILTER_SESSION);
+    setFilterSession({});
     setSortSession(undefined);
     setShowAllPositionOppIds(new Set());
     setAttentionTip(null);
@@ -187,12 +187,19 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
   );
 
   const mergedFilters = useMemo(() => {
+    const sessionSearchTerms = resolveSessionOverride(
+      filterSession.searchTerms,
+      activeView?.filters?.searchTerms,
+    );
     const boardFilters = clausesToDealBoardFilters(
       effectiveClauses,
-      filterSession.datePreset ?? activeView?.filters?.datePreset,
-      filterSession.dateFrom ?? activeView?.filters?.dateFrom,
-      filterSession.dateTo ?? activeView?.filters?.dateTo,
-      filterSession.search ?? activeView?.filters?.search,
+      resolveSessionOverride(filterSession.datePreset, activeView?.filters?.datePreset),
+      resolveSessionOverride(filterSession.dateFrom, activeView?.filters?.dateFrom),
+      resolveSessionOverride(filterSession.dateTo, activeView?.filters?.dateTo),
+      sessionSearchTerms !== undefined
+        ? undefined
+        : resolveSessionOverride(filterSession.search, activeView?.filters?.search),
+      sessionSearchTerms,
     );
 
     return {
@@ -204,20 +211,31 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     activeView?.filters?.datePreset,
     activeView?.filters?.dateTo,
     activeView?.filters?.search,
+    activeView?.filters?.searchTerms,
     activeView?.filters?.showAll,
     effectiveClauses,
     filterSession.dateFrom,
     filterSession.datePreset,
     filterSession.dateTo,
     filterSession.search,
+    filterSession.searchTerms,
   ]);
 
   const filterBarValue = useMemo<FilterState>(
     () => ({
-      datePreset: filterSession.datePreset ?? activeView?.filters?.datePreset,
-      dateFrom: filterSession.dateFrom ?? activeView?.filters?.dateFrom,
-      dateTo: filterSession.dateTo ?? activeView?.filters?.dateTo,
-      search: filterSession.search ?? activeView?.filters?.search ?? '',
+      datePreset: resolveSessionOverride(
+        filterSession.datePreset,
+        activeView?.filters?.datePreset,
+      ),
+      dateFrom: resolveSessionOverride(filterSession.dateFrom, activeView?.filters?.dateFrom),
+      dateTo: resolveSessionOverride(filterSession.dateTo, activeView?.filters?.dateTo),
+      search:
+        filterSession.search ??
+        (filterSession.searchTerms !== undefined ? '' : (activeView?.filters?.search ?? '')),
+      searchTerms: resolveSessionOverride(
+        filterSession.searchTerms,
+        activeView?.filters?.searchTerms,
+      ),
       clauses: viewClauses,
       sessionClauses: filterSession.sessionClauses,
     }),
@@ -266,6 +284,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     filterSession.dateFrom,
     filterSession.dateTo,
     filterSession.search,
+    filterSession.searchTerms,
     effectiveClauseKey,
     effectiveSortKey,
   ]);
@@ -440,10 +459,15 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
 
   const visibleLineItems = useMemo(() => {
     const flat = Object.values(filteredBoardData.lineItemsByOppId).flat();
-    const search = normalizeSearchTerm(mergedFilters.search);
-    if (!search) return flat;
-    return filterLineItemsForSearch(flat, search, recordsById);
-  }, [filteredBoardData.lineItemsByOppId, mergedFilters.search, recordsById]);
+    const terms = resolveSearchTerms(mergedFilters);
+    if (!terms.length) return flat;
+    return filterLineItemsForSearch(flat, terms, recordsById);
+  }, [
+    filteredBoardData.lineItemsByOppId,
+    mergedFilters.search,
+    mergedFilters.searchTerms,
+    recordsById,
+  ]);
 
   const attentionStats = useMemo(() => {
     const oppsById = new Map(streamFilteredRecords.map((record) => [record.id, record]));
@@ -489,6 +513,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
       dateFrom: next.dateFrom,
       dateTo: next.dateTo,
       search: next.search,
+      searchTerms: next.searchTerms,
     });
   };
 
@@ -506,7 +531,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
   };
 
   const handleFilterReset = () => {
-    setFilterSession(EMPTY_FILTER_SESSION);
+    setFilterSession(CLEAR_FILTER_SESSION);
     setSortSession(undefined);
     setShowAllPositionOppIds(new Set());
     setAttentionTip(null);
@@ -586,18 +611,19 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
       ).flat();
     }
 
-    const search = normalizeSearchTerm(mergedFilters.search);
-    if (!search) return scoped;
+    const terms = resolveSearchTerms(mergedFilters);
+    if (!terms.length) return scoped;
     const recordsByMobileId = new Map(mobileRecords.map((record) => [record.id, record]));
-    return filterLineItemsForSearch(scoped, search, recordsByMobileId);
+    return filterLineItemsForSearch(scoped, terms, recordsByMobileId);
   }, [
     effectiveClauses,
     hasLineItemFilters,
     mobileLayoutActive,
+    mergedFilters.search,
+    mergedFilters.searchTerms,
     streamFilteredLineItems,
     streamFilteredMobileLineItems,
     mobileRecords,
-    mergedFilters.search,
     showAllPositionOppIds,
     visibleLineItems,
   ]);
@@ -793,6 +819,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
             onChildColumnsSave={(columns, groups) =>
               saveActiveViewColumns('child', columns, groups)
             }
+            activeFilterCount={activeFilterCount}
           />
 
           {metadataFieldsWarning ? (

@@ -11,8 +11,8 @@ export const PrintPanelChip = ({ item }: PrintPanelChipProps) => (
   <SheetQueuePanel
     item={item}
     groupId={PRINT_FIELD_GROUP_ID}
-    chipLabel="Печать Плёнки"
-    title="Печать Плёнки"
+    chipLabel="Печать пленки"
+    title="Печать пленки"
     dataChipAttr="data-print-chip"
     fields={{
       date: 'dataGotovnostiPechati',
@@ -21,6 +21,7 @@ export const PrintPanelChip = ({ item }: PrintPanelChipProps) => (
       vzato: 'vzatoVRabotu',
       gotovo: 'gotovo',
       plenka: true,
+      restoration: 'restavraciyaPechati',
     }}
   />
 );

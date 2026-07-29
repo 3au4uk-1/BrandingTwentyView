@@ -11,7 +11,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { ExternalLinkIcon, LinkIcon } from '../ui/Icons';
+import { LinkIcon } from '../ui/Icons';
 import { Modal } from '../ui/Modal';
 
 type LinkCellProps = {
@@ -80,33 +80,11 @@ export const LinkCell = ({ itemId, value }: LinkCellProps) => {
   return (
     <>
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: spacing.xs, maxWidth: '100%' }}>
-        {url ? (
-          <a
-            href={url}
-            target="_blank"
-            rel="noreferrer"
-            title={label || url}
-            onClick={(event) => event.stopPropagation()}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: spacing.xs,
-              color: colors.accentText,
-              fontSize: font.sizeSm,
-              textDecoration: 'none',
-              flexShrink: 0,
-            }}
-          >
-            <LinkIcon size={14} color={colors.accentText} />
-            <ExternalLinkIcon size={12} color={colors.textMuted} />
-          </a>
-        ) : null}
-
         <button
           type="button"
           onClick={openEditor}
           onMouseDown={(event) => event.stopPropagation()}
-          title={url ? 'Изменить ссылку' : 'Добавить ссылку'}
+          title={url ? label || url : 'Добавить ссылку'}
           style={{
             border: 'none',
             background: 'transparent',
@@ -116,14 +94,21 @@ export const LinkCell = ({ itemId, value }: LinkCellProps) => {
             alignItems: 'center',
             gap: spacing.xs,
             cursor: 'pointer',
-            color: colors.textMuted,
+            color: url ? colors.accentText : colors.textMuted,
             fontSize: font.sizeSm,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
           }}
         >
-          {url ? '✎' : EMPTY_VALUE}
+          {url ? (
+            <>
+              <LinkIcon size={14} color={colors.accentText} />
+              <span>Макет</span>
+            </>
+          ) : (
+            EMPTY_VALUE
+          )}
         </button>
 
         <button
@@ -175,24 +160,41 @@ export const LinkCell = ({ itemId, value }: LinkCellProps) => {
           </>
         }
       >
-        <Input
-          theme={theme}
-          autoFocus
-          type="url"
-          placeholder="https://..."
-          value={draftValue}
-          onChange={(event) => setDraftValue(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              void save();
-            }
-            if (event.key === 'Escape') {
-              closeEditor();
-            }
-          }}
-          style={{ width: '100%', padding: '6px 8px', fontSize: font.sizeSm }}
-        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm }}>
+          <Input
+            theme={theme}
+            autoFocus
+            type="url"
+            placeholder="https://..."
+            value={draftValue}
+            onChange={(event) => setDraftValue(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                void save();
+              }
+              if (event.key === 'Escape') {
+                closeEditor();
+              }
+            }}
+            style={{ width: '100%', padding: '6px 8px', fontSize: font.sizeSm }}
+          />
+          {url ? (
+            <a
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                fontSize: font.sizeXs,
+                color: colors.accent,
+                fontWeight: font.weightSemibold,
+              }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              Открыть макет
+            </a>
+          ) : null}
+        </div>
       </Modal>
 
       <Modal

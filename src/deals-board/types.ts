@@ -31,13 +31,15 @@ export type DealBoardDatePreset =
   | 'custom';
 
 export type DealBoardFilters = {
-  datePreset?: DealBoardDatePreset;
+  datePreset?: DealBoardDatePreset | null;
   dateFrom?: string;
   dateTo?: string;
   stages?: LineItemStage[];
   types?: LineItemType[];
   oplata?: string;
   search?: string;
+  /** Multi-keyword OR search terms (preferred over `search` when set). */
+  searchTerms?: string[];
   showAll?: boolean;
   companyIds?: string[];
   clauses?: FilterClause[];

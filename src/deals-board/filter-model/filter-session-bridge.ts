@@ -3,6 +3,7 @@ import type { DealBoardFilters } from '../types';
 
 import { clausesToDealBoardFilters } from './clauses-to-deal-board-filters';
 import { migrateLegacyFilters } from './migrate-legacy-filters';
+import { resolveSessionOverride } from './resolve-session-override';
 import { getEffectiveClauses } from './session';
 import type { FilterClause, FilterState } from './types';
 
@@ -12,19 +13,27 @@ export const filterSessionToQuickFilters = (
   viewClauses: FilterClause[],
 ): QuickFiltersValue => {
   const effectiveClauses = getEffectiveClauses(viewClauses, filterSession.sessionClauses);
+  const sessionSearchTerms = resolveSessionOverride(
+    filterSession.searchTerms,
+    viewFilters.searchTerms,
+  );
   const boardFilters = clausesToDealBoardFilters(
     effectiveClauses,
-    filterSession.datePreset ?? viewFilters.datePreset,
-    filterSession.dateFrom ?? viewFilters.dateFrom,
-    filterSession.dateTo ?? viewFilters.dateTo,
-    filterSession.search ?? viewFilters.search,
+    resolveSessionOverride(filterSession.datePreset, viewFilters.datePreset),
+    resolveSessionOverride(filterSession.dateFrom, viewFilters.dateFrom),
+    resolveSessionOverride(filterSession.dateTo, viewFilters.dateTo),
+    sessionSearchTerms !== undefined
+      ? undefined
+      : resolveSessionOverride(filterSession.search, viewFilters.search),
+    sessionSearchTerms,
   );
-  const rawPreset = filterSession.datePreset ?? viewFilters.datePreset ?? null;
+  const rawPreset =
+    resolveSessionOverride(filterSession.datePreset, viewFilters.datePreset) ?? null;
 
   return {
     datePreset: rawPreset === 'future' ? null : (rawPreset as QuickFiltersValue['datePreset']),
-    dateFrom: filterSession.dateFrom ?? viewFilters.dateFrom,
-    dateTo: filterSession.dateTo ?? viewFilters.dateTo,
+    dateFrom: resolveSessionOverride(filterSession.dateFrom, viewFilters.dateFrom),
+    dateTo: resolveSessionOverride(filterSession.dateTo, viewFilters.dateTo),
     stages: boardFilters.stages ?? [],
     types: boardFilters.types ?? [],
     companyIds: boardFilters.companyIds ?? [],
@@ -58,10 +67,11 @@ export const buildPersistedFiltersFromSession = (
   effectiveClauses: FilterClause[],
 ): DealBoardFilters & { clauses: FilterClause[] } =>
   buildPersistedViewFilters(viewFilters, {
-    datePreset: filterSession.datePreset ?? viewFilters.datePreset,
-    dateFrom: filterSession.dateFrom ?? viewFilters.dateFrom,
-    dateTo: filterSession.dateTo ?? viewFilters.dateTo,
-    search: filterSession.search ?? viewFilters.search,
+    datePreset: resolveSessionOverride(filterSession.datePreset, viewFilters.datePreset),
+    dateFrom: resolveSessionOverride(filterSession.dateFrom, viewFilters.dateFrom),
+    dateTo: resolveSessionOverride(filterSession.dateTo, viewFilters.dateTo),
+    search: resolveSessionOverride(filterSession.search, viewFilters.search),
+    searchTerms: resolveSessionOverride(filterSession.searchTerms, viewFilters.searchTerms),
     clauses: effectiveClauses,
   });
 
@@ -78,6 +88,7 @@ export const buildPersistedViewFilters = (
     dateFrom: overrides.dateFrom ?? viewFilters.dateFrom,
     dateTo: overrides.dateTo ?? viewFilters.dateTo,
     search: overrides.search ?? viewFilters.search,
+    searchTerms: overrides.searchTerms ?? viewFilters.searchTerms,
     showAll: overrides.showAll ?? viewFilters.showAll,
     clauses: overrides.clauses ?? clauses,
   };

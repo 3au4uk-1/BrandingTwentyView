@@ -37,15 +37,17 @@ const resolveOplata = (clauses: FilterClause[]): DealBoardFilters['oplata'] => {
 
 export const clausesToDealBoardFilters = (
   clauses: FilterClause[],
-  datePreset?: DealBoardDatePreset,
+  datePreset?: DealBoardDatePreset | null,
   dateFrom?: string,
   dateTo?: string,
   search?: string,
+  searchTerms?: string[],
 ): DealBoardFilters => ({
-  datePreset,
+  datePreset: datePreset ?? undefined,
   dateFrom,
   dateTo,
   search: normalizeSearchTerm(search) || undefined,
+  searchTerms: searchTerms?.length ? searchTerms : undefined,
   stages: collectInValues(clauses, 'lineItem', 'stage'),
   types: collectInValues(clauses, 'lineItem', 'tip'),
   companyIds: collectInValues(clauses, 'deal', 'companyId'),

@@ -28,6 +28,8 @@ export type SheetQueueFieldMap = {
   gotovo: string;
   /** Print-only film number / markdown */
   plenka?: boolean;
+  /** Print-only restoration checkbox → Excel column F */
+  restoration?: string;
 };
 
 export type SheetQueuePanelProps = {
@@ -108,8 +110,43 @@ export const SheetQueuePanel = ({
 
   const vzato = readBool(item, fields.vzato);
   const gotovo = readBool(item, fields.gotovo);
+  const restoration = fields.restoration ? readBool(item, fields.restoration) : false;
   const snippet = fields.plenka ? plenkaSnippet(item.plenka) : '';
   const maketUrl = item.ssylkaNaMakety?.primaryLinkUrl?.trim() ?? '';
+
+  const formatChipLabel = () => {
+    if (gotovo) {
+      return snippet
+        ? `${chipLabel} - Готово - ${snippet}`
+        : `${chipLabel} - Готово`;
+    }
+    if (vzato) {
+      return `${chipLabel} - взято`;
+    }
+    return chipLabel;
+  };
+
+  const chipText = formatChipLabel();
+  const chipTone: 'idle' | 'vzato' | 'gotovo' = gotovo ? 'gotovo' : vzato ? 'vzato' : 'idle';
+
+  const chipColors =
+    chipTone === 'gotovo'
+      ? {
+          background: colors.successMuted,
+          color: colors.success,
+          border: colors.success,
+        }
+      : chipTone === 'vzato'
+        ? {
+            background: colors.warningMuted,
+            color: colors.warning,
+            border: colors.warning,
+          }
+        : {
+            background: open ? colors.accentMuted : colors.bgElevated,
+            color: open ? colors.accentText : colors.text,
+            border: open ? colors.accent : colors.borderStrong,
+          };
 
   const syncDraftsFromItem = () => {
     const next = parsePrintComment(readString(item, fields.comment));
@@ -187,9 +224,9 @@ export const SheetQueuePanel = ({
 
   const chipParts = [
     chipLabel,
-    vzato ? 'Взято' : null,
+    vzato ? 'взято' : null,
     gotovo ? 'Готово' : null,
-    snippet || null,
+    gotovo ? snippet || null : null,
   ].filter(Boolean);
 
   const readyHint =
@@ -210,26 +247,21 @@ export const SheetQueuePanel = ({
         style={{
           maxWidth: '100%',
           padding: '4px 10px',
-          border: `1px solid ${open ? colors.accent : colors.borderStrong}`,
+          border: `1px solid ${chipColors.border}`,
           borderRadius: '999px',
-          background: open
-            ? colors.accentMuted
-            : gotovo
-              ? colors.successMuted
-              : vzato
-                ? colors.accentMuted
-                : colors.bgElevated,
-          color: open || vzato || gotovo ? colors.accentText : colors.text,
+          background: chipColors.background,
+          color: chipColors.color,
           cursor: 'pointer',
           font: 'inherit',
           fontSize: font.sizeXs,
-          fontWeight: open || gotovo || vzato ? font.weightSemibold : font.weightMedium,
+          fontWeight:
+            open || gotovo || vzato ? font.weightSemibold : font.weightMedium,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
         }}
       >
-        {chipParts.join(' · ')}
+        {chipText}
       </button>
 
       <Modal
@@ -264,6 +296,18 @@ export const SheetQueuePanel = ({
             >
               Готово
             </Button>
+            {fields.restoration ? (
+              <Button
+                theme={theme}
+                size="sm"
+                variant={restoration ? 'primary' : 'ghost'}
+                onClick={() =>
+                  void patch({ [fields.restoration!]: !restoration })
+                }
+              >
+                Реставрация
+              </Button>
+            ) : null}
             <div style={{ flex: 1 }} />
             <Button theme={theme} size="sm" variant="ghost" onClick={() => setOpen(false)}>
               Закрыть
@@ -385,23 +429,34 @@ export const SheetQueuePanel = ({
                 onBlur={saveMaket}
                 style={{ flex: 1, height: 36 }}
               />
-              {maketUrl ? (
-                <a
-                  href={maketUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    fontSize: font.sizeXs,
-                    color: colors.accent,
-                    whiteSpace: 'nowrap',
-                    fontWeight: font.weightSemibold,
-                  }}
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  Открыть
-                </a>
-              ) : null}
             </div>
+            {maketUrl ? (
+              <a
+                href={maketUrl}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  marginTop: 6,
+                  fontSize: font.sizeXs,
+                  color: colors.accent,
+                  fontWeight: font.weightSemibold,
+                  alignSelf: 'flex-start',
+                }}
+                onClick={(event) => event.stopPropagation()}
+              >
+                Открыть макет
+              </a>
+            ) : (
+              <span
+                style={{
+                  marginTop: 6,
+                  fontSize: font.sizeXs,
+                  color: colors.textMuted,
+                }}
+              >
+                Ссылка откроется здесь после сохранения
+              </span>
+            )}
           </label>
 
           <div>

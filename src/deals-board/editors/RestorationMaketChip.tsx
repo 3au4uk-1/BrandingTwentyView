@@ -46,9 +46,7 @@ export const RestorationMaketChip = ({ item }: RestorationMaketChipProps) => {
     setOpen(true);
   };
 
-  const chipText = currentLabel
-    ? `Макет · ${currentLabel.length > 18 ? `${currentLabel.slice(0, 17)}…` : currentLabel}`
-    : 'Станд. макет';
+  const chipText = currentLabel ? 'Макет' : 'Станд. макет';
 
   return (
     <>
@@ -91,6 +89,22 @@ export const RestorationMaketChip = ({ item }: RestorationMaketChipProps) => {
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
+          {item.ssylkaNaMakety?.primaryLinkUrl ? (
+            <a
+              href={item.ssylkaNaMakety.primaryLinkUrl}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                fontSize: font.sizeXs,
+                color: colors.accent,
+                fontWeight: font.weightSemibold,
+                marginBottom: spacing.xs,
+              }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              Открыть текущий макет
+            </a>
+          ) : null}
           {STANDARD_RESTORATION_MAKETS.map((maket) => (
             <button
               key={maket.id}
