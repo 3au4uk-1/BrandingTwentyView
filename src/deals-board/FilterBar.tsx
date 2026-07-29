@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { LINE_ITEM_TYPES } from 'src/constants/line-item-types';
 import { LINE_ITEM_STAGES } from 'src/constants/stages';
@@ -10,6 +10,7 @@ import { formatFilterClauseLabel } from './filter-model/format-clause-label';
 import { beginSessionClauses, commitSessionClauses } from './filter-model/session';
 import type { FilterClause, FilterState } from './filter-model/types';
 import { useCompanies } from './hooks/useCompanies';
+import { useOutsideDismiss } from './hooks/useOutsideDismiss';
 import type { FieldDescriptor } from './metadata/types';
 import { createId } from './utils/create-id';
 import { getPresetRange } from './utils/date-filters';
@@ -97,6 +98,12 @@ export const FilterBar = ({
   const [activeBuilderField, setActiveBuilderField] = useState<BuilderField | null>(null);
   const [companySearch, setCompanySearch] = useState('');
   const [debouncedCompanySearch, setDebouncedCompanySearch] = useState('');
+  const builderRef = useRef<HTMLDivElement | null>(null);
+  const dismissBuilder = useCallback(() => {
+    setIsBuilderOpen(false);
+    setActiveBuilderField(null);
+  }, []);
+  useOutsideDismiss(isBuilderOpen, builderRef, dismissBuilder);
 
   const effectiveClauses =
     value.sessionClauses === undefined ? viewClauses : value.sessionClauses;
@@ -547,7 +554,7 @@ export const FilterBar = ({
         </div>
       ) : null}
 
-      <div style={{ position: 'relative' }}>
+      <div ref={builderRef} style={{ position: 'relative' }}>
         <button
           type="button"
           data-segment-btn

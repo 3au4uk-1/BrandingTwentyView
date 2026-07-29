@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState, useEffect } from 'react';
+import { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 
 import { LINE_ITEM_STAGES, type LineItemStage } from 'src/constants/stages';
 import { LINE_ITEM_TYPES, type LineItemType } from 'src/constants/line-item-types';
@@ -7,6 +7,7 @@ import type { DealBoardDatePreset } from 'src/deals-board/types';
 
 import { fetchCompanyNames } from './api/companies';
 import { useCompanies } from './hooks/useCompanies';
+import { useOutsideDismiss } from './hooks/useOutsideDismiss';
 import { getPresetRange } from './utils/date-filters';
 import { useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
@@ -51,6 +52,15 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
   const [isCompanyFilterOpen, setIsCompanyFilterOpen] = useState(false);
   const [companySearch, setCompanySearch] = useState('');
   const [debouncedCompanySearch, setDebouncedCompanySearch] = useState('');
+  const filtersRef = useRef<HTMLDivElement | null>(null);
+  const anyDropdownOpen = isStageFilterOpen || isTypeFilterOpen || isCompanyFilterOpen;
+  const dismissDropdowns = useCallback(() => {
+    setIsStageFilterOpen(false);
+    setIsTypeFilterOpen(false);
+    setIsCompanyFilterOpen(false);
+    setCompanySearch('');
+  }, []);
+  useOutsideDismiss(anyDropdownOpen, filtersRef, dismissDropdowns);
   const selectedStages = value.stages ?? [];
   const selectedTypes = value.types ?? [];
   const selectedCompanyIds = value.companyIds ?? [];
@@ -121,6 +131,7 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
 
   return (
     <div
+      ref={filtersRef}
       style={{
         display: 'flex',
         alignItems: 'center',

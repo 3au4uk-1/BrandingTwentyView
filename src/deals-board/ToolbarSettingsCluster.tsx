@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ColumnPicker } from './ColumnPicker';
 import { GroupChipModeToggle } from './GroupChipModeToggle';
+import { useOutsideDismiss } from './hooks/useOutsideDismiss';
 import { useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
 import { SettingsIcon } from './ui/Icons';
@@ -32,19 +33,8 @@ export const ToolbarSettingsCluster = ({
   const [parentPickerOpen, setParentPickerOpen] = useState(false);
   const [childPickerOpen, setChildPickerOpen] = useState(false);
   const clusterRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!isMenuOpen) return;
-
-    const onMouseDown = (event: MouseEvent) => {
-      if (!clusterRef.current?.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    };
-
-    window.addEventListener('mousedown', onMouseDown);
-    return () => window.removeEventListener('mousedown', onMouseDown);
-  }, [isMenuOpen]);
+  const dismissMenu = useCallback(() => setIsMenuOpen(false), []);
+  useOutsideDismiss(isMenuOpen, clusterRef, dismissMenu);
 
   const menuItemStyle = {
     width: '100%',

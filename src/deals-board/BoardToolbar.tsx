@@ -58,6 +58,8 @@ type BoardToolbarProps = {
   onParentColumnsSave: (columns: ColumnConfig[]) => Promise<void>;
   onChildColumnsSave: (columns: ColumnConfig[], groups: ColumnGroupConfig[]) => Promise<void>;
   activeFilterCount?: number;
+  /** Show «Сбросить» only when session differs from the active view. */
+  canResetFilters?: boolean;
 };
 
 export const BoardToolbar = ({
@@ -83,7 +85,8 @@ export const BoardToolbar = ({
   childGroups,
   onParentColumnsSave,
   onChildColumnsSave,
-  activeFilterCount = 0,
+  activeFilterCount: _activeFilterCount = 0,
+  canResetFilters = false,
 }: BoardToolbarProps) => {
   const theme = useTheme();
   const { colors, font, spacing, radius, colorScheme } = theme;
@@ -99,7 +102,7 @@ export const BoardToolbar = ({
 
   const searchTerms = filterValue.searchTerms ?? [];
   const draftSearch = filterValue.search ?? '';
-  const showReset = activeFilterCount > 0 || searchTerms.length > 0 || draftSearch.length > 0;
+  const showReset = canResetFilters;
 
   const commitDraftTerm = () => {
     const nextTerms = addSearchTerm(searchTerms, draftSearch);

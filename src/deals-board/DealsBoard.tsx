@@ -42,7 +42,10 @@ import { pinChildColumnFirst } from './utils/pin-child-column';
 import { useObjectFields } from './metadata/useObjectFields';
 import { VIRTUAL_PARENT_FIELD_DESCRIPTORS } from './metadata/virtual-columns';
 import { filterDealsAndLineItems } from './filter-model/apply-line-item-filters';
-import { CLEAR_FILTER_SESSION } from './filter-model/clear-filter-session';
+import {
+  hasFilterSessionOverrides,
+  RESET_FILTER_SESSION_TO_VIEW,
+} from './filter-model/clear-filter-session';
 import { clausesToDealBoardFilters } from './filter-model/clauses-to-deal-board-filters';
 import {
   buildPersistedFiltersFromSession,
@@ -253,6 +256,8 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     activeView?.filters ?? {},
     viewClauses,
   );
+  const canResetFilters =
+    hasFilterSessionOverrides(filterSession) || sortSession !== undefined;
 
   const persistedViewFilters = useMemo(
     () =>
@@ -535,7 +540,8 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
   };
 
   const handleFilterReset = () => {
-    setFilterSession(CLEAR_FILTER_SESSION);
+    // Restore the active view's saved filters (drop session overrides).
+    setFilterSession(RESET_FILTER_SESSION_TO_VIEW);
     setSortSession(undefined);
     setShowAllPositionOppIds(new Set());
     setAttentionTip(null);
@@ -824,6 +830,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
               saveActiveViewColumns('child', columns, groups)
             }
             activeFilterCount={activeFilterCount}
+            canResetFilters={canResetFilters}
           />
 
           {metadataFieldsWarning ? (

@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useOutsideDismiss } from './hooks/useOutsideDismiss';
 import { useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
 import type { ColumnConfig, ColumnGroupConfig } from './types';
@@ -65,19 +66,14 @@ export const ColumnPicker = ({
   const [draftGroups, setDraftGroups] = useState<ColumnGroupConfig[]>([]);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const title = target === 'parent' ? 'Колонки сделок' : 'Колонки позиций';
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const onMouseDown = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    window.addEventListener('mousedown', onMouseDown);
-    return () => window.removeEventListener('mousedown', onMouseDown);
-  }, [isOpen]);
+  const dismiss = useCallback(() => {
+    if (onOpenChange) {
+      onOpenChange(false);
+    } else {
+      setInternalOpen(false);
+    }
+  }, [onOpenChange]);
+  useOutsideDismiss(isOpen, containerRef, dismiss);
 
   // Sync draft from props only when closed (or on open). While open, keep local
   // reorder/visibility edits — otherwise refetch/mergeColumns identity churn resets ↑↓.
