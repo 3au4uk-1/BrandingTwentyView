@@ -8,6 +8,26 @@ import { shouldFetchAllOpportunities } from '../utils/date-filters';
 import { getEffectiveOpportunitySort } from '../utils/sort-opportunities';
 import type { DealBoardFilters, DealBoardSort } from '../types';
 
+export const resolveOpportunitiesFetchAll = (params: {
+  filters: DealBoardFilters;
+  sort: DealBoardSort[];
+  showAll?: boolean;
+  forcePaginated?: boolean;
+  effectiveClauses?: FilterClause[];
+}): boolean => {
+  const effectiveSort = getEffectiveOpportunitySort(
+    params.sort.length > 0 ? params.sort : DEFAULT_DATE_SORT,
+  );
+  const showAll = params.showAll ?? false;
+  const forcePaginated = params.forcePaginated ?? false;
+
+  return (
+    !forcePaginated &&
+    (showAll ||
+      shouldFetchAllOpportunities(params.filters, effectiveSort, params.effectiveClauses))
+  );
+};
+
 const DEFAULT_PAGE_SIZE = 50;
 const DEFAULT_DATE_SORT: DealBoardSort[] = [
   { field: OPPORTUNITY_DATE_FILTER_FIELD, direction: 'AscNullsFirst' },
@@ -64,10 +84,13 @@ export const useOpportunities = (params: {
   const effectiveSort = getEffectiveOpportunitySort(
     params.sort.length > 0 ? params.sort : DEFAULT_DATE_SORT,
   );
-  const fetchAll =
-    !forcePaginated &&
-    (showAll ||
-      shouldFetchAllOpportunities(params.filters, effectiveSort, params.effectiveClauses));
+  const fetchAll = resolveOpportunitiesFetchAll({
+    filters: params.filters,
+    sort: params.sort,
+    showAll,
+    forcePaginated,
+    effectiveClauses: params.effectiveClauses,
+  });
 
   return useQuery({
     queryKey: opportunitiesQueryKey(

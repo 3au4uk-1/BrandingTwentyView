@@ -31,9 +31,10 @@ import { DealsTable } from './DealsTable/DealsTable';
 import { ExpandModeProvider } from './hooks/useExpandMode';
 import { GroupChipModeProvider } from './hooks/useGroupChipMode';
 import { useDealBoardViews, useUpdateDealBoardView } from './hooks/useDealBoardViews';
+import { useDealsBoardPage } from './hooks/useDealsBoardPage';
 import { useLineItems } from './hooks/useLineItems';
 import { usePrefetchLineItemListStatuses } from './hooks/useLineItemListStatus';
-import { useOpportunities } from './hooks/useOpportunities';
+import { resolveOpportunitiesFetchAll, useOpportunities } from './hooks/useOpportunities';
 import { useOpportunityRashodFields } from './hooks/useOpportunityRashodFields';
 import { useDealsBoardRealtimeSync } from './realtime/useDealsBoardRealtimeSync';
 import { crmFieldNamesFromColumns, fieldTypesByNameFromDescriptors, needsCompanyRelation } from './metadata/crm-field-names';
@@ -371,6 +372,29 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
   const effectiveShowAll = mobileLayoutActive ? false : showAllDeals;
   const pageSize = mobileLayoutActive ? MOBILE_PAGE_SIZE : DESKTOP_PAGE_SIZE;
 
+  const lineItemQueryFilters = useMemo(
+    () =>
+      mergedFilters.stages?.length || mergedFilters.types?.length
+        ? { stages: mergedFilters.stages, types: mergedFilters.types }
+        : undefined,
+    [mergedFilters.stages, mergedFilters.types],
+  );
+
+  const fetchAll = resolveOpportunitiesFetchAll({
+    filters: mergedFilters,
+    sort: effectiveSort,
+    showAll: effectiveShowAll,
+    forcePaginated: mobileLayoutActive,
+    effectiveClauses,
+  });
+  const useAggregateColdPath = !effectiveShowAll && !fetchAll;
+
+  const baseColdLoadEnabled =
+    !viewsQuery.isLoading &&
+    !viewsQuery.isSeedingDefault &&
+    Boolean(activeView) &&
+    !parentFieldsQuery.isLoading;
+
   const opportunitiesQuery = useOpportunities({
     viewId: activeView?.id,
     filters: mergedFilters,
@@ -384,15 +408,26 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     includeCompanyRelation,
     fieldTypesByName: parentFieldTypesByName,
     effectiveClauses,
-    enabled:
-      !viewsQuery.isLoading &&
-      !viewsQuery.isSeedingDefault &&
-      Boolean(activeView) &&
-      !parentFieldsQuery.isLoading,
+    enabled: baseColdLoadEnabled && !useAggregateColdPath,
   });
 
-  const records = asArray<OpportunityRow>(opportunitiesQuery.data?.records);
-  const totalCount = opportunitiesQuery.data?.totalCount ?? 0;
+  const dealsBoardPageQuery = useDealsBoardPage({
+    viewId: activeView?.id,
+    filters: mergedFilters,
+    sort: effectiveSort,
+    page,
+    pageSize,
+    visibleCrmFieldNames: visibleParentCrmFields,
+    restFieldNames: opportunityRestFieldNames,
+    includeCompanyRelation,
+    fieldTypesByName: parentFieldTypesByName,
+    lineItemFilters: lineItemQueryFilters,
+    enabled: baseColdLoadEnabled && useAggregateColdPath,
+  });
+
+  const coldLoadQuery = useAggregateColdPath ? dealsBoardPageQuery : opportunitiesQuery;
+  const records = asArray<OpportunityRow>(coldLoadQuery.data?.records);
+  const totalCount = coldLoadQuery.data?.totalCount ?? 0;
   const totalPages = effectiveShowAll
     ? 1
     : Math.max(1, Math.ceil(totalCount / pageSize));
@@ -403,18 +438,12 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     }
   }, [page, totalPages]);
 
-  const lineItemQueryFilters = useMemo(
-    () =>
-      mergedFilters.stages?.length || mergedFilters.types?.length
-        ? { stages: mergedFilters.stages, types: mergedFilters.types }
-        : undefined,
-    [mergedFilters.stages, mergedFilters.types],
-  );
+  const activeColdLoadLoading = coldLoadQuery.isLoading;
 
   const lineItemsQuery = useLineItems(
     records.map((record) => record.id),
     lineItemQueryFilters,
-    !opportunitiesQuery.isLoading,
+    !activeColdLoadLoading && records.length > 0 && !useAggregateColdPath,
   );
   const lineItems = asArray<LineItemRow>(lineItemsQuery.data);
   const streamFilteredLineItems = useMemo(
@@ -431,13 +460,13 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
   }, [streamFilteredLineItems]);
 
   const streamFilteredRecords = useMemo(() => {
-    if (lineItemsQuery.isLoading) {
+    if (activeColdLoadLoading || lineItemsQuery.isLoading) {
       return records;
     }
 
     const oppIdsWithItems = new Set(Object.keys(lineItemsByOppId));
     return records.filter((record) => oppIdsWithItems.has(record.id));
-  }, [lineItemsByOppId, lineItemsQuery.isLoading, records]);
+  }, [lineItemsByOppId, activeColdLoadLoading, lineItemsQuery.isLoading, records]);
 
   const filteredBoardData = useMemo(() => {
     if (!hasLineItemFilters) {
@@ -591,7 +620,10 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
   const mobileLineItemsQuery = useLineItems(
     mobileLayoutActive ? mobileRecords.map((record) => record.id) : [],
     lineItemQueryFilters,
-    mobileLayoutActive && mobileRecords.length > 0 && !opportunitiesQuery.isLoading,
+    mobileLayoutActive &&
+      mobileRecords.length > 0 &&
+      !activeColdLoadLoading &&
+      !useAggregateColdPath,
   );
   const mobileLineItems = asArray<LineItemRow>(mobileLineItemsQuery.data);
   const streamFilteredMobileLineItems = useMemo(
@@ -642,16 +674,21 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     () => displayLineItems.map((item) => item.id).filter(Boolean),
     [displayLineItems],
   );
-  const activeLineItemsLoading = mobileLayoutActive
-    ? mobileLineItemsQuery.isLoading
+  const activeLineItemsLoading = useAggregateColdPath
+    ? activeColdLoadLoading
     : lineItemsQuery.isLoading;
+  const listStatusHydratedFromAggregate =
+    useAggregateColdPath && Boolean(dealsBoardPageQuery.data?.listStatusHydrated);
   const listStatusReady =
-    !opportunitiesQuery.isLoading &&
+    !activeColdLoadLoading &&
     !activeLineItemsLoading &&
     listStatusLineItemIds.length > 0;
-  usePrefetchLineItemListStatuses(listStatusLineItemIds, listStatusReady);
+  usePrefetchLineItemListStatuses(
+    listStatusLineItemIds,
+    listStatusReady && !listStatusHydratedFromAggregate,
+  );
 
-  const loadError = viewsQuery.error ?? opportunitiesQuery.error ?? null;
+  const loadError = viewsQuery.error ?? coldLoadQuery.error ?? null;
   const metadataFieldsError =
     parentFieldsQuery.error ?? childFieldsQuery.error ?? null;
   const metadataFieldsWarning = metadataFieldsError
@@ -800,7 +837,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
             saveActiveViewColumns('child', columns, groups)
           }
           onResetFilters={handleFilterReset}
-          isLoading={opportunitiesQuery.isLoading}
+          isLoading={coldLoadQuery.isLoading}
           isViewLoading={viewsQuery.isLoading || viewsQuery.isSeedingDefault}
           errorMessage={
             loadError instanceof Error ? loadError.message : loadError ? String(loadError) : undefined
@@ -823,7 +860,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
             deals={filteredBoardData.deals}
             lineItems={visibleLineItems}
             dealCount={visibleTotalCount}
-            isLoading={opportunitiesQuery.isLoading}
+            isLoading={coldLoadQuery.isLoading}
             onOpenAnalytics={() => setBoardPane('analytics')}
             settingsDisabled={!activeView}
             onEditView={() => {
@@ -950,7 +987,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
               onShowAllChange={(nextShowAll) => void handleShowAllChange(nextShowAll)}
               sort={effectiveSort}
               onSortChange={handleSortChange}
-              isLoading={opportunitiesQuery.isLoading}
+              isLoading={coldLoadQuery.isLoading}
               isViewLoading={viewsQuery.isLoading || viewsQuery.isSeedingDefault}
               errorMessage={
                 loadError instanceof Error ? loadError.message : loadError ? String(loadError) : undefined

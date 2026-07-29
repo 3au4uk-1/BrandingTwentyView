@@ -77,11 +77,13 @@ const findLineItemOpportunityId = (
 const invalidateObjectQueries = (queryClient: QueryClient, objectNameSingular: string): void => {
   if (objectNameSingular === 'opportunity') {
     queryClient.invalidateQueries({ queryKey: ['opportunities'] });
+    queryClient.invalidateQueries({ queryKey: ['deals-board-page'] });
     return;
   }
 
   if (objectNameSingular === 'dealLineItem') {
     queryClient.invalidateQueries({ queryKey: ['lineItems'] });
+    queryClient.invalidateQueries({ queryKey: ['deals-board-page'] });
   }
 };
 

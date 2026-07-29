@@ -79,6 +79,7 @@ describe('applyObjectRecordEvent', () => {
     );
 
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['opportunities'] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['deals-board-page'] });
   });
 
   it('ignores unrelated objects', () => {
@@ -116,5 +117,6 @@ describe('applyObjectRecordEvent', () => {
       expect(archiveManualLineItem).toHaveBeenCalledWith('li-1');
     });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['lineItems'] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['deals-board-page'] });
   });
 });
