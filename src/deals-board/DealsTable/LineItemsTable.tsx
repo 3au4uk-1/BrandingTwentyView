@@ -577,6 +577,7 @@ export const LineItemsTable = ({
                   </td>
                   {ungrouped.map((entry) => {
                     const width = getColumnWidth(entry);
+                    const isPrevyu = entry.field === 'prevyuOkleyki';
 
                     return (
                       <td
@@ -589,11 +590,14 @@ export const LineItemsTable = ({
                           fontSize: font.sizeSm,
                           color: colors.textSecondary,
                           whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
+                          // Prevyu hover/popover are CSS-anchored outside the thumb —
+                          // overflow:hidden clips them into the cell box.
+                          overflow: isPrevyu ? 'visible' : 'hidden',
+                          textOverflow: isPrevyu ? undefined : 'ellipsis',
                           verticalAlign: 'middle',
                           boxSizing: 'border-box',
                           position: 'relative',
+                          zIndex: isPrevyu ? 1 : undefined,
                         }}
                       >
                         <DynamicFieldCell

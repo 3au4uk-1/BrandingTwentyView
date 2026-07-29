@@ -1,22 +1,13 @@
 import { useEffect, type MouseEvent as ReactMouseEvent } from 'react';
-import { createPortal } from 'react-dom';
 
 import { useTheme } from '../../theme/ThemeContext';
 import type { LineItemFileRef } from '../../types';
 import { Button } from '../../ui/Button';
-import { resolvePortalContainer, usePortalHost } from '../../ui/PortalHostContext';
-import {
-  clientRectToRootOffset,
-  resolveAnchoredOverlayPosition,
-  type RectLike,
-} from '../../utils/anchored-overlay';
 
 export type PrevyuFilesPopoverProps = {
   files: LineItemFileRef[];
   urls: string[];
   open: boolean;
-  /** Client/viewport rect of the thumb (any shared coordinate space with the root). */
-  anchorRect: DOMRect | RectLike | null;
   onClose: () => void;
   onMakeFirst: (fileId: string) => void;
   onRemove: (fileId: string) => void;
@@ -27,17 +18,15 @@ export type PrevyuFilesPopoverProps = {
 const THUMB_SIZE = 40;
 const POPOVER_MIN_WIDTH = 220;
 const POPOVER_MAX_WIDTH = 280;
-const POPOVER_ESTIMATED_HEIGHT = 200;
 
 /**
- * Files list after import. Root-relative `absolute` positioning — `fixed` + client
- * rects land on the Twenty host page (over the left nav) under Remote DOM.
+ * Files panel anchored above the thumb via CSS (no portal / client rects).
+ * Remote DOM broke fixed/absolute+getBoundingClientRect placement.
  */
 export const PrevyuFilesPopover = ({
   files,
   urls,
   open,
-  anchorRect,
   onClose,
   onMakeFirst,
   onRemove,
@@ -45,7 +34,6 @@ export const PrevyuFilesPopover = ({
   isPending,
 }: PrevyuFilesPopoverProps) => {
   const theme = useTheme();
-  const portalHostRef = usePortalHost();
   const { colors, font, spacing, radius, zIndex } = theme;
 
   useEffect(() => {
@@ -66,39 +54,7 @@ export const PrevyuFilesPopover = ({
     event.stopPropagation();
   };
 
-  const root = portalHostRef?.current ?? null;
-  const rootWidth = root && 'clientWidth' in root ? Number(root.clientWidth) || 0 : 0;
-  const rootHeight = root && 'clientHeight' in root ? Number(root.clientHeight) || 0 : 0;
-
-  let top = 0;
-  let left = 0;
-  let transform: string | undefined;
-
-  if (anchorRect) {
-    const localAnchor = clientRectToRootOffset(
-      {
-        top: anchorRect.top,
-        left: anchorRect.left,
-        bottom: anchorRect.bottom,
-        right: anchorRect.right,
-        width: anchorRect.width,
-        height: anchorRect.height,
-      },
-      root,
-    );
-    const placed = resolveAnchoredOverlayPosition({
-      anchor: localAnchor,
-      overlayWidth: POPOVER_MAX_WIDTH,
-      overlayHeight: POPOVER_ESTIMATED_HEIGHT,
-      rootWidth: rootWidth || 1200,
-      rootHeight: rootHeight || 800,
-    });
-    top = placed.top;
-    left = placed.left;
-    transform = placed.transform;
-  }
-
-  const panel = (
+  return (
     <div
       role="dialog"
       aria-label="Файлы превью"
@@ -107,9 +63,9 @@ export const PrevyuFilesPopover = ({
       onMouseDown={stopBubble}
       style={{
         position: 'absolute',
-        top,
-        left,
-        transform,
+        left: 0,
+        bottom: '100%',
+        marginBottom: 4,
         zIndex: zIndex.dropdown,
         minWidth: POPOVER_MIN_WIDTH,
         maxWidth: POPOVER_MAX_WIDTH,
@@ -121,6 +77,29 @@ export const PrevyuFilesPopover = ({
         boxSizing: 'border-box',
       }}
     >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: spacing.sm,
+          marginBottom: spacing.sm,
+        }}
+      >
+        <span
+          style={{
+            fontSize: font.sizeSm,
+            fontWeight: font.weightSemibold,
+            color: colors.text,
+          }}
+        >
+          Превью
+        </span>
+        <Button theme={theme} variant="ghost" size="sm" onClick={onClose}>
+          Закрыть
+        </Button>
+      </div>
+
       {files.length > 0 ? (
         <div
           style={{
@@ -246,7 +225,4 @@ export const PrevyuFilesPopover = ({
       </Button>
     </div>
   );
-
-  const container = resolvePortalContainer('root', portalHostRef);
-  return container ? createPortal(panel, container) : panel;
 };

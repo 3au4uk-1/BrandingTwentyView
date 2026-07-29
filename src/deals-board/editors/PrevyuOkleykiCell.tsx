@@ -36,7 +36,7 @@ export const PrevyuOkleykiCell = ({
   row,
 }: PrevyuOkleykiCellProps) => {
   const theme = useTheme();
-  const { colors, font, radius } = theme;
+  const { colors, font, radius, zIndex } = theme;
   const queryClient = useQueryClient();
 
   const files = value ?? [];
@@ -46,9 +46,8 @@ export const PrevyuOkleykiCell = ({
   const hasFiles = files.length > 0;
   const actions = usePrevyuMediaActions({ itemId, files });
   const cellRef = useRef<HTMLDivElement>(null);
-  const [hoverAnchor, setHoverAnchor] = useState<{ x: number; y: number } | null>(null);
+  const [hoverOpen, setHoverOpen] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const [popoverAnchorRect, setPopoverAnchorRect] = useState<DOMRect | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [imageBroken, setImageBroken] = useState(false);
 
@@ -61,39 +60,10 @@ export const PrevyuOkleykiCell = ({
     setImageBroken(false);
   }, [primaryUrl]);
 
-  useEffect(() => {
-    if (!popoverOpen) return;
-
-    const handlePointerDown = (event: MouseEvent) => {
-      const target = event.target;
-      if (!(target instanceof Node)) return;
-      if (cellRef.current?.contains(target)) return;
-      if (target instanceof Element && target.closest('[data-prevyu-files-popover]')) return;
-      setPopoverOpen(false);
-    };
-
-    document.addEventListener('mousedown', handlePointerDown);
-    return () => document.removeEventListener('mousedown', handlePointerDown);
-  }, [popoverOpen]);
-
   const openUploadModal = () => {
     setPopoverOpen(false);
-    setHoverAnchor(null);
+    setHoverOpen(false);
     setUploadOpen(true);
-  };
-
-  const openPopover = () => {
-    const el = cellRef.current;
-    let rect: DOMRect | null = null;
-    if (el && typeof el.getBoundingClientRect === 'function') {
-      try {
-        rect = el.getBoundingClientRect();
-      } catch {
-        rect = null;
-      }
-    }
-    setPopoverAnchorRect(rect);
-    setPopoverOpen(true);
   };
 
   const handleOpenOkleyka = (event: ReactMouseEvent) => {
@@ -128,18 +98,18 @@ export const PrevyuOkleykiCell = ({
   };
 
   const handleThumbClick = () => {
-    if (hasFiles) {
-      openPopover();
-    } else {
+    if (!hasFiles) {
       openUploadModal();
+      return;
     }
-  };
-
-  const updateHoverAnchor = (event: ReactMouseEvent) => {
-    setHoverAnchor({ x: event.clientX, y: event.clientY });
+    // Toggle — Remote DOM often does not deliver document outside-clicks.
+    setHoverOpen(false);
+    setPopoverOpen((open) => !open);
   };
 
   const showThumbnail = Boolean(primaryUrl && !imageBroken);
+  const showHover = hoverOpen && showThumbnail && !popoverOpen && !uploadOpen;
+  const overlayActive = popoverOpen || showHover;
 
   return (
     <div
@@ -153,10 +123,14 @@ export const PrevyuOkleykiCell = ({
     >
       <div
         ref={cellRef}
+        data-prevyu-anchor={overlayActive ? '' : undefined}
         style={{
+          position: 'relative',
           display: 'inline-flex',
           flexDirection: 'column',
           alignItems: 'flex-start',
+          overflow: 'visible',
+          zIndex: overlayActive ? zIndex.dropdown : 'auto',
         }}
       >
         <button
@@ -168,9 +142,8 @@ export const PrevyuOkleykiCell = ({
           onDragOver={handleDragOver}
           onDrop={handleDrop}
           onPaste={handlePaste}
-          onMouseEnter={showThumbnail ? updateHoverAnchor : undefined}
-          onMouseMove={showThumbnail ? updateHoverAnchor : undefined}
-          onMouseLeave={showThumbnail ? () => setHoverAnchor(null) : undefined}
+          onMouseEnter={showThumbnail && !popoverOpen ? () => setHoverOpen(true) : undefined}
+          onMouseLeave={showThumbnail ? () => setHoverOpen(false) : undefined}
           style={{
             position: 'relative',
             width: THUMB_SIZE,
@@ -257,19 +230,16 @@ export const PrevyuOkleykiCell = ({
           ) : null}
         </button>
 
-        {hoverAnchor && showThumbnail ? (
-          <PrevyuHoverPreview
-            url={primaryUrl!}
-            anchor={hoverAnchor}
-            onClose={() => setHoverAnchor(null)}
-          />
-        ) : null}
+        <PrevyuHoverPreview
+          url={primaryUrl ?? ''}
+          open={showHover}
+          onClose={() => setHoverOpen(false)}
+        />
 
         <PrevyuFilesPopover
           files={files}
           urls={urls}
           open={popoverOpen}
-          anchorRect={popoverAnchorRect}
           onClose={() => setPopoverOpen(false)}
           onMakeFirst={(fileId) => void actions.makeFirst(fileId)}
           onRemove={(fileId) => void actions.removeFile(fileId)}

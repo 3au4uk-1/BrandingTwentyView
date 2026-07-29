@@ -130,6 +130,16 @@ export const GlobalThemeStyles = ({ theme }: GlobalThemeStylesProps) => {
         background-color: ${colors.bgHover} !important;
       }
 
+      /* Prevyu CSS overlays extend outside the thumb; lift the row so they paint above neighbors. */
+      [data-deals-board] tr:has([data-prevyu-anchor]) {
+        position: relative;
+        z-index: ${zIndex.dropdown};
+      }
+
+      [data-deals-board] [data-prevyu-anchor] {
+        overflow: visible;
+      }
+
       [data-layout="mobile"] [data-mobile-toolbar] {
         position: -webkit-sticky;
         position: sticky;
