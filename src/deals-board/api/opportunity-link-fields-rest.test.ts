@@ -92,17 +92,34 @@ describe('enrichOpportunityRowsWithRestFields', () => {
   });
 
   it('fetches REST chunks in parallel when more than one chunk is needed', async () => {
-    const callOrder: number[] = [];
-    const get = vi.fn().mockImplementation(async () => {
-      const order = callOrder.length;
-      callOrder.push(order);
-      await new Promise((resolve) => setTimeout(resolve, 10 - order));
-      return {
-        data: {
-          opportunities: [{ id: `opp-${order + 1}`, tonyLink: { primaryLinkUrl: `https://tony.example/${order + 1}` } }],
-        },
+    type Deferred<T> = {
+      promise: Promise<T>;
+      resolve: (value: T) => void;
+    };
+
+    const createDeferred = <T>(): Deferred<T> => {
+      let resolve!: (value: T) => void;
+      const promise = new Promise<T>((res) => {
+        resolve = res;
+      });
+      return { promise, resolve };
+    };
+
+    const chunk0 = createDeferred<{
+      data: {
+        opportunities: Array<{ id: string; tonyLink: { primaryLinkUrl: string } }>;
       };
-    });
+    }>();
+    const chunk1 = createDeferred<{
+      data: {
+        opportunities: Array<{ id: string; tonyLink: { primaryLinkUrl: string } }>;
+      };
+    }>();
+
+    const get = vi
+      .fn()
+      .mockImplementationOnce(() => chunk0.promise)
+      .mockImplementationOnce(() => chunk1.promise);
 
     vi.mocked(RestApiClient).mockImplementation(
       () =>
@@ -116,9 +133,35 @@ describe('enrichOpportunityRowsWithRestFields', () => {
       name: `Deal ${index + 1}`,
     }));
 
-    await enrichOpportunityRowsWithRestFields(records, ['tonyLink']);
+    const enrichmentPromise = enrichOpportunityRowsWithRestFields(records, ['tonyLink']);
 
     expect(get).toHaveBeenCalledTimes(2);
-    expect(callOrder).toEqual([0, 1]);
+
+    chunk0.resolve({
+      data: {
+        opportunities: Array.from({ length: 50 }, (_, index) => ({
+          id: `opp-${index + 1}`,
+          tonyLink: { primaryLinkUrl: `https://tony.example/${index + 1}` },
+        })),
+      },
+    });
+    chunk1.resolve({
+      data: {
+        opportunities: [
+          { id: 'opp-51', tonyLink: { primaryLinkUrl: 'https://tony.example/51' } },
+        ],
+      },
+    });
+
+    const enriched = await enrichmentPromise;
+
+    expect(enriched[0]).toMatchObject({
+      id: 'opp-1',
+      tonyLink: { primaryLinkUrl: 'https://tony.example/1' },
+    });
+    expect(enriched[50]).toMatchObject({
+      id: 'opp-51',
+      tonyLink: { primaryLinkUrl: 'https://tony.example/51' },
+    });
   });
 });
