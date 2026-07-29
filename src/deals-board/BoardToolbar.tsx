@@ -120,19 +120,11 @@ export const BoardToolbar = ({
   const showReset = canResetFilters;
 
   useEffect(() => {
-    if (searchFocusedRef.current) {
-      // Debounce lag: parent still has a prefix of what the user already typed.
-      if (
-        committedSearch !== localSearch &&
-        committedSearch.length > 0 &&
-        localSearch.startsWith(committedSearch)
-      ) {
-        return;
-      }
-      if (committedSearch === localSearch) return;
-    }
+    // While focused, local draft is the only source of truth. Syncing from parent
+    // on delete restores the longer stale value (cursor jumps, text "comes back").
+    if (searchFocusedRef.current) return;
     setLocalSearch(committedSearch);
-  }, [committedSearch, localSearch]);
+  }, [committedSearch]);
 
   useEffect(
     () => () => {
@@ -141,6 +133,13 @@ export const BoardToolbar = ({
     [],
   );
 
+  const clearSearchTimers = () => {
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+      searchDebounceRef.current = null;
+    }
+  };
+
   const flushSearchToParent = (next: string) => {
     const current = filterValueRef.current;
     if ((current.search ?? '') === next) return;
@@ -148,18 +147,22 @@ export const BoardToolbar = ({
   };
 
   const scheduleSearchCommit = (next: string) => {
-    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    clearSearchTimers();
     searchDebounceRef.current = setTimeout(() => {
       searchDebounceRef.current = null;
       flushSearchToParent(next);
     }, SEARCH_COMMIT_DEBOUNCE_MS);
   };
 
+  const handleFilterResetClick = () => {
+    searchFocusedRef.current = false;
+    clearSearchTimers();
+    setLocalSearch('');
+    onFilterReset();
+  };
+
   const commitDraftTerm = () => {
-    if (searchDebounceRef.current) {
-      clearTimeout(searchDebounceRef.current);
-      searchDebounceRef.current = null;
-    }
+    clearSearchTimers();
     const nextTerms = addSearchTerm(searchTerms, localSearch);
     if (nextTerms.length === searchTerms.length && !localSearch.trim()) return;
     setLocalSearch('');
@@ -310,10 +313,7 @@ export const BoardToolbar = ({
               }}
               onBlur={() => {
                 searchFocusedRef.current = false;
-                if (searchDebounceRef.current) {
-                  clearTimeout(searchDebounceRef.current);
-                  searchDebounceRef.current = null;
-                }
+                clearSearchTimers();
                 flushSearchToParent(localSearch);
               }}
               onKeyDown={onSearchKeyDown}
