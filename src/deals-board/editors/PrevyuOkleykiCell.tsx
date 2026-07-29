@@ -13,10 +13,12 @@ import { resolvePrevyuFileUrls } from '../api/files-field';
 import { useTheme } from '../theme/ThemeContext';
 import type { LineItemFileRef, LineItemRow } from '../types';
 import { usePortalHost } from '../ui/PortalHostContext';
+import { measureElementInRoot, type RectLike } from '../utils/anchored-overlay';
 import {
-  measureElementInRoot,
-  type RectLike,
-} from '../utils/anchored-overlay';
+  calibrateBoardClientOrigin,
+  clientPointToBoardLocal,
+  measureAnchorInBoard,
+} from '../utils/board-client-origin';
 import { openOkleykaDialogForLineItem } from '../utils/open-okleyka-dialog';
 import { findOpportunityInCache } from '../utils/sync-deal-stage';
 import { PrevyuFilesPopover } from './prevyu/PrevyuFilesPopover';
@@ -64,10 +66,54 @@ export const PrevyuOkleykiCell = ({
     (typeof row?.opportunityId === 'string' ? row.opportunityId : undefined);
   const itemName = typeof row?.name === 'string' ? row.name : undefined;
 
+  const rootEl = () => portalHostRef?.current ?? null;
+
   const measureThumb = useCallback((): RectLike | null => {
-    const root = portalHostRef?.current ?? null;
-    return measureElementInRoot(thumbRef.current, root);
+    return measureAnchorInBoard(thumbRef.current, rootEl());
   }, [portalHostRef]);
+
+  const syncOriginFromPointer = useCallback(
+    (event: ReactMouseEvent) => {
+      const root = rootEl();
+      const offsetBox = measureElementInRoot(thumbRef.current, root);
+      if (!offsetBox || (offsetBox.left <= 1 && offsetBox.top <= 1)) {
+        // Offset walk unusable — rely on resolveBoardClientOrigin (root/iframe/chrome).
+        return;
+      }
+      const native = event.nativeEvent as MouseEvent & {
+        offsetX?: number;
+        offsetY?: number;
+      };
+      calibrateBoardClientOrigin({
+        clientX: event.clientX,
+        clientY: event.clientY,
+        offsetX: typeof native.offsetX === 'number' ? native.offsetX : 0,
+        offsetY: typeof native.offsetY === 'number' ? native.offsetY : 0,
+        targetInRoot: { x: offsetBox.left, y: offsetBox.top },
+      });
+    },
+    [portalHostRef],
+  );
+
+  const updateHoverFromPointer = useCallback(
+    (event: ReactMouseEvent) => {
+      syncOriginFromPointer(event);
+      const local = clientPointToBoardLocal(
+        { x: event.clientX, y: event.clientY },
+        rootEl(),
+      );
+      // Degenerate rect at the cursor — preview sits just to the right of it.
+      setHoverAnchor({
+        left: local.x,
+        top: local.y,
+        right: local.x,
+        bottom: local.y,
+        width: 0,
+        height: 0,
+      });
+    },
+    [syncOriginFromPointer, portalHostRef],
+  );
 
   useEffect(() => {
     setImageBroken(false);
@@ -110,7 +156,7 @@ export const PrevyuOkleykiCell = ({
     void actions.addFromClipboard();
   };
 
-  const handleThumbClick = () => {
+  const handleThumbClick = (event: ReactMouseEvent) => {
     if (!hasFiles) {
       openUploadModal();
       return;
@@ -120,6 +166,7 @@ export const PrevyuOkleykiCell = ({
       setPopoverOpen(false);
       return;
     }
+    syncOriginFromPointer(event);
     setPopoverAnchor(measureThumb());
     setPopoverOpen(true);
   };
@@ -147,9 +194,10 @@ export const PrevyuOkleykiCell = ({
         onDrop={handleDrop}
         onPaste={handlePaste}
         onMouseEnter={
-          showThumbnail && !popoverOpen
-            ? () => setHoverAnchor(measureThumb())
-            : undefined
+          showThumbnail && !popoverOpen ? updateHoverFromPointer : undefined
+        }
+        onMouseMove={
+          showThumbnail && !popoverOpen ? updateHoverFromPointer : undefined
         }
         onMouseLeave={showThumbnail ? () => setHoverAnchor(null) : undefined}
         style={{

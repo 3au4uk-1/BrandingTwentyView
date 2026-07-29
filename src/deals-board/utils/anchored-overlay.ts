@@ -18,6 +18,8 @@ type Measurable = {
   getBoundingClientRect: () => DOMRect | RectLike;
 };
 
+export type { Measurable };
+
 type OffsetNode = {
   offsetLeft?: number;
   offsetTop?: number;
