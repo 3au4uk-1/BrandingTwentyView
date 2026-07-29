@@ -1,7 +1,10 @@
 import { useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
+import { buildPrevyuUploadHtml } from 'src/logic-functions/shared/prevyu-upload-html';
+
 import { useTheme } from '../../theme/ThemeContext';
+import type { LineItemFileRef } from '../../types';
 import { Button } from '../../ui/Button';
 import { Modal } from '../../ui/Modal';
 import { openRecordSidePanel } from '../../utils/open-record-side-panel';
@@ -13,28 +16,48 @@ import {
 export type PrevyuUploadModalProps = {
   itemId: string;
   itemName?: string;
+  files?: LineItemFileRef[] | null;
   isOpen: boolean;
   onClose: () => void;
 };
 
+const readAppAccessToken = (): string | null => {
+  const token = globalThis.process?.env?.TWENTY_APP_ACCESS_TOKEN?.trim();
+  return token || null;
+};
+
 /**
- * Modal shell in the board + iframe to logic-function HTML (main thread).
- * Upload/paste happen outside Remote DOM; board refreshes via BroadcastChannel /
- * postMessage / invalidate on close.
+ * Modal shell + srcdoc iframe (main-thread HTML).
+ * Avoids navigating iframe to /s/... without Bearer (Missing authentication token).
+ * POST uses embedded TWENTY_APP_ACCESS_TOKEN.
  */
 export const PrevyuUploadModal = ({
   itemId,
   itemName,
+  files,
   isOpen,
   onClose,
 }: PrevyuUploadModalProps) => {
   const theme = useTheme();
   const { colors, font, spacing } = theme;
   const queryClient = useQueryClient();
-  const iframeUrl = useMemo(
+
+  const postUrl = useMemo(
     () => (isOpen ? resolvePrevyuUploadPageUrl(itemId) : null),
     [isOpen, itemId],
   );
+  const accessToken = useMemo(() => (isOpen ? readAppAccessToken() : null), [isOpen]);
+
+  const srcDoc = useMemo(() => {
+    if (!isOpen || !postUrl || !accessToken) return null;
+    return buildPrevyuUploadHtml({
+      lineItemId: itemId,
+      lineItemName: itemName ?? '',
+      files: files ?? [],
+      postUrl,
+      accessToken,
+    });
+  }, [isOpen, postUrl, accessToken, itemId, itemName, files]);
 
   const refreshLineItems = () => {
     void queryClient.invalidateQueries({ queryKey: ['lineItems'] });
@@ -88,6 +111,12 @@ export const PrevyuUploadModal = ({
     onClose();
   };
 
+  const missingConfigMessage = !postUrl
+    ? 'Не задан URL functions (TWENTY_FUNCTIONS_URL / TWENTY_API_URL). Используйте «Открыть в карточке».'
+    : !accessToken
+      ? 'Нет TWENTY_APP_ACCESS_TOKEN в front-component. Используйте «Открыть в карточке».'
+      : null;
+
   return (
     <Modal
       theme={theme}
@@ -126,10 +155,11 @@ export const PrevyuUploadModal = ({
         </div>
       }
     >
-      {iframeUrl ? (
+      {srcDoc ? (
         <iframe
           title="prevyu-upload"
-          src={iframeUrl}
+          srcDoc={srcDoc}
+          sandbox="allow-scripts allow-same-origin allow-forms"
           style={{
             display: 'block',
             width: '100%',
@@ -152,8 +182,7 @@ export const PrevyuUploadModal = ({
             lineHeight: 1.4,
           }}
         >
-          Не задан TWENTY_FUNCTIONS_URL — iframe загрузки недоступен. Используйте «Открыть в
-          карточке».
+          {missingConfigMessage ?? 'Не удалось собрать страницу загрузки.'}
         </div>
       )}
     </Modal>

@@ -4,6 +4,10 @@ export type BuildPrevyuUploadHtmlOpts = {
   lineItemId: string;
   lineItemName: string;
   files: PrevyuFileRefLike[];
+  /** Absolute POST URL — required for srcdoc iframes (no useful location.pathname). */
+  postUrl: string;
+  /** App access token for Authorization on POST (iframe navigation cannot send Bearer). */
+  accessToken: string;
 };
 
 const escapeHtml = (value: string): string =>
@@ -15,17 +19,21 @@ const escapeHtml = (value: string): string =>
     .replace(/'/g, '&#39;');
 
 /**
- * Self-contained main-thread upload page for iframe embedding.
+ * Self-contained main-thread upload page for iframe srcdoc embedding.
  * Posts { type: 'prevyu-upload', lineItemId } on success via BroadcastChannel + parent postMessage.
  */
 export const buildPrevyuUploadHtml = ({
   lineItemId,
   lineItemName,
   files,
+  postUrl,
+  accessToken,
 }: BuildPrevyuUploadHtmlOpts): string => {
   const safeId = escapeHtml(lineItemId);
   const safeName = escapeHtml(lineItemName || 'Позиция');
   const filesJson = JSON.stringify(files).replace(/</g, '\\u003c');
+  const postUrlJson = JSON.stringify(postUrl);
+  const accessTokenJson = JSON.stringify(accessToken);
 
   return `<!DOCTYPE html>
 <html lang="ru">
@@ -93,6 +101,8 @@ export const buildPrevyuUploadHtml = ({
   <script>
 (function () {
   var lineItemId = ${JSON.stringify(lineItemId)};
+  var postUrl = ${postUrlJson};
+  var accessToken = ${accessTokenJson};
   var files = ${filesJson};
   var zone = document.getElementById('zone');
   var fileInput = document.getElementById('file');
@@ -141,22 +151,25 @@ export const buildPrevyuUploadHtml = ({
     });
   }
 
-  function postPath() {
-    return location.pathname;
-  }
-
   function uploadBase64(filename, contentType, dataBase64) {
     if (busy) return;
     if (files.length >= 6) {
       setStatus('Максимум 6 файлов', 'err');
       return;
     }
+    if (!postUrl || !accessToken) {
+      setStatus('Нет URL или токена для загрузки', 'err');
+      return;
+    }
     busy = true;
     setStatus('Загрузка…');
-    fetch(postPath(), {
+    fetch(postUrl, {
       method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      credentials: 'omit',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + accessToken,
+      },
       body: JSON.stringify({ filename: filename, contentType: contentType, dataBase64: dataBase64 }),
     })
       .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })

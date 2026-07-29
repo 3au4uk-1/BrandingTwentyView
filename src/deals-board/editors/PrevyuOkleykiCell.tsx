@@ -281,6 +281,7 @@ export const PrevyuOkleykiCell = ({
       <PrevyuUploadModal
         itemId={itemId}
         itemName={itemName}
+        files={files}
         isOpen={uploadOpen}
         onClose={() => setUploadOpen(false)}
       />

@@ -44,7 +44,18 @@ const handler = async (event: RoutePayload) => {
     // still render; upload may fail if id invalid
   }
 
-  const html = buildPrevyuUploadHtml({ lineItemId, lineItemName, files });
+  // Direct browser open of this GET still needs session/app auth at the gateway.
+  // Board modal prefers srcdoc with embedded token (see PrevyuUploadModal).
+  const requestUrl = (event as { rawPath?: string; path?: string }).rawPath
+    || (event as { path?: string }).path
+    || `/prevyu-upload/${lineItemId}`;
+  const html = buildPrevyuUploadHtml({
+    lineItemId,
+    lineItemName,
+    files,
+    postUrl: requestUrl,
+    accessToken: '',
+  });
   return new Response(html, {
     status: 200,
     headers: {
