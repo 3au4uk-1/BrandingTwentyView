@@ -1,129 +1,59 @@
-import { useEffect, useId, type RefObject } from 'react';
+import { useEffect, type RefObject } from 'react';
 
 import { usePortalHost } from '../ui/PortalHostContext';
 
-export const OUTSIDE_DISMISS_ATTR = 'data-outside-dismiss';
-
-const readAttr = (value: unknown): string | null => {
-  if (!value || typeof value !== 'object') return null;
-  const el = value as { getAttribute?: (name: string) => string | null };
-  if (typeof el.getAttribute !== 'function') return null;
-  try {
-    return el.getAttribute(OUTSIDE_DISMISS_ATTR);
-  } catch {
-    return null;
-  }
-};
-
 /**
- * True when the event originated inside `container`.
- * Prefer `composedPath()` — Remote DOM often breaks `contains(Node)`.
- */
-export const eventTargetsContainer = (
-  container: HTMLElement | null | undefined,
-  event: Event,
-  dismissId?: string | null,
-): boolean => {
-  if (!container) return false;
-
-  const path =
-    typeof (event as { composedPath?: () => EventTarget[] }).composedPath === 'function'
-      ? (event as { composedPath: () => EventTarget[] }).composedPath()
-      : [];
-
-  if (path.length > 0) {
-    if (path.includes(container)) return true;
-    if (dismissId) {
-      for (const entry of path) {
-        if (readAttr(entry) === dismissId) return true;
-      }
-    }
-  }
-
-  const target = event.target;
-  try {
-    if (
-      target &&
-      typeof container.contains === 'function' &&
-      container.contains(target as Node)
-    ) {
-      return true;
-    }
-  } catch {
-    // Remote DOM event targets are often not real Nodes.
-  }
-
-  if (dismissId && target && typeof (target as { closest?: unknown }).closest === 'function') {
-    try {
-      const match = (target as { closest: (sel: string) => Element | null }).closest(
-        `[${OUTSIDE_DISMISS_ATTR}="${dismissId}"]`,
-      );
-      if (match) return true;
-    } catch {
-      // ignore
-    }
-  }
-
-  return false;
-};
-
-/**
- * Close a toolbar dropdown when the user presses outside it.
+ * Close a toolbar dropdown when the user interacts with the board body (table)
+ * or presses Escape.
  *
- * Remote DOM notes:
- * - `window` outside-clicks are unreliable → also listen on the board root
- * - `contains(Node)` often throws/lies → use `composedPath`
- * - sync dismiss on mousedown + trigger `onClick` toggle re-opens the menu → defer dismiss
+ * Do NOT listen on the board root / window in capture phase: under Twenty Remote DOM
+ * `contains`/`composedPath` cannot tell toolbar clicks from outside clicks, so a
+ * root listener closes the menu on every interaction (View appears "broken").
  */
 export const useOutsideDismiss = (
   open: boolean,
-  containerRef: RefObject<HTMLElement | null>,
+  _containerRef: RefObject<HTMLElement | null>,
   onDismiss: () => void,
 ): void => {
   const portalHostRef = usePortalHost();
-  const dismissId = useId();
 
   useEffect(() => {
     if (!open) return;
 
-    const container = containerRef.current;
-    if (container) {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onDismiss();
+    };
+
+    const onBodyPointerDown = () => {
+      onDismiss();
+    };
+
+    const root = portalHostRef?.current ?? null;
+    let body: Element | null = null;
+    try {
+      if (root && typeof (root as { querySelector?: unknown }).querySelector === 'function') {
+        body = (root as { querySelector: (sel: string) => Element | null }).querySelector(
+          '[data-deals-board-body]',
+        );
+      }
+    } catch {
+      body = null;
+    }
+    if (!body && typeof document !== 'undefined') {
       try {
-        container.setAttribute(OUTSIDE_DISMISS_ATTR, dismissId);
+        body = document.querySelector('[data-deals-board-body]');
       } catch {
-        // ignore
+        body = null;
       }
     }
 
-    let dismissTimer: ReturnType<typeof setTimeout> | null = null;
-
-    const onPointerDown = (event: Event) => {
-      if (eventTargetsContainer(containerRef.current, event, dismissId)) return;
-
-      // Defer past the trigger's click handler. If `contains` misfires on the
-      // toggle, sync dismiss+toggle would reopen the menu (false → true).
-      if (dismissTimer != null) clearTimeout(dismissTimer);
-      dismissTimer = setTimeout(() => {
-        dismissTimer = null;
-        onDismiss();
-      }, 0);
-    };
-
-    const boardRoot = portalHostRef?.current ?? null;
-    boardRoot?.addEventListener?.('pointerdown', onPointerDown, true);
-
+    body?.addEventListener?.('pointerdown', onBodyPointerDown);
     const view = typeof window !== 'undefined' ? window : undefined;
-    view?.addEventListener?.('pointerdown', onPointerDown, true);
+    view?.addEventListener?.('keydown', onKeyDown);
 
     return () => {
-      if (dismissTimer != null) clearTimeout(dismissTimer);
-      try {
-        container?.removeAttribute?.(OUTSIDE_DISMISS_ATTR);
-      } catch {
-        // ignore
-      }
-      boardRoot?.removeEventListener?.('pointerdown', onPointerDown, true);
-      view?.removeEventListener?.('pointerdown', onPointerDown, true);
+      body?.removeEventListener?.('pointerdown', onBodyPointerDown);
+      view?.removeEventListener?.('keydown', onKeyDown);
     };
-  }, [open, onDismiss, containerRef, portalHostRef, dismissId]);
+  }, [open, onDismiss, portalHostRef]);
 };
