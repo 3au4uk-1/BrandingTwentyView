@@ -216,3 +216,22 @@ export async function archiveManualLineItem(lineItemId: string) {
     { method: 'POST', body: JSON.stringify({}) },
   );
 }
+
+export type LineItemAmountWriteBackResult = {
+  success: true;
+  amountRub: number;
+  opportunityAmountRub: number;
+};
+
+export async function writeBackLineItemAmount(
+  lineItemId: string,
+  amountRub: number,
+): Promise<LineItemAmountWriteBackResult> {
+  return logicFunctionFetch<LineItemAmountWriteBackResult>(
+    `/crmparser/line-items/${encodeURIComponent(lineItemId)}/amount`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ amountRub }),
+    },
+  );
+}
