@@ -5,8 +5,10 @@ export type ListName =
   | 'restoration'
   | 'podryad'
   | 'banner'
+  | 'ne_nashe_branding'
   | 'decor_blacklist'
-  | 'mk_blacklist';
+  | 'mk_blacklist'
+  | 'ne_nashe_decor_mk';
 
 export type ManualLineItemSyncBody = {
   opportunityId: string;
@@ -24,6 +26,8 @@ export type LineItemListStatus = {
   restorationMatch: boolean;
   podryadMatch: boolean;
   bannerMatch: boolean;
+  neNasheBrandingMatch?: boolean;
+  neNasheDecorMkMatch?: boolean;
   pattern: string | null;
   dealId: number | null;
   dealTwentyId: string | null;

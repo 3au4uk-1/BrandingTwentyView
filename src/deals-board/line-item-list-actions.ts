@@ -35,6 +35,12 @@ export const LINE_ITEM_LIST_ACTIONS: LineItemListAction[] = [
     isActive: (status) => Boolean(status?.bannerMatch),
   },
   {
+    list: 'ne_nashe_branding',
+    label: 'В не наше',
+    shortLabel: 'НН',
+    isActive: (status) => Boolean(status?.neNasheBrandingMatch),
+  },
+  {
     list: 'decor_blacklist',
     label: 'В блеклист декор',
     shortLabel: 'БД',
@@ -46,6 +52,12 @@ export const LINE_ITEM_LIST_ACTIONS: LineItemListAction[] = [
     shortLabel: 'БМ',
     isActive: (status) => Boolean(status?.mkBlacklisted),
   },
+  {
+    list: 'ne_nashe_decor_mk',
+    label: 'В не наше',
+    shortLabel: 'НН',
+    isActive: (status) => Boolean(status?.neNasheDecorMkMatch),
+  },
 ];
 
 const BRANDING_BOARD_LISTS = new Set<ListName>([
@@ -53,9 +65,14 @@ const BRANDING_BOARD_LISTS = new Set<ListName>([
   'restoration',
   'podryad',
   'banner',
+  'ne_nashe_branding',
 ]);
 
-const DECOR_MK_BOARD_LISTS = new Set<ListName>(['decor_blacklist', 'mk_blacklist']);
+const DECOR_MK_BOARD_LISTS = new Set<ListName>([
+  'decor_blacklist',
+  'mk_blacklist',
+  'ne_nashe_decor_mk',
+]);
 
 export function filterActionsForBoardStream(boardStream: BoardStream): LineItemListAction[] {
   const allowedLists =

@@ -17,6 +17,7 @@ describe('LINE_ITEM_LIST_ACTIONS', () => {
       { label: 'В реставрацию', shortLabel: 'Р' },
       { label: 'В подряд', shortLabel: 'П' },
       { label: 'В баннер', shortLabel: 'БН' },
+      { label: 'В не наше', shortLabel: 'НН' },
     ]);
   });
 });
@@ -29,26 +30,34 @@ describe('filterActionsForBoardStream', () => {
       'restoration',
       'podryad',
       'banner',
+      'ne_nashe_branding',
     ]);
   });
 
   it('returns decor and MK blacklist actions on the decor_mk board', () => {
     const actions = filterActionsForBoardStream(BOARD_STREAM.DECOR_MK);
-    expect(actions.map((action) => action.list)).toEqual(['decor_blacklist', 'mk_blacklist']);
+    expect(actions.map((action) => action.list)).toEqual([
+      'decor_blacklist',
+      'mk_blacklist',
+      'ne_nashe_decor_mk',
+    ]);
     expect(actions.map(({ label, shortLabel }) => ({ label, shortLabel }))).toEqual([
       { label: 'В блеклист декор', shortLabel: 'БД' },
       { label: 'В блеклист МК', shortLabel: 'БМ' },
+      { label: 'В не наше', shortLabel: 'НН' },
     ]);
   });
 
-  it('defines all six list actions in LINE_ITEM_LIST_ACTIONS', () => {
+  it('defines all eight list actions in LINE_ITEM_LIST_ACTIONS', () => {
     expect(LINE_ITEM_LIST_ACTIONS.map((action) => action.list)).toEqual([
       'blacklist',
       'restoration',
       'podryad',
       'banner',
+      'ne_nashe_branding',
       'decor_blacklist',
       'mk_blacklist',
+      'ne_nashe_decor_mk',
     ]);
   });
 });
