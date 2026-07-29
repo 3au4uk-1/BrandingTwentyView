@@ -1,29 +1,66 @@
-import { useEffect, type RefObject } from 'react';
+import { useEffect, useId, type RefObject } from 'react';
 
 import { usePortalHost } from '../ui/PortalHostContext';
 
-const OUTSIDE_DISMISS_ATTR = 'data-outside-dismiss';
+export const OUTSIDE_DISMISS_ATTR = 'data-outside-dismiss';
 
-const isInsideContainer = (
-  container: HTMLElement | null,
-  target: EventTarget | null,
-): boolean => {
-  if (!container || target == null) return false;
-
+const readAttr = (value: unknown): string | null => {
+  if (!value || typeof value !== 'object') return null;
+  const el = value as { getAttribute?: (name: string) => string | null };
+  if (typeof el.getAttribute !== 'function') return null;
   try {
-    if (typeof container.contains === 'function' && container.contains(target as Node)) {
+    return el.getAttribute(OUTSIDE_DISMISS_ATTR);
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * True when the event originated inside `container`.
+ * Prefer `composedPath()` — Remote DOM often breaks `contains(Node)`.
+ */
+export const eventTargetsContainer = (
+  container: HTMLElement | null | undefined,
+  event: Event,
+  dismissId?: string | null,
+): boolean => {
+  if (!container) return false;
+
+  const path =
+    typeof (event as { composedPath?: () => EventTarget[] }).composedPath === 'function'
+      ? (event as { composedPath: () => EventTarget[] }).composedPath()
+      : [];
+
+  if (path.length > 0) {
+    if (path.includes(container)) return true;
+    if (dismissId) {
+      for (const entry of path) {
+        if (readAttr(entry) === dismissId) return true;
+      }
+    }
+  }
+
+  const target = event.target;
+  try {
+    if (
+      target &&
+      typeof container.contains === 'function' &&
+      container.contains(target as Node)
+    ) {
       return true;
     }
   } catch {
     // Remote DOM event targets are often not real Nodes.
   }
 
-  const maybeElement = target as { closest?: (selector: string) => Element | null };
-  if (typeof maybeElement.closest === 'function') {
+  if (dismissId && target && typeof (target as { closest?: unknown }).closest === 'function') {
     try {
-      return maybeElement.closest(`[${OUTSIDE_DISMISS_ATTR}]`) === container;
+      const match = (target as { closest: (sel: string) => Element | null }).closest(
+        `[${OUTSIDE_DISMISS_ATTR}="${dismissId}"]`,
+      );
+      if (match) return true;
     } catch {
-      return false;
+      // ignore
     }
   }
 
@@ -32,8 +69,11 @@ const isInsideContainer = (
 
 /**
  * Close a toolbar dropdown when the user presses outside it.
- * Listens on the board root (capture) as well as window — Remote DOM often
- * does not deliver `window` outside-clicks reliably, and `contains(Node)` throws.
+ *
+ * Remote DOM notes:
+ * - `window` outside-clicks are unreliable → also listen on the board root
+ * - `contains(Node)` often throws/lies → use `composedPath`
+ * - sync dismiss on mousedown + trigger `onClick` toggle re-opens the menu → defer dismiss
  */
 export const useOutsideDismiss = (
   open: boolean,
@@ -41,6 +81,7 @@ export const useOutsideDismiss = (
   onDismiss: () => void,
 ): void => {
   const portalHostRef = usePortalHost();
+  const dismissId = useId();
 
   useEffect(() => {
     if (!open) return;
@@ -48,35 +89,41 @@ export const useOutsideDismiss = (
     const container = containerRef.current;
     if (container) {
       try {
-        container.setAttribute(OUTSIDE_DISMISS_ATTR, '');
+        container.setAttribute(OUTSIDE_DISMISS_ATTR, dismissId);
       } catch {
         // ignore
       }
     }
 
+    let dismissTimer: ReturnType<typeof setTimeout> | null = null;
+
     const onPointerDown = (event: Event) => {
-      if (isInsideContainer(containerRef.current, event.target)) return;
-      onDismiss();
+      if (eventTargetsContainer(containerRef.current, event, dismissId)) return;
+
+      // Defer past the trigger's click handler. If `contains` misfires on the
+      // toggle, sync dismiss+toggle would reopen the menu (false → true).
+      if (dismissTimer != null) clearTimeout(dismissTimer);
+      dismissTimer = setTimeout(() => {
+        dismissTimer = null;
+        onDismiss();
+      }, 0);
     };
 
     const boardRoot = portalHostRef?.current ?? null;
     boardRoot?.addEventListener?.('pointerdown', onPointerDown, true);
-    boardRoot?.addEventListener?.('mousedown', onPointerDown, true);
 
     const view = typeof window !== 'undefined' ? window : undefined;
     view?.addEventListener?.('pointerdown', onPointerDown, true);
-    view?.addEventListener?.('mousedown', onPointerDown, true);
 
     return () => {
+      if (dismissTimer != null) clearTimeout(dismissTimer);
       try {
         container?.removeAttribute?.(OUTSIDE_DISMISS_ATTR);
       } catch {
         // ignore
       }
       boardRoot?.removeEventListener?.('pointerdown', onPointerDown, true);
-      boardRoot?.removeEventListener?.('mousedown', onPointerDown, true);
       view?.removeEventListener?.('pointerdown', onPointerDown, true);
-      view?.removeEventListener?.('mousedown', onPointerDown, true);
     };
-  }, [open, onDismiss, containerRef, portalHostRef]);
+  }, [open, onDismiss, containerRef, portalHostRef, dismissId]);
 };
