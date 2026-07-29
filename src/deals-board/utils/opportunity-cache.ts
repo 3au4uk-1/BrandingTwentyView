@@ -4,8 +4,11 @@ import type { LineItemRow, OpportunityRow } from '../types';
 
 type OpportunitiesPage = {
   records: OpportunityRow[];
-  totalCount: number;
+  totalCount?: number;
 };
+
+/** Query roots that hold paginated opportunity lists on the board. */
+export const OPPORTUNITY_PAGE_QUERY_ROOTS = ['opportunities', 'deals-board-page'] as const;
 
 export const findLineItemOpportunityId = (
   queryClient: QueryClient,
@@ -21,6 +24,22 @@ export const findLineItemOpportunityId = (
   return undefined;
 };
 
+export const findOpportunityInCache = (
+  queryClient: QueryClient,
+  opportunityId: string,
+): OpportunityRow | undefined => {
+  for (const root of OPPORTUNITY_PAGE_QUERY_ROOTS) {
+    for (const [, page] of queryClient.getQueriesData<OpportunitiesPage>({
+      queryKey: [root],
+    })) {
+      const match = page?.records?.find((record) => record.id === opportunityId);
+      if (match) return match;
+    }
+  }
+
+  return undefined;
+};
+
 export const patchOpportunityInCache = (
   queryClient: QueryClient,
   opportunityId: string,
@@ -28,18 +47,20 @@ export const patchOpportunityInCache = (
 ): boolean => {
   let didPatch = false;
 
-  for (const [queryKey, page] of queryClient.getQueriesData<OpportunitiesPage>({
-    queryKey: ['opportunities'],
-  })) {
-    if (!page?.records?.some((record) => record.id === opportunityId)) continue;
+  for (const root of OPPORTUNITY_PAGE_QUERY_ROOTS) {
+    for (const [queryKey, page] of queryClient.getQueriesData<OpportunitiesPage>({
+      queryKey: [root],
+    })) {
+      if (!page?.records?.some((record) => record.id === opportunityId)) continue;
 
-    queryClient.setQueryData<OpportunitiesPage>(queryKey, {
-      ...page,
-      records: page.records.map((record) =>
-        record.id === opportunityId ? { ...record, ...patch } : record,
-      ),
-    });
-    didPatch = true;
+      queryClient.setQueryData<OpportunitiesPage>(queryKey, {
+        ...page,
+        records: page.records.map((record) =>
+          record.id === opportunityId ? { ...record, ...patch } : record,
+        ),
+      });
+      didPatch = true;
+    }
   }
 
   return didPatch;

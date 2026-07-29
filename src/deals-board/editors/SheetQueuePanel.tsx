@@ -15,8 +15,10 @@ import { Input, Textarea } from '../ui/Input';
 import { Modal } from '../ui/Modal';
 import { toLocalInputDate } from '../utils/date-filters';
 import {
+  clampHourToWorkWindow,
   formatPrintTimeDisplay,
   normalizePrintTime,
+  PRINT_WORK_HOURS,
   snapMinuteToTen,
 } from '../utils/normalize-print-time';
 
@@ -41,13 +43,15 @@ export type SheetQueuePanelProps = {
   dataChipAttr?: string;
 };
 
-const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const MINUTES = ['00', '10', '20', '30', '40', '50'] as const;
 
 const splitTime = (value?: string | null) => {
   const normalized = normalizePrintTime(value);
   const [hour = '09', minute = '00'] = normalized.split(':');
-  return { hour, minute: snapMinuteToTen(minute) };
+  return {
+    hour: clampHourToWorkWindow(hour),
+    minute: snapMinuteToTen(minute),
+  };
 };
 
 const readString = (item: LineItemRow, field: string) => {
@@ -57,8 +61,57 @@ const readString = (item: LineItemRow, field: string) => {
 
 const readBool = (item: LineItemRow, field: string) => item[field] === true;
 
+const statusBadgeStyle = (
+  active: boolean,
+  tone: 'vzato' | 'gotovo',
+  colors: {
+    success: string;
+    successMuted: string;
+    warning: string;
+    warningMuted: string;
+    borderSubtle: string;
+    textMuted: string;
+    bgElevated: string;
+  },
+  radius: { pill: number },
+  font: { sizeXs: string; weightSemibold: number; weightMedium: number },
+): CSSProperties => {
+  if (!active) {
+    return {
+      padding: '4px 10px',
+      borderRadius: radius.pill,
+      border: `1px solid ${colors.borderSubtle}`,
+      background: colors.bgElevated,
+      color: colors.textMuted,
+      font: 'inherit',
+      fontSize: font.sizeXs,
+      fontWeight: font.weightMedium,
+      cursor: 'default',
+      pointerEvents: 'none' as const,
+      userSelect: 'none' as const,
+    };
+  }
+  const on =
+    tone === 'gotovo'
+      ? { background: colors.successMuted, color: colors.success, border: colors.success }
+      : { background: colors.warningMuted, color: colors.warning, border: colors.warning };
+  return {
+    padding: '4px 10px',
+    borderRadius: radius.pill,
+    border: `1px solid ${on.border}`,
+    background: on.background,
+    color: on.color,
+    font: 'inherit',
+    fontSize: font.sizeXs,
+    fontWeight: font.weightSemibold,
+    cursor: 'default',
+    pointerEvents: 'none' as const,
+    userSelect: 'none' as const,
+  };
+};
+
 const selectStyle = (
-  colors: { border: string; bg: string; text: string },
+  colors: { border: string; bgElevated: string; text: string },
   radius: { md: number },
   spacing: { sm: string },
   extra?: CSSProperties,
@@ -67,7 +120,7 @@ const selectStyle = (
   minWidth: 64,
   borderRadius: radius.md,
   border: `1px solid ${colors.border}`,
-  background: colors.bg,
+  background: colors.bgElevated,
   color: colors.text,
   padding: `0 ${spacing.sm}`,
   font: 'inherit',
@@ -148,6 +201,23 @@ export const SheetQueuePanel = ({
             border: open ? colors.accent : colors.borderStrong,
           };
 
+  const persistClampedTimeIfNeeded = () => {
+    const raw = readString(item, fields.time);
+    const normalized = normalizePrintTime(raw);
+    if (!normalized) return;
+
+    const [rawHour = '09', rawMinute = '00'] = normalized.split(':');
+    const clampedHour = clampHourToWorkWindow(rawHour);
+    const snappedMinute = snapMinuteToTen(rawMinute);
+    const clampedTime = `${clampedHour}:${snappedMinute}`;
+
+    if (clampedTime !== normalized) {
+      setHour(clampedHour);
+      setMinute(snappedMinute);
+      void patch({ [fields.time]: clampedTime });
+    }
+  };
+
   const syncDraftsFromItem = () => {
     const next = parsePrintComment(readString(item, fields.comment));
     setSelectedPresets(next.presets);
@@ -161,6 +231,7 @@ export const SheetQueuePanel = ({
     setMinute(t.minute);
     setPlenkaDraft(item.plenka?.markdown ?? '');
     setMaketDraft(item.ssylkaNaMakety?.primaryLinkUrl ?? '');
+    persistClampedTimeIfNeeded();
   };
 
   const openPanel = (event: ReactMouseEvent<HTMLButtonElement>) => {
@@ -201,9 +272,10 @@ export const SheetQueuePanel = ({
   };
 
   const saveTime = (nextHour: string, nextMinute: string) => {
-    setHour(nextHour);
+    const clampedHour = clampHourToWorkWindow(nextHour);
+    setHour(clampedHour);
     setMinute(nextMinute);
-    void patch({ [fields.time]: `${nextHour}:${nextMinute}` });
+    void patch({ [fields.time]: `${clampedHour}:${nextMinute}` });
   };
 
   const savePlenka = () => {
@@ -280,30 +352,12 @@ export const SheetQueuePanel = ({
               flexWrap: 'wrap',
             }}
           >
-            <Button
-              theme={theme}
-              size="sm"
-              variant={vzato ? 'primary' : 'ghost'}
-              onClick={() => void patch({ [fields.vzato]: !vzato })}
-            >
-              Взято
-            </Button>
-            <Button
-              theme={theme}
-              size="sm"
-              variant={gotovo ? 'primary' : 'ghost'}
-              onClick={() => void patch({ [fields.gotovo]: !gotovo })}
-            >
-              Готово
-            </Button>
             {fields.restoration ? (
               <Button
                 theme={theme}
                 size="sm"
                 variant={restoration ? 'primary' : 'ghost'}
-                onClick={() =>
-                  void patch({ [fields.restoration!]: !restoration })
-                }
+                onClick={() => void patch({ [fields.restoration!]: !restoration })}
               >
                 Реставрация
               </Button>
@@ -316,6 +370,32 @@ export const SheetQueuePanel = ({
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div
+              style={{
+                fontSize: font.sizeXs,
+                color: colors.textMuted,
+                fontWeight: font.weightMedium,
+              }}
+            >
+              Статус с листа
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              <span
+                aria-label={vzato ? 'Взято: да' : 'Взято: нет'}
+                style={statusBadgeStyle(vzato, 'vzato', colors, radius, font)}
+              >
+                Взято
+              </span>
+              <span
+                aria-label={gotovo ? 'Готово: да' : 'Готово: нет'}
+                style={statusBadgeStyle(gotovo, 'gotovo', colors, radius, font)}
+              >
+                Готово
+              </span>
+            </div>
+          </div>
+
           <div
             style={{
               fontSize: font.sizeXs,
@@ -374,7 +454,7 @@ export const SheetQueuePanel = ({
                     onChange={(event) => saveTime(event.target.value, minute)}
                     style={selectStyle(colors, radius, spacing)}
                   >
-                    {HOURS.map((value) => (
+                    {PRINT_WORK_HOURS.map((value) => (
                       <option key={value} value={value}>
                         {value}
                       </option>
@@ -558,7 +638,7 @@ export const SheetQueuePanel = ({
 
           {readString(item, fields.time) ? (
             <div style={{ fontSize: font.sizeXs, color: colors.textMuted }}>
-              Сохранено: {formatPrintTimeDisplay(readString(item, fields.time))}
+              Сохранено: {formatPrintTimeDisplay(`${hour}:${minute}`)}
             </div>
           ) : null}
         </div>

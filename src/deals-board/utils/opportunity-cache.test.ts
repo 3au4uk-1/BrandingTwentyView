@@ -3,7 +3,11 @@ import { describe, expect, it } from 'vitest';
 
 import type { LineItemRow, OpportunityRow } from '../types';
 
-import { findLineItemOpportunityId, patchOpportunityInCache } from './opportunity-cache';
+import {
+  findLineItemOpportunityId,
+  findOpportunityInCache,
+  patchOpportunityInCache,
+} from './opportunity-cache';
 
 describe('opportunity-cache', () => {
   it('finds opportunity id for a cached line item', () => {
@@ -16,6 +20,17 @@ describe('opportunity-cache', () => {
     expect(findLineItemOpportunityId(queryClient, 'missing')).toBeUndefined();
   });
 
+  it('finds opportunity in deals-board-page cold-load cache', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(['deals-board-page', 'view-1'], {
+      records: [{ id: 'opp-cold', name: 'Cold Deal', loadDate: '2026-07-29' }],
+      totalCount: 1,
+    });
+
+    expect(findOpportunityInCache(queryClient, 'opp-cold')?.name).toBe('Cold Deal');
+    expect(findOpportunityInCache(queryClient, 'missing')).toBeUndefined();
+  });
+
   it('patches opportunity amount in cached pages', () => {
     const queryClient = new QueryClient();
     const records: OpportunityRow[] = [
@@ -23,6 +38,10 @@ describe('opportunity-cache', () => {
       { id: 'opp-2', name: 'Deal B' },
     ];
     queryClient.setQueryData(['opportunities'], { records, totalCount: 2 });
+    queryClient.setQueryData(['deals-board-page', 'v'], {
+      records: [{ id: 'opp-1', name: 'Deal A' }],
+      totalCount: 1,
+    });
 
     const didPatch = patchOpportunityInCache(queryClient, 'opp-1', {
       amount: { amountMicros: 4_200_000_000, currencyCode: 'RUB' },
@@ -35,5 +54,13 @@ describe('opportunity-cache', () => {
       currencyCode: 'RUB',
     });
     expect(page?.records[1].name).toBe('Deal B');
+    const cold = queryClient.getQueryData<{ records: OpportunityRow[] }>([
+      'deals-board-page',
+      'v',
+    ]);
+    expect(cold?.records[0].amount).toEqual({
+      amountMicros: 4_200_000_000,
+      currencyCode: 'RUB',
+    });
   });
 });

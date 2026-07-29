@@ -239,7 +239,7 @@ export const BoardToolbar = ({
             value={filterValue}
             viewClauses={viewClauses}
             onChange={onFilterChange}
-            onReset={onFilterReset}
+            onReset={handleFilterResetClick}
             parentFields={parentFields}
             childFields={childFields}
             layout="compact-top"
@@ -335,7 +335,7 @@ export const BoardToolbar = ({
             />
           </div>
           {showReset ? (
-            <Button theme={theme} variant="ghost" size="sm" onClick={onFilterReset}>
+            <Button theme={theme} variant="ghost" size="sm" onClick={handleFilterResetClick}>
               Сбросить
             </Button>
           ) : null}

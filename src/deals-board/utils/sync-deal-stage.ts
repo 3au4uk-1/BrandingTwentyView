@@ -2,29 +2,15 @@ import type { QueryClient } from '@tanstack/react-query';
 
 import { fetchLineItemsByOpportunityIds } from '../api/line-items';
 import { patchOpportunity } from '../api/opportunities';
-import type { OpportunityRow } from '../types';
 import { notifyDealCancelled } from './cancel-otmena-notify';
 import { computeDealStage } from './compute-deal-stage';
+import {
+  findOpportunityInCache,
+  patchOpportunityInCache,
+} from './opportunity-cache';
 import { isOtmenaTransition } from './otmena-transition';
 
-type OpportunitiesPage = {
-  records: OpportunityRow[];
-  totalCount: number;
-};
-
-export const findOpportunityInCache = (
-  queryClient: QueryClient,
-  opportunityId: string,
-): OpportunityRow | undefined => {
-  for (const [, page] of queryClient.getQueriesData<OpportunitiesPage>({
-    queryKey: ['opportunities'],
-  })) {
-    const match = page?.records.find((record) => record.id === opportunityId);
-    if (match) return match;
-  }
-
-  return undefined;
-};
+export { findOpportunityInCache } from './opportunity-cache';
 
 export const syncDealStage = async (
   queryClient: QueryClient,
@@ -40,18 +26,7 @@ export const syncDealStage = async (
 
   await patchOpportunity(opportunityId, { stage: nextStage });
 
-  for (const [queryKey, page] of queryClient.getQueriesData<OpportunitiesPage>({
-    queryKey: ['opportunities'],
-  })) {
-    if (!page?.records) continue;
-
-    queryClient.setQueryData<OpportunitiesPage>(queryKey, {
-      ...page,
-      records: page.records.map((record) =>
-        record.id === opportunityId ? { ...record, stage: nextStage } : record,
-      ),
-    });
-  }
+  patchOpportunityInCache(queryClient, opportunityId, { stage: nextStage });
 
   if (isOtmenaTransition(previousStage, nextStage)) {
     notifyDealCancelled();

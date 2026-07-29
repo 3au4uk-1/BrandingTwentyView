@@ -1,16 +1,13 @@
 import type { QueryClient } from '@tanstack/react-query';
 
 import { updateLineItem } from '../api/line-items';
-import type { LineItemRow, OpportunityRow } from '../types';
+import type { LineItemRow } from '../types';
+import { findOpportunityInCache } from '../utils/opportunity-cache';
+import { notifyOkleykaMessage } from '../utils/okleyka-message-notify';
 import { planBrandingFreeNameRename } from './branding-free-name';
 import { planHvataykaAutomation } from './hvatayka';
 import { planRestorationMaketAuto } from './restoration-maket';
 import { planTipFromName } from './tip-from-name';
-import { notifyOkleykaMessage } from '../utils/okleyka-message-notify';
-
-type OpportunitiesPage = {
-  records: OpportunityRow[];
-};
 
 const HVATAYKA_TRIGGER_FIELDS = new Set(['name', 'tip', 'stage', 'tipDetail', 'kommentariy']);
 
@@ -44,19 +41,6 @@ const findSiblingsInCache = (
   }
 
   return [...byId.values()];
-};
-
-const findOpportunityInCache = (
-  queryClient: QueryClient,
-  opportunityId: string,
-): OpportunityRow | undefined => {
-  for (const [, page] of queryClient.getQueriesData<OpportunitiesPage>({
-    queryKey: ['opportunities'],
-  })) {
-    const match = page?.records?.find((record) => record.id === opportunityId);
-    if (match) return match;
-  }
-  return undefined;
 };
 
 const patchCaches = (

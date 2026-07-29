@@ -19,8 +19,8 @@ import {
   clientPointToBoardLocal,
   measureAnchorInBoard,
 } from '../utils/board-client-origin';
+import { findOpportunityInCache } from '../utils/opportunity-cache';
 import { openOkleykaDialogForLineItem } from '../utils/open-okleyka-dialog';
-import { findOpportunityInCache } from '../utils/sync-deal-stage';
 import { PrevyuFilesPopover } from './prevyu/PrevyuFilesPopover';
 import { PrevyuHoverPreview } from './prevyu/PrevyuHoverPreview';
 import { PrevyuUploadModal } from './prevyu/PrevyuUploadModal';
