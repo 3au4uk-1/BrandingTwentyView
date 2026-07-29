@@ -1,4 +1,11 @@
-import { useMemo, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent as ReactChangeEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from 'react';
 
 import { currencyToRub, formatRub, type CurrencyAmount } from './analytics/compute';
 import { FilterBar } from './FilterBar';
@@ -25,6 +32,9 @@ import {
 import { addSearchTerm } from './utils/search';
 import { Input } from './ui/Input';
 import { Button } from './ui/Button';
+
+/** Keep typing snappy under Remote DOM — parent filter updates are expensive. */
+const SEARCH_COMMIT_DEBOUNCE_MS = 280;
 
 const PREFIX_COLOR: Record<Exclude<DealPrefix, 'OTHER'>, ChipColor> = {
   PRO: 'purple',
@@ -101,14 +111,60 @@ export const BoardToolbar = ({
   );
 
   const searchTerms = filterValue.searchTerms ?? [];
-  const draftSearch = filterValue.search ?? '';
+  const committedSearch = filterValue.search ?? '';
+  const [localSearch, setLocalSearch] = useState(committedSearch);
+  const searchFocusedRef = useRef(false);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const filterValueRef = useRef(filterValue);
+  filterValueRef.current = filterValue;
   const showReset = canResetFilters;
 
+  useEffect(() => {
+    if (searchFocusedRef.current) {
+      // Debounce lag: parent still has a prefix of what the user already typed.
+      if (
+        committedSearch !== localSearch &&
+        committedSearch.length > 0 &&
+        localSearch.startsWith(committedSearch)
+      ) {
+        return;
+      }
+      if (committedSearch === localSearch) return;
+    }
+    setLocalSearch(committedSearch);
+  }, [committedSearch, localSearch]);
+
+  useEffect(
+    () => () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    },
+    [],
+  );
+
+  const flushSearchToParent = (next: string) => {
+    const current = filterValueRef.current;
+    if ((current.search ?? '') === next) return;
+    onFilterChange({ ...current, search: next });
+  };
+
+  const scheduleSearchCommit = (next: string) => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      searchDebounceRef.current = null;
+      flushSearchToParent(next);
+    }, SEARCH_COMMIT_DEBOUNCE_MS);
+  };
+
   const commitDraftTerm = () => {
-    const nextTerms = addSearchTerm(searchTerms, draftSearch);
-    if (nextTerms.length === searchTerms.length && !draftSearch.trim()) return;
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+      searchDebounceRef.current = null;
+    }
+    const nextTerms = addSearchTerm(searchTerms, localSearch);
+    if (nextTerms.length === searchTerms.length && !localSearch.trim()) return;
+    setLocalSearch('');
     onFilterChange({
-      ...filterValue,
+      ...filterValueRef.current,
       searchTerms: nextTerms,
       search: '',
     });
@@ -116,9 +172,15 @@ export const BoardToolbar = ({
 
   const removeTerm = (term: string) => {
     onFilterChange({
-      ...filterValue,
+      ...filterValueRef.current,
       searchTerms: searchTerms.filter((value) => value.toLowerCase() !== term.toLowerCase()),
     });
+  };
+
+  const onSearchChange = (event: ReactChangeEvent<HTMLInputElement>) => {
+    const next = event.target.value;
+    setLocalSearch(next);
+    scheduleSearchCommit(next);
   };
 
   const onSearchKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
@@ -127,7 +189,7 @@ export const BoardToolbar = ({
       commitDraftTerm();
       return;
     }
-    if (event.key === 'Backspace' && !draftSearch && searchTerms.length > 0) {
+    if (event.key === 'Backspace' && !localSearch && searchTerms.length > 0) {
       event.preventDefault();
       removeTerm(searchTerms[searchTerms.length - 1]!);
     }
@@ -240,11 +302,20 @@ export const BoardToolbar = ({
             ))}
             <Input
               theme={theme}
-              type="search"
-              value={draftSearch}
-              onChange={(event) =>
-                onFilterChange({ ...filterValue, search: event.target.value })
-              }
+              type="text"
+              value={localSearch}
+              onChange={onSearchChange}
+              onFocus={() => {
+                searchFocusedRef.current = true;
+              }}
+              onBlur={() => {
+                searchFocusedRef.current = false;
+                if (searchDebounceRef.current) {
+                  clearTimeout(searchDebounceRef.current);
+                  searchDebounceRef.current = null;
+                }
+                flushSearchToParent(localSearch);
+              }}
               onKeyDown={onSearchKeyDown}
               placeholder={
                 searchTerms.length > 0
