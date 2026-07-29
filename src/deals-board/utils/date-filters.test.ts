@@ -189,15 +189,25 @@ describe('shouldFetchAllOpportunities', () => {
     ).toBe(false);
   });
 
-  it('loads all records for wide date filters', () => {
+  it('loads all records for wide date filters except future (server-filtered page)', () => {
     expect(shouldFetchAllOpportunities({ datePreset: 'month' })).toBe(true);
-    expect(shouldFetchAllOpportunities({ datePreset: 'future' })).toBe(true);
+    expect(shouldFetchAllOpportunities({ datePreset: 'future' })).toBe(false);
     expect(shouldFetchAllOpportunities({ datePreset: 'custom' })).toBe(true);
     expect(
       shouldFetchAllOpportunities({
         dateFrom: '2026-06-27',
         dateTo: '2026-06-27',
       }),
+    ).toBe(true);
+  });
+
+  it('still fetchAll for future when line-item clauses exist', () => {
+    expect(
+      shouldFetchAllOpportunities(
+        { datePreset: 'future' },
+        undefined,
+        [{ id: '1', level: 'lineItem', field: 'stage', operator: 'in', value: ['NOVYY'] }],
+      ),
     ).toBe(true);
   });
 

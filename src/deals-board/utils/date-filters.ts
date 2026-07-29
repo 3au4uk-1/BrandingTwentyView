@@ -211,6 +211,10 @@ export const shouldFetchAllOpportunities = (
     return false;
   }
 
+  if (preset === 'future') {
+    return false;
+  }
+
   if (preset === 'custom') {
     return true;
   }
