@@ -55,11 +55,15 @@ export const Modal = ({
     onClose();
   };
 
+  // Remote DOM: `fixed` escapes onto the Twenty host page (over the left nav).
+  // Root/inline portals must use `absolute` inside the board's position:relative host.
+  const overlayPosition = portalTarget === 'body' ? 'fixed' : 'absolute';
+
   const modal = (
     <div
       role="presentation"
       style={{
-        position: 'fixed',
+        position: overlayPosition,
         inset: 0,
         zIndex: zIndex.modal + zIndexOffset,
         display: 'flex',

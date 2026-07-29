@@ -5,12 +5,18 @@ import { useTheme } from '../../theme/ThemeContext';
 import type { LineItemFileRef } from '../../types';
 import { Button } from '../../ui/Button';
 import { resolvePortalContainer, usePortalHost } from '../../ui/PortalHostContext';
+import {
+  clientRectToRootOffset,
+  resolveAnchoredOverlayPosition,
+  type RectLike,
+} from '../../utils/anchored-overlay';
 
 export type PrevyuFilesPopoverProps = {
   files: LineItemFileRef[];
   urls: string[];
   open: boolean;
-  anchorRect: DOMRect | null;
+  /** Client/viewport rect of the thumb (any shared coordinate space with the root). */
+  anchorRect: DOMRect | RectLike | null;
   onClose: () => void;
   onMakeFirst: (fileId: string) => void;
   onRemove: (fileId: string) => void;
@@ -19,40 +25,14 @@ export type PrevyuFilesPopoverProps = {
 };
 
 const THUMB_SIZE = 40;
-const POPOVER_GAP = 4;
-const VIEWPORT_MARGIN = 8;
 const POPOVER_MIN_WIDTH = 220;
 const POPOVER_MAX_WIDTH = 280;
 const POPOVER_ESTIMATED_HEIGHT = 200;
 
-const getViewportSize = () => {
-  if (typeof window === 'undefined') {
-    return { width: 0, height: 0 };
-  }
-  return { width: window.innerWidth, height: window.innerHeight };
-};
-
-const computePopoverStyle = (anchorRect: DOMRect | null) => {
-  if (!anchorRect) {
-    return { top: 0, left: 0, transform: undefined as string | undefined };
-  }
-
-  const { width: viewportWidth, height: viewportHeight } = getViewportSize();
-  let top = anchorRect.bottom + POPOVER_GAP;
-  let transform: string | undefined;
-
-  if (top + POPOVER_ESTIMATED_HEIGHT > viewportHeight - VIEWPORT_MARGIN) {
-    top = anchorRect.top - POPOVER_GAP;
-    transform = 'translateY(-100%)';
-  }
-
-  let left = anchorRect.left;
-  left = Math.min(left, viewportWidth - POPOVER_MAX_WIDTH - VIEWPORT_MARGIN);
-  left = Math.max(VIEWPORT_MARGIN, left);
-
-  return { top, left, transform };
-};
-
+/**
+ * Files list after import. Root-relative `absolute` positioning — `fixed` + client
+ * rects land on the Twenty host page (over the left nav) under Remote DOM.
+ */
 export const PrevyuFilesPopover = ({
   files,
   urls,
@@ -86,7 +66,37 @@ export const PrevyuFilesPopover = ({
     event.stopPropagation();
   };
 
-  const { top, left, transform } = computePopoverStyle(anchorRect);
+  const root = portalHostRef?.current ?? null;
+  const rootWidth = root && 'clientWidth' in root ? Number(root.clientWidth) || 0 : 0;
+  const rootHeight = root && 'clientHeight' in root ? Number(root.clientHeight) || 0 : 0;
+
+  let top = 0;
+  let left = 0;
+  let transform: string | undefined;
+
+  if (anchorRect) {
+    const localAnchor = clientRectToRootOffset(
+      {
+        top: anchorRect.top,
+        left: anchorRect.left,
+        bottom: anchorRect.bottom,
+        right: anchorRect.right,
+        width: anchorRect.width,
+        height: anchorRect.height,
+      },
+      root,
+    );
+    const placed = resolveAnchoredOverlayPosition({
+      anchor: localAnchor,
+      overlayWidth: POPOVER_MAX_WIDTH,
+      overlayHeight: POPOVER_ESTIMATED_HEIGHT,
+      rootWidth: rootWidth || 1200,
+      rootHeight: rootHeight || 800,
+    });
+    top = placed.top;
+    left = placed.left;
+    transform = placed.transform;
+  }
 
   const panel = (
     <div
@@ -96,7 +106,7 @@ export const PrevyuFilesPopover = ({
       onClick={stopBubble}
       onMouseDown={stopBubble}
       style={{
-        position: 'fixed',
+        position: 'absolute',
         top,
         left,
         transform,

@@ -3,24 +3,23 @@ import { createPortal } from 'react-dom';
 
 import { useTheme } from '../../theme/ThemeContext';
 import { resolvePortalContainer, usePortalHost } from '../../ui/PortalHostContext';
+import { clientPointToRootOffset } from '../../utils/anchored-overlay';
 
 export type PrevyuHoverPreviewProps = {
   url: string;
+  /** clientX / clientY from the pointer event (any shared coordinate space). */
   anchor: { x: number; y: number } | null;
   onClose: () => void;
 };
 
 const PREVIEW_MAX = 280;
-const VIEWPORT_MARGIN = 300;
+const ROOT_MARGIN = 12;
 const CURSOR_OFFSET = 12;
 
-const getViewportSize = () => {
-  if (typeof window === 'undefined') {
-    return { width: 0, height: 0 };
-  }
-  return { width: window.innerWidth, height: window.innerHeight };
-};
-
+/**
+ * Floating thumbnail preview. Uses root-relative `absolute` (not `fixed`) so
+ * Twenty Remote DOM does not pin the image to the host page top-left / sidebar.
+ */
 export const PrevyuHoverPreview = ({ url, anchor, onClose }: PrevyuHoverPreviewProps) => {
   const theme = useTheme();
   const portalHostRef = usePortalHost();
@@ -42,15 +41,27 @@ export const PrevyuHoverPreview = ({ url, anchor, onClose }: PrevyuHoverPreviewP
 
   if (!anchor) return null;
 
-  const { width: viewportWidth, height: viewportHeight } = getViewportSize();
-  const left = Math.min(anchor.x + CURSOR_OFFSET, Math.max(0, viewportWidth - VIEWPORT_MARGIN));
-  const top = Math.min(anchor.y + CURSOR_OFFSET, Math.max(0, viewportHeight - VIEWPORT_MARGIN));
+  const root = portalHostRef?.current ?? null;
+  const local = clientPointToRootOffset(anchor, root);
+  const rootWidth = root && 'clientWidth' in root ? Number(root.clientWidth) || 0 : 0;
+  const rootHeight = root && 'clientHeight' in root ? Number(root.clientHeight) || 0 : 0;
+
+  let left = local.x + CURSOR_OFFSET;
+  let top = local.y + CURSOR_OFFSET;
+  if (rootWidth > 0) {
+    left = Math.min(left, Math.max(ROOT_MARGIN, rootWidth - PREVIEW_MAX - ROOT_MARGIN));
+  }
+  if (rootHeight > 0) {
+    top = Math.min(top, Math.max(ROOT_MARGIN, rootHeight - PREVIEW_MAX - ROOT_MARGIN));
+  }
+  left = Math.max(ROOT_MARGIN, left);
+  top = Math.max(ROOT_MARGIN, top);
 
   const preview = (
     <div
       data-prevyu-hover-preview
       style={{
-        position: 'fixed',
+        position: 'absolute',
         left,
         top,
         zIndex: zIndex.dropdown,
