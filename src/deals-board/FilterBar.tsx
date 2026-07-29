@@ -103,7 +103,7 @@ export const FilterBar = ({
     setIsBuilderOpen(false);
     setActiveBuilderField(null);
   }, []);
-  useOutsideDismiss(isBuilderOpen, builderRef, dismissBuilder);
+  const dismissLayer = useOutsideDismiss(isBuilderOpen, builderRef, dismissBuilder);
 
   const effectiveClauses =
     value.sessionClauses === undefined ? viewClauses : value.sessionClauses;
@@ -555,6 +555,7 @@ export const FilterBar = ({
       ) : null}
 
       <div ref={builderRef} style={{ position: 'relative' }}>
+        {dismissLayer}
         <button
           type="button"
           data-segment-btn

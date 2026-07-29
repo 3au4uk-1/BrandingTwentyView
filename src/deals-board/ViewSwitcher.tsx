@@ -33,7 +33,7 @@ export const ViewSwitcher = ({
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const dismiss = useCallback(() => setIsOpen(false), []);
-  useOutsideDismiss(isOpen, containerRef, dismiss);
+  const dismissLayer = useOutsideDismiss(isOpen, containerRef, dismiss);
 
   const sortedViews = useMemo(() => sortViews(views), [views]);
   const activeView =
@@ -73,6 +73,7 @@ export const ViewSwitcher = ({
 
   return (
     <div ref={containerRef} style={{ position: 'relative', minWidth: '220px', flexShrink: 0 }}>
+      {dismissLayer}
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}

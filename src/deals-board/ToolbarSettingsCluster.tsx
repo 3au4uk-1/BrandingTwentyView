@@ -34,7 +34,7 @@ export const ToolbarSettingsCluster = ({
   const [childPickerOpen, setChildPickerOpen] = useState(false);
   const clusterRef = useRef<HTMLDivElement | null>(null);
   const dismissMenu = useCallback(() => setIsMenuOpen(false), []);
-  useOutsideDismiss(isMenuOpen, clusterRef, dismissMenu);
+  const dismissLayer = useOutsideDismiss(isMenuOpen, clusterRef, dismissMenu);
 
   const menuItemStyle = {
     width: '100%',
@@ -56,6 +56,7 @@ export const ToolbarSettingsCluster = ({
       ref={clusterRef}
       style={{ position: 'relative', display: 'flex', alignItems: 'center', flexShrink: 0 }}
     >
+      {dismissLayer}
       <Button
         theme={theme}
         variant="ghost"

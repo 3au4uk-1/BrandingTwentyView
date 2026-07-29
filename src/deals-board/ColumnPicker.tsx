@@ -73,7 +73,7 @@ export const ColumnPicker = ({
       setInternalOpen(false);
     }
   }, [onOpenChange]);
-  useOutsideDismiss(isOpen, containerRef, dismiss);
+  const dismissLayer = useOutsideDismiss(isOpen, containerRef, dismiss);
 
   // Sync draft from props only when closed (or on open). While open, keep local
   // reorder/visibility edits — otherwise refetch/mergeColumns identity churn resets ↑↓.
@@ -245,6 +245,7 @@ export const ColumnPicker = ({
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
+      {dismissLayer}
       {hideTrigger ? null : (
         <Button theme={theme} variant="ghost" size="sm" onClick={() => setIsOpen((prev) => !prev)}>
           {triggerLabel}

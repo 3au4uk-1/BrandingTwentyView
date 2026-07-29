@@ -60,7 +60,7 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
     setIsCompanyFilterOpen(false);
     setCompanySearch('');
   }, []);
-  useOutsideDismiss(anyDropdownOpen, filtersRef, dismissDropdowns);
+  const dismissLayer = useOutsideDismiss(anyDropdownOpen, filtersRef, dismissDropdowns);
   const selectedStages = value.stages ?? [];
   const selectedTypes = value.types ?? [];
   const selectedCompanyIds = value.companyIds ?? [];
@@ -141,6 +141,7 @@ export const QuickFiltersBar = ({ value, onChange, onReset }: QuickFiltersBarPro
         minWidth: 0,
       }}
     >
+      {dismissLayer}
       <div
         style={{
           display: 'inline-flex',
