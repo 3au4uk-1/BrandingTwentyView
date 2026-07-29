@@ -1,5 +1,4 @@
 import {
-  type ChangeEvent as ReactChangeEvent,
   type ClipboardEvent as ReactClipboardEvent,
   type DragEvent as ReactDragEvent,
   type MouseEvent as ReactMouseEvent,
@@ -13,11 +12,10 @@ import { resolvePrevyuFileUrls } from '../api/files-field';
 import { useTheme } from '../theme/ThemeContext';
 import type { LineItemFileRef, LineItemRow } from '../types';
 import { openOkleykaDialogForLineItem } from '../utils/open-okleyka-dialog';
-import { openRecordSidePanel } from '../utils/open-record-side-panel';
 import { findOpportunityInCache } from '../utils/sync-deal-stage';
 import { PrevyuFilesPopover } from './prevyu/PrevyuFilesPopover';
 import { PrevyuHoverPreview } from './prevyu/PrevyuHoverPreview';
-import { triggerHiddenFileInput } from './prevyu/trigger-hidden-file-input';
+import { PrevyuUploadModal } from './prevyu/PrevyuUploadModal';
 import { usePrevyuMediaActions } from './prevyu/usePrevyuMediaActions';
 
 type PrevyuOkleykiCellProps = {
@@ -47,16 +45,17 @@ export const PrevyuOkleykiCell = ({
   const extraCount = Math.max(0, files.length - 1);
   const hasFiles = files.length > 0;
   const actions = usePrevyuMediaActions({ itemId, files });
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const cellRef = useRef<HTMLDivElement>(null);
   const [hoverAnchor, setHoverAnchor] = useState<{ x: number; y: number } | null>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [popoverAnchorRect, setPopoverAnchorRect] = useState<DOMRect | null>(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
   const [imageBroken, setImageBroken] = useState(false);
 
   const resolvedOpportunityId =
     opportunityId ||
     (typeof row?.opportunityId === 'string' ? row.opportunityId : undefined);
+  const itemName = typeof row?.name === 'string' ? row.name : undefined;
 
   useEffect(() => {
     setImageBroken(false);
@@ -77,12 +76,10 @@ export const PrevyuOkleykiCell = ({
     return () => document.removeEventListener('mousedown', handlePointerDown);
   }, [popoverOpen]);
 
-  const openFilePicker = () => {
-    // Remote DOM proxies are truthy but often lack real DOM methods — `?.click`
-    // still throws TypeError: click is not a function.
-    triggerHiddenFileInput(fileInputRef.current, () => {
-      void openRecordSidePanel('dealLineItem', itemId);
-    });
+  const openUploadModal = () => {
+    setPopoverOpen(false);
+    setHoverAnchor(null);
+    setUploadOpen(true);
   };
 
   const openPopover = () => {
@@ -99,14 +96,6 @@ export const PrevyuOkleykiCell = ({
     setPopoverOpen(true);
   };
 
-  const handleFileInputChange = (event: ReactChangeEvent<HTMLInputElement>) => {
-    const selected = event.target.files;
-    if (selected?.length) {
-      void actions.addFiles(Array.from(selected));
-    }
-    event.target.value = '';
-  };
-
   const handleOpenOkleyka = (event: ReactMouseEvent) => {
     event.stopPropagation();
     if (!resolvedOpportunityId) return;
@@ -116,7 +105,7 @@ export const PrevyuOkleykiCell = ({
       ...(row as LineItemRow),
       id: itemId,
       opportunityId: resolvedOpportunityId,
-      name: typeof row?.name === 'string' ? row.name : '',
+      name: itemName ?? '',
       prevyuOkleyki: files,
       stage: stage ?? (typeof row?.stage === 'string' ? row.stage : null),
     } satisfies LineItemRow;
@@ -142,7 +131,7 @@ export const PrevyuOkleykiCell = ({
     if (hasFiles) {
       openPopover();
     } else {
-      openFilePicker();
+      openUploadModal();
     }
   };
 
@@ -170,15 +159,6 @@ export const PrevyuOkleykiCell = ({
           alignItems: 'flex-start',
         }}
       >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          style={{ display: 'none' }}
-          onChange={handleFileInputChange}
-        />
-
         <button
           type="button"
           disabled={actions.isPending}
@@ -293,10 +273,18 @@ export const PrevyuOkleykiCell = ({
           onClose={() => setPopoverOpen(false)}
           onMakeFirst={(fileId) => void actions.makeFirst(fileId)}
           onRemove={(fileId) => void actions.removeFile(fileId)}
-          onAddClick={openFilePicker}
+          onAddClick={openUploadModal}
           isPending={actions.isPending}
         />
       </div>
+
+      <PrevyuUploadModal
+        itemId={itemId}
+        itemName={itemName}
+        files={files}
+        isOpen={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+      />
 
       {stage === 'OKLEYKA' ? (
         <button
@@ -318,4 +306,3 @@ export const PrevyuOkleykiCell = ({
     </div>
   );
 };
-

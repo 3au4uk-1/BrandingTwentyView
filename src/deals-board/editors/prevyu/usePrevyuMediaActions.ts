@@ -21,20 +21,34 @@ import {
 type UsePrevyuMediaActionsArgs = {
   itemId: string;
   files: LineItemFileRef[] | null | undefined;
+  /** side-panel = open card on truncated bytes; message = keep UI and set lastError */
+  remoteDomFallback?: 'side-panel' | 'message';
 };
 
-export const usePrevyuMediaActions = ({ itemId, files }: UsePrevyuMediaActionsArgs) => {
+export const usePrevyuMediaActions = ({
+  itemId,
+  files,
+  remoteDomFallback = 'side-panel',
+}: UsePrevyuMediaActionsArgs) => {
   const updateMutation = useUpdateLineItem();
   const [isUploading, setIsUploading] = useState(false);
+  const [lastError, setLastError] = useState<string | null>(null);
+
+  const clearError = useCallback(() => setLastError(null), []);
 
   const addFiles = useCallback(
     async (incoming: File[]) => {
       const images = collectImageFiles(incoming);
-      if (!images.length) return;
+      if (!images.length) {
+        setLastError('Не найдено изображение для загрузки.');
+        return;
+      }
 
       const slots = remainingPrevyuSlots((files ?? []).length);
       if (slots === 0) {
-        window.alert('Максимум 6 файлов');
+        const message = 'Максимум 6 файлов';
+        setLastError(message);
+        window.alert(message);
         return;
       }
 
@@ -42,6 +56,7 @@ export const usePrevyuMediaActions = ({ itemId, files }: UsePrevyuMediaActionsAr
       if (!toUpload.length) return;
 
       setIsUploading(true);
+      setLastError(null);
       try {
         let next = files ?? [];
 
@@ -52,13 +67,17 @@ export const usePrevyuMediaActions = ({ itemId, files }: UsePrevyuMediaActionsAr
               toPrevyuFileRef(uploaded, file.name || 'prevyu'),
             ]);
           } catch (error) {
+            const message =
+              error instanceof Error ? error.message : 'Не удалось загрузить превью.';
             if (isPrevyuRemoteDomUploadError(error)) {
-              openRecordSidePanel('dealLineItem', itemId);
+              setLastError(message);
+              if (remoteDomFallback === 'side-panel') {
+                openRecordSidePanel('dealLineItem', itemId);
+              }
               return;
             }
-            window.alert(
-              `Не удалось загрузить превью.${error instanceof Error ? ` ${error.message}` : ''}`,
-            );
+            setLastError(message);
+            window.alert(`Не удалось загрузить превью.${message ? ` ${message}` : ''}`);
             return;
           }
         }
@@ -69,15 +88,16 @@ export const usePrevyuMediaActions = ({ itemId, files }: UsePrevyuMediaActionsAr
             data: { prevyuOkleyki: next },
           });
         } catch (error) {
-          window.alert(
-            `Не удалось сохранить превью.${error instanceof Error ? ` ${error.message}` : ''}`,
-          );
+          const message =
+            error instanceof Error ? error.message : 'Не удалось сохранить превью.';
+          setLastError(message);
+          window.alert(`Не удалось сохранить превью.${message ? ` ${message}` : ''}`);
         }
       } finally {
         setIsUploading(false);
       }
     },
-    [files, itemId, updateMutation],
+    [files, itemId, remoteDomFallback, updateMutation],
   );
 
   const addFromDataTransfer = useCallback(
@@ -89,7 +109,12 @@ export const usePrevyuMediaActions = ({ itemId, files }: UsePrevyuMediaActionsAr
 
   const addFromClipboard = useCallback(async () => {
     const images = await readImagesFromClipboardApi();
-    if (!images.length) return;
+    if (!images.length) {
+      setLastError(
+        'Буфер не отдал изображение. В Remote DOM Ctrl+V часто не передаёт картинку — попробуйте выбрать файл или «Открыть в карточке».',
+      );
+      return;
+    }
     await addFiles(images);
   }, [addFiles]);
 
@@ -127,6 +152,8 @@ export const usePrevyuMediaActions = ({ itemId, files }: UsePrevyuMediaActionsAr
 
   return {
     isPending: isUploading || updateMutation.isPending,
+    lastError,
+    clearError,
     addFiles,
     addFromDataTransfer,
     addFromClipboard,
