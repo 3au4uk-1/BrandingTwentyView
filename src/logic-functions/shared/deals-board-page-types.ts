@@ -8,6 +8,8 @@ export type DealsBoardPageRequest = {
   includeCompanyRelation: boolean;
   restFieldNames: string[];
   includeListStatus: boolean;
+  /** CRM field type map for GraphQL node selection (e.g. `{ amount: 'CURRENCY' }`) */
+  fieldTypesByName?: Record<string, string>;
 };
 
 export type DealsBoardPageResponse = {

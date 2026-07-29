@@ -2,6 +2,22 @@ import type { LineItemRowLike } from './deals-board-page-types';
 
 export type { DealsBoardPageRequest, DealsBoardPageResponse, LineItemRowLike } from './deals-board-page-types';
 
+export const MAX_LIST_STATUS_BATCH_IDS = 500;
+
+const DEFAULT_FIELD_TYPES_BY_NAME: Readonly<Record<string, string>> = { amount: 'CURRENCY' };
+
+export const resolveFieldTypesByName = (
+  fieldTypesByName?: Record<string, string>,
+): Record<string, string> => {
+  if (!fieldTypesByName || Object.keys(fieldTypesByName).length === 0) {
+    return { ...DEFAULT_FIELD_TYPES_BY_NAME };
+  }
+  return fieldTypesByName;
+};
+
+export const capLineItemIdsForListStatus = (ids: string[]): string[] =>
+  ids.slice(0, MAX_LIST_STATUS_BATCH_IDS);
+
 const TIMEOUT_LIKE_CODES = new Set(['ETIMEDOUT', 'ECONNABORTED', 'UND_ERR_CONNECT_TIMEOUT']);
 
 const isTimeoutLikeError = (error: unknown): boolean => {

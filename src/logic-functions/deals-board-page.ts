@@ -6,7 +6,11 @@ import type { RoutePayload } from 'twenty-sdk/logic-function';
 import { DEALS_BOARD_PAGE_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER } from 'src/constants/universal-identifiers';
 
 import { crmparserProxyFetch, jsonProxyResponse } from './shared/crmparser-proxy';
-import { groupLineItemsByOpportunityId } from './shared/deals-board-page-core';
+import {
+  capLineItemIdsForListStatus,
+  groupLineItemsByOpportunityId,
+  resolveFieldTypesByName,
+} from './shared/deals-board-page-core';
 import { buildOpportunityNodeSelection } from './shared/deals-board-page-opportunity-selection';
 import {
   enrichOpportunityRowsWithRestFields,
@@ -49,9 +53,10 @@ const fetchListStatusByLineItemId = async (
 ): Promise<Record<string, unknown> | undefined> => {
   if (lineItemIds.length === 0) return undefined;
 
+  const cappedIds = capLineItemIdsForListStatus(lineItemIds);
   const { status, body } = await crmparserProxyFetch(`/twenty/line-items/list-status`, {
     method: 'POST',
-    body: JSON.stringify({ ids: lineItemIds }),
+    body: JSON.stringify({ ids: cappedIds }),
   });
 
   if (status < 200 || status >= 300) return undefined;
@@ -75,7 +80,7 @@ const handler = async (event: RoutePayload) => {
     const nodeSelection = buildOpportunityNodeSelection(
       body.visibleCrmFieldNames ?? [],
       body.includeCompanyRelation ?? false,
-      { amount: 'CURRENCY' },
+      resolveFieldTypesByName(body.fieldTypesByName),
     );
 
     const result = await coreClient.query({

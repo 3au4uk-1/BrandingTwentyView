@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  capLineItemIdsForListStatus,
   groupLineItemsByOpportunityId,
+  MAX_LIST_STATUS_BATCH_IDS,
+  resolveFieldTypesByName,
   shouldUseDealsBoardPageFallback,
 } from './deals-board-page-core';
 
@@ -20,6 +23,26 @@ describe('groupLineItemsByOpportunityId', () => {
       ],
       o2: [{ id: 'l3', opportunityId: 'o2' }],
     });
+  });
+});
+
+describe('resolveFieldTypesByName', () => {
+  it('defaults to amount CURRENCY when missing or empty', () => {
+    expect(resolveFieldTypesByName()).toEqual({ amount: 'CURRENCY' });
+    expect(resolveFieldTypesByName({})).toEqual({ amount: 'CURRENCY' });
+  });
+
+  it('returns provided map when non-empty', () => {
+    expect(resolveFieldTypesByName({ stage: 'SELECT' })).toEqual({ stage: 'SELECT' });
+  });
+});
+
+describe('capLineItemIdsForListStatus', () => {
+  it('caps at MAX_LIST_STATUS_BATCH_IDS', () => {
+    const ids = Array.from({ length: MAX_LIST_STATUS_BATCH_IDS + 10 }, (_, i) => `id-${i}`);
+    expect(capLineItemIdsForListStatus(ids)).toHaveLength(MAX_LIST_STATUS_BATCH_IDS);
+    expect(capLineItemIdsForListStatus(ids)[0]).toBe('id-0');
+    expect(capLineItemIdsForListStatus(ids).at(-1)).toBe(`id-${MAX_LIST_STATUS_BATCH_IDS - 1}`);
   });
 });
 
