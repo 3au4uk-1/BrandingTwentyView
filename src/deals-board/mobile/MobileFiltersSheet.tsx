@@ -65,10 +65,9 @@ export const MobileFiltersSheet = ({
 
   const sectionTitleStyle = {
     fontSize: font.sizeXs,
-    fontWeight: font.weightSemibold,
+    fontWeight: font.weightMedium,
     color: colors.textMuted,
-    letterSpacing: '0.04em',
-    textTransform: 'uppercase' as const,
+    letterSpacing: '-0.01em',
     marginBottom: '8px',
   };
 

@@ -1,4 +1,14 @@
-export type ListName = 'blacklist' | 'restoration' | 'podryad' | 'banner';
+import { getTwentyFunctionsBaseUrl } from '../utils/twenty-functions-base-url';
+
+export type ListName =
+  | 'blacklist'
+  | 'restoration'
+  | 'podryad'
+  | 'banner'
+  | 'ne_nashe_branding'
+  | 'decor_blacklist'
+  | 'mk_blacklist'
+  | 'ne_nashe_decor_mk';
 
 export type ManualLineItemSyncBody = {
   opportunityId: string;
@@ -11,9 +21,13 @@ export type ManualLineItemSyncBody = {
 export type LineItemListStatus = {
   known?: boolean;
   blacklisted: boolean;
+  decorBlacklisted?: boolean;
+  mkBlacklisted?: boolean;
   restorationMatch: boolean;
   podryadMatch: boolean;
   bannerMatch: boolean;
+  neNasheBrandingMatch?: boolean;
+  neNasheDecorMkMatch?: boolean;
   pattern: string | null;
   dealId: number | null;
   dealTwentyId: string | null;
@@ -29,18 +43,13 @@ const MAX_BATCH_IDS = 500;
 const readProcessEnv = (): Record<string, string | undefined> =>
   globalThis.process?.env ?? {};
 
-const getFunctionsBaseUrl = (): string | null => {
-  const baseUrl = readProcessEnv().TWENTY_FUNCTIONS_URL?.trim().replace(/\/$/, '');
-  return baseUrl || null;
-};
-
 const getAppAccessToken = (): string | null => {
   const token = readProcessEnv().TWENTY_APP_ACCESS_TOKEN?.trim();
   return token || null;
 };
 
 export const isCrmparserConfigured = (): boolean =>
-  Boolean(getFunctionsBaseUrl() && getAppAccessToken());
+  Boolean(getTwentyFunctionsBaseUrl() && getAppAccessToken());
 
 const formatCrmparserProxyError = (status: number, body: unknown): string => {
   const record = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
@@ -60,7 +69,7 @@ const formatCrmparserProxyError = (status: number, body: unknown): string => {
 };
 
 async function logicFunctionFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const baseUrl = getFunctionsBaseUrl();
+  const baseUrl = getTwentyFunctionsBaseUrl();
   const token = getAppAccessToken();
   if (!baseUrl || !token) {
     throw new Error('Crmparser proxy not configured');
@@ -205,5 +214,24 @@ export async function archiveManualLineItem(lineItemId: string) {
   return logicFunctionFetch<{ success: boolean }>(
     `/crmparser/line-items/${encodeURIComponent(lineItemId)}/archive`,
     { method: 'POST', body: JSON.stringify({}) },
+  );
+}
+
+export type LineItemAmountWriteBackResult = {
+  success: true;
+  amountRub: number;
+  opportunityAmountRub: number;
+};
+
+export async function writeBackLineItemAmount(
+  lineItemId: string,
+  amountRub: number,
+): Promise<LineItemAmountWriteBackResult> {
+  return logicFunctionFetch<LineItemAmountWriteBackResult>(
+    `/crmparser/line-items/${encodeURIComponent(lineItemId)}/amount`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ amountRub }),
+    },
   );
 }

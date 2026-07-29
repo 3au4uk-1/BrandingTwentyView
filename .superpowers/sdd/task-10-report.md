@@ -1,40 +1,39 @@
-# Task 10 Report: Version bump + final verification
+# Task 10 Report: Version bump + verification checklist
 
 ## Status
-Complete.
 
-## Summary
-Final verification passed on the `feat/filters-tanstack-polish` branch. Bumped `package.json` version `0.4.1` → `0.5.0` for the filters + TanStack board polish release.
+**DONE** — patch bump committed; staging checklist pending manual verification.
 
 ## Version
+
 | File | Change |
 |------|--------|
-| `package.json` | `0.4.1` → `0.5.0` |
+| `package.json` | `0.5.3` → `0.5.4` |
 
-## Tests
-```
-node node_modules/vitest/dist/cli.js run --config vitest.unit.config.ts
-→ 61 files passed, 348 tests passed (exit 0)
-Duration: 3.78s
-```
+## Staging checklist (manual — PENDING)
 
-## Lint
-```
-npx oxlint -c .oxlintrc.json .
-→ 0 errors, 5 warnings (pre-existing no-unused-vars)
-Finished in 31ms on 246 files
-```
+| # | Check | Result |
+|---|-------|--------|
+| 1 | F5 Opportunities — record Finish (shell floor) | **PENDING** |
+| 2 | F5 Реализация default «Будущие» — board-owned Finish ≤ ~2s; ≤1 primary aggregate call when paginated | **PENDING** |
+| 3 | Toggle showAll — heavy path OK | **PENDING** |
+| 4 | today/week presets OK | **PENDING** |
+| 5 | Expand 5 deals OK | **PENDING** |
+| 6 | Analytics rashod still loads (Wave C) | **PENDING** |
+| 7 | Simulate LF down (optional): board still loads via fallback | **PENDING** |
 
-Warnings (unchanged baseline):
-- `DealRow.tsx`: unused `isHovered` param
-- `DealsBoard.tsx`: unused `opportunityLinkFieldNames`
-- `Button.tsx`: unused `radius`, `font` destructuring
-- `crm-field-names.test.ts`: unused import
+> Network Finish timings not measured from this agent session — run on staging after deploy.
 
 ## Commit
-`chore: bump version to 0.5.0 for filters and TanStack board`
 
-Author: Cursor Agent `<cursor-agent@local>`
+**`722a37b`** — `chore: bump deals-board to 0.5.4 after cold-load perf`
 
-## Concerns
-None blocking release. Pre-existing lint warnings remain for a follow-up cleanup pass.
+## Cold-load review fixes
+
+- **`shouldUseDealsBoardPageFallback`**: 404 and `NOT_CONFIGURED` / “not configured” now trigger legacy multi-call path; 400 still does not.
+- **Tests**: 16/16 passing in `deals-board-page-core.test.ts` + `deals-board-page.test.ts`.
+
+## Spec coverage (Task 10)
+
+- ≤2s board-owned success criteria → checklist items 2–7 (pending manual run)
+- Patch version bump after cold-load perf work (Tasks 0–9)

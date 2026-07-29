@@ -8,6 +8,7 @@ import {
   isCrmparserConfigured,
   resetListStatusBatcherForTests,
   syncManualLineItem,
+  writeBackLineItemAmount,
 } from './crmparser';
 
 describe('crmparser proxy client', () => {
@@ -251,6 +252,61 @@ describe('crmparser proxy client', () => {
         method: 'POST',
         body: JSON.stringify({}),
       }),
+    );
+  });
+
+  it('writeBackLineItemAmount posts amountRub to logic function', async () => {
+    globalThis.process = {
+      env: {
+        TWENTY_FUNCTIONS_URL: 'https://twenty.test/functions',
+        TWENTY_APP_ACCESS_TOKEN: 'app-token',
+      },
+    } as NodeJS.Process;
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        amountRub: 1500,
+        opportunityAmountRub: 4200,
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await writeBackLineItemAmount('li-42', 1500);
+    expect(result).toEqual({
+      success: true,
+      amountRub: 1500,
+      opportunityAmountRub: 4200,
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://twenty.test/functions/crmparser/line-items/li-42/amount',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ amountRub: 1500 }),
+      }),
+    );
+  });
+
+  it('writeBackLineItemAmount surfaces parser error message', async () => {
+    globalThis.process = {
+      env: {
+        TWENTY_FUNCTIONS_URL: 'https://twenty.test/functions',
+        TWENTY_APP_ACCESS_TOKEN: 'app-token',
+      },
+    } as NodeJS.Process;
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: 'Ne-nashe line items cannot be amount-locked' }),
+      }),
+    );
+
+    await expect(writeBackLineItemAmount('li-42', 100)).rejects.toThrow(
+      'Ne-nashe line items cannot be amount-locked',
     );
   });
 });

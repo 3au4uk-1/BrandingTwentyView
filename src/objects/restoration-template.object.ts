@@ -1,0 +1,75 @@
+import { defineObject, FieldType } from 'twenty-sdk/define';
+import {
+  RESTORATION_TEMPLATE_EQUIPMENT_HINT_FIELD_UNIVERSAL_IDENTIFIER,
+  RESTORATION_TEMPLATE_IS_ACTIVE_FIELD_UNIVERSAL_IDENTIFIER,
+  RESTORATION_TEMPLATE_IS_DEFAULT_FIELD_UNIVERSAL_IDENTIFIER,
+  RESTORATION_TEMPLATE_MAKET_URL_FIELD_UNIVERSAL_IDENTIFIER,
+  RESTORATION_TEMPLATE_MATCH_KEYWORDS_FIELD_UNIVERSAL_IDENTIFIER,
+  RESTORATION_TEMPLATE_OBJECT_UNIVERSAL_IDENTIFIER,
+  RESTORATION_TEMPLATE_PREVIEW_URL_FIELD_UNIVERSAL_IDENTIFIER,
+  RESTORATION_TEMPLATE_PRIORITY_FIELD_UNIVERSAL_IDENTIFIER,
+} from 'src/constants/universal-identifiers';
+
+export default defineObject({
+  universalIdentifier: RESTORATION_TEMPLATE_OBJECT_UNIVERSAL_IDENTIFIER,
+  nameSingular: 'restorationTemplate',
+  namePlural: 'restorationTemplates',
+  labelSingular: 'Шаблон реставрации',
+  labelPlural: 'Шаблоны реставрации',
+  icon: 'IconPhoto',
+  description: 'Каталог шаблонов макетов для реставрации',
+  fields: [
+    {
+      universalIdentifier: RESTORATION_TEMPLATE_MATCH_KEYWORDS_FIELD_UNIVERSAL_IDENTIFIER,
+      name: 'matchKeywords',
+      type: FieldType.TEXT,
+      label: 'Ключевые слова',
+      icon: 'IconTags',
+    },
+    {
+      universalIdentifier: RESTORATION_TEMPLATE_EQUIPMENT_HINT_FIELD_UNIVERSAL_IDENTIFIER,
+      name: 'equipmentHint',
+      type: FieldType.TEXT,
+      label: 'Тип оборудования',
+      icon: 'IconTool',
+    },
+    {
+      universalIdentifier: RESTORATION_TEMPLATE_MAKET_URL_FIELD_UNIVERSAL_IDENTIFIER,
+      name: 'maketUrl',
+      type: FieldType.LINKS,
+      label: 'Макет',
+      icon: 'IconLink',
+    },
+    {
+      universalIdentifier: RESTORATION_TEMPLATE_PREVIEW_URL_FIELD_UNIVERSAL_IDENTIFIER,
+      name: 'previewUrl',
+      type: FieldType.LINKS,
+      label: 'Превью',
+      icon: 'IconPhoto',
+    },
+    {
+      universalIdentifier: RESTORATION_TEMPLATE_PRIORITY_FIELD_UNIVERSAL_IDENTIFIER,
+      name: 'priority',
+      type: FieldType.NUMBER,
+      label: 'Приоритет',
+      icon: 'IconListNumbers',
+      defaultValue: 0,
+    },
+    {
+      universalIdentifier: RESTORATION_TEMPLATE_IS_ACTIVE_FIELD_UNIVERSAL_IDENTIFIER,
+      name: 'isActive',
+      type: FieldType.BOOLEAN,
+      label: 'Активен',
+      icon: 'IconCheck',
+      defaultValue: true,
+    },
+    {
+      universalIdentifier: RESTORATION_TEMPLATE_IS_DEFAULT_FIELD_UNIVERSAL_IDENTIFIER,
+      name: 'isDefault',
+      type: FieldType.BOOLEAN,
+      label: 'По умолчанию',
+      icon: 'IconStar',
+      defaultValue: false,
+    },
+  ],
+});

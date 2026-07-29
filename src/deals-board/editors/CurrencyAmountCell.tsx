@@ -1,10 +1,16 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { writeBackLineItemAmount } from '../api/crmparser';
 import { useUpdateRecord } from '../hooks/useUpdateRecord';
 import type { BoardObjectName } from '../metadata/types';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
 import { Input } from '../ui/Input';
+import {
+  findLineItemOpportunityId,
+  patchOpportunityInCache,
+} from '../utils/opportunity-cache';
 
 import { formatReadOnlyValue } from '../cells/format-read-only-value';
 
@@ -28,6 +34,7 @@ export const CurrencyAmountCell = ({
 }: CurrencyAmountCellProps) => {
   const theme = useTheme();
   const { colors, font } = theme;
+  const queryClient = useQueryClient();
   const updateMutation = useUpdateRecord(objectName);
   const rubles = microsToRubles(value?.amountMicros);
   const [isEditing, setIsEditing] = useState(false);
@@ -65,6 +72,29 @@ export const CurrencyAmountCell = ({
         },
       });
       setIsEditing(false);
+
+      if (objectName === 'dealLineItem' && fieldName === 'amount') {
+        try {
+          const result = await writeBackLineItemAmount(recordId, parsed);
+          if (typeof result.opportunityAmountRub === 'number') {
+            const opportunityId = findLineItemOpportunityId(queryClient, recordId);
+            if (opportunityId) {
+              patchOpportunityInCache(queryClient, opportunityId, {
+                amount: {
+                  amountMicros: rublesToMicros(result.opportunityAmountRub),
+                  currencyCode: value?.currencyCode ?? 'RUB',
+                },
+              });
+            }
+          }
+        } catch (error) {
+          window.alert(
+            error instanceof Error
+              ? error.message
+              : 'Не удалось записать сумму в парсер. Значение в Twenty сохранено.',
+          );
+        }
+      }
     } catch (error) {
       window.alert(
         `Не удалось сохранить сумму.${error instanceof Error ? ` ${error.message}` : ''}`,

@@ -23,17 +23,22 @@ export type CreateLineItemInput = {
   opportunityId: string;
   stage: 'NOVYY';
   kolichestvo: number;
+  poryadok?: number;
   amount: {
     amountMicros: number;
     currencyCode: 'RUB';
   };
 };
 
-export const buildCreateLineItemInput = (opportunityId: string): CreateLineItemInput => ({
+export const buildCreateLineItemInput = (
+  opportunityId: string,
+  poryadok = 0,
+): CreateLineItemInput => ({
   name: DEFAULT_MANUAL_LINE_ITEM_NAME,
   opportunityId,
   stage: 'NOVYY',
   kolichestvo: 1,
+  poryadok,
   amount: {
     amountMicros: 0,
     currencyCode: 'RUB',
@@ -273,21 +278,25 @@ const fetchLineItemOpportunityIdsPage = async (
 };
 
 export const fetchLineItemOpportunityIdsBySearch = async (
-  search: string,
+  search: string | string[],
   filters?: LineItemQueryFilters,
 ): Promise<string[]> => {
-  const term = search.trim();
-  if (!term) return [];
+  const terms = (Array.isArray(search) ? search : [search])
+    .map((term) => term.trim())
+    .filter(Boolean);
+  if (!terms.length) return [];
 
   const client = getRestClient();
   const allIds = new Set<string>();
-  let after: string | undefined;
 
-  do {
-    const page = await fetchLineItemOpportunityIdsPage(client, term, filters, after);
-    page.opportunityIds.forEach((id) => allIds.add(id));
-    after = page.nextCursor;
-  } while (after);
+  for (const term of terms) {
+    let after: string | undefined;
+    do {
+      const page = await fetchLineItemOpportunityIdsPage(client, term, filters, after);
+      page.opportunityIds.forEach((id) => allIds.add(id));
+      after = page.nextCursor;
+    } while (after);
+  }
 
   return [...allIds];
 };
@@ -298,6 +307,21 @@ export const updateLineItem = async (
 ): Promise<void> => {
   const client = getRestClient();
   await client.patch(`/rest/dealLineItems/${id}`, data);
+};
+
+export const fetchLineItemById = async (id: string): Promise<LineItemRow | null> => {
+  const client = getRestClient();
+  const response = await client.get<unknown>(`/rest/dealLineItems/${id}`);
+  if (!response || typeof response !== 'object') return null;
+  const body = response as Record<string, unknown>;
+  const record =
+    (body.data as Record<string, unknown> | undefined)?.dealLineItem ??
+    body.dealLineItem ??
+    body.data ??
+    body;
+  if (!record || typeof record !== 'object') return null;
+  const row = record as LineItemRow;
+  return typeof row.id === 'string' ? row : null;
 };
 
 type LineItemCreateClient = Pick<RestApiClient, 'post' | 'patch' | 'get'>;
@@ -386,10 +410,11 @@ export const resolveCreatedLineItemId = async (
 export const createLineItemWithClient = async (
   client: LineItemCreateClient,
   opportunityId: string,
+  poryadok = 0,
 ): Promise<string> => {
   const response = await client.post<unknown>(
     '/rest/dealLineItems',
-    buildCreateLineItemInput(opportunityId),
+    buildCreateLineItemInput(opportunityId, poryadok),
   );
   const id = await resolveCreatedLineItemId(client, opportunityId, response);
 
@@ -400,6 +425,9 @@ export const createLineItemWithClient = async (
   return id;
 };
 
-export const createLineItem = async (opportunityId: string): Promise<string> => {
-  return createLineItemWithClient(getRestClient(), opportunityId);
+export const createLineItem = async (
+  opportunityId: string,
+  poryadok = 0,
+): Promise<string> => {
+  return createLineItemWithClient(getRestClient(), opportunityId, poryadok);
 };

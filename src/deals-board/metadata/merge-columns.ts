@@ -3,6 +3,19 @@ import { defaultWidthForFieldType } from './field-registry';
 import type { FieldDescriptor } from './types';
 import { VIRTUAL_PARENT_DEFAULTS } from './virtual-columns';
 
+/** Prefer app constants when CRM metadata labels are mojibake / wrong encoding. */
+const LABEL_OVERRIDES: Record<string, string> = {
+  tip: 'Категория',
+  stage: 'Стадия',
+  tipDetail: 'Уточнение',
+  kolichestvo: 'Кол-во',
+  amount: 'Сумма',
+  kommentariy: 'Комментарий',
+  plenka: 'Плёнка',
+  ssylkaNaMakety: 'Макеты',
+  prevyuOkleyki: 'Превью',
+};
+
 const descriptorMap = (descriptors: FieldDescriptor[]) =>
   new Map(descriptors.map((descriptor) => [descriptor.field, descriptor]));
 
@@ -15,6 +28,9 @@ export const mergeColumns = (
   const byField = descriptorMap(allDescriptors);
   const savedByField = new Map(savedColumns.map((column) => [column.field, column]));
 
+  const resolveLabel = (field: string, fallback: string) =>
+    LABEL_OVERRIDES[field] ?? fallback;
+
   const merged: ColumnConfig[] = [];
 
   for (const saved of [...savedColumns].sort((a, b) => a.order - b.order)) {
@@ -22,7 +38,7 @@ export const mergeColumns = (
     if (!descriptor) continue;
     merged.push({
       ...saved,
-      label: descriptor.label,
+      label: resolveLabel(saved.field, descriptor.label),
       groupId: saved.groupId,
     });
   }
@@ -35,10 +51,12 @@ export const mergeColumns = (
     const virtualDefaults = VIRTUAL_PARENT_DEFAULTS[descriptor.field];
     merged.push({
       field: descriptor.field,
-      label: descriptor.label,
+      label: resolveLabel(descriptor.field, descriptor.label),
       order: virtualDefaults?.order ?? nextOrder++,
       visible: virtualDefaults?.visible ?? false,
-      width: virtualDefaults?.width ?? defaultWidthForFieldType(descriptor.fieldType, descriptor.field),
+      width:
+        virtualDefaults?.width ??
+        defaultWidthForFieldType(descriptor.fieldType, descriptor.field),
     });
   }
 
@@ -47,14 +65,31 @@ export const mergeColumns = (
   for (const descriptor of crmDescriptors) {
     if (savedByField.has(descriptor.field)) continue;
 
+    const isStage = descriptor.field === 'stage';
+    const isTipDetail = descriptor.field === 'tipDetail';
+    const isPrevyu = descriptor.field === 'prevyuOkleyki';
+    const nameOrder = merged.find((column) => column.field === 'name')?.order;
+    const stageInsertOrder =
+      typeof nameOrder === 'number' ? nameOrder + 0.5 : nextOrder++;
+
     merged.push({
       field: descriptor.field,
-      label: descriptor.label,
-      order: nextOrder++,
-      visible: false,
-      width: defaultWidthForFieldType(descriptor.fieldType, descriptor.field),
+      label: resolveLabel(descriptor.field, descriptor.label),
+      order: isStage ? stageInsertOrder : nextOrder++,
+      visible: isStage || isTipDetail || isPrevyu,
+      width: isStage
+        ? 148
+        : isTipDetail
+          ? 140
+          : isPrevyu
+            ? 100
+            : defaultWidthForFieldType(descriptor.fieldType, descriptor.field),
     });
   }
 
-  return merged.sort((a, b) => a.order - b.order);
+  // Preserve saved order (including tipDetail). Only missing tipDetail is seeded
+  // near stage above — do not re-pin on every merge or ↑↓ in ColumnPicker is undone.
+  return merged
+    .sort((a, b) => a.order - b.order)
+    .map((column, index) => ({ ...column, order: index }));
 };

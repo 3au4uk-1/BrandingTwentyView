@@ -6,7 +6,7 @@ export const FUTURE_DEALS_VIEW_NAME = 'Будущие сделки';
 
 export const FUTURE_DEALS_VIEW_FILTERS: DealBoardFilters = {
   datePreset: 'future',
-  showAll: true,
+  showAll: false,
 };
 
 export const FUTURE_DEALS_VIEW_SORT: DealBoardSort[] = [
@@ -18,7 +18,6 @@ export const hasFutureDealsViewMechanics = (view: {
   sort: DealBoardSort[];
 }): boolean =>
   view.filters.datePreset === 'future' &&
-  view.filters.showAll === true &&
   view.sort.length === 1 &&
   view.sort[0]?.field === OPPORTUNITY_DATE_FILTER_FIELD &&
   view.sort[0]?.direction === 'AscNullsLast';

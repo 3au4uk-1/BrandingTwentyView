@@ -1,6 +1,8 @@
+import { resolveSessionOverride } from '../filter-model/resolve-session-override';
 import type { FilterClause, FilterState } from '../filter-model/types';
 import { getEffectiveClauses } from '../filter-model/session';
 import type { DealBoardFilters } from '../types';
+import { resolveSearchTerms } from './search';
 
 export const countActiveQuickFilters = (
   filterSession: Partial<FilterState>,
@@ -9,7 +11,7 @@ export const countActiveQuickFilters = (
 ): number => {
   let count = 0;
 
-  const datePreset = filterSession.datePreset ?? viewFilters.datePreset;
+  const datePreset = resolveSessionOverride(filterSession.datePreset, viewFilters.datePreset);
   if (datePreset) {
     count += 1;
   }
@@ -20,8 +22,14 @@ export const countActiveQuickFilters = (
   );
   count += clauseGroups.size;
 
-  const search = (filterSession.search ?? viewFilters.search ?? '').trim();
-  if (search.length > 0) {
+  const searchTerms = resolveSearchTerms({
+    search:
+      filterSession.searchTerms !== undefined
+        ? undefined
+        : (filterSession.search ?? viewFilters.search),
+    searchTerms: resolveSessionOverride(filterSession.searchTerms, viewFilters.searchTerms),
+  });
+  if (searchTerms.length > 0) {
     count += 1;
   }
 

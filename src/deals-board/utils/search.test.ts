@@ -3,11 +3,13 @@ import { describe, expect, it } from 'vitest';
 import type { LineItemRow, OpportunityRow } from '../types';
 
 import {
+  addSearchTerm,
   buildOpportunityFilter,
   buildOpportunitySearchClause,
   filterLineItemsForSearch,
   lineItemMatchesSearch,
   opportunityMatchesSearch,
+  resolveSearchTerms,
 } from './search';
 
 describe('buildOpportunitySearchClause', () => {
@@ -21,6 +23,36 @@ describe('buildOpportunitySearchClause', () => {
     expect(buildOpportunitySearchClause('баннер', ['opp-1', 'opp-2'])).toEqual({
       or: [{ name: { ilike: '%баннер%' } }, { id: { in: ['opp-1', 'opp-2'] } }],
     });
+  });
+
+  it('ORs multiple name terms', () => {
+    expect(buildOpportunitySearchClause(['фотобудка', 'брендинг'])).toEqual({
+      or: [{ name: { ilike: '%фотобудка%' } }, { name: { ilike: '%брендинг%' } }],
+    });
+  });
+});
+
+describe('resolveSearchTerms', () => {
+  it('prefers chips and ignores draft search', () => {
+    expect(resolveSearchTerms({ search: 'draft', searchTerms: ['фотобудка', 'брендинг'] })).toEqual([
+      'фотобудка',
+      'брендинг',
+    ]);
+  });
+
+  it('treats empty chips as no search', () => {
+    expect(resolveSearchTerms({ search: 'draft', searchTerms: [] })).toEqual([]);
+  });
+
+  it('falls back to single search when chips unset', () => {
+    expect(resolveSearchTerms({ search: '  баннер  ' })).toEqual(['баннер']);
+  });
+});
+
+describe('addSearchTerm', () => {
+  it('dedupes case-insensitively', () => {
+    expect(addSearchTerm(['Фото'], 'фото')).toEqual(['Фото']);
+    expect(addSearchTerm(['Фото'], 'брендинг')).toEqual(['Фото', 'брендинг']);
   });
 });
 
@@ -45,12 +77,22 @@ describe('buildOpportunityFilter', () => {
       and: [{ companyId: { in: ['company-1', 'company-2'] } }],
     });
   });
+
+  it('ORs multi keyword searchTerms', () => {
+    expect(buildOpportunityFilter({ searchTerms: ['a', 'b'] })).toEqual({
+      and: [{ or: [{ name: { ilike: '%a%' } }, { name: { ilike: '%b%' } }] }],
+    });
+  });
 });
 
 describe('opportunityMatchesSearch', () => {
   it('matches case-insensitively', () => {
     expect(opportunityMatchesSearch({ name: 'Сделка Баннер' }, 'баннер')).toBe(true);
     expect(opportunityMatchesSearch({ name: 'Сделка Баннер' }, 'визитка')).toBe(false);
+  });
+
+  it('matches any of multiple terms', () => {
+    expect(opportunityMatchesSearch({ name: 'Сделка Баннер' }, ['визитка', 'баннер'])).toBe(true);
   });
 });
 
@@ -92,5 +134,12 @@ describe('filterLineItemsForSearch', () => {
 
   it('keeps only matching line items when parent name does not match', () => {
     expect(filterLineItemsForSearch(lineItems, 'визитки', recordsById)).toEqual([lineItems[0]]);
+  });
+
+  it('ORs multiple terms across deals and positions', () => {
+    expect(filterLineItemsForSearch(lineItems, ['визитки', 'наклейки'], recordsById)).toEqual([
+      lineItems[0],
+      lineItems[2],
+    ]);
   });
 });

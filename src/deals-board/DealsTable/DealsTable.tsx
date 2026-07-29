@@ -33,6 +33,7 @@ import {
 } from '../utils/columns';
 import { shouldShowDaySeparators } from '../utils/day-separators';
 import { getEffectiveOpportunitySort } from '../utils/sort-opportunities';
+import type { BoardStream } from 'src/constants/product-stream';
 import { DealsDataTable } from './DealsDataTable';
 import { withParentExpandColumn } from './build-parent-columns';
 
@@ -64,6 +65,8 @@ type DealsTableProps = {
   isLoading?: boolean;
   isViewLoading?: boolean;
   errorMessage?: string;
+  attentionOpportunityIds?: Set<string> | null;
+  boardStream?: BoardStream;
 };
 
 export const DealsTable = ({
@@ -94,10 +97,11 @@ export const DealsTable = ({
   isLoading = false,
   isViewLoading = false,
   errorMessage,
+  attentionOpportunityIds = null,
+  boardStream,
 }: DealsTableProps) => {
   const theme = useTheme();
   const { colors, font, spacing } = theme;
-  const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
   const { mode } = useExpandMode();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [parentUserSized, setParentUserSized] = useState(false);
@@ -325,13 +329,13 @@ export const DealsTable = ({
         hasLineItemFilters={hasLineItemFilters}
         showAllPositionOppIds={showAllPositionOppIds}
         onToggleShowAllPositions={onToggleShowAllPositions}
+        attentionOpportunityIds={attentionOpportunityIds}
         isExpanded={isExpanded}
         toggleExpand={toggleExpand}
-        hoveredRowId={hoveredRowId}
-        onHoverRowChange={setHoveredRowId}
         showDaySeparators={showDaySeparators}
         sort={effectiveSort}
         onSortChange={onSortChange}
+        boardStream={boardStream}
       />
 
       <div

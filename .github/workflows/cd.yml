@@ -62,9 +62,9 @@ jobs:
           api-url: ${{ env.TWENTY_DEPLOY_URL }}
           api-key: ${{ secrets.TWENTY_DEPLOY_API_KEY }}
 
-      # Staging clone may already have the app; install can fail on field UUID collisions.
+      # Must succeed: soft-fail previously masked UUID ownership collisions and left
+      # new fields (poryadok, tipDetail, …) never synced on staging.
       - name: Install
-        continue-on-error: ${{ github.ref == 'refs/heads/staging' }}
         uses: twentyhq/twenty/.github/actions/install-twenty-app@main
         with:
           api-url: ${{ env.TWENTY_DEPLOY_URL }}

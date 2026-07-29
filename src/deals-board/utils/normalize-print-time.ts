@@ -23,6 +23,24 @@ export const snapMinuteToTen = (minute: string): string => {
   return String(snapped).padStart(2, '0');
 };
 
+export const PRINT_WORK_HOUR_MIN = 8;
+export const PRINT_WORK_HOUR_MAX = 22;
+
+export const PRINT_WORK_HOURS: readonly string[] = Array.from(
+  { length: PRINT_WORK_HOUR_MAX - PRINT_WORK_HOUR_MIN + 1 },
+  (_, i) => String(PRINT_WORK_HOUR_MIN + i).padStart(2, '0'),
+);
+
+export const clampHourToWorkWindow = (hour: string): string => {
+  const parsed = Number.parseInt(hour, 10);
+  if (Number.isNaN(parsed)) return '09';
+  const clamped = Math.min(
+    PRINT_WORK_HOUR_MAX,
+    Math.max(PRINT_WORK_HOUR_MIN, parsed),
+  );
+  return String(clamped).padStart(2, '0');
+};
+
 export const formatPrintTimeDisplay = (raw?: string | null): string | null => {
   const normalized = normalizePrintTime(raw);
   return normalized || null;

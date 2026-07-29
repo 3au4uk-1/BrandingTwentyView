@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { VIEW_VISIBILITY } from 'src/constants/view-visibility';
 
+import { useOutsideDismiss } from './hooks/useOutsideDismiss';
 import { useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
 import { ChevronDownIcon } from './ui/Icons';
@@ -31,19 +32,8 @@ export const ViewSwitcher = ({
   const { colors, radius, font, spacing, zIndex } = theme;
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const onMouseDown = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    window.addEventListener('mousedown', onMouseDown);
-    return () => window.removeEventListener('mousedown', onMouseDown);
-  }, [isOpen]);
+  const dismiss = useCallback(() => setIsOpen(false), []);
+  const dismissLayer = useOutsideDismiss(isOpen, containerRef, dismiss);
 
   const sortedViews = useMemo(() => sortViews(views), [views]);
   const activeView =
@@ -83,6 +73,7 @@ export const ViewSwitcher = ({
 
   return (
     <div ref={containerRef} style={{ position: 'relative', minWidth: '220px', flexShrink: 0 }}>
+      {dismissLayer}
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
@@ -131,9 +122,8 @@ export const ViewSwitcher = ({
               padding: '6px 10px 4px',
               fontSize: font.sizeXs,
               color: colors.textMuted,
-              fontWeight: font.weightSemibold,
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
+              fontWeight: font.weightMedium,
+              letterSpacing: '-0.01em',
             }}
           >
             Общие
@@ -152,9 +142,8 @@ export const ViewSwitcher = ({
               padding: '6px 10px 4px',
               fontSize: font.sizeXs,
               color: colors.textMuted,
-              fontWeight: font.weightSemibold,
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
+              fontWeight: font.weightMedium,
+              letterSpacing: '-0.01em',
             }}
           >
             Личные

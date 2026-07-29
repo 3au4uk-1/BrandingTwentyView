@@ -27,6 +27,7 @@ describe('applyObjectRecordEvent', () => {
 
   it('patches an opportunity row when it is already in cache', () => {
     const queryClient = new QueryClient();
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
     const filters = {};
     const queryKey = opportunitiesQueryKey(undefined, filters, 0, [], [], false, {}, false, false);
     const records: OpportunityRow[] = [{ id: 'opp-1', name: 'Deal A', stage: 'NEW' }];
@@ -43,6 +44,7 @@ describe('applyObjectRecordEvent', () => {
     expect(queryClient.getQueryData<{ records: OpportunityRow[] }>(queryKey)?.records[0]?.stage).toBe(
       'WON',
     );
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['deals-board-page'] });
   });
 
   it('patches a line item row when it is already in cache', () => {
@@ -79,6 +81,7 @@ describe('applyObjectRecordEvent', () => {
     );
 
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['opportunities'] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['deals-board-page'] });
   });
 
   it('ignores unrelated objects', () => {
@@ -116,5 +119,6 @@ describe('applyObjectRecordEvent', () => {
       expect(archiveManualLineItem).toHaveBeenCalledWith('li-1');
     });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['lineItems'] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['deals-board-page'] });
   });
 });

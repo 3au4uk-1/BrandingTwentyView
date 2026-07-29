@@ -9,6 +9,7 @@ import type { FieldDescriptor } from '../metadata/types';
 import { useTheme } from '../theme/ThemeContext';
 import { Button } from '../ui/Button';
 import type { ColumnConfig, ColumnGroupConfig, LineItemRow } from '../types';
+import type { BoardStream } from 'src/constants/product-stream';
 import { MobileLineItemRow } from './MobileLineItemRow';
 
 type MobileLineItemListProps = {
@@ -18,6 +19,7 @@ type MobileLineItemListProps = {
   groups: ColumnGroupConfig[];
   descriptorByField: Map<string, FieldDescriptor>;
   filters?: LineItemQueryFilters;
+  boardStream?: BoardStream;
 };
 
 export const MobileLineItemList = ({
@@ -27,6 +29,7 @@ export const MobileLineItemList = ({
   groups,
   descriptorByField,
   filters,
+  boardStream,
 }: MobileLineItemListProps) => {
   const theme = useTheme();
   const { colors, font, spacing } = theme;
@@ -75,10 +78,9 @@ export const MobileLineItemList = ({
         <div
           style={{
             fontSize: font.sizeXs,
-            fontWeight: font.weightSemibold,
+            fontWeight: font.weightMedium,
             color: colors.textMuted,
-            letterSpacing: '0.04em',
-            textTransform: 'uppercase',
+            letterSpacing: '-0.01em',
           }}
         >
           Позиции · {items.length}
@@ -129,6 +131,7 @@ export const MobileLineItemList = ({
               groups={groups}
               descriptorByField={descriptorByField}
               isLast={index === items.length - 1}
+              boardStream={boardStream}
             />
           ))}
         </div>

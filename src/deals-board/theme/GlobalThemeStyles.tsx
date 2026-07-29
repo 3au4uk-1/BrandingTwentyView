@@ -5,32 +5,47 @@ type GlobalThemeStylesProps = {
 };
 
 export const GlobalThemeStyles = ({ theme }: GlobalThemeStylesProps) => {
-  const { colors, radius, zIndex } = theme;
+  const { colors, font, radius, zIndex } = theme;
 
   return (
     <style>{`
-      [data-deals-board][data-desktop-layout] {
+      [data-deals-board] {
         box-sizing: border-box;
+        font-family: ${font.family};
+        color: ${colors.text};
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+      }
+
+      [data-deals-board] *,
+      [data-deals-board] *::before,
+      [data-deals-board] *::after {
+        box-sizing: border-box;
+      }
+
+      [data-deals-board][data-desktop-layout] {
         height: calc(100dvh - 7rem);
         max-height: calc(100dvh - 7rem);
         min-height: 0;
         overflow: hidden;
         display: flex;
         flex-direction: column;
+        background-color: ${colors.bg};
       }
 
       [data-deals-board][data-mobile-layout] {
-        box-sizing: border-box;
         height: auto;
         max-height: none;
         min-height: 0;
         overflow: visible;
+        background-color: ${colors.bg};
       }
 
       [data-deals-board-toolbar] {
         min-height: 0;
         flex-shrink: 0;
-        background-color: ${colors.bg};
+        background-color: ${colors.bgSecondary};
       }
 
       [data-deals-board][data-desktop-layout] [data-deals-board-body] {
@@ -39,6 +54,7 @@ export const GlobalThemeStyles = ({ theme }: GlobalThemeStylesProps) => {
         overflow: hidden;
         display: flex;
         flex-direction: column;
+        background-color: ${colors.bg};
       }
 
       [data-deals-board][data-mobile-layout] [data-deals-board-body] {
@@ -47,8 +63,20 @@ export const GlobalThemeStyles = ({ theme }: GlobalThemeStylesProps) => {
         display: block;
       }
 
+      [data-deals-board] button {
+        font-family: inherit;
+      }
+
       [data-deals-board] button:not(:disabled):active {
         transform: scale(0.98);
+      }
+
+      [data-deals-board] button,
+      [data-deals-board] [data-segment-btn],
+      [data-deals-board] [data-link-chip],
+      [data-deals-board] [data-expand-btn],
+      [data-deals-board] [data-field-input] {
+        transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
       }
 
       [data-deals-board] [data-btn-variant="primary"]:not(:disabled):hover {
@@ -73,7 +101,7 @@ export const GlobalThemeStyles = ({ theme }: GlobalThemeStylesProps) => {
       [data-deals-board] [data-field-input]:focus {
         outline: none;
         border-color: ${colors.accent} !important;
-        box-shadow: 0 0 0 2px ${colors.accentMuted};
+        box-shadow: 0 0 0 3px ${colors.accentMuted};
       }
 
       [data-deals-board] [data-segment-btn]:not(:disabled):hover {
@@ -81,8 +109,9 @@ export const GlobalThemeStyles = ({ theme }: GlobalThemeStylesProps) => {
       }
 
       [data-deals-board] [data-segment-btn][data-active="true"] {
-        background-color: ${colors.accentMuted} !important;
-        color: ${colors.accentText} !important;
+        background-color: ${colors.bgElevated} !important;
+        color: ${colors.text} !important;
+        box-shadow: ${colors.shadow};
       }
 
       [data-deals-board] [data-link-chip]:hover {
@@ -95,6 +124,20 @@ export const GlobalThemeStyles = ({ theme }: GlobalThemeStylesProps) => {
         color: ${colors.text} !important;
         background-color: ${colors.bgHover} !important;
         border-radius: ${radius.sm};
+      }
+
+      [data-deals-board] tr[data-deal-row]:hover > td {
+        background-color: ${colors.bgHover} !important;
+      }
+
+      /* Prevyu CSS overlays extend outside the thumb; lift the row so they paint above neighbors. */
+      [data-deals-board] tr:has([data-prevyu-anchor]) {
+        position: relative;
+        z-index: ${zIndex.dropdown};
+      }
+
+      [data-deals-board] [data-prevyu-anchor] {
+        overflow: visible;
       }
 
       [data-layout="mobile"] [data-mobile-toolbar] {

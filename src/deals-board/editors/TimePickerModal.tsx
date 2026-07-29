@@ -23,12 +23,6 @@ type TimePickerModalProps = {
 const HOURS = Array.from({ length: 24 }, (_, index) => pad2(index));
 const MINUTES = ['00', '10', '20', '30', '40', '50'] as const;
 
-const SELECT_SURFACE = {
-  background: '#18181b',
-  border: '#3f3f46',
-  optionText: '#e4e4e7',
-} as const;
-
 function pad2(value: number) {
   return String(value).padStart(2, '0');
 }
@@ -104,15 +98,15 @@ export const TimePickerModal = ({
     minWidth: 0,
     fontSize: font.sizeSm,
     fontWeight: font.weightMedium,
-    colorScheme: 'dark' as const,
-    backgroundColor: SELECT_SURFACE.background,
-    color: SELECT_SURFACE.optionText,
-    borderColor: SELECT_SURFACE.border,
+    letterSpacing: '-0.01em',
+    backgroundColor: colors.bgInset,
+    color: colors.text,
+    borderColor: colors.borderSubtle,
   };
 
   const optionStyle = {
-    backgroundColor: SELECT_SURFACE.background,
-    color: SELECT_SURFACE.optionText,
+    backgroundColor: colors.bgElevated,
+    color: colors.text,
   };
 
   return (

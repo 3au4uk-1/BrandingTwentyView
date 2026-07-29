@@ -2,6 +2,9 @@ import type { MouseEvent, ReactNode } from 'react';
 
 import { getOpportunityLinkButtonLabel } from 'src/constants/opportunity-links';
 
+import type { BoardStream } from 'src/constants/product-stream';
+import { BOARD_STREAM } from 'src/constants/product-stream';
+
 import type { LineItemType } from 'src/constants/line-item-types';
 import type { LineItemStage } from 'src/constants/stages';
 
@@ -13,6 +16,7 @@ import { DealStageSelect } from '../editors/DealStageSelect';
 import { CurrencyAmountCell } from '../editors/CurrencyAmountCell';
 import { DatePickerModal } from '../editors/DatePickerModal';
 import { LinkCell } from '../editors/LinkCell';
+import { PrevyuOkleykiCell } from '../editors/PrevyuOkleykiCell';
 import {
   PrintProgressCell,
   shouldRenderPrintProgress,
@@ -22,12 +26,13 @@ import { RichTextPopover } from '../editors/RichTextPopover';
 import { StageSelect } from '../editors/StageSelect';
 import { TextCell } from '../editors/TextCell';
 import { TypeSelect } from '../editors/TypeSelect';
+import { TipDetailSelect } from '../editors/TipDetailSelect';
 import { TimePickerModal } from '../editors/TimePickerModal';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
 import { ChevronRightIcon, ExternalLinkIcon } from '../ui/Icons';
 import type { FieldDescriptor } from '../metadata/types';
-import type { LineItemRow } from '../types';
+import type { LineItemFileRef, LineItemRow } from '../types';
 
 import { DealSummaryChips } from '../DealsTable/DealSummaryChips';
 
@@ -48,6 +53,7 @@ export type FieldOverrideProps = {
   onToggleExpand?: (id: string) => void;
   hideExpandButton?: boolean;
   listMenuPresentation?: 'inline' | 'sheet';
+  boardStream?: BoardStream;
   touchFriendly?: boolean;
   visibleFields?: readonly string[];
 };
@@ -144,7 +150,12 @@ const ParentNameCell = ({
   );
 };
 
-const ChildNameCell = ({ value, recordId, listMenuPresentation }: FieldOverrideProps) => {
+const ChildNameCell = ({
+  value,
+  recordId,
+  listMenuPresentation,
+  boardStream = BOARD_STREAM.BRANDING,
+}: FieldOverrideProps) => {
   const theme = useTheme();
   const { data: listStatus } = useLineItemListStatus(recordId);
   const showListMenu = isCrmparserConfigured();
@@ -164,12 +175,17 @@ const ChildNameCell = ({ value, recordId, listMenuPresentation }: FieldOverrideP
         <Chip text="реставрация · 0 ₽" color="yellow" theme={theme} />
       ) : null}
       {listStatus?.blacklisted ? <Chip text="блеклист" color="red" theme={theme} /> : null}
+      {listStatus?.decorBlacklisted ? (
+        <Chip text="блеклист декор" color="red" theme={theme} />
+      ) : null}
+      {listStatus?.mkBlacklisted ? <Chip text="блеклист МК" color="red" theme={theme} /> : null}
       {listStatus?.podryadMatch ? <Chip text="подряд" color="blue" theme={theme} /> : null}
       {listStatus?.bannerMatch ? <Chip text="баннер" color="green" theme={theme} /> : null}
       {showListMenu && recordId ? (
         <LineItemListMenu
           lineItemId={recordId}
           listStatus={listStatus}
+          boardStream={boardStream}
           presentation={listMenuPresentation ?? 'inline'}
         />
       ) : null}
@@ -258,6 +274,23 @@ export const renderFieldOverride = (props: FieldOverrideProps): ReactNode | null
         <TypeSelect
           recordId={recordId}
           value={value as LineItemType | null | undefined}
+          tipDetail={
+            typeof props.row?.tipDetail === 'string' ? props.row.tipDetail : null
+          }
+        />
+      );
+    case 'tipDetail':
+      if (variant !== 'child') return null;
+
+      return (
+        <TipDetailSelect
+          recordId={recordId}
+          tip={
+            typeof props.row?.tip === 'string'
+              ? (props.row.tip as LineItemType)
+              : null
+          }
+          value={typeof value === 'string' ? value : null}
         />
       );
     case 'stage':
@@ -285,6 +318,24 @@ export const renderFieldOverride = (props: FieldOverrideProps): ReactNode | null
         <LinkCell
           itemId={recordId}
           value={value as { primaryLinkUrl?: string; primaryLinkLabel?: string } | undefined}
+        />
+      );
+    case 'prevyuOkleyki':
+      return (
+        <PrevyuOkleykiCell
+          itemId={recordId}
+          opportunityId={
+            typeof props.row?.opportunityId === 'string'
+              ? props.row.opportunityId
+              : undefined
+          }
+          stage={
+            typeof props.row?.stage === 'string' || props.row?.stage === null
+              ? (props.row.stage as string | null)
+              : undefined
+          }
+          value={value as LineItemFileRef[] | null | undefined}
+          row={props.row}
         />
       );
     case 'plenka':

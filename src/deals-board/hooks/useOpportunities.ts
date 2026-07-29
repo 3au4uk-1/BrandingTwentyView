@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import { OPPORTUNITY_DATE_FILTER_FIELD } from 'src/constants/date-filter-field';
 
@@ -7,6 +7,26 @@ import { fetchOpportunities } from '../api/opportunities';
 import { shouldFetchAllOpportunities } from '../utils/date-filters';
 import { getEffectiveOpportunitySort } from '../utils/sort-opportunities';
 import type { DealBoardFilters, DealBoardSort } from '../types';
+
+export const resolveOpportunitiesFetchAll = (params: {
+  filters: DealBoardFilters;
+  sort: DealBoardSort[];
+  showAll?: boolean;
+  forcePaginated?: boolean;
+  effectiveClauses?: FilterClause[];
+}): boolean => {
+  const effectiveSort = getEffectiveOpportunitySort(
+    params.sort.length > 0 ? params.sort : DEFAULT_DATE_SORT,
+  );
+  const showAll = params.showAll ?? false;
+  const forcePaginated = params.forcePaginated ?? false;
+
+  return (
+    !forcePaginated &&
+    (showAll ||
+      shouldFetchAllOpportunities(params.filters, effectiveSort, params.effectiveClauses))
+  );
+};
 
 const DEFAULT_PAGE_SIZE = 50;
 const DEFAULT_DATE_SORT: DealBoardSort[] = [
@@ -64,10 +84,13 @@ export const useOpportunities = (params: {
   const effectiveSort = getEffectiveOpportunitySort(
     params.sort.length > 0 ? params.sort : DEFAULT_DATE_SORT,
   );
-  const fetchAll =
-    !forcePaginated &&
-    (showAll ||
-      shouldFetchAllOpportunities(params.filters, effectiveSort, params.effectiveClauses));
+  const fetchAll = resolveOpportunitiesFetchAll({
+    filters: params.filters,
+    sort: params.sort,
+    showAll,
+    forcePaginated,
+    effectiveClauses: params.effectiveClauses,
+  });
 
   return useQuery({
     queryKey: opportunitiesQueryKey(
@@ -106,5 +129,6 @@ export const useOpportunities = (params: {
       };
     },
     enabled: params.enabled !== false,
+    placeholderData: keepPreviousData,
   });
 };

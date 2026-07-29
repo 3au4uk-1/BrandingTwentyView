@@ -1,7 +1,7 @@
 import { OPPORTUNITY_DATE_FILTER_FIELD } from 'src/constants/date-filter-field';
 
 import { buildOpportunityNodeSelection } from '../metadata/build-opportunity-selection';
-import { buildOpportunityFilter, normalizeSearchTerm } from '../utils/search';
+import { buildOpportunityFilter, resolveSearchTerms } from '../utils/search';
 import { opportunityMatchesDateFilter } from '../utils/resolve-opportunity-date';
 import { fetchLineItemOpportunityIdsBySearch } from './line-items';
 import {
@@ -123,13 +123,13 @@ export const fetchOpportunities = async (params: {
   const includeCompanyRelation = params.includeCompanyRelation ?? DEFAULT_INCLUDE_COMPANY_RELATION;
   const fieldTypesByName = params.fieldTypesByName ?? { amount: 'CURRENCY' };
   const effectiveSort = getEffectiveOpportunitySort(params.sort);
-  const searchTerm = normalizeSearchTerm(params.filters.search);
+  const searchTerms = resolveSearchTerms(params.filters);
   const lineItemSearchFilters =
     params.filters.stages?.length || params.filters.types?.length
       ? { stages: params.filters.stages, types: params.filters.types }
       : undefined;
-  const lineItemMatchedOpportunityIds = searchTerm
-    ? await fetchLineItemOpportunityIdsBySearch(searchTerm, lineItemSearchFilters)
+  const lineItemMatchedOpportunityIds = searchTerms.length
+    ? await fetchLineItemOpportunityIdsBySearch(searchTerms, lineItemSearchFilters)
     : undefined;
 
   if (!params.fetchAll) {

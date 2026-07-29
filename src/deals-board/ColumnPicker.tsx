@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useOutsideDismiss } from './hooks/useOutsideDismiss';
 import { useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
 import type { ColumnConfig, ColumnGroupConfig } from './types';
@@ -65,27 +66,34 @@ export const ColumnPicker = ({
   const [draftGroups, setDraftGroups] = useState<ColumnGroupConfig[]>([]);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const title = target === 'parent' ? 'Колонки сделок' : 'Колонки позиций';
+  const dismiss = useCallback(() => {
+    if (onOpenChange) {
+      onOpenChange(false);
+    } else {
+      setInternalOpen(false);
+    }
+  }, [onOpenChange]);
+  const dismissLayer = useOutsideDismiss(isOpen, containerRef, dismiss);
+
+  // Sync draft from props only when closed (or on open). While open, keep local
+  // reorder/visibility edits — otherwise refetch/mergeColumns identity churn resets ↑↓.
+  useEffect(() => {
+    if (isOpen) return;
+    setDraftColumns(sortColumns(columns));
+  }, [columns, isOpen]);
+
+  useEffect(() => {
+    if (isOpen) return;
+    setDraftGroups(target === 'child' ? sortGroups(groups) : []);
+  }, [groups, target, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
-
-    const onMouseDown = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    window.addEventListener('mousedown', onMouseDown);
-    return () => window.removeEventListener('mousedown', onMouseDown);
-  }, [isOpen]);
-
-  useEffect(() => {
     setDraftColumns(sortColumns(columns));
-  }, [columns]);
-
-  useEffect(() => {
     setDraftGroups(target === 'child' ? sortGroups(groups) : []);
-  }, [groups, target]);
+    // Intentionally only when the panel opens — not on every columns/groups identity change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- snapshot props at open
+  }, [isOpen]);
 
   const canInteract = !isSaving;
   const triggerLabel = useMemo(
@@ -237,6 +245,7 @@ export const ColumnPicker = ({
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
+      {dismissLayer}
       {hideTrigger ? null : (
         <Button theme={theme} variant="ghost" size="sm" onClick={() => setIsOpen((prev) => !prev)}>
           {triggerLabel}

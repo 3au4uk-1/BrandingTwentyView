@@ -43,6 +43,12 @@ describe('shouldAutoExpandDeal', () => {
 
     expect(shouldAutoExpandDeal(items, 'smart', 'DUBL')).toBe(false);
   });
+
+  it('does not auto-expand done (GOTOVO) opportunities', () => {
+    const items = [{ stage: 'V_RABOTE' as const }];
+
+    expect(shouldAutoExpandDeal(items, 'smart', 'GOTOVO')).toBe(false);
+  });
 });
 
 describe('computeIsExpanded', () => {
@@ -104,15 +110,30 @@ describe('toggleExpandOverride', () => {
 
   it('allows expanding fully completed deals in smart mode', () => {
     const doneItems = [{ stage: 'GOTOVO' as const }, { stage: 'OTMENA' as const }];
-    expect(computeIsExpanded('deal-1', doneItems, 'smart', EMPTY_EXPAND_OVERRIDES)).toBe(false);
+    expect(
+      computeIsExpanded('deal-1', doneItems, 'smart', EMPTY_EXPAND_OVERRIDES, 'GOTOVO'),
+    ).toBe(false);
 
-    const expanded = toggleExpandOverride('deal-1', doneItems, 'smart', EMPTY_EXPAND_OVERRIDES);
+    const expanded = toggleExpandOverride(
+      'deal-1',
+      doneItems,
+      'smart',
+      EMPTY_EXPAND_OVERRIDES,
+      'GOTOVO',
+    );
     expect(expanded.expanded).toEqual(['deal-1']);
-    expect(computeIsExpanded('deal-1', doneItems, 'smart', expanded)).toBe(true);
+    expect(computeIsExpanded('deal-1', doneItems, 'smart', expanded, 'GOTOVO')).toBe(true);
 
-    const collapsed = toggleExpandOverride('deal-1', doneItems, 'smart', expanded);
+    const collapsed = toggleExpandOverride('deal-1', doneItems, 'smart', expanded, 'GOTOVO');
     expect(collapsed.expanded).toEqual([]);
-    expect(computeIsExpanded('deal-1', doneItems, 'smart', collapsed)).toBe(false);
+    expect(computeIsExpanded('deal-1', doneItems, 'smart', collapsed, 'GOTOVO')).toBe(false);
+  });
+
+  it('auto-expands deals with only done line items when opportunity is still active', () => {
+    const doneItems = [{ stage: 'GOTOVO' as const }];
+    expect(computeIsExpanded('deal-1', doneItems, 'smart', EMPTY_EXPAND_OVERRIDES, 'NOVYY')).toBe(
+      true,
+    );
   });
 
   it('allows manually expanding cancelled opportunities in smart mode', () => {

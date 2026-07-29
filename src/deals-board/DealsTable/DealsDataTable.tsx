@@ -9,6 +9,7 @@ import { Fragment, useMemo, type CSSProperties, type RefObject } from 'react';
 
 import type { LineItemQueryFilters } from '../api/line-items';
 import type { FieldDescriptor } from '../metadata/types';
+import type { BoardStream } from 'src/constants/product-stream';
 import { useTheme } from '../theme/ThemeContext';
 import type {
   ColumnConfig,
@@ -32,6 +33,7 @@ import {
   dealBoardSortToSortingState,
   sortingStateToDealBoardSort,
 } from './parent-table-sort';
+import { lineItemDragSession } from './line-item-drag-session';
 import { ResizableColumnHeader } from './ResizableColumnHeader';
 
 export type DealsDataTableProps = {
@@ -69,14 +71,15 @@ export type DealsDataTableProps = {
   onToggleShowAllPositions?: (opportunityId: string) => void;
   isExpanded: (id: string) => boolean;
   toggleExpand: (id: string) => void;
-  hoveredRowId: string | null;
-  onHoverRowChange: (rowId: string | null) => void;
   showDaySeparators: boolean;
   sort: DealBoardSort[];
   onSortChange: (next: DealBoardSort[]) => void;
+  attentionOpportunityIds?: Set<string> | null;
+  boardStream?: BoardStream;
 };
 
 const PINNED_LEFT_COLUMN_IDS = ['__expand', 'name'] as const;
+const EMPTY_LINE_ITEMS: LineItemRow[] = [];
 
 const getColumnFromHeader = (table: Table<OpportunityRow>, headerId: string): ColumnConfig => {
   const header = table.getFlatHeaders().find((item) => item.id === headerId);
@@ -111,11 +114,11 @@ export const DealsDataTable = ({
   onToggleShowAllPositions,
   isExpanded,
   toggleExpand,
-  hoveredRowId,
-  onHoverRowChange,
   showDaySeparators,
   sort,
   onSortChange,
+  attentionOpportunityIds = null,
+  boardStream,
 }: DealsDataTableProps) => {
   const theme = useTheme();
   const { colors, font, spacing, zIndex } = theme;
@@ -153,17 +156,29 @@ export const DealsDataTable = ({
     <div
       ref={scrollRef}
       onPointerMove={(event) => {
-        if (!isResizing) return;
-        onPointerMove(event.clientX);
+        if (isResizing) onPointerMove(event.clientX);
+        if (lineItemDragSession.isActive()) lineItemDragSession.move(event.clientY);
       }}
-      onPointerUp={onPointerEnd}
-      onPointerCancel={onPointerEnd}
+      onPointerUp={() => {
+        onPointerEnd();
+        if (lineItemDragSession.isActive()) lineItemDragSession.end();
+      }}
+      onPointerCancel={() => {
+        onPointerEnd();
+        if (lineItemDragSession.isActive()) lineItemDragSession.cancel();
+      }}
       onMouseMove={(event) => {
-        if (!isResizing) return;
-        onPointerMove(event.clientX);
+        if (isResizing) onPointerMove(event.clientX);
+        if (lineItemDragSession.isActive()) lineItemDragSession.move(event.clientY);
       }}
-      onMouseUp={onPointerEnd}
-      onMouseLeave={onPointerEnd}
+      onMouseUp={() => {
+        onPointerEnd();
+        if (lineItemDragSession.isActive()) lineItemDragSession.end();
+      }}
+      onMouseLeave={() => {
+        onPointerEnd();
+        if (lineItemDragSession.isActive()) lineItemDragSession.end();
+      }}
       style={{
         flex: 1,
         minHeight: 0,
@@ -288,30 +303,24 @@ export const DealsDataTable = ({
                   </tr>
                 ) : null}
                 <DealRow
-                  row={{
-                    ...row,
-                    companyName: row.companyName ?? companyNameMap.get(row.companyId ?? ''),
-                  }}
+                  row={row}
+                  companyName={row.companyName ?? companyNameMap.get(row.companyId ?? '')}
                   columns={tableColumns}
                   childColumns={childColumns}
                   childGroups={childGroups}
                   parentDescriptorByField={parentDescriptorByField}
                   childDescriptorByField={childDescriptorByField}
                   onChildColumnResizeStart={beginChildResize}
-                  lineItems={lineItemsByOpportunity.get(row.id) ?? []}
+                  lineItems={lineItemsByOpportunity.get(row.id) ?? EMPTY_LINE_ITEMS}
                   isExpanded={isExpanded(row.id)}
-                  isHovered={hoveredRowId === row.id}
-                  onHoverChange={(hovered) => onHoverRowChange(hovered ? row.id : null)}
                   onToggleExpand={toggleExpand}
                   opportunityLinkFields={opportunityLinkFields}
                   filters={lineItemFilters}
                   hasLineItemFilters={hasLineItemFilters}
                   showAllPositions={showAllPositionOppIds?.has(row.id) ?? false}
-                  onToggleShowAllPositions={
-                    onToggleShowAllPositions
-                      ? () => onToggleShowAllPositions(row.id)
-                      : undefined
-                  }
+                  onToggleShowAllPositions={onToggleShowAllPositions}
+                  attentionHighlighted={attentionOpportunityIds?.has(row.id) ?? false}
+                  boardStream={boardStream}
                 />
               </Fragment>
             );

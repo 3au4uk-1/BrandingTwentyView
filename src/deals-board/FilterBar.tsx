@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { LINE_ITEM_TYPES } from 'src/constants/line-item-types';
 import { LINE_ITEM_STAGES } from 'src/constants/stages';
@@ -10,6 +10,7 @@ import { formatFilterClauseLabel } from './filter-model/format-clause-label';
 import { beginSessionClauses, commitSessionClauses } from './filter-model/session';
 import type { FilterClause, FilterState } from './filter-model/types';
 import { useCompanies } from './hooks/useCompanies';
+import { useOutsideDismiss } from './hooks/useOutsideDismiss';
 import type { FieldDescriptor } from './metadata/types';
 import { createId } from './utils/create-id';
 import { getPresetRange } from './utils/date-filters';
@@ -38,7 +39,7 @@ const BUILDER_FIELDS: BuilderField[] = [
   {
     level: 'lineItem',
     field: 'tip',
-    label: 'Тип',
+    label: 'Категория',
     kind: 'multi-select',
     options: LINE_ITEM_TYPES,
   },
@@ -78,17 +79,31 @@ export type FilterBarProps = {
   onReset: () => void;
   parentFields?: FieldDescriptor[];
   childFields?: FieldDescriptor[];
+  /** compact-top = dates + filter + chips only (search lives in BoardToolbar) */
+  layout?: 'default' | 'compact-top';
 };
 
 const newClauseId = (): string => createId();
 
-export const FilterBar = ({ value, viewClauses, onChange, onReset }: FilterBarProps) => {
+export const FilterBar = ({
+  value,
+  viewClauses,
+  onChange,
+  onReset,
+  layout = 'default',
+}: FilterBarProps) => {
   const theme = useTheme();
   const { colors, radius, font, spacing, zIndex } = theme;
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [activeBuilderField, setActiveBuilderField] = useState<BuilderField | null>(null);
   const [companySearch, setCompanySearch] = useState('');
   const [debouncedCompanySearch, setDebouncedCompanySearch] = useState('');
+  const builderRef = useRef<HTMLDivElement | null>(null);
+  const dismissBuilder = useCallback(() => {
+    setIsBuilderOpen(false);
+    setActiveBuilderField(null);
+  }, []);
+  const dismissLayer = useOutsideDismiss(isBuilderOpen, builderRef, dismissBuilder);
 
   const effectiveClauses =
     value.sessionClauses === undefined ? viewClauses : value.sessionClauses;
@@ -539,7 +554,8 @@ export const FilterBar = ({ value, viewClauses, onChange, onReset }: FilterBarPr
         </div>
       ) : null}
 
-      <div style={{ position: 'relative' }}>
+      <div ref={builderRef} style={{ position: 'relative' }}>
+        {dismissLayer}
         <button
           type="button"
           data-segment-btn
@@ -607,18 +623,22 @@ export const FilterBar = ({ value, viewClauses, onChange, onReset }: FilterBarPr
         </button>
       ))}
 
-      <Input
-        theme={theme}
-        type="search"
-        value={value.search ?? ''}
-        onChange={(event) => onChange({ ...value, search: event.target.value })}
-        placeholder="Поиск сделок и позиций..."
-        style={{ minWidth: '140px', flex: '1 1 180px', maxWidth: '240px', padding: '5px 10px' }}
-      />
+      {layout === 'compact-top' ? null : (
+        <>
+          <Input
+            theme={theme}
+            type="search"
+            value={value.search ?? ''}
+            onChange={(event) => onChange({ ...value, search: event.target.value })}
+            placeholder="Поиск сделок и позиций..."
+            style={{ minWidth: '140px', flex: '1 1 180px', maxWidth: '240px', padding: '5px 10px' }}
+          />
 
-      <Button theme={theme} variant="ghost" size="sm" onClick={onReset}>
-        Сбросить
-      </Button>
+          <Button theme={theme} variant="ghost" size="sm" onClick={onReset}>
+            Сбросить
+          </Button>
+        </>
+      )}
     </div>
   );
 };

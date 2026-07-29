@@ -4,12 +4,59 @@ import { buildOpportunityDateFilter } from './date-filters';
 
 export const normalizeSearchTerm = (search?: string): string => search?.trim() ?? '';
 
+/** Unique non-empty search terms used for OR matching. */
+export const resolveSearchTerms = (filters: {
+  search?: string;
+  searchTerms?: string[];
+}): string[] => {
+  // `searchTerms` set (even `[]`) means chip mode — ignore draft `search`.
+  if (filters.searchTerms !== undefined) {
+    const fromChips = filters.searchTerms
+      .map((term) => normalizeSearchTerm(term))
+      .filter(Boolean);
+    const seen = new Set<string>();
+    const unique: string[] = [];
+    for (const term of fromChips) {
+      const key = term.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      unique.push(term);
+    }
+    return unique;
+  }
+  const single = normalizeSearchTerm(filters.search);
+  return single ? [single] : [];
+};
+
+export const addSearchTerm = (terms: string[] | undefined, raw: string): string[] => {
+  const next = normalizeSearchTerm(raw);
+  if (!next) return terms ?? [];
+  const existing = terms ?? [];
+  if (existing.some((term) => term.toLowerCase() === next.toLowerCase())) {
+    return existing;
+  }
+  return [...existing, next];
+};
+
 export const buildOpportunitySearchClause = (
-  search: string,
+  search: string | string[],
   lineItemMatchedOpportunityIds?: string[],
 ): Record<string, unknown> => {
-  const nameFilter = { name: { ilike: `%${search}%` } };
+  const terms = (Array.isArray(search) ? search : [search])
+    .map((term) => normalizeSearchTerm(term))
+    .filter(Boolean);
+  const nameFilters = terms.map((term) => ({ name: { ilike: `%${term}%` } }));
+  const nameFilter =
+    nameFilters.length === 0
+      ? null
+      : nameFilters.length === 1
+        ? nameFilters[0]
+        : { or: nameFilters };
+
   const matchingIds = lineItemMatchedOpportunityIds?.filter(Boolean) ?? [];
+  if (!nameFilter) {
+    return matchingIds.length > 0 ? { id: { in: matchingIds } } : {};
+  }
   if (matchingIds.length === 0) {
     return nameFilter;
   }
@@ -24,9 +71,9 @@ export const buildOpportunityFilter = (
   const dateFilter = buildOpportunityDateFilter(filters);
   if (dateFilter) and.push(dateFilter);
 
-  const search = normalizeSearchTerm(filters.search);
-  if (search) {
-    and.push(buildOpportunitySearchClause(search, lineItemMatchedOpportunityIds));
+  const terms = resolveSearchTerms(filters);
+  if (terms.length > 0) {
+    and.push(buildOpportunitySearchClause(terms, lineItemMatchedOpportunityIds));
   }
 
   const companyIds = filters.companyIds?.filter(Boolean) ?? [];
@@ -39,39 +86,45 @@ export const buildOpportunityFilter = (
 
 export const opportunityMatchesSearch = (
   opportunity: Pick<OpportunityRow, 'name'>,
-  search: string,
+  search: string | string[],
 ): boolean => {
-  const normalized = normalizeSearchTerm(search).toLowerCase();
-  if (!normalized) return true;
-  return opportunity.name.toLowerCase().includes(normalized);
+  const terms = (Array.isArray(search) ? search : [search])
+    .map((term) => normalizeSearchTerm(term).toLowerCase())
+    .filter(Boolean);
+  if (terms.length === 0) return true;
+  const name = opportunity.name.toLowerCase();
+  return terms.some((term) => name.includes(term));
 };
 
 export const lineItemMatchesSearch = (
   item: Pick<LineItemRow, 'name' | 'kommentariy'>,
-  search: string,
+  search: string | string[],
 ): boolean => {
-  const normalized = normalizeSearchTerm(search).toLowerCase();
-  if (!normalized) return true;
-  if (item.name.toLowerCase().includes(normalized)) return true;
-  if (typeof item.kommentariy === 'string' && item.kommentariy.toLowerCase().includes(normalized)) {
-    return true;
-  }
-  return false;
+  const terms = (Array.isArray(search) ? search : [search])
+    .map((term) => normalizeSearchTerm(term).toLowerCase())
+    .filter(Boolean);
+  if (terms.length === 0) return true;
+  const name = item.name.toLowerCase();
+  const comment =
+    typeof item.kommentariy === 'string' ? item.kommentariy.toLowerCase() : '';
+  return terms.some((term) => name.includes(term) || comment.includes(term));
 };
 
 export const filterLineItemsForSearch = (
   lineItems: LineItemRow[],
-  search: string,
+  search: string | string[],
   recordsById: Map<string, OpportunityRow>,
 ): LineItemRow[] => {
-  const normalized = normalizeSearchTerm(search);
-  if (!normalized) return lineItems;
+  const terms = (Array.isArray(search) ? search : [search])
+    .map((term) => normalizeSearchTerm(term))
+    .filter(Boolean);
+  if (terms.length === 0) return lineItems;
 
   return lineItems.filter((item) => {
     const opportunity = recordsById.get(item.opportunityId);
-    if (opportunity && opportunityMatchesSearch(opportunity, normalized)) {
+    if (opportunity && opportunityMatchesSearch(opportunity, terms)) {
       return true;
     }
-    return lineItemMatchesSearch(item, normalized);
+    return lineItemMatchesSearch(item, terms);
   });
 };

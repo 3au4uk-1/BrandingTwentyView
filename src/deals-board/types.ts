@@ -1,4 +1,6 @@
 import type { LineItemType } from 'src/constants/line-item-types';
+import type { BoardKind } from 'src/constants/product-stream';
+import type { ProductStream } from 'src/constants/product-stream';
 import type { LineItemStage } from 'src/constants/stages';
 import type { ViewVisibility } from 'src/constants/view-visibility';
 
@@ -29,13 +31,15 @@ export type DealBoardDatePreset =
   | 'custom';
 
 export type DealBoardFilters = {
-  datePreset?: DealBoardDatePreset;
+  datePreset?: DealBoardDatePreset | null;
   dateFrom?: string;
   dateTo?: string;
   stages?: LineItemStage[];
   types?: LineItemType[];
   oplata?: string;
   search?: string;
+  /** Multi-keyword OR search terms (preferred over `search` when set). */
+  searchTerms?: string[];
   showAll?: boolean;
   companyIds?: string[];
   clauses?: FilterClause[];
@@ -47,6 +51,7 @@ export type DealBoardViewRecord = {
   id: string;
   name: string;
   visibility: ViewVisibility;
+  boardKind?: BoardKind;
   parentColumns: ColumnConfig[];
   childColumns: ColumnConfig[];
   childGroups: ColumnGroupConfig[];
@@ -71,6 +76,8 @@ export type OpportunityRow = {
   [key: string]: unknown;
 };
 
+export type LineItemFileRef = { fileId: string; label?: string };
+
 export type LineItemRow = {
   id: string;
   opportunityId: string;
@@ -79,8 +86,12 @@ export type LineItemRow = {
   amount?: { amountMicros: number; currencyCode: string };
   kommentariy?: string;
   tip?: LineItemType | null;
+  tipDetail?: string | null;
+  poryadok?: number | null;
   stage?: LineItemStage | null;
   ssylkaNaMakety?: { primaryLinkUrl?: string; primaryLinkLabel?: string };
   plenka?: { markdown?: string };
+  prevyuOkleyki?: LineItemFileRef[] | null;
+  productStream?: ProductStream | null;
   [key: string]: unknown;
 };

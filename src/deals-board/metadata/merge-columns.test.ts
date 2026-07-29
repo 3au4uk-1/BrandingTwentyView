@@ -44,12 +44,54 @@ describe('mergeColumns', () => {
     expect(merged.some((c) => c.field === 'summary')).toBe(true);
   });
 
-  it('preserves groupId from saved columns', () => {
-    const merged = mergeColumns(
-      [{ field: 'name', label: 'Сделка', order: 0, visible: true, groupId: 'g1' }],
-      [{ field: 'name', label: 'Сделка', source: 'crm', fieldType: 'TEXT', isEditable: true }],
+  it('inserts missing stage after name as visible', () => {
+    const merged = mergeColumns(saved, [
+      ...crmFields,
+      { field: 'stage', label: 'Stage', source: 'crm', fieldType: 'SELECT', isEditable: true },
+    ]);
+    const stage = merged.find((c) => c.field === 'stage');
+    const name = merged.find((c) => c.field === 'name');
+    expect(stage).toMatchObject({ visible: true, width: 148, label: 'Стадия' });
+    expect(stage!.order).toBeGreaterThan(name!.order);
+    expect(stage!.order).toBeLessThan(
+      merged.find((c) => c.field === 'loadDate')?.order ?? Number.POSITIVE_INFINITY,
     );
+  });
 
-    expect(merged[0]?.groupId).toBe('g1');
+  it('preserves saved tipDetail order relative to stage', () => {
+    const childFields: FieldDescriptor[] = [
+      { field: 'name', label: 'Name', source: 'crm', fieldType: 'TEXT', isEditable: true },
+      { field: 'stage', label: 'Stage', source: 'crm', fieldType: 'SELECT', isEditable: true },
+      { field: 'tip', label: 'Tip', source: 'crm', fieldType: 'SELECT', isEditable: true },
+      {
+        field: 'tipDetail',
+        label: 'Detail',
+        source: 'crm',
+        fieldType: 'SELECT',
+        isEditable: true,
+      },
+    ];
+    const childSaved: ColumnConfig[] = [
+      { field: 'name', label: 'Name', order: 0, visible: true },
+      { field: 'tip', label: 'Тип', order: 1, visible: true },
+      { field: 'stage', label: 'Стадия', order: 2, visible: true },
+      { field: 'tipDetail', label: 'Уточнение', order: 3, visible: true },
+    ];
+
+    const reordered: ColumnConfig[] = [
+      { field: 'name', label: 'Name', order: 0, visible: true },
+      { field: 'stage', label: 'Стадия', order: 1, visible: true },
+      { field: 'tip', label: 'Тип', order: 2, visible: true },
+      { field: 'tipDetail', label: 'Уточнение', order: 3, visible: true },
+    ];
+
+    const merged = mergeColumns(reordered, childFields);
+    expect(merged.map((c) => c.field)).toEqual(['name', 'stage', 'tip', 'tipDetail']);
+    expect(mergeColumns(childSaved, childFields).map((c) => c.field)).toEqual([
+      'name',
+      'tip',
+      'stage',
+      'tipDetail',
+    ]);
   });
 });

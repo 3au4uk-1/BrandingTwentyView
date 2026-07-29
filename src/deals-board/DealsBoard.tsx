@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   DEFAULT_CHILD_COLUMNS,
@@ -7,7 +7,13 @@ import {
 } from 'src/constants/column-definitions';
 import { FUTURE_DEALS_VIEW_NAME } from 'src/constants/future-deals-view';
 import { MOBILE_VIEW_NAME } from 'src/constants/mobile-view';
-import { APP_DISPLAY_NAME } from 'src/constants/universal-identifiers';
+import {
+  BOARD_STREAM,
+  boardStreamToBoardKind,
+  filterLineItemsByBoardStream,
+  type BoardStream,
+} from 'src/constants/product-stream';
+import type { LineItemType } from 'src/constants/line-item-types';
 
 import {
   resolveOpportunityLinkFieldDescriptors,
@@ -15,27 +21,32 @@ import {
 } from 'src/constants/opportunity-links';
 import { resolveOpportunityRestFieldNames } from 'src/constants/opportunity-rest-fields';
 
+import { AnalyticsPanel } from './analytics/AnalyticsPanel';
+import { BoardToolbar } from './BoardToolbar';
 import { useShouldUseMobileLayout } from './hooks/useShouldUseMobileLayout';
 import { useHostHeightLock } from './hooks/useHostHeightLock';
 import { DESKTOP_BOARD_HEIGHT_CSS } from './utils/desktop-layout';
 import { MobileDealsBoard } from './mobile/MobileDealsBoard';
-import { ToolbarSettingsCluster } from './ToolbarSettingsCluster';
 import { DealsTable } from './DealsTable/DealsTable';
-import { ExpandModeToggle } from './ExpandModeToggle';
-import { GroupChipModeToggle } from './GroupChipModeToggle';
 import { ExpandModeProvider } from './hooks/useExpandMode';
 import { GroupChipModeProvider } from './hooks/useGroupChipMode';
 import { useDealBoardViews, useUpdateDealBoardView } from './hooks/useDealBoardViews';
+import { useDealsBoardPage } from './hooks/useDealsBoardPage';
 import { useLineItems } from './hooks/useLineItems';
 import { usePrefetchLineItemListStatuses } from './hooks/useLineItemListStatus';
-import { useOpportunities } from './hooks/useOpportunities';
+import { resolveOpportunitiesFetchAll, useOpportunities } from './hooks/useOpportunities';
+import { useOpportunityRashodFields } from './hooks/useOpportunityRashodFields';
 import { useDealsBoardRealtimeSync } from './realtime/useDealsBoardRealtimeSync';
 import { crmFieldNamesFromColumns, fieldTypesByNameFromDescriptors, needsCompanyRelation } from './metadata/crm-field-names';
 import { mergeColumns } from './metadata/merge-columns';
+import { pinChildColumnFirst } from './utils/pin-child-column';
 import { useObjectFields } from './metadata/useObjectFields';
 import { VIRTUAL_PARENT_FIELD_DESCRIPTORS } from './metadata/virtual-columns';
-import { FilterBar } from './FilterBar';
 import { filterDealsAndLineItems } from './filter-model/apply-line-item-filters';
+import {
+  hasFilterSessionOverrides,
+  RESET_FILTER_SESSION_TO_VIEW,
+} from './filter-model/clear-filter-session';
 import { clausesToDealBoardFilters } from './filter-model/clauses-to-deal-board-filters';
 import {
   buildPersistedFiltersFromSession,
@@ -43,8 +54,16 @@ import {
 } from './filter-model/filter-session-bridge';
 import { hasLineItemFilterClauses } from './filter-model/has-line-item-filter-clauses';
 import { migrateLegacyFilters } from './filter-model/migrate-legacy-filters';
-import { getEffectiveClauses } from './filter-model/session';
+import { resolveSessionOverride } from './filter-model/resolve-session-override';
+import {
+  beginSessionClauses,
+  commitSessionClauses,
+  getEffectiveClauses,
+} from './filter-model/session';
+import { toggleInClauseValue } from './filter-model/toggle-in-clause';
 import type { FilterState } from './filter-model/types';
+import { BoardInsightPanel } from './BoardInsightPanel';
+import { computeAttention } from './attention/compute';
 import type {
   ColumnGroupConfig,
   DealBoardSort,
@@ -52,9 +71,11 @@ import type {
   LineItemRow,
   OpportunityRow,
 } from './types';
+import { getTodayInputDateMsk } from './utils/working-days';
 import { ThemeProvider, useTheme } from './theme/ThemeContext';
 import { CancelOtmenaProvider } from './ui/CancelOtmenaPopup';
 import { ManualSyncErrorToastProvider } from './ui/ManualSyncErrorToast';
+import { OkleykaMessageDialogProvider } from './ui/OkleykaMessageDialog';
 import { PortalHostProvider } from './ui/PortalHostContext';
 import { DEALS_BOARD_ROOT_ID } from './utils/dom';
 import { resolveActiveDealBoardView } from './utils/resolve-active-view';
@@ -66,17 +87,21 @@ import {
 } from './utils/pagination';
 import { applyPrintGroupSeed } from './utils/column-groups';
 import { asArray } from './utils/parse-json-field';
-import { filterLineItemsForSearch, normalizeSearchTerm } from './utils/search';
+import { filterLineItemsForSearch, resolveSearchTerms } from './utils/search';
 import { ViewSettingsModal } from './ViewSettingsModal';
-import { ViewSwitcher } from './ViewSwitcher';
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
-const queryClient = new QueryClient();
-
-const EMPTY_FILTER_SESSION: Partial<FilterState> = {};
-
-const DealsBoardContent = () => {
+const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
+  const boardKind = boardStreamToBoardKind(boardStream);
   const theme = useTheme();
-  const { colors, font, spacing, radius, layout } = theme;
+  const { colors, font, spacing, layout } = theme;
   const rootRef = useRef<HTMLDivElement | null>(null);
   const mobileLayoutActive = useShouldUseMobileLayout(rootRef);
   const lockedHostHeight = useHostHeightLock(rootRef, !mobileLayoutActive);
@@ -84,16 +109,18 @@ const DealsBoardContent = () => {
     ? `${lockedHostHeight}px`
     : DESKTOP_BOARD_HEIGHT_CSS;
   const [accumulatedRecords, setAccumulatedRecords] = useState<OpportunityRow[]>([]);
-  const viewsQuery = useDealBoardViews();
+  const viewsQuery = useDealBoardViews(boardKind);
   const updateViewMutation = useUpdateDealBoardView();
   useDealsBoardRealtimeSync(!viewsQuery.isLoading);
   const [activeViewId, setActiveViewId] = useState<string>();
   const [page, setPage] = useState(0);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editViewDraft, setEditViewDraft] = useState<DealBoardViewRecord>();
-  const [filterSession, setFilterSession] = useState<Partial<FilterState>>(EMPTY_FILTER_SESSION);
+  const [filterSession, setFilterSession] = useState<Partial<FilterState>>({});
   const [sortSession, setSortSession] = useState<DealBoardSort[] | undefined>(undefined);
   const [showAllPositionOppIds, setShowAllPositionOppIds] = useState<Set<string>>(() => new Set());
+  const [boardPane, setBoardPane] = useState<'deals' | 'analytics'>('deals');
+  const [attentionTip, setAttentionTip] = useState<LineItemType | null>(null);
   const views = asArray<DealBoardViewRecord>(viewsQuery.data);
   const hasPrintGroupMigrationAttemptedRef = useRef(false);
 
@@ -148,9 +175,10 @@ const DealsBoardContent = () => {
   useEffect(() => {
     setPage(0);
     setAccumulatedRecords([]);
-    setFilterSession(EMPTY_FILTER_SESSION);
+    setFilterSession({});
     setSortSession(undefined);
     setShowAllPositionOppIds(new Set());
+    setAttentionTip(null);
   }, [activeView?.id]);
 
   const viewClauses = useMemo(
@@ -164,12 +192,19 @@ const DealsBoardContent = () => {
   );
 
   const mergedFilters = useMemo(() => {
+    const sessionSearchTerms = resolveSessionOverride(
+      filterSession.searchTerms,
+      activeView?.filters?.searchTerms,
+    );
     const boardFilters = clausesToDealBoardFilters(
       effectiveClauses,
-      filterSession.datePreset ?? activeView?.filters?.datePreset,
-      filterSession.dateFrom ?? activeView?.filters?.dateFrom,
-      filterSession.dateTo ?? activeView?.filters?.dateTo,
-      filterSession.search ?? activeView?.filters?.search,
+      resolveSessionOverride(filterSession.datePreset, activeView?.filters?.datePreset),
+      resolveSessionOverride(filterSession.dateFrom, activeView?.filters?.dateFrom),
+      resolveSessionOverride(filterSession.dateTo, activeView?.filters?.dateTo),
+      sessionSearchTerms !== undefined
+        ? undefined
+        : resolveSessionOverride(filterSession.search, activeView?.filters?.search),
+      sessionSearchTerms,
     );
 
     return {
@@ -181,20 +216,31 @@ const DealsBoardContent = () => {
     activeView?.filters?.datePreset,
     activeView?.filters?.dateTo,
     activeView?.filters?.search,
+    activeView?.filters?.searchTerms,
     activeView?.filters?.showAll,
     effectiveClauses,
     filterSession.dateFrom,
     filterSession.datePreset,
     filterSession.dateTo,
     filterSession.search,
+    filterSession.searchTerms,
   ]);
 
   const filterBarValue = useMemo<FilterState>(
     () => ({
-      datePreset: filterSession.datePreset ?? activeView?.filters?.datePreset,
-      dateFrom: filterSession.dateFrom ?? activeView?.filters?.dateFrom,
-      dateTo: filterSession.dateTo ?? activeView?.filters?.dateTo,
-      search: filterSession.search ?? activeView?.filters?.search ?? '',
+      datePreset: resolveSessionOverride(
+        filterSession.datePreset,
+        activeView?.filters?.datePreset,
+      ),
+      dateFrom: resolveSessionOverride(filterSession.dateFrom, activeView?.filters?.dateFrom),
+      dateTo: resolveSessionOverride(filterSession.dateTo, activeView?.filters?.dateTo),
+      search:
+        filterSession.search ??
+        (filterSession.searchTerms !== undefined ? '' : (activeView?.filters?.search ?? '')),
+      searchTerms: resolveSessionOverride(
+        filterSession.searchTerms,
+        activeView?.filters?.searchTerms,
+      ),
       clauses: viewClauses,
       sessionClauses: filterSession.sessionClauses,
     }),
@@ -211,6 +257,8 @@ const DealsBoardContent = () => {
     activeView?.filters ?? {},
     viewClauses,
   );
+  const canResetFilters =
+    hasFilterSessionOverrides(filterSession) || sortSession !== undefined;
 
   const persistedViewFilters = useMemo(
     () =>
@@ -243,6 +291,7 @@ const DealsBoardContent = () => {
     filterSession.dateFrom,
     filterSession.dateTo,
     filterSession.search,
+    filterSession.searchTerms,
     effectiveClauseKey,
     effectiveSortKey,
   ]);
@@ -262,7 +311,10 @@ const DealsBoardContent = () => {
 
   const mergedChildColumns = useMemo(
     () =>
-      mergeColumns(activeView?.childColumns ?? DEFAULT_CHILD_COLUMNS, childFieldsQuery.data ?? []),
+      pinChildColumnFirst(
+        mergeColumns(activeView?.childColumns ?? DEFAULT_CHILD_COLUMNS, childFieldsQuery.data ?? []),
+        'prevyuOkleyki',
+      ),
     [activeView?.childColumns, childFieldsQuery.data],
   );
 
@@ -288,7 +340,11 @@ const DealsBoardContent = () => {
   );
 
   const opportunityRestFieldNames = useMemo(
-    () => resolveOpportunityRestFieldNames(mergedParentColumns, parentFieldsQuery.data ?? []),
+    () =>
+      resolveOpportunityRestFieldNames(
+        mergedParentColumns,
+        parentFieldsQuery.data ?? [],
+      ),
     [mergedParentColumns, parentFieldsQuery.data],
   );
 
@@ -316,6 +372,29 @@ const DealsBoardContent = () => {
   const effectiveShowAll = mobileLayoutActive ? false : showAllDeals;
   const pageSize = mobileLayoutActive ? MOBILE_PAGE_SIZE : DESKTOP_PAGE_SIZE;
 
+  const lineItemQueryFilters = useMemo(
+    () =>
+      mergedFilters.stages?.length || mergedFilters.types?.length
+        ? { stages: mergedFilters.stages, types: mergedFilters.types }
+        : undefined,
+    [mergedFilters.stages, mergedFilters.types],
+  );
+
+  const fetchAll = resolveOpportunitiesFetchAll({
+    filters: mergedFilters,
+    sort: effectiveSort,
+    showAll: effectiveShowAll,
+    forcePaginated: mobileLayoutActive,
+    effectiveClauses,
+  });
+  const useAggregateColdPath = !effectiveShowAll && !fetchAll;
+
+  const baseColdLoadEnabled =
+    !viewsQuery.isLoading &&
+    !viewsQuery.isSeedingDefault &&
+    Boolean(activeView) &&
+    !parentFieldsQuery.isLoading;
+
   const opportunitiesQuery = useOpportunities({
     viewId: activeView?.id,
     filters: mergedFilters,
@@ -329,15 +408,26 @@ const DealsBoardContent = () => {
     includeCompanyRelation,
     fieldTypesByName: parentFieldTypesByName,
     effectiveClauses,
-    enabled:
-      !viewsQuery.isLoading &&
-      !viewsQuery.isSeedingDefault &&
-      Boolean(activeView) &&
-      !parentFieldsQuery.isLoading,
+    enabled: baseColdLoadEnabled && !useAggregateColdPath,
   });
 
-  const records = asArray<OpportunityRow>(opportunitiesQuery.data?.records);
-  const totalCount = opportunitiesQuery.data?.totalCount ?? 0;
+  const dealsBoardPageQuery = useDealsBoardPage({
+    viewId: activeView?.id,
+    filters: mergedFilters,
+    sort: effectiveSort,
+    page,
+    pageSize,
+    visibleCrmFieldNames: visibleParentCrmFields,
+    restFieldNames: opportunityRestFieldNames,
+    includeCompanyRelation,
+    fieldTypesByName: parentFieldTypesByName,
+    lineItemFilters: lineItemQueryFilters,
+    enabled: baseColdLoadEnabled && useAggregateColdPath,
+  });
+
+  const coldLoadQuery = useAggregateColdPath ? dealsBoardPageQuery : opportunitiesQuery;
+  const records = asArray<OpportunityRow>(coldLoadQuery.data?.records);
+  const totalCount = coldLoadQuery.data?.totalCount ?? 0;
   const totalPages = effectiveShowAll
     ? 1
     : Math.max(1, Math.ceil(totalCount / pageSize));
@@ -348,44 +438,57 @@ const DealsBoardContent = () => {
     }
   }, [page, totalPages]);
 
-  const lineItemQueryFilters = useMemo(
-    () =>
-      mergedFilters.stages?.length || mergedFilters.types?.length
-        ? { stages: mergedFilters.stages, types: mergedFilters.types }
-        : undefined,
-    [mergedFilters.stages, mergedFilters.types],
-  );
+  const activeColdLoadLoading = coldLoadQuery.isLoading;
 
   const lineItemsQuery = useLineItems(
     records.map((record) => record.id),
     lineItemQueryFilters,
-    !opportunitiesQuery.isLoading,
+    !activeColdLoadLoading && records.length > 0 && !useAggregateColdPath,
   );
   const lineItems = asArray<LineItemRow>(lineItemsQuery.data);
+  const streamFilteredLineItems = useMemo(
+    () => filterLineItemsByBoardStream(lineItems, boardStream),
+    [boardStream, lineItems],
+  );
 
   const lineItemsByOppId = useMemo(() => {
     const grouped: Record<string, LineItemRow[]> = {};
-    for (const item of lineItems) {
+    for (const item of streamFilteredLineItems) {
       (grouped[item.opportunityId] ??= []).push(item);
     }
     return grouped;
-  }, [lineItems]);
+  }, [streamFilteredLineItems]);
+
+  const streamFilteredRecords = useMemo(() => {
+    if (activeColdLoadLoading || lineItemsQuery.isLoading) {
+      return records;
+    }
+
+    const oppIdsWithItems = new Set(Object.keys(lineItemsByOppId));
+    return records.filter((record) => oppIdsWithItems.has(record.id));
+  }, [lineItemsByOppId, activeColdLoadLoading, lineItemsQuery.isLoading, records]);
 
   const filteredBoardData = useMemo(() => {
     if (!hasLineItemFilters) {
       return {
-        deals: records,
+        deals: streamFilteredRecords,
         lineItemsByOppId,
       };
     }
 
     return filterDealsAndLineItems({
-      deals: records,
+      deals: streamFilteredRecords,
       lineItemsByOppId,
       clauses: effectiveClauses,
       showAllPositionOppIds,
     });
-  }, [effectiveClauses, hasLineItemFilters, lineItemsByOppId, records, showAllPositionOppIds]);
+  }, [
+    effectiveClauses,
+    hasLineItemFilters,
+    lineItemsByOppId,
+    showAllPositionOppIds,
+    streamFilteredRecords,
+  ]);
 
   const recordsById = useMemo(
     () => new Map(filteredBoardData.deals.map((record) => [record.id, record])),
@@ -394,13 +497,52 @@ const DealsBoardContent = () => {
 
   const visibleLineItems = useMemo(() => {
     const flat = Object.values(filteredBoardData.lineItemsByOppId).flat();
-    const search = normalizeSearchTerm(mergedFilters.search);
-    if (!search) return flat;
-    return filterLineItemsForSearch(flat, search, recordsById);
-  }, [filteredBoardData.lineItemsByOppId, mergedFilters.search, recordsById]);
+    const terms = resolveSearchTerms(mergedFilters);
+    if (!terms.length) return flat;
+    return filterLineItemsForSearch(flat, terms, recordsById);
+  }, [
+    filteredBoardData.lineItemsByOppId,
+    mergedFilters.search,
+    mergedFilters.searchTerms,
+    recordsById,
+  ]);
 
-  const visibleRecords = filteredBoardData.deals;
-  const visibleTotalCount = hasLineItemFilters ? visibleRecords.length : totalCount;
+  const attentionStats = useMemo(() => {
+    const oppsById = new Map(streamFilteredRecords.map((record) => [record.id, record]));
+    return computeAttention(getTodayInputDateMsk(), streamFilteredLineItems, oppsById);
+  }, [streamFilteredLineItems, streamFilteredRecords]);
+
+  const attentionHighlightOppIds = useMemo(() => {
+    if (!attentionTip) return null;
+    const ids = new Set<string>();
+    for (const item of attentionStats.items) {
+      if (item.tip === attentionTip) ids.add(item.opportunityId);
+    }
+    return ids;
+  }, [attentionStats.items, attentionTip]);
+
+  const tableRecords = useMemo(() => {
+    if (!attentionHighlightOppIds) return filteredBoardData.deals;
+    return streamFilteredRecords.filter((deal) => attentionHighlightOppIds.has(deal.id));
+  }, [attentionHighlightOppIds, filteredBoardData.deals, streamFilteredRecords]);
+
+  const tableLineItems = useMemo(() => {
+    if (!attentionTip) return visibleLineItems;
+    const lineIds = new Set(
+      attentionStats.items
+        .filter((item) => item.tip === attentionTip)
+        .map((item) => item.lineItemId),
+    );
+    return streamFilteredLineItems.filter((item) => lineIds.has(item.id));
+  }, [attentionStats.items, attentionTip, streamFilteredLineItems, visibleLineItems]);
+
+  const visibleRecords = tableRecords;
+  const visibleTotalCount = attentionTip
+    ? tableRecords.length
+    : hasLineItemFilters
+      ? filteredBoardData.deals.length
+      : totalCount;
+  const rashodQuery = useOpportunityRashodFields(visibleRecords);
 
   const handleFilterBarChange = (next: FilterState) => {
     setFilterSession({
@@ -409,13 +551,29 @@ const DealsBoardContent = () => {
       dateFrom: next.dateFrom,
       dateTo: next.dateTo,
       search: next.search,
+      searchTerms: next.searchTerms,
+    });
+  };
+
+  const toggleScoreboardClause = (field: 'tip' | 'stage', optionValue: string) => {
+    const base =
+      filterSession.sessionClauses === undefined
+        ? beginSessionClauses(viewClauses)
+        : filterSession.sessionClauses;
+    setFilterSession({
+      ...filterSession,
+      sessionClauses: commitSessionClauses(
+        toggleInClauseValue(base, 'lineItem', field, optionValue),
+      ),
     });
   };
 
   const handleFilterReset = () => {
-    setFilterSession(EMPTY_FILTER_SESSION);
+    // Restore the active view's saved filters (drop session overrides).
+    setFilterSession(RESET_FILTER_SESSION_TO_VIEW);
     setSortSession(undefined);
     setShowAllPositionOppIds(new Set());
+    setAttentionTip(null);
   };
 
   const handleSortChange = (next: DealBoardSort[]) => {
@@ -423,7 +581,7 @@ const DealsBoardContent = () => {
     setPage(0);
   };
 
-  const handleToggleShowAllPositions = (opportunityId: string) => {
+  const handleToggleShowAllPositions = useCallback((opportunityId: string) => {
     setShowAllPositionOppIds((prev) => {
       const next = new Set(prev);
       if (next.has(opportunityId)) {
@@ -433,7 +591,7 @@ const DealsBoardContent = () => {
       }
       return next;
     });
-  };
+  }, []);
 
   useEffect(() => {
     if (effectiveShowAll) {
@@ -462,14 +620,22 @@ const DealsBoardContent = () => {
   const mobileLineItemsQuery = useLineItems(
     mobileLayoutActive ? mobileRecords.map((record) => record.id) : [],
     lineItemQueryFilters,
-    mobileLayoutActive && mobileRecords.length > 0 && !opportunitiesQuery.isLoading,
+    mobileLayoutActive &&
+      mobileRecords.length > 0 &&
+      !activeColdLoadLoading &&
+      !useAggregateColdPath,
   );
   const mobileLineItems = asArray<LineItemRow>(mobileLineItemsQuery.data);
+  const streamFilteredMobileLineItems = useMemo(
+    () => filterLineItemsByBoardStream(mobileLineItems, boardStream),
+    [boardStream, mobileLineItems],
+  );
 
   const displayLineItems = useMemo(() => {
     if (!mobileLayoutActive) return visibleLineItems;
 
-    const sourceItems = mobileLineItems.length > 0 ? mobileLineItems : lineItems;
+    const sourceItems =
+      streamFilteredMobileLineItems.length > 0 ? streamFilteredMobileLineItems : streamFilteredLineItems;
     let scoped = sourceItems;
 
     if (hasLineItemFilters) {
@@ -487,18 +653,19 @@ const DealsBoardContent = () => {
       ).flat();
     }
 
-    const search = normalizeSearchTerm(mergedFilters.search);
-    if (!search) return scoped;
+    const terms = resolveSearchTerms(mergedFilters);
+    if (!terms.length) return scoped;
     const recordsByMobileId = new Map(mobileRecords.map((record) => [record.id, record]));
-    return filterLineItemsForSearch(scoped, search, recordsByMobileId);
+    return filterLineItemsForSearch(scoped, terms, recordsByMobileId);
   }, [
     effectiveClauses,
     hasLineItemFilters,
-    lineItems,
     mobileLayoutActive,
-    mobileLineItems,
-    mobileRecords,
     mergedFilters.search,
+    mergedFilters.searchTerms,
+    streamFilteredLineItems,
+    streamFilteredMobileLineItems,
+    mobileRecords,
     showAllPositionOppIds,
     visibleLineItems,
   ]);
@@ -507,9 +674,21 @@ const DealsBoardContent = () => {
     () => displayLineItems.map((item) => item.id).filter(Boolean),
     [displayLineItems],
   );
-  usePrefetchLineItemListStatuses(listStatusLineItemIds);
+  const activeLineItemsLoading = useAggregateColdPath
+    ? activeColdLoadLoading
+    : lineItemsQuery.isLoading;
+  const listStatusHydratedFromAggregate =
+    useAggregateColdPath && Boolean(dealsBoardPageQuery.data?.listStatusHydrated);
+  const listStatusReady =
+    !activeColdLoadLoading &&
+    !activeLineItemsLoading &&
+    listStatusLineItemIds.length > 0;
+  usePrefetchLineItemListStatuses(
+    listStatusLineItemIds,
+    listStatusReady && !listStatusHydratedFromAggregate,
+  );
 
-  const loadError = viewsQuery.error ?? opportunitiesQuery.error ?? null;
+  const loadError = viewsQuery.error ?? coldLoadQuery.error ?? null;
   const metadataFieldsError =
     parentFieldsQuery.error ?? childFieldsQuery.error ?? null;
   const metadataFieldsWarning = metadataFieldsError
@@ -571,6 +750,7 @@ const DealsBoardContent = () => {
     <PortalHostProvider hostRef={rootRef}>
       <CancelOtmenaProvider>
       <ManualSyncErrorToastProvider>
+      <OkleykaMessageDialogProvider>
       <div
         ref={rootRef}
         id={DEALS_BOARD_ROOT_ID}
@@ -634,6 +814,7 @@ const DealsBoardContent = () => {
           opportunityLinkFields={opportunityLinkFields}
           records={mobileRecords}
           lineItems={displayLineItems}
+          boardStream={boardStream}
           lineItemFilters={lineItemQueryFilters}
           totalCount={visibleTotalCount}
           page={page}
@@ -656,7 +837,7 @@ const DealsBoardContent = () => {
             saveActiveViewColumns('child', columns, groups)
           }
           onResetFilters={handleFilterReset}
-          isLoading={opportunitiesQuery.isLoading}
+          isLoading={coldLoadQuery.isLoading}
           isViewLoading={viewsQuery.isLoading || viewsQuery.isSeedingDefault}
           errorMessage={
             loadError instanceof Error ? loadError.message : loadError ? String(loadError) : undefined
@@ -665,171 +846,109 @@ const DealsBoardContent = () => {
         </>
       ) : (
         <>
-          <div data-deals-board-toolbar>
-            <header
+          <BoardToolbar
+            views={views}
+            activeViewId={activeView?.id}
+            onSelectView={setActiveViewId}
+            onCreateView={() => setIsCreateModalOpen(true)}
+            filterValue={filterBarValue}
+            viewClauses={viewClauses}
+            onFilterChange={handleFilterBarChange}
+            onFilterReset={handleFilterReset}
+            parentFields={parentFieldsQuery.data ?? []}
+            childFields={childFieldsQuery.data ?? []}
+            deals={filteredBoardData.deals}
+            lineItems={visibleLineItems}
+            dealCount={visibleTotalCount}
+            isLoading={coldLoadQuery.isLoading}
+            onOpenAnalytics={() => setBoardPane('analytics')}
+            settingsDisabled={!activeView}
+            onEditView={() => {
+              if (activeView) setEditViewDraft(activeView);
+            }}
+            parentColumns={mergedParentColumns}
+            childColumns={mergedChildColumns}
+            childGroups={activeView?.childGroups ?? []}
+            onParentColumnsSave={(columns) => saveActiveViewColumns('parent', columns)}
+            onChildColumnsSave={(columns, groups) =>
+              saveActiveViewColumns('child', columns, groups)
+            }
+            activeFilterCount={activeFilterCount}
+            canResetFilters={canResetFilters}
+          />
+
+          {metadataFieldsWarning ? (
+            <div
               style={{
+                padding: `${spacing.xs} ${spacing.md}`,
+                fontSize: font.sizeSm,
+                color: colors.warning,
+                backgroundColor: colors.warningMuted,
                 borderBottom: `1px solid ${colors.border}`,
-                backgroundColor: colors.bgSecondary,
+                flexShrink: 0,
               }}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: spacing.md,
-                  padding: `${spacing.sm} ${spacing.md}`,
-                  minHeight: layout.toolbarHeight,
-                  flexWrap: 'wrap',
-                }}
-              >
-                <ViewSwitcher
-                  views={views}
-                  activeViewId={activeView?.id}
-                  onSelectView={setActiveViewId}
-                  onCreateView={() => setIsCreateModalOpen(true)}
-                />
+              {metadataFieldsWarning}
+            </div>
+          ) : null}
 
-                <div
-                  style={{
-                    width: '1px',
-                    alignSelf: 'stretch',
-                    backgroundColor: colors.borderSubtle,
-                    flexShrink: 0,
-                    minHeight: '28px',
-                  }}
-                />
+          {lineItemsWarning ? (
+            <div
+              style={{
+                padding: `${spacing.xs} ${spacing.md}`,
+                fontSize: font.sizeSm,
+                color: colors.warning,
+                backgroundColor: colors.warningMuted,
+                borderBottom: `1px solid ${colors.border}`,
+                flexShrink: 0,
+              }}
+            >
+              Позиции сделок не загрузились: {lineItemsWarning}
+            </div>
+          ) : null}
 
-                <FilterBar
-                  value={filterBarValue}
-                  viewClauses={viewClauses}
-                  onChange={handleFilterBarChange}
-                  onReset={handleFilterReset}
-                  parentFields={parentFieldsQuery.data ?? []}
-                  childFields={childFieldsQuery.data ?? []}
-                />
+          <BoardInsightPanel
+            lineItems={visibleLineItems}
+            deals={filteredBoardData.deals}
+            selectedTypes={mergedFilters.types ?? []}
+            onToggleType={(tip) => toggleScoreboardClause('tip', tip)}
+            attentionStats={attentionStats}
+            attentionTip={attentionTip}
+            onToggleAttentionTip={(tip) =>
+              setAttentionTip((current) => (current === tip ? null : tip))
+            }
+            summaryTitle={
+              filterBarValue.datePreset === 'today'
+                ? 'Сводка на сегодня'
+                : filterBarValue.datePreset === 'tomorrow'
+                  ? 'Сводка на завтра'
+                  : filterBarValue.datePreset === 'dayAfterTomorrow'
+                    ? 'Сводка на послезавтра'
+                    : filterBarValue.datePreset === 'week'
+                      ? 'Сводка на неделю'
+                      : filterBarValue.datePreset === 'month'
+                        ? 'Сводка на месяц'
+                        : 'Сводка'
+            }
+          />
 
-                <div
-                  style={{
-                    marginLeft: 'auto',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: spacing.sm,
-                    flexShrink: 0,
-                  }}
-                >
-                  <ExpandModeToggle />
-                  <GroupChipModeToggle />
-                </div>
-              </div>
-
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: spacing.md,
-                  padding: `6px ${spacing.md}`,
-                  borderTop: `1px solid ${colors.borderSubtle}`,
-                  minHeight: '32px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, minWidth: 0 }}>
-                  <span
-                    style={{
-                      fontSize: font.sizeSm,
-                      fontWeight: font.weightSemibold,
-                      color: colors.text,
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {APP_DISPLAY_NAME}
-                  </span>
-                  {activeView ? (
-                    <>
-                      <span style={{ color: colors.textMuted, fontSize: font.sizeXs }}>/</span>
-                      <span
-                        style={{
-                          fontSize: font.sizeSm,
-                          color: colors.textSecondary,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {activeView.name}
-                      </span>
-                      {!opportunitiesQuery.isLoading ? (
-                        <span
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            padding: '1px 7px',
-                            borderRadius: radius.pill,
-                            fontSize: font.sizeXs,
-                            fontWeight: font.weightMedium,
-                            fontFamily: font.mono,
-                            color: colors.textMuted,
-                            backgroundColor: colors.bgTertiary,
-                            border: `1px solid ${colors.borderSubtle}`,
-                            flexShrink: 0,
-                          }}
-                        >
-                          {visibleTotalCount}
-                        </span>
-                      ) : null}
-                    </>
-                  ) : null}
-                </div>
-
-                <ToolbarSettingsCluster
-                  disabled={!activeView}
-                  onEditView={() => {
-                    if (activeView) {
-                      setEditViewDraft(activeView);
-                    }
-                  }}
-                  parentColumns={mergedParentColumns}
-                  childColumns={mergedChildColumns}
-                  childGroups={activeView?.childGroups ?? []}
-                  onParentColumnsSave={(columns) => saveActiveViewColumns('parent', columns)}
-                  onChildColumnsSave={(columns, groups) =>
-                    saveActiveViewColumns('child', columns, groups)
-                  }
-                />
-              </div>
-            </header>
-
-            {metadataFieldsWarning ? (
-              <div
-                style={{
-                  padding: `${spacing.xs} ${spacing.md}`,
-                  fontSize: font.sizeSm,
-                  color: colors.warning,
-                  backgroundColor: colors.warningMuted,
-                  borderBottom: `1px solid ${colors.border}`,
-                  flexShrink: 0,
-                }}
-              >
-                {metadataFieldsWarning}
-              </div>
-            ) : null}
-
-            {lineItemsWarning ? (
-              <div
-                style={{
-                  padding: `${spacing.xs} ${spacing.md}`,
-                  fontSize: font.sizeSm,
-                  color: colors.warning,
-                  backgroundColor: colors.warningMuted,
-                  borderBottom: `1px solid ${colors.border}`,
-                  flexShrink: 0,
-                }}
-              >
-                Позиции сделок не загрузились: {lineItemsWarning}
-              </div>
-            ) : null}
-          </div>
-
+          {boardPane === 'analytics' ? (
+            <div
+              data-deals-board-body
+              style={{
+                minHeight: 0,
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <AnalyticsPanel
+                opportunities={rashodQuery.opportunities}
+                lineItems={visibleLineItems}
+                onBack={() => setBoardPane('deals')}
+              />
+            </div>
+          ) : (
           <div
             data-deals-board-body
             style={{
@@ -848,11 +967,13 @@ const DealsBoardContent = () => {
               childDescriptorByField={childDescriptorByField}
               opportunityLinkFields={opportunityLinkFields}
               records={visibleRecords}
-              lineItems={visibleLineItems}
+              lineItems={tableLineItems}
               lineItemFilters={lineItemQueryFilters}
               hasLineItemFilters={hasLineItemFilters}
               showAllPositionOppIds={showAllPositionOppIds}
               onToggleShowAllPositions={handleToggleShowAllPositions}
+              attentionOpportunityIds={attentionHighlightOppIds}
+              boardStream={boardStream}
               totalCount={visibleTotalCount}
               page={page}
               totalPages={totalPages}
@@ -866,18 +987,20 @@ const DealsBoardContent = () => {
               onShowAllChange={(nextShowAll) => void handleShowAllChange(nextShowAll)}
               sort={effectiveSort}
               onSortChange={handleSortChange}
-              isLoading={opportunitiesQuery.isLoading}
+              isLoading={coldLoadQuery.isLoading}
               isViewLoading={viewsQuery.isLoading || viewsQuery.isSeedingDefault}
               errorMessage={
                 loadError instanceof Error ? loadError.message : loadError ? String(loadError) : undefined
               }
             />
           </div>
+          )}
         </>
       )}
 
       <ViewSettingsModal
         isOpen={isCreateModalOpen}
+        boardKind={boardKind}
         filtersToPersist={persistedViewFilters}
         onClose={() => setIsCreateModalOpen(false)}
         onSaved={(view) => setActiveViewId(view.id)}
@@ -885,25 +1008,31 @@ const DealsBoardContent = () => {
 
       <ViewSettingsModal
         isOpen={Boolean(editViewDraft)}
+        boardKind={boardKind}
         initialView={editViewDraft}
         filtersToPersist={persistedViewFilters}
         onClose={() => setEditViewDraft(undefined)}
         onSaved={(view) => setActiveViewId(view.id)}
       />
     </div>
+      </OkleykaMessageDialogProvider>
       </ManualSyncErrorToastProvider>
       </CancelOtmenaProvider>
     </PortalHostProvider>
   );
 };
 
-export const DealsBoard = () => {
+export const DealsBoard = ({
+  boardStream = BOARD_STREAM.BRANDING,
+}: {
+  boardStream?: BoardStream;
+} = {}) => {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <ExpandModeProvider>
           <GroupChipModeProvider>
-            <DealsBoardContent />
+            <DealsBoardContent boardStream={boardStream} />
           </GroupChipModeProvider>
         </ExpandModeProvider>
       </ThemeProvider>

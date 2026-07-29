@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 import type { FieldDescriptor } from '../metadata/types';
 import type { ColumnConfig, LineItemRow } from '../types';
+import type { BoardStream } from 'src/constants/product-stream';
 import { resolveFieldValue } from '../utils/resolve-field-value';
 
 import { DynamicFieldCell } from './DynamicFieldCell';
@@ -12,6 +13,7 @@ export type GroupFieldStripProps = {
   descriptorByField: Map<string, FieldDescriptor>;
   renderMember?: (member: ColumnConfig, cell: ReactNode) => ReactNode;
   listMenuPresentation?: 'inline' | 'sheet';
+  boardStream?: BoardStream;
   touchFriendly?: boolean;
 };
 
@@ -21,6 +23,7 @@ export const GroupFieldStrip = ({
   descriptorByField,
   renderMember,
   listMenuPresentation,
+  boardStream,
   touchFriendly,
 }: GroupFieldStripProps) => {
   if (!members?.length) {
@@ -52,6 +55,7 @@ export const GroupFieldStrip = ({
             row={item}
             visibleFields={visibleFields}
             listMenuPresentation={listMenuPresentation}
+            boardStream={boardStream}
             touchFriendly={touchFriendly}
           />
         );

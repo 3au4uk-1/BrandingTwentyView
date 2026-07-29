@@ -43,4 +43,18 @@ describe('countActiveQuickFilters', () => {
   it('ignores whitespace-only search', () => {
     expect(countActiveQuickFilters({ search: '   ' }, {}, [])).toBe(0);
   });
+
+  it('counts searchTerms chips and ignores draft when chips are set', () => {
+    expect(
+      countActiveQuickFilters(
+        { search: 'draft', searchTerms: ['фотобудка', 'брендинг'] },
+        {},
+        [],
+      ),
+    ).toBe(1);
+  });
+
+  it('treats cleared datePreset null as inactive even if view had a preset', () => {
+    expect(countActiveQuickFilters({ datePreset: null }, { datePreset: 'week' }, [])).toBe(0);
+  });
 });

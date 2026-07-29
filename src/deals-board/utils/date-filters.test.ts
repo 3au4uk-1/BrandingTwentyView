@@ -165,13 +165,34 @@ describe('shouldFetchAllOpportunities', () => {
     ).toBe(false);
   });
 
-  it('loads all records for active date filters', () => {
-    expect(shouldFetchAllOpportunities({ datePreset: 'today' })).toBe(true);
-    expect(shouldFetchAllOpportunities({ datePreset: 'tomorrow' })).toBe(true);
-    expect(shouldFetchAllOpportunities({ datePreset: 'dayAfterTomorrow' })).toBe(true);
-    expect(shouldFetchAllOpportunities({ datePreset: 'week' })).toBe(true);
+  it('loads all records for today when line-item filter clauses are active', () => {
+    expect(
+      shouldFetchAllOpportunities(
+        { datePreset: 'today' },
+        undefined,
+        [{ id: '1', level: 'lineItem', field: 'stage', operator: 'in', value: ['NOVYY'] }],
+      ),
+    ).toBe(true);
+  });
+
+  it('paginates tight date presets (even with default date sort)', () => {
+    const dateSort = [{ field: 'loadDate', direction: 'AscNullsFirst' as const }];
+    expect(shouldFetchAllOpportunities({ datePreset: 'today' }, dateSort)).toBe(false);
+    expect(shouldFetchAllOpportunities({ datePreset: 'tomorrow' }, dateSort)).toBe(false);
+    expect(shouldFetchAllOpportunities({ datePreset: 'dayAfterTomorrow' }, dateSort)).toBe(false);
+    expect(shouldFetchAllOpportunities({ datePreset: 'week' }, dateSort)).toBe(false);
+    expect(
+      shouldFetchAllOpportunities(
+        { datePreset: 'week' },
+        [{ field: 'name', direction: 'AscNullsFirst' }],
+      ),
+    ).toBe(false);
+  });
+
+  it('loads all records for wide date filters except future (server-filtered page)', () => {
     expect(shouldFetchAllOpportunities({ datePreset: 'month' })).toBe(true);
-    expect(shouldFetchAllOpportunities({ datePreset: 'future' })).toBe(true);
+    expect(shouldFetchAllOpportunities({ datePreset: 'future' })).toBe(false);
+    expect(shouldFetchAllOpportunities({ datePreset: 'custom' })).toBe(true);
     expect(
       shouldFetchAllOpportunities({
         dateFrom: '2026-06-27',
@@ -180,19 +201,24 @@ describe('shouldFetchAllOpportunities', () => {
     ).toBe(true);
   });
 
-  it('loads all records when sorting by date', () => {
+  it('still fetchAll for future when line-item clauses exist', () => {
     expect(
       shouldFetchAllOpportunities(
-        { datePreset: 'week' },
+        { datePreset: 'future' },
+        undefined,
+        [{ id: '1', level: 'lineItem', field: 'stage', operator: 'in', value: ['NOVYY'] }],
+      ),
+    ).toBe(true);
+  });
+
+  it('does not fetch-all when there is no date filter and no line-item clauses', () => {
+    expect(shouldFetchAllOpportunities({})).toBe(false);
+    expect(
+      shouldFetchAllOpportunities(
+        {},
         [{ field: 'loadDate', direction: 'AscNullsFirst' }],
       ),
-    ).toBe(true);
-    expect(
-      shouldFetchAllOpportunities(
-        { datePreset: 'week' },
-        [{ field: 'name', direction: 'AscNullsFirst' }],
-      ),
-    ).toBe(true);
+    ).toBe(false);
   });
 });
 

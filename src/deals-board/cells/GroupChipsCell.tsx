@@ -1,3 +1,8 @@
+import { FREZA_FIELD_GROUP_ID } from 'src/constants/freza-field-group';
+import { PRINT_FIELD_GROUP_ID } from 'src/constants/print-field-group';
+
+import { FrezaPanelChip } from '../editors/FrezaPanelChip';
+import { PrintPanelChip } from '../editors/PrintPanelChip';
 import { useGroupChipMode } from '../hooks/useGroupChipMode';
 import { useLineItemGroupExpand } from '../hooks/useLineItemGroupExpand';
 import { useTheme } from '../theme/ThemeContext';
@@ -27,7 +32,15 @@ export const GroupChipsCell = ({
   const toggle = onToggle ?? expansion.toggle;
   const { colors, font, spacing } = useTheme();
 
-  if (groups.length === 0) {
+  const hasPrintGroup = groups.some((entry) => entry.group.id === PRINT_FIELD_GROUP_ID);
+  const otherGroups = groups.filter(
+    (entry) =>
+      entry.group.id !== PRINT_FIELD_GROUP_ID && entry.group.id !== FREZA_FIELD_GROUP_ID,
+  );
+
+  const showQueueChips = hasPrintGroup;
+
+  if (!showQueueChips && otherGroups.length === 0) {
     return null;
   }
 
@@ -41,7 +54,14 @@ export const GroupChipsCell = ({
         minWidth: 0,
       }}
     >
-      {groups.map(({ group, members }) => {
+      {showQueueChips ? (
+        <>
+          <PrintPanelChip item={item} />
+          <FrezaPanelChip item={item} />
+        </>
+      ) : null}
+
+      {otherGroups.map(({ group, members }) => {
         const active = isExpanded(item.id, group.id);
         const label = formatGroupChipLabel(
           group.name,

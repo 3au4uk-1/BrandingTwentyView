@@ -36,14 +36,15 @@ export const SegmentControl = <T extends string>({
       style={{
         display: 'inline-flex',
         flexShrink: 0,
-        border: `1px solid ${isMuted ? colors.borderSubtle : colors.border}`,
+        gap: 2,
+        padding: 2,
+        border: 'none',
         borderRadius: radius.md,
-        overflow: 'hidden',
-        backgroundColor: isMuted ? colors.bgTertiary : colors.bgElevated,
+        backgroundColor: isMuted ? colors.bgTertiary : colors.bgInset,
         ...style,
       }}
     >
-      {options.map((option, index) => {
+      {options.map((option) => {
         const isActive = value === option.value;
 
         return (
@@ -56,24 +57,18 @@ export const SegmentControl = <T extends string>({
             onClick={() => onChange(option.value)}
             style={{
               border: 'none',
-              borderRight: index < options.length - 1 ? `1px solid ${colors.borderSubtle}` : 'none',
-              padding: isMuted ? `3px ${spacing.xs}` : `${spacing.xs} ${spacing.sm}`,
+              borderRadius: radius.sm,
+              padding: isMuted ? `3px ${spacing.xs}` : `5px ${spacing.sm}`,
               fontSize: isMuted ? font.sizeXs : font.sizeSm,
               fontFamily: font.family,
-              fontWeight: isActive ? font.weightMedium : font.weightNormal,
-              backgroundColor: isActive
-                ? isMuted
-                  ? colors.bgElevated
-                  : colors.accentMuted
-                : 'transparent',
-              color: isActive
-                ? isMuted
-                  ? colors.textSecondary
-                  : colors.accentText
-                : colors.textMuted,
+              fontWeight: isActive ? font.weightSemibold : font.weightMedium,
+              letterSpacing: '-0.01em',
+              backgroundColor: isActive ? colors.bgElevated : 'transparent',
+              color: isActive ? colors.text : colors.textMuted,
+              boxShadow: isActive ? colors.shadow : 'none',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
-              transition: 'background-color 0.12s ease, color 0.12s ease',
+              transition: 'background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease',
             }}
           >
             {option.label}

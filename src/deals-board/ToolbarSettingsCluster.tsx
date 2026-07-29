@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ColumnPicker } from './ColumnPicker';
+import { GroupChipModeToggle } from './GroupChipModeToggle';
+import { useOutsideDismiss } from './hooks/useOutsideDismiss';
 import { useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
-import { ChevronDownIcon, SettingsIcon } from './ui/Icons';
+import { SettingsIcon } from './ui/Icons';
 import type { ColumnConfig, ColumnGroupConfig } from './types';
 
 type ToolbarSettingsClusterProps = {
@@ -31,19 +33,8 @@ export const ToolbarSettingsCluster = ({
   const [parentPickerOpen, setParentPickerOpen] = useState(false);
   const [childPickerOpen, setChildPickerOpen] = useState(false);
   const clusterRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!isMenuOpen) return;
-
-    const onMouseDown = (event: MouseEvent) => {
-      if (!clusterRef.current?.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    };
-
-    window.addEventListener('mousedown', onMouseDown);
-    return () => window.removeEventListener('mousedown', onMouseDown);
-  }, [isMenuOpen]);
+  const dismissMenu = useCallback(() => setIsMenuOpen(false), []);
+  const dismissLayer = useOutsideDismiss(isMenuOpen, clusterRef, dismissMenu);
 
   const menuItemStyle = {
     width: '100%',
@@ -65,6 +56,7 @@ export const ToolbarSettingsCluster = ({
       ref={clusterRef}
       style={{ position: 'relative', display: 'flex', alignItems: 'center', flexShrink: 0 }}
     >
+      {dismissLayer}
       <Button
         theme={theme}
         variant="ghost"
@@ -73,11 +65,11 @@ export const ToolbarSettingsCluster = ({
         onClick={() => setIsMenuOpen((prev) => !prev)}
         aria-expanded={isMenuOpen}
         aria-haspopup="menu"
-        style={{ gap: spacing.xs }}
+        aria-label="Настройки доски"
+        title="Настройки: view, колонки, группы, отображение"
+        style={{ padding: '6px 8px' }}
       >
-        <SettingsIcon size={14} color={colors.textMuted} />
-        Настройки
-        <ChevronDownIcon color={colors.textMuted} />
+        <SettingsIcon size={16} color={colors.textMuted} />
       </Button>
 
       {isMenuOpen ? (
@@ -87,16 +79,30 @@ export const ToolbarSettingsCluster = ({
             position: 'absolute',
             top: 'calc(100% + 6px)',
             right: 0,
-            minWidth: '220px',
+            minWidth: '260px',
             zIndex: zIndex.dropdown,
             border: `1px solid ${colors.border}`,
             borderRadius: radius.lg,
             backgroundColor: colors.bgElevated,
             boxShadow: colors.shadowLg,
-            padding: spacing.xs,
+            padding: spacing.sm,
             boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: spacing.xs,
           }}
         >
+          <div
+            style={{
+              fontSize: font.sizeXs,
+              fontWeight: font.weightSemibold,
+              color: colors.textMuted,
+              padding: '2px 10px 6px',
+              letterSpacing: '0.02em',
+            }}
+          >
+            Управление доской
+          </div>
           <button
             type="button"
             role="menuitem"
@@ -106,16 +112,8 @@ export const ToolbarSettingsCluster = ({
               onEditView();
             }}
             style={menuItemStyle}
-            onMouseEnter={(event) => {
-              if (!disabled) {
-                event.currentTarget.style.backgroundColor = colors.bgHover;
-              }
-            }}
-            onMouseLeave={(event) => {
-              event.currentTarget.style.backgroundColor = 'transparent';
-            }}
           >
-            Редактировать view
+            Редактировать view / название
           </button>
           <button
             type="button"
@@ -126,14 +124,6 @@ export const ToolbarSettingsCluster = ({
               setParentPickerOpen(true);
             }}
             style={menuItemStyle}
-            onMouseEnter={(event) => {
-              if (!disabled) {
-                event.currentTarget.style.backgroundColor = colors.bgHover;
-              }
-            }}
-            onMouseLeave={(event) => {
-              event.currentTarget.style.backgroundColor = 'transparent';
-            }}
           >
             Колонки: сделки
           </button>
@@ -146,17 +136,41 @@ export const ToolbarSettingsCluster = ({
               setChildPickerOpen(true);
             }}
             style={menuItemStyle}
-            onMouseEnter={(event) => {
-              if (!disabled) {
-                event.currentTarget.style.backgroundColor = colors.bgHover;
-              }
-            }}
-            onMouseLeave={(event) => {
-              event.currentTarget.style.backgroundColor = 'transparent';
+          >
+            Колонки / группы: позиции
+          </button>
+          <div
+            style={{
+              borderTop: `1px solid ${colors.borderSubtle}`,
+              marginTop: 4,
+              paddingTop: 8,
+              paddingLeft: 10,
+              paddingRight: 10,
+              paddingBottom: 4,
             }}
           >
-            Колонки: позиции
-          </button>
+            <div
+              style={{
+                fontSize: font.sizeXs,
+                color: colors.textMuted,
+                marginBottom: 6,
+              }}
+            >
+              Чипы групп
+            </div>
+            <GroupChipModeToggle />
+          </div>
+          <p
+            style={{
+              margin: '4px 10px 0',
+              fontSize: 10,
+              color: colors.textMuted,
+              lineHeight: 1.35,
+            }}
+          >
+            Цвета строк стадий — в колонке «Стадия». Подписи блоков сводки / внимания
+            пока в коде приложения.
+          </p>
         </div>
       ) : null}
 

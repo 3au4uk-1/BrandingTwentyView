@@ -29,7 +29,7 @@ export const FILTER_BUILDER_FIELDS: FilterBuilderField[] = [
   {
     level: 'lineItem',
     field: 'tip',
-    label: 'Тип',
+    label: 'Категория',
     kind: 'multi-select',
     options: LINE_ITEM_TYPES,
   },

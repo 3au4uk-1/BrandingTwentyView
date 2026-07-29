@@ -1,42 +1,14 @@
 import type { QueryClient } from '@tanstack/react-query';
 
 import { archiveManualLineItem } from '../api/crmparser';
-import type { LineItemRow, OpportunityRow } from '../types';
+import type { LineItemRow } from '../types';
+import { patchOpportunityInCache } from '../utils/opportunity-cache';
 import { syncDealStage } from '../utils/sync-deal-stage';
 import { WATCHED_OBJECT_NAMES } from './constants';
 import type { ObjectRecordEvent } from './types';
 
-type OpportunitiesPage = {
-  records: OpportunityRow[];
-  totalCount: number;
-};
-
 const isWatchedObject = (objectNameSingular: string): boolean =>
   WATCHED_OBJECT_NAMES.includes(objectNameSingular as (typeof WATCHED_OBJECT_NAMES)[number]);
-
-const patchOpportunityInCache = (
-  queryClient: QueryClient,
-  recordId: string,
-  patch: Record<string, unknown>,
-): boolean => {
-  let didPatch = false;
-
-  for (const [queryKey, page] of queryClient.getQueriesData<OpportunitiesPage>({
-    queryKey: ['opportunities'],
-  })) {
-    if (!page?.records?.some((record) => record.id === recordId)) continue;
-
-    queryClient.setQueryData<OpportunitiesPage>(queryKey, {
-      ...page,
-      records: page.records.map((record) =>
-        record.id === recordId ? { ...record, ...patch } : record,
-      ),
-    });
-    didPatch = true;
-  }
-
-  return didPatch;
-};
 
 const patchLineItemInCache = (
   queryClient: QueryClient,
@@ -77,11 +49,13 @@ const findLineItemOpportunityId = (
 const invalidateObjectQueries = (queryClient: QueryClient, objectNameSingular: string): void => {
   if (objectNameSingular === 'opportunity') {
     queryClient.invalidateQueries({ queryKey: ['opportunities'] });
+    queryClient.invalidateQueries({ queryKey: ['deals-board-page'] });
     return;
   }
 
   if (objectNameSingular === 'dealLineItem') {
     queryClient.invalidateQueries({ queryKey: ['lineItems'] });
+    queryClient.invalidateQueries({ queryKey: ['deals-board-page'] });
   }
 };
 
@@ -121,6 +95,10 @@ export const applyObjectRecordEvent = (
         if (opportunityId) {
           void syncDealStage(queryClient, opportunityId);
         }
+      }
+
+      if (event.objectNameSingular === 'opportunity') {
+        queryClient.invalidateQueries({ queryKey: ['deals-board-page'] });
       }
 
       return;

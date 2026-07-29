@@ -25,6 +25,7 @@ export const MobileDealsBoard = (props: MobileDealsBoardProps) => {
     opportunityLinkFields,
     records,
     lineItems,
+    boardStream,
     lineItemFilters,
     totalCount,
     page,
@@ -155,6 +156,7 @@ export const MobileDealsBoard = (props: MobileDealsBoardProps) => {
               isExpanded={isExpanded(row.id)}
               onToggleExpand={toggleExpand}
               lineItemFilters={lineItemFilters}
+              boardStream={boardStream}
             />
           ))}
           {hasMore ? (

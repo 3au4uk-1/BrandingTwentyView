@@ -13,6 +13,7 @@ import {
   hasFutureDealsViewMechanics,
 } from 'src/constants/future-deals-view';
 import { MOBILE_VIEW_NAME } from 'src/constants/mobile-view';
+import { BOARD_KIND, type BoardKind } from 'src/constants/product-stream';
 import { VIEW_VISIBILITY } from 'src/constants/view-visibility';
 
 import {
@@ -24,38 +25,53 @@ import type { DealBoardViewRecord } from '../types';
 
 export const dealBoardViewsQueryKey = () => ['dealBoardViews'] as const;
 
-const DEFAULT_VIEW_SEED: Omit<DealBoardViewRecord, 'id'> = {
+const filterViewsByBoardKind = (
+  views: DealBoardViewRecord[],
+  boardKind: BoardKind,
+): DealBoardViewRecord[] =>
+  views.filter((view) => (view.boardKind ?? BOARD_KIND.REALIZACIYA) === boardKind);
+
+const createDefaultViewSeed = (
+  boardKind: BoardKind,
+): Omit<DealBoardViewRecord, 'id'> => ({
   name: 'Базовый обзор',
   visibility: VIEW_VISIBILITY.WORKSPACE,
+  boardKind,
   parentColumns: DEFAULT_PARENT_COLUMNS,
   childColumns: DEFAULT_CHILD_COLUMNS,
   childGroups: [],
   filters: {},
   sort: [],
   isDefault: false,
-};
+});
 
-const FUTURE_DEALS_VIEW_SEED: Omit<DealBoardViewRecord, 'id'> = {
+const createFutureDealsViewSeed = (
+  boardKind: BoardKind,
+): Omit<DealBoardViewRecord, 'id'> => ({
   name: FUTURE_DEALS_VIEW_NAME,
   visibility: VIEW_VISIBILITY.WORKSPACE,
+  boardKind,
   parentColumns: DEFAULT_PARENT_COLUMNS,
   childColumns: DEFAULT_CHILD_COLUMNS,
   childGroups: DEFAULT_CHILD_GROUPS,
   filters: FUTURE_DEALS_VIEW_FILTERS,
   sort: FUTURE_DEALS_VIEW_SORT,
   isDefault: true,
-};
+});
 
-const MOBILE_VIEW_SEED: Omit<DealBoardViewRecord, 'id'> = {
+const createMobileViewSeed = (
+  boardKind: BoardKind,
+): Omit<DealBoardViewRecord, 'id'> => ({
   name: MOBILE_VIEW_NAME,
   visibility: VIEW_VISIBILITY.WORKSPACE,
+  boardKind,
   parentColumns: DEFAULT_PARENT_COLUMNS,
   childColumns: DEFAULT_CHILD_COLUMNS,
   childGroups: DEFAULT_CHILD_GROUPS,
   filters: FUTURE_DEALS_VIEW_FILTERS,
   sort: FUTURE_DEALS_VIEW_SORT,
   isDefault: false,
-};
+});
 
 const isFutureDealsDefault = (views: DealBoardViewRecord[]): boolean => {
   const futureView = views.find((view) => view.name === FUTURE_DEALS_VIEW_NAME);
@@ -93,18 +109,35 @@ const alignMobileViewWithFutureDeals = async (
   });
 };
 
-export const useDealBoardViews = () => {
+const viewNeedsShowAllCleared = (view: DealBoardViewRecord): boolean =>
+  view.filters.showAll === true &&
+  (view.name === FUTURE_DEALS_VIEW_NAME ||
+    view.name === MOBILE_VIEW_NAME ||
+    view.filters.datePreset === 'future');
+
+const clearShowAllOnHeavyViews = async (views: DealBoardViewRecord[]): Promise<void> => {
+  await Promise.all(
+    views.filter(viewNeedsShowAllCleared).map((view) =>
+      updateDealBoardView(view.id, {
+        filters: { ...view.filters, showAll: false },
+      }),
+    ),
+  );
+};
+
+export const useDealBoardViews = (boardKind: BoardKind = BOARD_KIND.REALIZACIYA) => {
   const queryClient = useQueryClient();
   const hasSeedAttemptedRef = useRef(false);
   const hasFutureSeedAttemptedRef = useRef(false);
   const hasMobileSeedAttemptedRef = useRef(false);
   const hasMobileAlignAttemptedRef = useRef(false);
   const hasDefaultMigrationAttemptedRef = useRef(false);
+  const hasShowAllClearAttemptedRef = useRef(false);
   const seedDefaultViewMutation = useMutation({
     mutationFn: async () => {
-      await createDealBoardView(DEFAULT_VIEW_SEED);
-      await createDealBoardView(FUTURE_DEALS_VIEW_SEED);
-      await createDealBoardView(MOBILE_VIEW_SEED);
+      await createDealBoardView(createDefaultViewSeed(boardKind));
+      await createDealBoardView(createFutureDealsViewSeed(boardKind));
+      await createDealBoardView(createMobileViewSeed(boardKind));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: dealBoardViewsQueryKey() });
@@ -116,9 +149,9 @@ export const useDealBoardViews = () => {
 
   const ensureFutureViewMutation = useMutation({
     mutationFn: async () => {
-      const views = await fetchDealBoardViews();
+      const views = filterViewsByBoardKind(await fetchDealBoardViews(), boardKind);
       await promoteFutureDealsViewAsDefault(views);
-      await createDealBoardView(FUTURE_DEALS_VIEW_SEED);
+      await createDealBoardView(createFutureDealsViewSeed(boardKind));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: dealBoardViewsQueryKey() });
@@ -130,7 +163,7 @@ export const useDealBoardViews = () => {
 
   const ensureMobileViewMutation = useMutation({
     mutationFn: async () => {
-      await createDealBoardView(MOBILE_VIEW_SEED);
+      await createDealBoardView(createMobileViewSeed(boardKind));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: dealBoardViewsQueryKey() });
@@ -160,9 +193,20 @@ export const useDealBoardViews = () => {
     },
   });
 
+  const clearShowAllMutation = useMutation({
+    mutationFn: clearShowAllOnHeavyViews,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: dealBoardViewsQueryKey() });
+    },
+    onError: () => {
+      hasShowAllClearAttemptedRef.current = false;
+    },
+  });
+
   const query = useQuery({
     queryKey: dealBoardViewsQueryKey(),
     queryFn: fetchDealBoardViews,
+    select: (allViews) => filterViewsByBoardKind(allViews, boardKind),
   });
   const viewCount = query.data?.length ?? 0;
   const hasFutureView = query.data?.some((view) => view.name === FUTURE_DEALS_VIEW_NAME) ?? false;
@@ -170,6 +214,8 @@ export const useDealBoardViews = () => {
   const mobileView = query.data?.find((view) => view.name === MOBILE_VIEW_NAME);
   const isMobileViewAligned =
     !mobileView || hasFutureDealsViewMechanics(mobileView);
+  const hasViewsNeedingShowAllClear =
+    query.data?.some(viewNeedsShowAllCleared) ?? false;
 
   useEffect(() => {
     if (!query.isSuccess || viewCount > 0 || hasSeedAttemptedRef.current) {
@@ -269,6 +315,28 @@ export const useDealBoardViews = () => {
     viewCount,
   ]);
 
+  useEffect(() => {
+    if (
+      !query.isSuccess ||
+      viewCount === 0 ||
+      !hasViewsNeedingShowAllClear ||
+      hasShowAllClearAttemptedRef.current ||
+      clearShowAllMutation.isPending
+    ) {
+      return;
+    }
+
+    hasShowAllClearAttemptedRef.current = true;
+    clearShowAllMutation.mutate(query.data ?? []);
+  }, [
+    clearShowAllMutation.isPending,
+    clearShowAllMutation.mutate,
+    hasViewsNeedingShowAllClear,
+    query.data,
+    query.isSuccess,
+    viewCount,
+  ]);
+
   return {
     ...query,
     isSeedingDefault:
@@ -276,7 +344,8 @@ export const useDealBoardViews = () => {
       ensureFutureViewMutation.isPending ||
       ensureMobileViewMutation.isPending ||
       alignMobileViewMutation.isPending ||
-      promoteFutureDefaultMutation.isPending,
+      promoteFutureDefaultMutation.isPending ||
+      clearShowAllMutation.isPending,
   };
 };
 

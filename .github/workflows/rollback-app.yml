@@ -1,0 +1,72 @@
+name: Rollback Twenty app (dispatch)
+
+on:
+  repository_dispatch:
+    types: [rollback-twenty-app]
+
+permissions:
+  contents: read
+
+env:
+  TWENTY_DEPLOY_URL: ${{ vars.TWENTY_DEPLOY_URL }}
+
+concurrency:
+  group: rollback-twenty-app-prod
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate dispatch payload
+        run: |
+          set -euo pipefail
+          VERSION="${{ github.event.client_payload.version }}"
+          if [ -z "${VERSION}" ]; then
+            echo "::error::client_payload.version is required"
+            exit 1
+          fi
+          echo "Rolling back Twenty app to version=${VERSION} ref=${{ github.event.client_payload.ref || 'default branch' }}"
+
+      - name: Checkout pinned ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.client_payload.ref || github.sha }}
+
+      - name: Resolve deploy target
+        run: |
+          if [ -z "${TWENTY_DEPLOY_URL}" ]; then
+            echo "::error::TWENTY_DEPLOY_URL variable is required for prod rollback"
+            exit 1
+          fi
+          echo "Deploying rollback to ${TWENTY_DEPLOY_URL}"
+
+      - name: Set deploy version (must exceed installed)
+        env:
+          TARGET_VERSION: ${{ github.event.client_payload.version }}
+        run: |
+          node -e "
+          const fs = require('fs');
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const base = String(process.env.TARGET_VERSION).replace(/[-+].*$/, '');
+          const parts = base.split('.').map((n) => parseInt(n, 10) || 0);
+          const run = parseInt(process.env.GITHUB_RUN_NUMBER, 10);
+          if (!Number.isFinite(run) || run < 1) {
+            throw new Error('GITHUB_RUN_NUMBER missing or invalid');
+          }
+          pkg.version = parts[0] + '.' + parts[1] + '.' + run;
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          console.log('rollback source version', process.env.TARGET_VERSION, '-> deploy version', pkg.version);
+          "
+
+      - name: Deploy
+        uses: twentyhq/twenty/.github/actions/deploy-twenty-app@main
+        with:
+          api-url: ${{ env.TWENTY_DEPLOY_URL }}
+          api-key: ${{ secrets.TWENTY_DEPLOY_API_KEY }}
+
+      - name: Install
+        uses: twentyhq/twenty/.github/actions/install-twenty-app@main
+        with:
+          api-url: ${{ env.TWENTY_DEPLOY_URL }}
+          api-key: ${{ secrets.TWENTY_DEPLOY_API_KEY }}
