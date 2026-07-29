@@ -152,8 +152,15 @@ export const PrevyuOkleykiCell = ({
     void actions.addFromDataTransfer(event.dataTransfer);
   };
 
-  const handlePaste = (_event: ReactClipboardEvent) => {
-    void actions.addFromClipboard();
+  const handlePaste = (event: ReactClipboardEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    // Remote DOM usually cannot read image bytes — fall back to the upload modal
+    // (main-thread iframe) where Ctrl+V works after focus.
+    void (async () => {
+      const ok = await actions.addFromPasteEvent(event.clipboardData);
+      if (!ok) openUploadModal();
+    })();
   };
 
   const handleThumbClick = (event: ReactMouseEvent) => {

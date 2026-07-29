@@ -107,16 +107,29 @@ export const usePrevyuMediaActions = ({
     [addFiles],
   );
 
-  const addFromClipboard = useCallback(async () => {
+  const addFromClipboard = useCallback(async (): Promise<boolean> => {
     const images = await readImagesFromClipboardApi();
     if (!images.length) {
       setLastError(
-        'Буфер не отдал изображение. В Remote DOM Ctrl+V часто не передаёт картинку — попробуйте выбрать файл или «Открыть в карточке».',
+        'Буфер не отдал изображение в Remote DOM — откройте окно загрузки и нажмите Ctrl+V там.',
       );
-      return;
+      return false;
     }
     await addFiles(images);
+    return true;
   }, [addFiles]);
+
+  const addFromPasteEvent = useCallback(
+    async (clipboardData: DataTransfer | null | undefined): Promise<boolean> => {
+      const fromEvent = collectImageFilesFromDataTransfer(clipboardData);
+      if (fromEvent.length) {
+        await addFiles(fromEvent);
+        return true;
+      }
+      return addFromClipboard();
+    },
+    [addFiles, addFromClipboard],
+  );
 
   const makeFirst = useCallback(
     async (fileId: string) => {
@@ -157,6 +170,7 @@ export const usePrevyuMediaActions = ({
     addFiles,
     addFromDataTransfer,
     addFromClipboard,
+    addFromPasteEvent,
     makeFirst,
     removeFile,
   };

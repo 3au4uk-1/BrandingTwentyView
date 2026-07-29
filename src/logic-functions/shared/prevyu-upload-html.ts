@@ -20,7 +20,8 @@ const escapeHtml = (value: string): string =>
 
 /**
  * Self-contained main-thread upload page for iframe srcdoc embedding.
- * Posts { type: 'prevyu-upload', lineItemId } on success via BroadcastChannel + parent postMessage.
+ * Paste target is a contenteditable catcher (not a full-size file input overlay) —
+ * otherwise Ctrl+V never reaches the paste handler.
  */
 export const buildPrevyuUploadHtml = ({
   lineItemId,
@@ -64,16 +65,46 @@ export const buildPrevyuUploadHtml = ({
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 10px;
       padding: 20px;
       outline: none;
     }
-    .zone:focus { border-color: #3b82f6; }
-    .zone strong { font-size: 13px; }
-    .zone span { font-size: 11px; color: #a3a3a3; }
-    .zone input[type=file] {
-      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    .zone:focus-within { border-color: #3b82f6; }
+    .paste-catch {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      z-index: 1;
+      color: transparent;
+      caret-color: transparent;
+      overflow: hidden;
+      outline: none;
     }
+    .zone-ui {
+      position: relative;
+      z-index: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      pointer-events: none;
+      text-align: center;
+    }
+    .zone-ui strong { font-size: 13px; }
+    .zone-ui span { font-size: 11px; color: #a3a3a3; }
+    #pick {
+      position: relative;
+      z-index: 2;
+      pointer-events: auto;
+      border: 1px solid #525252;
+      background: #2a2a2a;
+      color: #f5f5f5;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    #file { display: none; }
     .status { font-size: 12px; min-height: 16px; color: #a3a3a3; }
     .status.err { color: #ff453a; }
     .status.ok { color: #30d158; }
@@ -89,13 +120,17 @@ export const buildPrevyuUploadHtml = ({
 <body data-prevyu-upload="${safeId}">
   <div class="wrap">
     <h1>Превью</h1>
-    <p class="sub">${safeName} — Ctrl+V, перетащите файл или выберите с диска (до 6).</p>
-    <div class="zone" id="zone" tabindex="0">
+    <p class="sub">${safeName} — кликните в область и нажмите Ctrl+V, либо выберите файл (до 6).</p>
+    <div class="zone" id="zone">
+      <div class="paste-catch" id="pasteCatch" contenteditable="true" spellcheck="false" tabindex="0" aria-label="Вставка превью"></div>
+      <div class="zone-ui">
+        <strong>Ctrl+V / перетащить</strong>
+        <span>Фокус должен быть в этой области</span>
+      </div>
+      <button type="button" id="pick">Выбрать с диска</button>
       <input id="file" type="file" accept="image/*" multiple />
-      <strong>Ctrl+V / перетащить / выбрать файл</strong>
-      <span>Загрузка идёт на главном потоке, вне Remote DOM</span>
     </div>
-    <div class="status" id="status">Готово к вставке</div>
+    <div class="status" id="status">Кликните сюда и нажмите Ctrl+V</div>
     <div class="list" id="list"></div>
   </div>
   <script>
@@ -105,7 +140,9 @@ export const buildPrevyuUploadHtml = ({
   var accessToken = ${accessTokenJson};
   var files = ${filesJson};
   var zone = document.getElementById('zone');
+  var pasteCatch = document.getElementById('pasteCatch');
   var fileInput = document.getElementById('file');
+  var pickBtn = document.getElementById('pick');
   var statusEl = document.getElementById('status');
   var listEl = document.getElementById('list');
   var busy = false;
@@ -113,6 +150,12 @@ export const buildPrevyuUploadHtml = ({
   function setStatus(text, kind) {
     statusEl.textContent = text || '';
     statusEl.className = 'status' + (kind ? ' ' + kind : '');
+  }
+
+  function focusPaste() {
+    try {
+      pasteCatch.focus();
+    } catch (e) {}
   }
 
   function notifyParent() {
@@ -152,18 +195,18 @@ export const buildPrevyuUploadHtml = ({
   }
 
   function uploadBase64(filename, contentType, dataBase64) {
-    if (busy) return;
+    if (busy) return Promise.resolve();
     if (files.length >= 6) {
       setStatus('Максимум 6 файлов', 'err');
-      return;
+      return Promise.resolve();
     }
     if (!postUrl || !accessToken) {
       setStatus('Нет URL или токена для загрузки', 'err');
-      return;
+      return Promise.resolve();
     }
     busy = true;
     setStatus('Загрузка…');
-    fetch(postUrl, {
+    return fetch(postUrl, {
       method: 'POST',
       credentials: 'omit',
       headers: {
@@ -183,12 +226,14 @@ export const buildPrevyuUploadHtml = ({
           files = result.body.files;
           renderList();
         }
-        setStatus('Загружено', 'ok');
+        setStatus('Загружено — можно вставить ещё (Ctrl+V)', 'ok');
         notifyParent();
+        focusPaste();
       })
       .catch(function (err) {
         busy = false;
         setStatus(err && err.message ? err.message : 'Сеть недоступна', 'err');
+        focusPaste();
       });
   }
 
@@ -205,13 +250,18 @@ export const buildPrevyuUploadHtml = ({
     });
   }
 
+  function isImageLike(file) {
+    if (!file) return false;
+    if (!file.type || file.type.indexOf('image/') === 0) return true;
+    if (file.type === 'application/octet-stream') return true;
+    return /\\.(png|jpe?g|gif|webp|bmp|heic)$/i.test(file.name || '');
+  }
+
   function handleFiles(fileList) {
     var images = [];
     for (var i = 0; i < fileList.length; i++) {
       var f = fileList[i];
-      if (f && (!f.type || f.type.indexOf('image/') === 0 || /\\.(png|jpe?g|gif|webp|bmp|heic)$/i.test(f.name || ''))) {
-        images.push(f);
-      }
+      if (isImageLike(f)) images.push(f);
     }
     if (!images.length) {
       setStatus('Нужно изображение', 'err');
@@ -226,28 +276,72 @@ export const buildPrevyuUploadHtml = ({
     }, Promise.resolve());
   }
 
-  zone.addEventListener('paste', function (event) {
-    event.preventDefault();
-    var dt = event.clipboardData;
-    if (dt && dt.files && dt.files.length) {
-      handleFiles(dt.files);
-      return;
+  function collectFromClipboardData(dt) {
+    var out = [];
+    if (!dt) return out;
+    if (dt.files && dt.files.length) {
+      for (var i = 0; i < dt.files.length; i++) {
+        if (isImageLike(dt.files[i])) out.push(dt.files[i]);
+      }
+      if (out.length) return out;
     }
-    if (dt && dt.items) {
-      var blobs = [];
-      for (var i = 0; i < dt.items.length; i++) {
-        var item = dt.items[i];
-        if (item && item.kind === 'file' && (!item.type || item.type.indexOf('image/') === 0)) {
-          var blob = item.getAsFile();
-          if (blob) blobs.push(blob);
+    if (dt.items) {
+      for (var j = 0; j < dt.items.length; j++) {
+        var item = dt.items[j];
+        if (!item) continue;
+        var type = item.type || '';
+        if (item.kind === 'file' && (!type || type.indexOf('image/') === 0 || type === 'application/octet-stream')) {
+          var blob = item.getAsFile && item.getAsFile();
+          if (blob) out.push(blob);
         }
       }
-      if (blobs.length) handleFiles(blobs);
-      else setStatus('В буфере нет изображения', 'err');
+    }
+    return out;
+  }
+
+  function readClipboardApi() {
+    if (!navigator.clipboard || typeof navigator.clipboard.read !== 'function') {
+      return Promise.resolve([]);
+    }
+    return navigator.clipboard.read().then(function (items) {
+      var pending = [];
+      (items || []).forEach(function (item) {
+        (item.types || []).forEach(function (type) {
+          if (type.indexOf('image/') !== 0) return;
+          pending.push(
+            item.getType(type).then(function (blob) {
+              var ext = type.split('/')[1] || 'png';
+              return new File([blob], 'clipboard.' + ext, { type: type });
+            })
+          );
+        });
+      });
+      return Promise.all(pending);
+    }).catch(function () { return []; });
+  }
+
+  function onPaste(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    try { pasteCatch.innerHTML = ''; } catch (e) {}
+    var fromEvent = collectFromClipboardData(event.clipboardData);
+    if (fromEvent.length) {
+      handleFiles(fromEvent);
       return;
     }
-    setStatus('В буфере нет изображения', 'err');
-  });
+    setStatus('Читаю буфер…');
+    readClipboardApi().then(function (images) {
+      if (images && images.length) {
+        handleFiles(images);
+        return;
+      }
+      setStatus('В буфере нет изображения — скопируйте картинку и нажмите Ctrl+V здесь', 'err');
+      focusPaste();
+    });
+  }
+
+  document.addEventListener('paste', onPaste);
+  pasteCatch.addEventListener('paste', onPaste);
 
   zone.addEventListener('dragover', function (event) {
     event.preventDefault();
@@ -259,15 +353,29 @@ export const buildPrevyuUploadHtml = ({
     }
   });
 
+  zone.addEventListener('click', function (event) {
+    if (event.target === pickBtn || event.target === fileInput) return;
+    focusPaste();
+  });
+
+  pickBtn.addEventListener('click', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    fileInput.click();
+  });
+
   fileInput.addEventListener('change', function () {
     if (fileInput.files && fileInput.files.length) {
       handleFiles(fileInput.files);
       fileInput.value = '';
     }
+    focusPaste();
   });
 
   renderList();
-  try { zone.focus(); } catch (e) {}
+  focusPaste();
+  setTimeout(focusPaste, 50);
+  setTimeout(focusPaste, 300);
 })();
   </script>
 </body>

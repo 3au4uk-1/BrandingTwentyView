@@ -19,5 +19,7 @@ describe('buildPrevyuUploadHtml', () => {
     expect(html).toContain('https://t.test/s/prevyu-upload/li-1');
     expect(html).toContain('tok-abc');
     expect(html).toContain('Authorization');
+    expect(html).toContain('pasteCatch');
+    expect(html).toContain('contenteditable');
   });
 });

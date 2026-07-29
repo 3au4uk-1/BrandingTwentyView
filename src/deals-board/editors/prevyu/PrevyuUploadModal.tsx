@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { buildPrevyuUploadHtml } from 'src/logic-functions/shared/prevyu-upload-html';
@@ -41,6 +41,7 @@ export const PrevyuUploadModal = ({
   const theme = useTheme();
   const { colors, font, spacing } = theme;
   const queryClient = useQueryClient();
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const postUrl = useMemo(
     () => (isOpen ? resolvePrevyuUploadPageUrl(itemId) : null),
@@ -62,6 +63,33 @@ export const PrevyuUploadModal = ({
   const refreshLineItems = () => {
     void queryClient.invalidateQueries({ queryKey: ['lineItems'] });
   };
+
+  useEffect(() => {
+    if (!isOpen || !srcDoc) return;
+
+    const focusIframe = () => {
+      const iframe = iframeRef.current;
+      if (!iframe) return;
+      try {
+        iframe.focus();
+        iframe.contentWindow?.focus();
+        const catcher = iframe.contentDocument?.getElementById('pasteCatch');
+        catcher?.focus?.();
+      } catch {
+        // Remote DOM / cross-frame focus may throw
+      }
+    };
+
+    const t0 = globalThis.setTimeout?.(focusIframe, 0);
+    const t1 = globalThis.setTimeout?.(focusIframe, 100);
+    const t2 = globalThis.setTimeout?.(focusIframe, 400);
+
+    return () => {
+      if (t0 != null) globalThis.clearTimeout?.(t0);
+      if (t1 != null) globalThis.clearTimeout?.(t1);
+      if (t2 != null) globalThis.clearTimeout?.(t2);
+    };
+  }, [isOpen, srcDoc]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -124,8 +152,8 @@ export const PrevyuUploadModal = ({
       title="Превью"
       description={
         itemName
-          ? `${itemName} — загрузка в отдельном контексте (вне Remote DOM).`
-          : 'Загрузка в отдельном контексте (вне Remote DOM).'
+          ? `${itemName} — кликните в область вставки и нажмите Ctrl+V.`
+          : 'Кликните в область вставки и нажмите Ctrl+V.'
       }
       onClose={handleClose}
       portalTarget="root"
@@ -157,9 +185,18 @@ export const PrevyuUploadModal = ({
     >
       {srcDoc ? (
         <iframe
+          ref={iframeRef}
           title="prevyu-upload"
           srcDoc={srcDoc}
           sandbox="allow-scripts allow-same-origin allow-forms"
+          onLoad={() => {
+            try {
+              iframeRef.current?.contentWindow?.focus();
+              iframeRef.current?.contentDocument?.getElementById('pasteCatch')?.focus();
+            } catch {
+              // ignore
+            }
+          }}
           style={{
             display: 'block',
             width: '100%',
