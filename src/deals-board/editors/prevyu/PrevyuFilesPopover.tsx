@@ -1,13 +1,21 @@
 import { useEffect, type MouseEvent as ReactMouseEvent } from 'react';
+import { createPortal } from 'react-dom';
 
 import { useTheme } from '../../theme/ThemeContext';
 import type { LineItemFileRef } from '../../types';
 import { Button } from '../../ui/Button';
+import { resolvePortalContainer, usePortalHost } from '../../ui/PortalHostContext';
+import {
+  resolveAnchoredOverlayPosition,
+  type RectLike,
+} from '../../utils/anchored-overlay';
 
 export type PrevyuFilesPopoverProps = {
   files: LineItemFileRef[];
   urls: string[];
   open: boolean;
+  /** Root-local thumb box from measureElementInRoot. */
+  anchor: RectLike | null;
   onClose: () => void;
   onMakeFirst: (fileId: string) => void;
   onRemove: (fileId: string) => void;
@@ -18,15 +26,17 @@ export type PrevyuFilesPopoverProps = {
 const THUMB_SIZE = 40;
 const POPOVER_MIN_WIDTH = 220;
 const POPOVER_MAX_WIDTH = 280;
+const POPOVER_ESTIMATED_HEIGHT = 220;
 
 /**
- * Files panel anchored above the thumb via CSS (no portal / client rects).
- * Remote DOM broke fixed/absolute+getBoundingClientRect placement.
+ * Files panel portaled to the board root (escapes table overflow) and placed
+ * above the thumb using offset-based root-local geometry.
  */
 export const PrevyuFilesPopover = ({
   files,
   urls,
   open,
+  anchor,
   onClose,
   onMakeFirst,
   onRemove,
@@ -34,6 +44,7 @@ export const PrevyuFilesPopover = ({
   isPending,
 }: PrevyuFilesPopoverProps) => {
   const theme = useTheme();
+  const portalHostRef = usePortalHost();
   const { colors, font, spacing, radius, zIndex } = theme;
 
   useEffect(() => {
@@ -54,7 +65,36 @@ export const PrevyuFilesPopover = ({
     event.stopPropagation();
   };
 
-  return (
+  const root = portalHostRef?.current ?? null;
+  const rootWidth = root && 'clientWidth' in root ? Number(root.clientWidth) || 0 : 0;
+  const rootHeight = root && 'clientHeight' in root ? Number(root.clientHeight) || 0 : 0;
+
+  const placed = anchor
+    ? resolveAnchoredOverlayPosition({
+        anchor,
+        overlayWidth: POPOVER_MAX_WIDTH,
+        overlayHeight: POPOVER_ESTIMATED_HEIGHT,
+        rootWidth: rootWidth || 1200,
+        rootHeight: rootHeight || 800,
+        preferAbove: true,
+      })
+    : { top: 16, left: 16, transform: undefined as string | undefined };
+
+  const backdrop = (
+    <div
+      data-prevyu-files-backdrop
+      aria-hidden="true"
+      onMouseDown={onClose}
+      style={{
+        position: 'absolute',
+        inset: 0,
+        zIndex: zIndex.dropdown,
+        backgroundColor: 'transparent',
+      }}
+    />
+  );
+
+  const panel = (
     <div
       role="dialog"
       aria-label="Файлы превью"
@@ -63,10 +103,10 @@ export const PrevyuFilesPopover = ({
       onMouseDown={stopBubble}
       style={{
         position: 'absolute',
-        left: 0,
-        bottom: '100%',
-        marginBottom: 4,
-        zIndex: zIndex.dropdown,
+        top: placed.top,
+        left: placed.left,
+        transform: placed.transform,
+        zIndex: zIndex.dropdown + 1,
         minWidth: POPOVER_MIN_WIDTH,
         maxWidth: POPOVER_MAX_WIDTH,
         border: `1px solid ${colors.border}`,
@@ -224,5 +264,22 @@ export const PrevyuFilesPopover = ({
         Добавить
       </Button>
     </div>
+  );
+
+  const container = resolvePortalContainer('root', portalHostRef);
+  if (!container) {
+    return (
+      <>
+        {backdrop}
+        {panel}
+      </>
+    );
+  }
+
+  return (
+    <>
+      {createPortal(backdrop, container)}
+      {createPortal(panel, container)}
+    </>
   );
 };

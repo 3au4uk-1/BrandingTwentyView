@@ -1,27 +1,33 @@
-import { useEffect, type MouseEvent as ReactMouseEvent } from 'react';
+import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 import { useTheme } from '../../theme/ThemeContext';
+import { resolvePortalContainer, usePortalHost } from '../../ui/PortalHostContext';
+import {
+  resolveHoverPreviewPosition,
+  type RectLike,
+} from '../../utils/anchored-overlay';
 
 export type PrevyuHoverPreviewProps = {
   url: string;
-  /** When false, render nothing. */
-  open: boolean;
+  /** Root-local thumb box from measureElementInRoot (not client rects). */
+  anchor: RectLike | null;
   onClose: () => void;
 };
 
 const PREVIEW_MAX = 280;
 
 /**
- * Enlarged preview next to the thumb.
- * CSS-anchored (no clientX / getBoundingClientRect) — Remote DOM mixes host-page
- * pointer coords with widget-local rects, which shifted the portal image sideways.
+ * Floating preview portaled to the board root so table overflow cannot clip it.
+ * Positioned from offset-based root-local anchor (Remote DOM–safe).
  */
-export const PrevyuHoverPreview = ({ url, open, onClose }: PrevyuHoverPreviewProps) => {
+export const PrevyuHoverPreview = ({ url, anchor, onClose }: PrevyuHoverPreviewProps) => {
   const theme = useTheme();
+  const portalHostRef = usePortalHost();
   const { colors, radius, zIndex } = theme;
 
   useEffect(() => {
-    if (!open) return;
+    if (!anchor) return;
 
     const handleDismiss = () => onClose();
     const view = typeof window !== 'undefined' ? window : undefined;
@@ -31,23 +37,27 @@ export const PrevyuHoverPreview = ({ url, open, onClose }: PrevyuHoverPreviewPro
       view?.removeEventListener?.('scroll', handleDismiss, true);
       view?.removeEventListener?.('blur', handleDismiss);
     };
-  }, [open, onClose]);
+  }, [anchor, onClose]);
 
-  if (!open) return null;
+  if (!anchor) return null;
 
-  return (
+  const root = portalHostRef?.current ?? null;
+  const rootWidth = root && 'clientWidth' in root ? Number(root.clientWidth) || 0 : 0;
+  const rootHeight = root && 'clientHeight' in root ? Number(root.clientHeight) || 0 : 0;
+  const { top, left } = resolveHoverPreviewPosition(
+    anchor,
+    PREVIEW_MAX,
+    rootWidth || 1200,
+    rootHeight || 800,
+  );
+
+  const preview = (
     <div
       data-prevyu-hover-preview
-      onMouseEnter={(event: ReactMouseEvent) => {
-        // Keep preview while crossing the gap from thumb → preview is not needed
-        // (pointerEvents none); dismiss stays on thumb mouseLeave.
-        event.stopPropagation();
-      }}
       style={{
         position: 'absolute',
-        left: '100%',
-        top: 0,
-        marginLeft: 8,
+        left,
+        top,
         zIndex: zIndex.dropdown,
         pointerEvents: 'none',
         borderRadius: radius.md,
@@ -73,4 +83,7 @@ export const PrevyuHoverPreview = ({ url, open, onClose }: PrevyuHoverPreviewPro
       />
     </div>
   );
+
+  const container = resolvePortalContainer('root', portalHostRef);
+  return container ? createPortal(preview, container) : preview;
 };
