@@ -3,7 +3,6 @@ import { PRINT_FIELD_GROUP_ID } from 'src/constants/print-field-group';
 
 import { FrezaPanelChip } from '../editors/FrezaPanelChip';
 import { PrintPanelChip } from '../editors/PrintPanelChip';
-import { RestorationMaketChip } from '../editors/RestorationMaketChip';
 import { useGroupChipMode } from '../hooks/useGroupChipMode';
 import { useLineItemGroupExpand } from '../hooks/useLineItemGroupExpand';
 import { useTheme } from '../theme/ThemeContext';
@@ -33,9 +32,6 @@ export const GroupChipsCell = ({
   const toggle = onToggle ?? expansion.toggle;
   const { colors, font, spacing } = useTheme();
 
-  const showRestorationChip =
-    item.tip === 'RESTAVRACIYA' || Boolean(item.ssylkaNaMakety?.primaryLinkUrl);
-
   const hasPrintGroup = groups.some((entry) => entry.group.id === PRINT_FIELD_GROUP_ID);
   const otherGroups = groups.filter(
     (entry) =>
@@ -44,7 +40,7 @@ export const GroupChipsCell = ({
 
   const showQueueChips = hasPrintGroup;
 
-  if (!showQueueChips && !showRestorationChip && otherGroups.length === 0) {
+  if (!showQueueChips && otherGroups.length === 0) {
     return null;
   }
 
@@ -98,7 +94,6 @@ export const GroupChipsCell = ({
           </button>
         );
       })}
-      {showRestorationChip ? <RestorationMaketChip item={item} /> : null}
     </div>
   );
 };

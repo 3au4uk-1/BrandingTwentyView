@@ -28,6 +28,17 @@ export const removePrevyuFile = (
   fileId: string,
 ): LineItemFileRef[] => (current ?? []).filter((file) => file.fileId !== fileId);
 
+export const movePrevyuFileToFront = (
+  current: LineItemFileRef[] | null | undefined,
+  fileId: string,
+): LineItemFileRef[] => {
+  const files = [...(current ?? [])];
+  const index = files.findIndex((file) => file.fileId === fileId);
+  if (index <= 0) return files;
+  const [picked] = files.splice(index, 1);
+  return [picked, ...files];
+};
+
 /**
  * Resolve copy/preview URLs for FILES refs.
  * - Prefer `label` when it is an absolute http(s) URL (upload response url stored as label)

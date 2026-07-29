@@ -38,6 +38,7 @@ import { useOpportunityRashodFields } from './hooks/useOpportunityRashodFields';
 import { useDealsBoardRealtimeSync } from './realtime/useDealsBoardRealtimeSync';
 import { crmFieldNamesFromColumns, fieldTypesByNameFromDescriptors, needsCompanyRelation } from './metadata/crm-field-names';
 import { mergeColumns } from './metadata/merge-columns';
+import { pinChildColumnFirst } from './utils/pin-child-column';
 import { useObjectFields } from './metadata/useObjectFields';
 import { VIRTUAL_PARENT_FIELD_DESCRIPTORS } from './metadata/virtual-columns';
 import { filterDealsAndLineItems } from './filter-model/apply-line-item-filters';
@@ -304,7 +305,10 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
 
   const mergedChildColumns = useMemo(
     () =>
-      mergeColumns(activeView?.childColumns ?? DEFAULT_CHILD_COLUMNS, childFieldsQuery.data ?? []),
+      pinChildColumnFirst(
+        mergeColumns(activeView?.childColumns ?? DEFAULT_CHILD_COLUMNS, childFieldsQuery.data ?? []),
+        'prevyuOkleyki',
+      ),
     [activeView?.childColumns, childFieldsQuery.data],
   );
 

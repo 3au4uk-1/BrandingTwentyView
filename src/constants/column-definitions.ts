@@ -16,24 +16,18 @@ export const DEFAULT_CHILD_GROUPS: ColumnGroupConfig[] = [
 ];
 
 export const DEFAULT_CHILD_COLUMNS: ColumnConfig[] = [
-  { field: 'name', label: 'Позиция', order: 0, visible: true, width: 240 },
-  { field: 'tip', label: 'Категория', order: 1, visible: true, width: 120 },
-  { field: 'stage', label: 'Стадия', order: 2, visible: true, width: 120 },
-  { field: 'tipDetail', label: 'Уточнение', order: 3, visible: true, width: 140 },
+  { field: 'prevyuOkleyki', label: 'Превью', order: 0, visible: true, width: 72 },
+  { field: 'name', label: 'Позиция', order: 1, visible: true, width: 240 },
+  { field: 'tip', label: 'Категория', order: 2, visible: true, width: 120 },
+  { field: 'stage', label: 'Стадия', order: 3, visible: true, width: 120 },
+  { field: 'tipDetail', label: 'Уточнение', order: 4, visible: true, width: 140 },
   {
     field: 'ssylkaNaMakety',
     label: 'Макеты',
-    order: 4,
-    visible: true,
-    width: 100,
-    groupId: PRINT_FIELD_GROUP_ID,
-  },
-  {
-    field: 'prevyuOkleyki',
-    label: 'Превью',
     order: 5,
     visible: true,
     width: 100,
+    groupId: PRINT_FIELD_GROUP_ID,
   },
   {
     field: 'dataGotovnostiPechati',

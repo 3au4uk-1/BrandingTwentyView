@@ -5,6 +5,7 @@ import {
   isImageFile,
   mergePrevyuFileList,
   mergePrevyuFiles,
+  movePrevyuFileToFront,
   removePrevyuFile,
   resolvePrevyuFileUrls,
   toPrevyuFileRef,
@@ -28,6 +29,24 @@ describe('mergePrevyuFiles / removePrevyuFile', () => {
     expect(removePrevyuFile([{ fileId: 'a' }, { fileId: 'b' }], 'a')).toEqual([
       { fileId: 'b' },
     ]);
+  });
+});
+
+describe('movePrevyuFileToFront', () => {
+  it('moves matching file to index 0 and keeps others', () => {
+    expect(
+      movePrevyuFileToFront(
+        [{ fileId: 'a' }, { fileId: 'b' }, { fileId: 'c' }],
+        'b',
+      ),
+    ).toEqual([{ fileId: 'b' }, { fileId: 'a' }, { fileId: 'c' }]);
+  });
+
+  it('returns same order when fileId missing or already first', () => {
+    const files = [{ fileId: 'a' }, { fileId: 'b' }];
+    expect(movePrevyuFileToFront(files, 'a')).toEqual(files);
+    expect(movePrevyuFileToFront(files, 'z')).toEqual(files);
+    expect(movePrevyuFileToFront(null, 'a')).toEqual([]);
   });
 });
 
