@@ -34,6 +34,7 @@ export const useLineItems = (
     queryKey: lineItemsQueryKey(sortedIds, filters),
     queryFn: () => fetchLineItemsByOpportunityIds(sortedIds, filters),
     enabled: enabled && sortedIds.length > 0,
+    staleTime: 30_000,
   });
 };
 
@@ -153,7 +154,10 @@ export const useUpdateLineItem = () => {
         });
       }
 
-      queryClient.invalidateQueries({ queryKey: ['lineItems'] });
+      if (error) {
+        queryClient.invalidateQueries({ queryKey: ['lineItems'] });
+        return;
+      }
 
       if (opportunityId) {
         await syncDealStage(queryClient, opportunityId);

@@ -544,7 +544,10 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     : hasLineItemFilters
       ? filteredBoardData.deals.length
       : totalCount;
-  const rashodQuery = useOpportunityRashodFields(visibleRecords);
+  const rashodQuery = useOpportunityRashodFields(
+    visibleRecords,
+    boardPane === 'analytics',
+  );
 
   const handleFilterBarChange = (next: FilterState) => {
     setFilterSession({
