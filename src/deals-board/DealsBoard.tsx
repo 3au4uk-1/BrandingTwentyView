@@ -34,6 +34,7 @@ import { useDealBoardViews, useUpdateDealBoardView } from './hooks/useDealBoardV
 import { useDealsBoardPage } from './hooks/useDealsBoardPage';
 import { useLineItems } from './hooks/useLineItems';
 import { usePrefetchLineItemListStatuses } from './hooks/useLineItemListStatus';
+import { useShowAllPreference } from './hooks/useShowAllPreference';
 import { resolveOpportunitiesFetchAll, useOpportunities } from './hooks/useOpportunities';
 import { useOpportunityRashodFields } from './hooks/useOpportunityRashodFields';
 import { useDealsBoardRealtimeSync } from './realtime/useDealsBoardRealtimeSync';
@@ -48,10 +49,7 @@ import {
   RESET_FILTER_SESSION_TO_VIEW,
 } from './filter-model/clear-filter-session';
 import { clausesToDealBoardFilters } from './filter-model/clauses-to-deal-board-filters';
-import {
-  buildPersistedFiltersFromSession,
-  buildPersistedViewFilters,
-} from './filter-model/filter-session-bridge';
+import { buildPersistedFiltersFromSession } from './filter-model/filter-session-bridge';
 import { hasLineItemFilterClauses } from './filter-model/has-line-item-filter-clauses';
 import { migrateLegacyFilters } from './filter-model/migrate-legacy-filters';
 import { resolveSessionOverride } from './filter-model/resolve-session-override';
@@ -161,6 +159,10 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     [activeViewId, mobileLayoutActive, views],
   );
 
+  const { showAll: showAllPreference, setShowAll: setShowAllPreference } = useShowAllPreference(
+    activeView?.id,
+  );
+
   useEffect(() => {
     if (!activeViewId && activeView?.id && !mobileLayoutActive) {
       setActiveViewId(activeView.id);
@@ -209,7 +211,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
 
     return {
       ...boardFilters,
-      showAll: activeView?.filters?.showAll,
+      showAll: showAllPreference,
     };
   }, [
     activeView?.filters?.dateFrom,
@@ -217,13 +219,13 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     activeView?.filters?.dateTo,
     activeView?.filters?.search,
     activeView?.filters?.searchTerms,
-    activeView?.filters?.showAll,
     effectiveClauses,
     filterSession.dateFrom,
     filterSession.datePreset,
     filterSession.dateTo,
     filterSession.search,
     filterSession.searchTerms,
+    showAllPreference,
   ]);
 
   const filterBarValue = useMemo<FilterState>(
@@ -368,7 +370,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     [parentFieldsQuery.data],
   );
 
-  const showAllDeals = activeView?.filters?.showAll ?? false;
+  const showAllDeals = showAllPreference;
   const effectiveShowAll = mobileLayoutActive ? false : showAllDeals;
   const pageSize = mobileLayoutActive ? MOBILE_PAGE_SIZE : DESKTOP_PAGE_SIZE;
 
@@ -726,24 +728,9 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     }
   };
 
-  const handleShowAllChange = async (nextShowAll: boolean) => {
-    if (!activeView) return;
-
-    try {
-      await updateViewMutation.mutateAsync({
-        id: activeView.id,
-        data: {
-          filters: buildPersistedViewFilters(activeView.filters, {
-            showAll: nextShowAll,
-          }),
-        },
-      });
-      setPage(0);
-    } catch (error) {
-      window.alert(
-        `Не удалось обновить настройку пагинации.${error instanceof Error ? ` ${error.message}` : ''}`,
-      );
-    }
+  const handleShowAllChange = (nextShowAll: boolean) => {
+    setShowAllPreference(nextShowAll);
+    setPage(0);
   };
 
   return (
@@ -984,7 +971,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
                 saveActiveViewColumns('child', columns, activeView?.childGroups ?? [])
               }
               showAll={showAllDeals}
-              onShowAllChange={(nextShowAll) => void handleShowAllChange(nextShowAll)}
+              onShowAllChange={handleShowAllChange}
               sort={effectiveSort}
               onSortChange={handleSortChange}
               isLoading={coldLoadQuery.isLoading}
