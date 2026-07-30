@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import type { LineItemRow, OpportunityRow } from '../types';
 import {
+  buildOkleykaSalaryFilename,
   buildOkleykaSalaryRows,
   isOkleykaSalaryLineItem,
   salaryRowsToCsv,
+  salaryRowsToXlsxMatrix,
 } from './compute';
 
 const item = (partial: Partial<LineItemRow> & Pick<LineItemRow, 'id'>): LineItemRow => ({
@@ -74,5 +76,29 @@ describe('okleyka salary compute', () => {
     expect(csv.startsWith('\uFEFF')).toBe(true);
     expect(csv).toContain('Bitrix;Сделка');
     expect(csv).toContain('90.0');
+  });
+
+  it('builds xlsx matrix and dated filename', () => {
+    const matrix = salaryRowsToXlsxMatrix([
+      {
+        lineItemId: 'a',
+        opportunityId: 'd',
+        bitrixUrl: 'https://x',
+        dealName: 'Сделка',
+        positionName: 'Поз',
+        qty: 1,
+        saleRub: 100,
+        printCostRub: 10,
+        frezaCostRub: 0,
+        profitRub: 90,
+        marginPct: 90,
+      },
+    ]);
+    expect(matrix[0]?.[0]).toBe('Bitrix');
+    expect(matrix[1]?.[3]).toBe(1);
+    expect(matrix[1]?.[8]).toBe(90);
+    expect(buildOkleykaSalaryFilename(new Date('2026-07-30T12:00:00.000Z'))).toBe(
+      'okleyka-salary-2026-07-30.xlsx',
+    );
   });
 });

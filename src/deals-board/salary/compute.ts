@@ -101,3 +101,37 @@ export const salaryRowsToCsv = (rows: OkleykaSalaryRow[]): string => {
   ];
   return `\uFEFF${lines.join('\n')}`;
 };
+
+/** Sheet matrix for Excel export (header + data rows). */
+export const salaryRowsToXlsxMatrix = (
+  rows: OkleykaSalaryRow[],
+): Array<Array<string | number>> => {
+  const header = [
+    'Bitrix',
+    'Сделка',
+    'Позиция',
+    'Кол-во',
+    'Сумма продажи',
+    'Расход печать',
+    'Расход фреза',
+    'Прибыль',
+    'Маржа %',
+  ];
+  return [
+    header,
+    ...rows.map((row) => [
+      row.bitrixUrl,
+      row.dealName,
+      row.positionName,
+      row.qty,
+      Math.round(row.saleRub),
+      Math.round(row.printCostRub),
+      Math.round(row.frezaCostRub),
+      Math.round(row.profitRub),
+      row.marginPct === null ? '' : Number(row.marginPct.toFixed(1)),
+    ]),
+  ];
+};
+
+export const buildOkleykaSalaryFilename = (date = new Date()): string =>
+  `okleyka-salary-${date.toISOString().slice(0, 10)}.xlsx`;

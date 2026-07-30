@@ -4,6 +4,11 @@ import { useMemo, useState } from 'react';
 import { ThemeProvider, useTheme } from '../theme/ThemeContext';
 import { Button } from '../ui/Button';
 import {
+  downloadBlobRemoteDomSafe,
+  revokePendingDownload,
+  type PendingDownloadLink,
+} from '../utils/download-blob';
+import {
   fetchOkleykaSalaryLineItems,
   fetchOpportunitiesByIdsForSalary,
 } from './api';
@@ -11,23 +16,16 @@ import {
   buildOkleykaSalaryRows,
   formatMarginPct,
   formatSalaryRub,
-  salaryRowsToCsv,
 } from './compute';
-
-const downloadCsv = (csv: string) => {
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = `okleyka-salary-${new Date().toISOString().slice(0, 10)}.csv`;
-  anchor.click();
-  URL.revokeObjectURL(url);
-};
+import { fetchOkleykaSalaryExcelBlob } from './export-excel';
 
 const OkleykaSalaryPageInner = () => {
   const theme = useTheme();
   const { colors, font, spacing, radius } = theme;
   const [refreshKey, setRefreshKey] = useState(0);
+  const [exportPending, setExportPending] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [pendingDownload, setPendingDownload] = useState<PendingDownloadLink | null>(null);
 
   const query = useQuery({
     queryKey: ['okleyka-salary', refreshKey],
@@ -52,6 +50,26 @@ const OkleykaSalaryPageInner = () => {
       marginPct: sale > 0 ? (profit / sale) * 100 : null,
     };
   }, [rows]);
+
+  const handleExportExcel = async () => {
+    setExportError(null);
+    setExportPending(true);
+    revokePendingDownload(pendingDownload);
+    setPendingDownload(null);
+    try {
+      const { blob, filename } = await fetchOkleykaSalaryExcelBlob(rows);
+      const result = downloadBlobRemoteDomSafe(blob, filename);
+      if (result.outcome === 'needs-link' && result.pending) {
+        setPendingDownload(result.pending);
+      } else if (result.outcome === 'failed') {
+        setExportError('Не удалось подготовить файл для скачивания.');
+      }
+    } catch (error) {
+      setExportError(error instanceof Error ? error.message : 'Ошибка экспорта');
+    } finally {
+      setExportPending(false);
+    }
+  };
 
   return (
     <div
@@ -94,7 +112,7 @@ const OkleykaSalaryPageInner = () => {
             {query.isFetching ? ' · обновление…' : ''}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: spacing.xs }}>
+        <div style={{ display: 'flex', gap: spacing.xs, alignItems: 'center', flexWrap: 'wrap' }}>
           <Button
             theme={theme}
             size="sm"
@@ -107,13 +125,31 @@ const OkleykaSalaryPageInner = () => {
             theme={theme}
             size="sm"
             variant="primary"
-            disabled={rows.length === 0}
-            onClick={() => downloadCsv(salaryRowsToCsv(rows))}
+            disabled={rows.length === 0 || exportPending}
+            onClick={() => void handleExportExcel()}
           >
-            CSV
+            {exportPending ? 'Excel…' : 'Excel'}
           </Button>
+          {pendingDownload ? (
+            <a
+              href={pendingDownload.url}
+              download={pendingDownload.filename}
+              style={{
+                color: colors.accent,
+                fontSize: font.sizeSm,
+                fontWeight: font.weightMedium,
+                textDecoration: 'underline',
+              }}
+            >
+              Скачать {pendingDownload.filename}
+            </a>
+          ) : null}
         </div>
       </header>
+
+      {exportError ? (
+        <div style={{ color: colors.danger, fontSize: font.sizeSm }}>{exportError}</div>
+      ) : null}
 
       <div
         style={{
