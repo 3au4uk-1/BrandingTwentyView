@@ -1,6 +1,11 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 
-import { downloadBlobRemoteDomSafe, revokePendingDownload } from './download-blob';
+import {
+  buildDataUrl,
+  buildDownloadSrcDoc,
+  downloadBlobRemoteDomSafe,
+  revokePendingDownload,
+} from './download-blob';
 
 describe('downloadBlobRemoteDomSafe', () => {
   afterEach(() => {
@@ -39,5 +44,20 @@ describe('downloadBlobRemoteDomSafe', () => {
 
     const result = downloadBlobRemoteDomSafe(new Blob(['x']), 't.xlsx');
     expect(result.outcome).toBe('opened');
+  });
+});
+
+describe('buildDownloadSrcDoc', () => {
+  it('embeds data url and filename for main-thread click', async () => {
+    const dataUrl = await buildDataUrl(
+      new Blob([new Uint8Array([1, 2, 3])], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      }),
+    );
+    const html = buildDownloadSrcDoc(dataUrl, 'okleyka-salary-2026-07-30.xlsx');
+    expect(html).toContain('data:application/vnd.openxmlformats');
+    expect(html).toContain('okleyka-salary-2026-07-30.xlsx');
+    expect(html).toContain('a.click()');
+    expect(html).toContain('okleyka-download-done');
   });
 });
