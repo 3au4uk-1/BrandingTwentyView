@@ -24,7 +24,7 @@ import {
 import { findActiveGroupMembers } from '../utils/active-group';
 import {
   planPoryadokPatches,
-  sortLineItemsByOrder,
+  sortLineItemsByStageBands,
 } from '../utils/line-item-order';
 import { resolveFieldValue } from '../utils/resolve-field-value';
 import { getStageRowStyles } from '../utils/stage-row-styles';
@@ -190,11 +190,14 @@ export const LineItemsTable = ({
   const isHiddenByFilters = isDefaultLineItemHiddenByFilters(filters);
   const isDragging = draggingId !== null;
 
-  const sortedItems = useMemo(() => sortLineItemsByOrder(items), [items]);
+  const sortedItems = useMemo(() => sortLineItemsByStageBands(items), [items]);
   const displayItems = orderedItems ?? sortedItems;
   displayItemsRef.current = displayItems;
   const itemsOrderSignature = useMemo(
-    () => items.map((item) => `${item.id}:${item.poryadok ?? ''}`).join('|'),
+    () =>
+      items
+        .map((item) => `${item.id}:${item.poryadok ?? ''}:${item.stage ?? ''}`)
+        .join('|'),
     [items],
   );
 

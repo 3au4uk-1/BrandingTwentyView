@@ -100,9 +100,12 @@ const handler = async (event: RoutePayload) => {
 
     return jsonResponse(200, { ok: true, files: next });
   } catch (error) {
-    return jsonResponse(500, {
-      error: error instanceof Error ? error.message : 'Upload failed',
-    });
+    const message = error instanceof Error ? error.message : 'Upload failed';
+    const friendly =
+      /fetch failed|Failed to fetch|NetworkError/i.test(message)
+        ? 'Не удалось сохранить файл на сервере Twenty (сеть Metadata API). Попробуйте через карточку позиции.'
+        : message;
+    return jsonResponse(500, { error: friendly });
   }
 };
 

@@ -8,6 +8,11 @@ export type BuildPrevyuUploadHtmlOpts = {
   postUrl: string;
   /** App access token for Authorization on POST (iframe navigation cannot send Bearer). */
   accessToken: string;
+  /**
+   * `parent` — postMessage to embedding board (avoids srcdoc/null-origin CORS).
+   * `direct` — fetch from the iframe (GET page / same-origin).
+   */
+  uploadMode?: 'parent' | 'direct';
 };
 
 const escapeHtml = (value: string): string =>
@@ -29,12 +34,14 @@ export const buildPrevyuUploadHtml = ({
   files,
   postUrl,
   accessToken,
+  uploadMode = 'direct',
 }: BuildPrevyuUploadHtmlOpts): string => {
   const safeId = escapeHtml(lineItemId);
   const safeName = escapeHtml(lineItemName || 'Позиция');
   const filesJson = JSON.stringify(files).replace(/</g, '\\u003c');
   const postUrlJson = JSON.stringify(postUrl);
   const accessTokenJson = JSON.stringify(accessToken);
+  const uploadModeJson = JSON.stringify(uploadMode);
 
   return `<!DOCTYPE html>
 <html lang="ru">
@@ -138,6 +145,7 @@ export const buildPrevyuUploadHtml = ({
   var lineItemId = ${JSON.stringify(lineItemId)};
   var postUrl = ${postUrlJson};
   var accessToken = ${accessTokenJson};
+  var uploadMode = ${uploadModeJson};
   var files = ${filesJson};
   var zone = document.getElementById('zone');
   var pasteCatch = document.getElementById('pasteCatch');
@@ -171,6 +179,17 @@ export const buildPrevyuUploadHtml = ({
     } catch (e) {}
   }
 
+  function formatNetworkError(message) {
+    var msg = message ? String(message) : '';
+    if (/fetch failed|Failed to fetch|NetworkError|Load failed/i.test(msg)) {
+      return 'Не удалось связаться с сервером загрузки. Используйте «Открыть в карточке» или проверьте TWENTY_FUNCTIONS_URL.';
+    }
+    if (/fetch failed/i.test(msg)) {
+      return 'Сервер Twenty не смог сохранить файл. Попробуйте «Открыть в карточке».';
+    }
+    return msg || 'Сеть недоступна';
+  }
+
   function renderList() {
     listEl.innerHTML = '';
     if (!files.length) return;
@@ -194,18 +213,60 @@ export const buildPrevyuUploadHtml = ({
     });
   }
 
-  function uploadBase64(filename, contentType, dataBase64) {
-    if (busy) return Promise.resolve();
-    if (files.length >= 6) {
-      setStatus('Максимум 6 файлов', 'err');
-      return Promise.resolve();
+  function applyUploadResult(result) {
+    busy = false;
+    if (!result || !result.ok) {
+      var errText = (result && result.body && result.body.error) || 'Ошибка загрузки';
+      setStatus(formatNetworkError(errText), 'err');
+      focusPaste();
+      return;
     }
-    if (!postUrl || !accessToken) {
-      setStatus('Нет URL или токена для загрузки', 'err');
-      return Promise.resolve();
+    if (Array.isArray(result.body.files)) {
+      files = result.body.files;
+      renderList();
     }
-    busy = true;
-    setStatus('Загрузка…');
+    setStatus('Загружено — можно вставить ещё (Ctrl+V)', 'ok');
+    notifyParent();
+    focusPaste();
+  }
+
+  function uploadViaParent(filename, contentType, dataBase64) {
+    return new Promise(function (resolve, reject) {
+      if (!window.parent || window.parent === window) {
+        reject(new Error('Нет родительского окна для загрузки'));
+        return;
+      }
+      var requestId = 'prevyu-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+      var timer = setTimeout(function () {
+        window.removeEventListener('message', onMsg);
+        reject(new Error('Таймаут загрузки через родительское окно'));
+      }, 120000);
+      function onMsg(event) {
+        var data = event.data;
+        if (!data || data.type !== 'prevyu-upload-response' || data.requestId !== requestId) return;
+        clearTimeout(timer);
+        window.removeEventListener('message', onMsg);
+        resolve({ ok: !!data.ok, body: data.body || {} });
+      }
+      window.addEventListener('message', onMsg);
+      try {
+        window.parent.postMessage({
+          type: 'prevyu-upload-request',
+          requestId: requestId,
+          lineItemId: lineItemId,
+          filename: filename,
+          contentType: contentType,
+          dataBase64: dataBase64,
+        }, '*');
+      } catch (e) {
+        clearTimeout(timer);
+        window.removeEventListener('message', onMsg);
+        reject(e);
+      }
+    });
+  }
+
+  function uploadDirect(filename, contentType, dataBase64) {
     return fetch(postUrl, {
       method: 'POST',
       credentials: 'omit',
@@ -214,25 +275,32 @@ export const buildPrevyuUploadHtml = ({
         Authorization: 'Bearer ' + accessToken,
       },
       body: JSON.stringify({ filename: filename, contentType: contentType, dataBase64: dataBase64 }),
-    })
-      .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })
-      .then(function (result) {
-        busy = false;
-        if (!result.ok) {
-          setStatus((result.body && result.body.error) || 'Ошибка загрузки', 'err');
-          return;
-        }
-        if (Array.isArray(result.body.files)) {
-          files = result.body.files;
-          renderList();
-        }
-        setStatus('Загружено — можно вставить ещё (Ctrl+V)', 'ok');
-        notifyParent();
-        focusPaste();
-      })
+    }).then(function (res) {
+      return res.json().then(function (body) { return { ok: res.ok, body: body }; });
+    });
+  }
+
+  function uploadBase64(filename, contentType, dataBase64) {
+    if (busy) return Promise.resolve();
+    if (files.length >= 6) {
+      setStatus('Максимум 6 файлов', 'err');
+      return Promise.resolve();
+    }
+    var useParent = uploadMode === 'parent';
+    if (!useParent && (!postUrl || !accessToken)) {
+      setStatus('Нет URL или токена для загрузки', 'err');
+      return Promise.resolve();
+    }
+    busy = true;
+    setStatus('Загрузка…');
+    var chain = useParent
+      ? uploadViaParent(filename, contentType, dataBase64)
+      : uploadDirect(filename, contentType, dataBase64);
+    return chain
+      .then(applyUploadResult)
       .catch(function (err) {
         busy = false;
-        setStatus(err && err.message ? err.message : 'Сеть недоступна', 'err');
+        setStatus(formatNetworkError(err && err.message), 'err');
         focusPaste();
       });
   }
