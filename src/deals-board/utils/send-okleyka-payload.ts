@@ -1,28 +1,61 @@
+import { sendOkleykaTelegramEvent } from '../api/crmparser';
+
 export type OkleykaSendPayload = {
   text: string;
   fileUrls: string[];
+  lineItemId: string;
+  opportunityId?: string;
+  force?: boolean;
+  sentBy?: { id?: string; name?: string };
 };
 
-export const buildClipboardText = (payload: OkleykaSendPayload): string => {
-  if (!payload.fileUrls.length) return payload.text;
-  return `${payload.text}\n\nФото:\n${payload.fileUrls.join('\n')}`;
+export type OkleykaSendResult = {
+  ok: boolean;
+  alreadySent?: boolean;
+  lastSentAt?: string;
+  warning?: string;
+  error?: string;
 };
 
-export const sendOkleykaPayload = async (
+export async function sendOkleykaPayload(
   payload: OkleykaSendPayload,
-): Promise<{ copiedText: boolean; copiedUrls: boolean }> => {
-  const clipboardText = buildClipboardText(payload);
+): Promise<OkleykaSendResult> {
   try {
-    await navigator.clipboard.writeText(clipboardText);
+    const result = await sendOkleykaTelegramEvent({
+      event: 'okleyka.send',
+      force: payload.force ?? false,
+      lineItemId: payload.lineItemId,
+      opportunityId: payload.opportunityId,
+      text: payload.text,
+      fileUrls: payload.fileUrls,
+      sentBy: payload.sentBy,
+    });
+
+    if (result.alreadySent) {
+      return {
+        ok: false,
+        alreadySent: true,
+        lastSentAt: result.lastSentAt,
+      };
+    }
+
+    if (!result.ok) {
+      return {
+        ok: false,
+        error: result.error ?? 'Не удалось отправить',
+        warning: result.warning,
+      };
+    }
+
     return {
-      copiedText: true,
-      copiedUrls: payload.fileUrls.length > 0,
+      ok: true,
+      warning: result.warning,
     };
-  } catch {
-    window.prompt('Скопируйте сообщение:', clipboardText);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     return {
-      copiedText: false,
-      copiedUrls: false,
+      ok: false,
+      error: message,
     };
   }
-};
+}

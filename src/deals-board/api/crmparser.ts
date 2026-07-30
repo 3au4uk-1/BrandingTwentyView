@@ -235,3 +235,32 @@ export async function writeBackLineItemAmount(
     },
   );
 }
+
+export type OkleykaTelegramSendBody = {
+  event: 'okleyka.send';
+  force?: boolean;
+  lineItemId: string;
+  opportunityId?: string;
+  text: string;
+  fileUrls: string[];
+  sentBy?: { id?: string; name?: string };
+};
+
+export type OkleykaTelegramSendResult = {
+  ok: boolean;
+  alreadySent?: boolean;
+  lastSentAt?: string;
+  messageIds?: number[];
+  loggedAt?: string;
+  warning?: string;
+  error?: string;
+};
+
+export async function sendOkleykaTelegramEvent(
+  body: OkleykaTelegramSendBody,
+): Promise<OkleykaTelegramSendResult> {
+  return logicFunctionFetch<OkleykaTelegramSendResult>(
+    `/crmparser/telegram/okleyka-send`,
+    { method: 'POST', body: JSON.stringify(body) },
+  );
+}

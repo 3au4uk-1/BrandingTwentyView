@@ -37,12 +37,16 @@ export const OkleykaMessageDialogProvider = ({
   const portalHostRef = usePortalHost();
   const [payload, setPayload] = useState<OkleykaNotifyPayload | null>(null);
   const [draft, setDraft] = useState<OkleykaMessageDraft | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
   const { colors, radius, font, spacing, zIndex } = theme;
 
   useEffect(() => {
     registerOkleykaMessageHandler((next) => {
-      setCopied(false);
+      setSending(false);
+      setSendError(null);
+      setSent(false);
       setPayload(next);
       setDraft(buildOkleykaDraft(next));
     });
@@ -52,7 +56,9 @@ export const OkleykaMessageDialogProvider = ({
   const handleDismiss = useCallback(() => {
     setPayload(null);
     setDraft(null);
-    setCopied(false);
+    setSending(false);
+    setSendError(null);
+    setSent(false);
   }, []);
 
   const updateDraft = useCallback(
@@ -62,13 +68,36 @@ export const OkleykaMessageDialogProvider = ({
     [],
   );
 
-  const handleCopy = useCallback(async () => {
-    if (!draft || !payload) return;
-    const text = formatOkleykaMessage(draft);
-    const fileUrls = resolvePrevyuFileUrls(payload.lineItem.prevyuOkleyki);
-    const result = await sendOkleykaPayload({ text, fileUrls });
-    setCopied(result.copiedText || result.copiedUrls);
-  }, [draft, payload]);
+  const handleSend = useCallback(
+    async (force = false) => {
+      if (!draft || !payload || sending) return;
+      setSending(true);
+      setSendError(null);
+      const text = formatOkleykaMessage(draft);
+      const fileUrls = resolvePrevyuFileUrls(payload.lineItem.prevyuOkleyki);
+      const result = await sendOkleykaPayload({
+        text,
+        fileUrls,
+        lineItemId: payload.lineItemId,
+        opportunityId: payload.opportunityId,
+        force,
+      });
+      setSending(false);
+      if (result.alreadySent && !force) {
+        const when = result.lastSentAt ?? '';
+        const ok = window.confirm(`Уже отправляли ${when}. Отправить ещё раз?`);
+        if (ok) await handleSend(true);
+        return;
+      }
+      if (!result.ok) {
+        setSendError(result.error ?? 'Не удалось отправить');
+        return;
+      }
+      setSent(true);
+      window.setTimeout(() => handleDismiss(), 800);
+    },
+    [draft, payload, sending, handleDismiss],
+  );
 
   useEffect(() => {
     if (!draft) return;
@@ -255,6 +284,20 @@ export const OkleykaMessageDialogProvider = ({
             {previewText}
           </pre>
 
+          {sendError ? (
+            <div
+              style={{
+                padding: spacing.sm,
+                borderRadius: radius.md,
+                backgroundColor: colors.dangerMuted,
+                color: colors.danger,
+                fontSize: font.sizeSm,
+              }}
+            >
+              {sendError}
+            </div>
+          ) : null}
+
           <div style={{ display: 'flex', gap: spacing.xs, justifyContent: 'flex-end' }}>
             <Button theme={theme} variant="ghost" size="sm" onClick={handleDismiss}>
               Отмена
@@ -263,9 +306,10 @@ export const OkleykaMessageDialogProvider = ({
               theme={theme}
               variant="primary"
               size="sm"
-              onClick={() => void handleCopy()}
+              disabled={sending}
+              onClick={() => void handleSend()}
             >
-              {copied ? 'Скопировано' : 'Копировать'}
+              {sent ? 'Отправлено' : sending ? 'Отправка…' : 'Отправить в чат'}
             </Button>
           </div>
         </div>
