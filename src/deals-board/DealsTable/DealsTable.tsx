@@ -359,6 +359,7 @@ export const DealsTable = ({
 
         <div style={{ display: 'flex', alignItems: 'center', gap: spacing.md }}>
           <label
+            title="Показать все сделки без постраничной навигации (только у вас)"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
