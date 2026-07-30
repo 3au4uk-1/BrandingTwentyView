@@ -148,14 +148,24 @@ describe('hasLineItemFilterClauses', () => {
 });
 
 describe('shouldFetchAllOpportunities', () => {
-  it('loads all records when line-item filter clauses are active', () => {
+  it('paginates when line-item filter clauses are active (aggregate ID pre-query)', () => {
     expect(
       shouldFetchAllOpportunities(
-        {},
+        { datePreset: 'future' },
         undefined,
         [{ id: '1', level: 'lineItem', field: 'stage', operator: 'in', value: ['NOVYY'] }],
       ),
-    ).toBe(true);
+    ).toBe(false);
+    expect(
+      shouldFetchAllOpportunities(
+        { datePreset: 'today' },
+        undefined,
+        [{ id: '1', level: 'lineItem', field: 'stage', operator: 'in', value: ['NOVYY'] }],
+      ),
+    ).toBe(false);
+  });
+
+  it('does not fetch-all for deal-level clauses without date filter', () => {
     expect(
       shouldFetchAllOpportunities(
         {},
@@ -163,16 +173,6 @@ describe('shouldFetchAllOpportunities', () => {
         [{ id: '1', level: 'deal', field: 'companyId', operator: 'in', value: ['c1'] }],
       ),
     ).toBe(false);
-  });
-
-  it('loads all records for today when line-item filter clauses are active', () => {
-    expect(
-      shouldFetchAllOpportunities(
-        { datePreset: 'today' },
-        undefined,
-        [{ id: '1', level: 'lineItem', field: 'stage', operator: 'in', value: ['NOVYY'] }],
-      ),
-    ).toBe(true);
   });
 
   it('paginates tight date presets (even with default date sort)', () => {
@@ -198,16 +198,6 @@ describe('shouldFetchAllOpportunities', () => {
         dateFrom: '2026-06-27',
         dateTo: '2026-06-27',
       }),
-    ).toBe(true);
-  });
-
-  it('still fetchAll for future when line-item clauses exist', () => {
-    expect(
-      shouldFetchAllOpportunities(
-        { datePreset: 'future' },
-        undefined,
-        [{ id: '1', level: 'lineItem', field: 'stage', operator: 'in', value: ['NOVYY'] }],
-      ),
     ).toBe(true);
   });
 

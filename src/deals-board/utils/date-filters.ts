@@ -200,12 +200,8 @@ export const buildOpportunityDateFilter = (
 export const shouldFetchAllOpportunities = (
   filters: DealBoardFilters,
   _sort?: DealBoardSort[],
-  clauses?: FilterClause[],
+  _clauses?: FilterClause[],
 ): boolean => {
-  if (clauses?.length && hasLineItemFilterClauses(clauses)) {
-    return true;
-  }
-
   const preset = filters.datePreset;
   if (preset && TIGHT_DATE_PRESETS.has(preset)) {
     return false;
