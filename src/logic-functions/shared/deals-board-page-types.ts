@@ -10,6 +10,8 @@ export type DealsBoardPageRequest = {
   includeListStatus: boolean;
   /** CRM field type map for GraphQL node selection (e.g. `{ amount: 'CURRENCY' }`) */
   fieldTypesByName?: Record<string, string>;
+  /** When true, response includes `_timings` stage durations (not shown in UI) */
+  debug?: boolean;
 };
 
 export type DealsBoardPageResponse = {
@@ -17,6 +19,12 @@ export type DealsBoardPageResponse = {
   totalCount: number;
   lineItemsByOppId: Record<string, Array<Record<string, unknown>>>;
   listStatusByLineItemId?: Record<string, unknown>;
+  _timings?: {
+    gqlMs: number;
+    enrichMs: number;
+    lineItemsMs: number;
+    totalMs: number;
+  };
 };
 
 export type LineItemRowLike = {

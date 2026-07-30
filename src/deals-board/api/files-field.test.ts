@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   collectImageFiles,
@@ -9,6 +9,7 @@ import {
   removePrevyuFile,
   resolvePrevyuFileUrls,
   toPrevyuFileRef,
+  uploadPrevyuFilesViaLogicFunction,
 } from './files-field';
 
 describe('mergePrevyuFiles / removePrevyuFile', () => {
@@ -129,5 +130,39 @@ describe('image file helpers', () => {
     expect(
       toPrevyuFileRef({ fileId: 'id-1', url: 'https://cdn/x.png' }, 'fallback.png'),
     ).toEqual({ fileId: 'id-1', label: 'https://cdn/x.png' });
+  });
+});
+
+describe('uploadPrevyuFilesViaLogicFunction', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('POSTs base64 to prevyu-upload LF and returns files', async () => {
+    globalThis.process = {
+      env: {
+        TWENTY_FUNCTIONS_URL: 'https://twenty.test/functions',
+        TWENTY_APP_ACCESS_TOKEN: 'app-token',
+      },
+    } as NodeJS.Process;
+
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify({ ok: true, files: [{ fileId: 'f1', label: 'a.png' }] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const files = await uploadPrevyuFilesViaLogicFunction(
+      'li-1',
+      new File([new Uint8Array([1, 2, 3])], 'a.png', { type: 'image/png' }),
+    );
+    expect(files).toEqual([{ fileId: 'f1', label: 'a.png' }]);
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringMatching(/\/prevyu-upload\/li-1$/),
+      expect.objectContaining({ method: 'POST' }),
+    );
   });
 });

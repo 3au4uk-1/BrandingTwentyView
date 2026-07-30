@@ -10,7 +10,6 @@ import {
   fetchLineItemOpportunityIdsByFilters,
   fetchLineItemOpportunityIdsBySearch,
 } from '../api/line-items';
-import { isCrmparserConfigured } from '../api/crmparser';
 import type { DealBoardFilters, DealBoardSort, LineItemRow, OpportunityRow } from '../types';
 import { buildOpportunityFilter, resolveSearchTerms } from '../utils/search';
 import {
@@ -121,8 +120,6 @@ export const fetchDealsBoardPageQueryData = async (
 
   const opportunityFilter = buildOpportunityFilter(params.filters, lineItemMatchedOpportunityIds);
   const orderBy = effectiveSort.map((entry) => ({ [entry.field]: entry.direction }));
-  const includeListStatus = isCrmparserConfigured();
-
   const request = {
     limit: pageSize,
     offset: params.page * pageSize,
@@ -131,7 +128,7 @@ export const fetchDealsBoardPageQueryData = async (
     visibleCrmFieldNames,
     includeCompanyRelation,
     restFieldNames: [...restFieldNames],
-    includeListStatus,
+    includeListStatus: false,
     fieldTypesByName: { ...fieldTypesByName },
   };
 
@@ -161,10 +158,7 @@ export const fetchDealsBoardPageQueryData = async (
   return {
     records,
     totalCount: response.totalCount,
-    listStatusHydrated:
-      includeListStatus &&
-      Boolean(response.listStatusByLineItemId) &&
-      Object.keys(response.listStatusByLineItemId ?? {}).length > 0,
+    listStatusHydrated: false,
   };
 };
 

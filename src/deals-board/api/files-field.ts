@@ -1,15 +1,14 @@
-import { MetadataApiClient } from 'twenty-client-sdk/metadata';
-
-import { DEAL_LINE_ITEM_PREVYU_OKLEYKI_FIELD_UNIVERSAL_IDENTIFIER } from 'src/constants/universal-identifiers';
 import { sanitizePrevyuFileRefs } from 'src/logic-functions/shared/prevyu-upload-service';
 
 import type { LineItemFileRef } from '../types';
+import { getTwentyFunctionsBaseUrl } from '../utils/twenty-functions-base-url';
 
-let metadataClient: MetadataApiClient | null = null;
+const readProcessEnv = (): Record<string, string | undefined> =>
+  globalThis.process?.env ?? {};
 
-const getMetadataApiClient = (): MetadataApiClient => {
-  if (!metadataClient) metadataClient = new MetadataApiClient();
-  return metadataClient;
+const getAppAccessToken = (): string | null => {
+  const token = readProcessEnv().TWENTY_APP_ACCESS_TOKEN?.trim();
+  return token || null;
 };
 
 export const PREVYU_UPLOAD_MAX_FILES = 6;
@@ -184,7 +183,18 @@ export const readBlobAsArrayBuffer = async (blob: Blob): Promise<ArrayBuffer> =>
   });
 };
 
-export const uploadPrevyuImageFile = async (file: File): Promise<UploadedPrevyuFile> => {
+const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  let binary = '';
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    const chunk = bytes.subarray(index, index + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+  return btoa(binary);
+};
+
+const assertPrevyuFileReadable = async (file: File): Promise<ArrayBuffer> => {
   const buffer = await readBlobAsArrayBuffer(file);
   if (!buffer.byteLength) {
     throw new Error(
@@ -198,23 +208,54 @@ export const uploadPrevyuImageFile = async (file: File): Promise<UploadedPrevyuF
       'Виджет Twenty обрезал файл. Нажмите «Открыть карточку» и вставьте Ctrl+V в поле «Превью оклейки».',
     );
   }
+  return buffer;
+};
 
-  const result = await getMetadataApiClient().uploadFile(
-    new Uint8Array(buffer),
-    file.name || `prevyu-${Date.now()}.png`,
-    file.type || 'image/png',
-    DEAL_LINE_ITEM_PREVYU_OKLEYKI_FIELD_UNIVERSAL_IDENTIFIER,
-  );
+export const uploadPrevyuFilesViaLogicFunction = async (
+  lineItemId: string,
+  file: File,
+): Promise<LineItemFileRef[]> => {
+  const buffer = await assertPrevyuFileReadable(file);
 
-  if (!result?.id) {
-    throw new Error('Upload did not return file id');
+  const baseUrl = getTwentyFunctionsBaseUrl();
+  const token = getAppAccessToken();
+  if (!baseUrl || !token) {
+    throw new Error('Prevyu upload proxy not configured');
   }
 
-  return {
-    fileId: result.id,
-    path: typeof result.path === 'string' ? result.path : undefined,
-    url: typeof result.url === 'string' ? result.url : undefined,
+  const response = await fetch(
+    `${baseUrl}/prevyu-upload/${encodeURIComponent(lineItemId)}`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        filename: file.name || `prevyu-${Date.now()}.png`,
+        contentType: file.type || 'image/png',
+        dataBase64: arrayBufferToBase64(buffer),
+      }),
+    },
+  );
+
+  const body = (await response.json().catch(() => ({}))) as {
+    ok?: boolean;
+    files?: unknown;
+    error?: string;
   };
+
+  if (!response.ok) {
+    throw new Error(
+      typeof body.error === 'string' ? body.error : `Prevyu upload error ${response.status}`,
+    );
+  }
+
+  if (!body.ok || !Array.isArray(body.files)) {
+    throw new Error('Prevyu upload did not return files');
+  }
+
+  return sanitizePrevyuFileRefs(body.files);
 };
 
 export const toPrevyuFileRef = (

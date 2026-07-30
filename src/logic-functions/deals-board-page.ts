@@ -5,24 +5,14 @@ import type { RoutePayload } from 'twenty-sdk/logic-function';
 
 import { DEALS_BOARD_PAGE_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER } from 'src/constants/universal-identifiers';
 
-import { crmparserProxyFetch, jsonProxyResponse } from './shared/crmparser-proxy';
-import {
-  capLineItemIdsForListStatus,
-  formatDealsBoardPageFailure,
-  groupLineItemsByOpportunityId,
-  resolveFieldTypesByName,
-} from './shared/deals-board-page-core';
-import { buildOpportunityNodeSelection } from './shared/deals-board-page-opportunity-selection';
+import { jsonProxyResponse } from './shared/crmparser-proxy';
+import { formatDealsBoardPageFailure } from './shared/deals-board-page-core';
+import { runDealsBoardPagePipeline } from './shared/deals-board-page-pipeline';
 import {
   enrichOpportunityRowsWithRestFields,
   fetchLineItemsByOpportunityIds,
 } from './shared/deals-board-page-rest';
-import type {
-  DealsBoardPageRequest,
-  DealsBoardPageResponse,
-} from './shared/deals-board-page-types';
-
-const asArray = <T>(value: unknown): T[] => (Array.isArray(value) ? value : []);
+import type { DealsBoardPageRequest } from './shared/deals-board-page-types';
 
 const parseRequestBody = (body: unknown): DealsBoardPageRequest | null => {
   if (!body) return null;
@@ -37,39 +27,6 @@ const parseRequestBody = (body: unknown): DealsBoardPageRequest | null => {
   return null;
 };
 
-const normalizeOpportunityNode = (
-  node: Record<string, unknown> & {
-    company?: { id?: string; name?: string };
-    closeDate?: string;
-    loadDate?: string;
-  },
-): Record<string, unknown> => ({
-  ...node,
-  companyName: node.company?.name,
-  loadDate: node.loadDate ?? node.closeDate,
-});
-
-const fetchListStatusByLineItemId = async (
-  lineItemIds: string[],
-): Promise<Record<string, unknown> | undefined> => {
-  if (lineItemIds.length === 0) return undefined;
-
-  const cappedIds = capLineItemIdsForListStatus(lineItemIds);
-  const { status, body } = await crmparserProxyFetch(`/twenty/line-items/list-status`, {
-    method: 'POST',
-    body: JSON.stringify({ ids: cappedIds }),
-  });
-
-  if (status < 200 || status >= 300) return undefined;
-
-  const statuses =
-    body && typeof body === 'object'
-      ? (body as { statuses?: Record<string, unknown> }).statuses
-      : undefined;
-
-  return statuses && typeof statuses === 'object' ? statuses : undefined;
-};
-
 const handler = async (event: RoutePayload) => {
   const body = parseRequestBody(event.body);
   if (!body?.limit || body.offset == null || !Array.isArray(body.orderBy)) {
@@ -78,57 +35,25 @@ const handler = async (event: RoutePayload) => {
 
   try {
     const coreClient = new CoreApiClient();
-    const nodeSelection = buildOpportunityNodeSelection(
-      body.visibleCrmFieldNames ?? [],
-      body.includeCompanyRelation ?? false,
-      resolveFieldTypesByName(body.fieldTypesByName),
-    );
-
-    const result = await coreClient.query({
-      opportunities: {
-        __args: {
-          first: body.limit,
-          offset: body.offset,
-          orderBy: body.orderBy,
-          filter: body.opportunityFilter,
-        },
-        edges: { node: nodeSelection },
-        totalCount: true,
-      },
-    });
-
-    const edges = asArray<{ node: Record<string, unknown> }>(result.opportunities?.edges);
-    let opportunities = edges.map((edge) => normalizeOpportunityNode(edge.node));
-
     const restClient = new RestApiClient();
-    opportunities = await enrichOpportunityRowsWithRestFields(
-      restClient,
-      opportunities,
-      body.restFieldNames ?? [],
+
+    const response = await runDealsBoardPagePipeline(
+      {
+        queryOpportunities: ({ nodeSelection, ...gqlArgs }) =>
+          coreClient.query({
+            opportunities: {
+              __args: gqlArgs,
+              edges: { node: nodeSelection },
+              totalCount: true,
+            },
+          }),
+        enrichWithRest: (rows, restFieldNames) =>
+          enrichOpportunityRowsWithRestFields(restClient, rows, restFieldNames),
+        fetchLineItems: (opportunityIds) =>
+          fetchLineItemsByOpportunityIds(restClient, opportunityIds),
+      },
+      body,
     );
-
-    const opportunityIds = opportunities
-      .map((record) => (typeof record.id === 'string' ? record.id : ''))
-      .filter(Boolean);
-
-    const lineItems = await fetchLineItemsByOpportunityIds(restClient, opportunityIds);
-    const lineItemsByOppId = groupLineItemsByOpportunityId(lineItems);
-
-    const response: DealsBoardPageResponse = {
-      opportunities,
-      totalCount: result.opportunities?.totalCount ?? 0,
-      lineItemsByOppId,
-    };
-
-    if (body.includeListStatus) {
-      const lineItemIds = lineItems
-        .map((item) => (typeof item.id === 'string' ? item.id : ''))
-        .filter(Boolean);
-      const listStatusByLineItemId = await fetchListStatusByLineItemId(lineItemIds);
-      if (listStatusByLineItemId) {
-        response.listStatusByLineItemId = listStatusByLineItemId;
-      }
-    }
 
     return jsonProxyResponse(200, response);
   } catch (error) {
