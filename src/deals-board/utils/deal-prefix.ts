@@ -42,3 +42,10 @@ export const countDealsByPrefix = (
 
   return counts;
 };
+
+export const formatPrefixCountsTitle = (
+  counts: Record<DealPrefix, number>,
+): string =>
+  DEAL_PREFIX_ORDER.filter((prefix) => counts[prefix] > 0)
+    .map((prefix) => `${DEAL_PREFIX_LABELS[prefix]} ${counts[prefix]}`)
+    .join(' ');
