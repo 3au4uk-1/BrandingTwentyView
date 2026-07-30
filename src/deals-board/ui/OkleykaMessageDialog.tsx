@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 
 import {
   buildOkleykaDraft,
+  formatOkleykaAlreadySentNotice,
   formatOkleykaMessage,
   type OkleykaMessageDraft,
 } from '../automations/okleyka-message';
@@ -40,6 +41,7 @@ export const OkleykaMessageDialogProvider = ({
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const [alreadySentAt, setAlreadySentAt] = useState<string | null>(null);
   const { colors, radius, font, spacing, zIndex } = theme;
 
   useEffect(() => {
@@ -47,6 +49,7 @@ export const OkleykaMessageDialogProvider = ({
       setSending(false);
       setSendError(null);
       setSent(false);
+      setAlreadySentAt(null);
       setPayload(next);
       setDraft(buildOkleykaDraft(next));
     });
@@ -59,6 +62,7 @@ export const OkleykaMessageDialogProvider = ({
     setSending(false);
     setSendError(null);
     setSent(false);
+    setAlreadySentAt(null);
   }, []);
 
   const updateDraft = useCallback(
@@ -84,15 +88,14 @@ export const OkleykaMessageDialogProvider = ({
       });
       setSending(false);
       if (result.alreadySent && !force) {
-        const when = result.lastSentAt ?? '';
-        const ok = window.confirm(`Уже отправляли ${when}. Отправить ещё раз?`);
-        if (ok) await handleSend(true);
+        setAlreadySentAt(result.lastSentAt ?? '');
         return;
       }
       if (!result.ok) {
         setSendError(result.error ?? 'Не удалось отправить');
         return;
       }
+      setAlreadySentAt(null);
       setSent(true);
       window.setTimeout(() => handleDismiss(), 800);
     },
@@ -284,6 +287,22 @@ export const OkleykaMessageDialogProvider = ({
             {previewText}
           </pre>
 
+          {alreadySentAt !== null ? (
+            <div
+              role="status"
+              data-okleyka-already-sent
+              style={{
+                padding: spacing.sm,
+                borderRadius: radius.md,
+                backgroundColor: colors.warningMuted,
+                color: colors.warning,
+                fontSize: font.sizeSm,
+              }}
+            >
+              {formatOkleykaAlreadySentNotice(alreadySentAt)}
+            </div>
+          ) : null}
+
           {sendError ? (
             <div
               style={{
@@ -307,9 +326,15 @@ export const OkleykaMessageDialogProvider = ({
               variant="primary"
               size="sm"
               disabled={sending}
-              onClick={() => void handleSend()}
+              onClick={() => void handleSend(alreadySentAt !== null)}
             >
-              {sent ? 'Отправлено' : sending ? 'Отправка…' : 'Отправить в чат'}
+              {sent
+                ? 'Отправлено'
+                : sending
+                  ? 'Отправка…'
+                  : alreadySentAt !== null
+                    ? 'Отправить ещё раз'
+                    : 'Отправить в чат'}
             </Button>
           </div>
         </div>

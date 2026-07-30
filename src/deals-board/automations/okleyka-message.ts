@@ -58,5 +58,12 @@ export const formatOkleykaMessage = (draft: OkleykaMessageDraft): string => {
   return lines.join('\n');
 };
 
+export const formatOkleykaAlreadySentNotice = (
+  lastSentAt?: string | null,
+): string => {
+  const when = lastSentAt?.trim();
+  return when ? `Уже отправляли ${when}.` : 'Уже отправляли эту позицию.';
+};
+
 export const buildOkleykaMessage = (ctx: OkleykaMessageContext): string =>
   formatOkleykaMessage(buildOkleykaDraft(ctx));
