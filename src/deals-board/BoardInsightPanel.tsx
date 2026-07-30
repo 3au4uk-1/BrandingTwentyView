@@ -15,6 +15,11 @@ import {
 } from './scoreboard/compute';
 import { useTheme } from './theme/ThemeContext';
 import type { LineItemRow, OpportunityRow } from './types';
+import {
+  countDealsByPrefix,
+  DEAL_PREFIX_LABELS,
+  DEAL_PREFIX_ORDER,
+} from './utils/deal-prefix';
 
 const SCOREBOARD_COLLAPSED_KEY = 'tv.dealsBoard.scoreboardCollapsed';
 
@@ -37,6 +42,7 @@ type BoardInsightPanelProps = {
 
 export const BoardInsightPanel = ({
   lineItems,
+  deals,
   selectedTypes,
   onToggleType,
   attentionStats,
@@ -64,6 +70,11 @@ export const BoardInsightPanel = ({
 
   const stats = useMemo(() => computeProductionScoreboard(lineItems), [lineItems]);
   const cards = useMemo(() => computeCategoryCardMetrics(lineItems), [lineItems]);
+  const prefixCounts = useMemo(() => countDealsByPrefix(deals), [deals]);
+  const visiblePrefixes = useMemo(
+    () => DEAL_PREFIX_ORDER.filter((prefix) => prefixCounts[prefix] > 0),
+    [prefixCounts],
+  );
 
   const tipCards = useMemo(() => {
     const tips = [...SCOREBOARD_TIP_ORDER];
@@ -233,8 +244,8 @@ export const BoardInsightPanel = ({
       {collapsed ? null : (
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(148px, 1fr))',
+            display: 'flex',
+            alignItems: 'stretch',
             gap: 6,
             padding: `0 ${spacing.md} 8px`,
             minWidth: 0,
@@ -242,103 +253,167 @@ export const BoardInsightPanel = ({
             paddingTop: 8,
           }}
         >
-          {tipCards.map((tip) => {
-            const metrics = cards[tip];
-            const active = selectedTypes.includes(tip);
-            const palette = getChipPalette(getLineItemTypeColor(tip) as ChipColor, colorScheme);
-            const empty = metrics.total === 0;
-            return (
-              <button
-                key={tip}
-                type="button"
-                onClick={() => onToggleType(tip)}
-                title={`${getLineItemTypeLabel(tip)}: ${metrics.total}`}
-                style={{
-                  border: 'none',
-                  cursor: 'pointer',
-                  borderRadius: radius.md,
-                  padding: '8px 10px',
-                  fontFamily: font.family,
-                  backgroundColor: colors.bgElevated,
-                  opacity: empty && !active ? 0.45 : 1,
-                  boxShadow: active
-                    ? `inset 0 0 0 1.5px ${colors.accent}`
-                    : `inset 0 0 0 1px ${colors.borderSubtle}`,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'stretch',
-                  gap: 4,
-                  textAlign: 'left',
-                  minWidth: 0,
-                }}
-              >
-                <span
+          <div
+            style={{
+              flex: '1 1 auto',
+              minWidth: 0,
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(148px, 1fr))',
+              gap: 6,
+            }}
+          >
+            {tipCards.map((tip) => {
+              const metrics = cards[tip];
+              const active = selectedTypes.includes(tip);
+              const palette = getChipPalette(getLineItemTypeColor(tip) as ChipColor, colorScheme);
+              const empty = metrics.total === 0;
+              return (
+                <button
+                  key={tip}
+                  type="button"
+                  onClick={() => onToggleType(tip)}
+                  title={`${getLineItemTypeLabel(tip)}: ${metrics.total}`}
                   style={{
+                    border: 'none',
+                    cursor: 'pointer',
+                    borderRadius: radius.md,
+                    padding: '8px 10px',
+                    fontFamily: font.family,
+                    backgroundColor: colors.bgElevated,
+                    opacity: empty && !active ? 0.45 : 1,
+                    boxShadow: active
+                      ? `inset 0 0 0 1.5px ${colors.accent}`
+                      : `inset 0 0 0 1px ${colors.borderSubtle}`,
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 8,
+                    flexDirection: 'column',
+                    alignItems: 'stretch',
+                    gap: 4,
+                    textAlign: 'left',
                     minWidth: 0,
                   }}
                 >
                   <span
                     style={{
-                      display: 'inline-flex',
+                      display: 'flex',
                       alignItems: 'center',
-                      gap: 5,
-                      fontSize: font.sizeXs,
-                      fontWeight: font.weightMedium,
-                      color: colors.textSecondary,
+                      justifyContent: 'space-between',
+                      gap: 8,
                       minWidth: 0,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
                     }}
                   >
                     <span
-                      aria-hidden
                       style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        backgroundColor: palette.text,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 5,
+                        fontSize: font.sizeXs,
+                        fontWeight: font.weightMedium,
+                        color: colors.textSecondary,
+                        minWidth: 0,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      <span
+                        aria-hidden
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          backgroundColor: palette.text,
+                          flexShrink: 0,
+                        }}
+                      />
+                      {getLineItemTypeLabel(tip)}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: font.sizeMd,
+                        fontWeight: font.weightSemibold,
+                        letterSpacing: '-0.03em',
+                        lineHeight: 1,
+                        fontVariantNumeric: 'tabular-nums',
+                        color: colors.text,
                         flexShrink: 0,
                       }}
-                    />
-                    {getLineItemTypeLabel(tip)}
+                    >
+                      {metrics.total}
+                    </span>
                   </span>
                   <span
                     style={{
-                      fontSize: font.sizeMd,
-                      fontWeight: font.weightSemibold,
-                      letterSpacing: '-0.03em',
-                      lineHeight: 1,
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '2px 8px',
+                      fontSize: 10,
+                      fontWeight: font.weightMedium,
+                      color: colors.textMuted,
                       fontVariantNumeric: 'tabular-nums',
-                      color: colors.text,
-                      flexShrink: 0,
                     }}
                   >
-                    {metrics.total}
+                    <StageCount color={STAGE_DOT.print} label="Печать" value={metrics.inPrint} />
+                    <StageCount color={STAGE_DOT.work} label="Работа" value={metrics.inWork} />
+                    <StageCount color={STAGE_DOT.ready} label="Готово" value={metrics.ready} />
                   </span>
-                </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {visiblePrefixes.length > 0 ? (
+            <div
+              title="Сделки по префиксу названия (только счёт)"
+              style={{
+                flex: '0 1 168px',
+                minWidth: 128,
+                maxWidth: 200,
+                alignSelf: 'stretch',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                gap: 3,
+                padding: '8px 10px',
+                borderRadius: radius.md,
+                backgroundColor: colors.bgElevated,
+                boxShadow: `inset 0 0 0 1px ${colors.borderSubtle}`,
+                fontFamily: font.family,
+                fontSize: font.sizeXs,
+                fontVariantNumeric: 'tabular-nums',
+                fontWeight: font.weightMedium,
+                color: colors.textMuted,
+                minHeight: 0,
+              }}
+            >
+              {visiblePrefixes.map((prefix) => (
                 <span
+                  key={prefix}
                   style={{
                     display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '2px 8px',
-                    fontSize: 10,
-                    fontWeight: font.weightMedium,
-                    color: colors.textMuted,
-                    fontVariantNumeric: 'tabular-nums',
+                    alignItems: 'baseline',
+                    justifyContent: 'space-between',
+                    gap: 8,
+                    whiteSpace: 'nowrap',
+                    minWidth: 0,
                   }}
                 >
-                  <StageCount color={STAGE_DOT.print} label="Печать" value={metrics.inPrint} />
-                  <StageCount color={STAGE_DOT.work} label="Работа" value={metrics.inWork} />
-                  <StageCount color={STAGE_DOT.ready} label="Готово" value={metrics.ready} />
+                  <span
+                    style={{
+                      color: colors.textSecondary,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      minWidth: 0,
+                    }}
+                  >
+                    {DEAL_PREFIX_LABELS[prefix]}
+                  </span>
+                  <span style={{ fontWeight: font.weightSemibold, color: colors.text, flexShrink: 0 }}>
+                    {prefixCounts[prefix]}
+                  </span>
                 </span>
-              </button>
-            );
-          })}
+              ))}
+            </div>
+          ) : null}
         </div>
       )}
     </section>

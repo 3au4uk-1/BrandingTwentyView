@@ -27,7 +27,7 @@ Quiet, readable ops UI — SF/system fonts, iOS HIG colors, low chrome. Not agen
 - Radius: 6 / 10 / 14 / pill
 - Motion: `cubic-bezier(0.25, 0.1, 0.25, 1)`; active `scale(0.98)`
 - Labels: sentence case — **no** mono + SCREAMING uppercase chrome
-- **Top block:** compact `BoardToolbar` (view · filters · search · deal count · quiet turnover · toggles) + one `BoardInsightPanel` (attention ghost chips + collapsible flat category rows). Prefix counts live in `{N} сд` `title`, not toolbar chips. Shared insight surface, not two separate bars. No emoji / tip glyphs — dots only.
+- **Top block:** compact `BoardToolbar` (view · filters · search · deal count · quiet turnover · toggles) + one `BoardInsightPanel` (attention ghost chips + collapsible flat category rows + compact prefix deal counts on the right). Prefix counts are not toolbar chips. Shared insight surface, not two separate bars. No emoji / tip glyphs — dots only.
 - **Turnover control:** tabular text button (opens analytics) — never success-green pill
 - **Category color = small cue only:** 6px dots / ghost select text — never paint whole cards or rows in tip color
 - **Stage rows:** no wash — solid 4px left rail only; filled stage select carries the readable color chip
