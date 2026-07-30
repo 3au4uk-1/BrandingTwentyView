@@ -1,10 +1,11 @@
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { ThemeProvider, useTheme } from '../theme/ThemeContext';
 import { Button } from '../ui/Button';
 import {
-  downloadBlobRemoteDomSafe,
+  buildDataUrl,
+  buildDownloadSrcDoc,
   revokePendingDownload,
   type PendingDownloadLink,
 } from '../utils/download-blob';
@@ -26,6 +27,7 @@ const OkleykaSalaryPageInner = () => {
   const [exportPending, setExportPending] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const [pendingDownload, setPendingDownload] = useState<PendingDownloadLink | null>(null);
+  const [downloadSrcDoc, setDownloadSrcDoc] = useState<string | null>(null);
 
   const query = useQuery({
     queryKey: ['okleyka-salary', refreshKey],
@@ -51,19 +53,35 @@ const OkleykaSalaryPageInner = () => {
     };
   }, [rows]);
 
+  useEffect(() => {
+    if (!downloadSrcDoc) return;
+    const onMessage = (event: MessageEvent) => {
+      const data = event.data as { type?: string } | null;
+      if (data?.type === 'okleyka-download-done') {
+        setDownloadSrcDoc(null);
+      }
+    };
+    window.addEventListener('message', onMessage);
+    const timer = globalThis.setTimeout?.(() => setDownloadSrcDoc(null), 8_000);
+    return () => {
+      window.removeEventListener('message', onMessage);
+      if (timer != null) globalThis.clearTimeout?.(timer);
+    };
+  }, [downloadSrcDoc]);
+
   const handleExportExcel = async () => {
     setExportError(null);
     setExportPending(true);
     revokePendingDownload(pendingDownload);
     setPendingDownload(null);
+    setDownloadSrcDoc(null);
     try {
       const { blob, filename } = await fetchOkleykaSalaryExcelBlob(rows);
-      const result = downloadBlobRemoteDomSafe(blob, filename);
-      if (result.outcome === 'needs-link' && result.pending) {
-        setPendingDownload(result.pending);
-      } else if (result.outcome === 'failed') {
-        setExportError('Не удалось подготовить файл для скачивания.');
-      }
+      const dataUrl = await buildDataUrl(blob);
+      // Main-thread iframe: real <a download> (Remote DOM host click is broken).
+      setDownloadSrcDoc(buildDownloadSrcDoc(dataUrl, filename));
+      // Fallback link (open in new tab) if iframe sandbox blocks auto-download.
+      setPendingDownload({ url: dataUrl, filename });
     } catch (error) {
       setExportError(error instanceof Error ? error.message : 'Ошибка экспорта');
     } finally {
@@ -85,8 +103,24 @@ const OkleykaSalaryPageInner = () => {
         padding: spacing.lg,
         gap: spacing.md,
         boxSizing: 'border-box',
+        position: 'relative',
       }}
     >
+      {downloadSrcDoc ? (
+        <iframe
+          title="okleyka-excel-download"
+          srcDoc={downloadSrcDoc}
+          sandbox="allow-scripts allow-downloads"
+          style={{
+            position: 'absolute',
+            width: 1,
+            height: 1,
+            opacity: 0,
+            pointerEvents: 'none',
+            border: 0,
+          }}
+        />
+      ) : null}
       <header
         style={{
           display: 'flex',
@@ -134,6 +168,8 @@ const OkleykaSalaryPageInner = () => {
             <a
               href={pendingDownload.url}
               download={pendingDownload.filename}
+              target="_blank"
+              rel="noreferrer"
               style={{
                 color: colors.accent,
                 fontSize: font.sizeSm,

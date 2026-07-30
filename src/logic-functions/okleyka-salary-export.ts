@@ -11,8 +11,13 @@ import {
   fetchOkleykaSalaryLineItems,
   fetchOpportunitiesByIdsForSalary,
 } from 'src/deals-board/salary/api';
-import { buildXlsxFromRows, XLSX_MIME } from './shared/build-xlsx';
+import { buildXlsxFromRows } from './shared/build-xlsx';
 
+/**
+ * Returns JSON `{ filename, contentBase64 }` — Twenty LOCAL LF serializes
+ * `Buffer`/`Uint8Array` Response bodies as `{"type":"Buffer","data":[...]}`,
+ * which is not a valid xlsx when saved by the browser.
+ */
 const handler = async () => {
   try {
     const lineItems = await fetchOkleykaSalaryLineItems();
@@ -22,14 +27,12 @@ const handler = async () => {
     const rows = buildOkleykaSalaryRows(lineItems, dealsById);
     const bytes = buildXlsxFromRows(salaryRowsToXlsxMatrix(rows));
     const filename = buildOkleykaSalaryFilename();
-    // Node Response accepts Buffer; Uint8Array may be wrapped inconsistently.
-    const body = Buffer.from(bytes);
+    const contentBase64 = Buffer.from(bytes).toString('base64');
 
-    return new Response(body, {
+    return new Response(JSON.stringify({ ok: true, filename, contentBase64 }), {
       status: 200,
       headers: {
-        'Content-Type': XLSX_MIME,
-        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Type': 'application/json; charset=utf-8',
         'Cache-Control': 'no-store',
       },
     });
