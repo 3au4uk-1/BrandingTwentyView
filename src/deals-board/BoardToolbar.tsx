@@ -12,7 +12,6 @@ import { FilterBar } from './FilterBar';
 import { ExpandModeToggle } from './ExpandModeToggle';
 import { ToolbarSettingsCluster } from './ToolbarSettingsCluster';
 import { ViewSwitcher } from './ViewSwitcher';
-import { getChipPalette, type ChipColor } from './Chip';
 import { useTheme } from './theme/ThemeContext';
 import type { FilterClause, FilterState } from './filter-model/types';
 import type { FieldDescriptor } from './metadata/types';
@@ -23,26 +22,13 @@ import type {
   LineItemRow,
   OpportunityRow,
 } from './types';
-import {
-  countDealsByPrefix,
-  DEAL_PREFIX_LABELS,
-  DEAL_PREFIX_ORDER,
-  type DealPrefix,
-} from './utils/deal-prefix';
+import { countDealsByPrefix, formatPrefixCountsTitle } from './utils/deal-prefix';
 import { addSearchTerm } from './utils/search';
 import { Input } from './ui/Input';
 import { Button } from './ui/Button';
 
 /** Keep typing snappy under Remote DOM — parent filter updates are expensive. */
 const SEARCH_COMMIT_DEBOUNCE_MS = 280;
-
-const PREFIX_COLOR: Record<Exclude<DealPrefix, 'OTHER'>, ChipColor> = {
-  PRO: 'purple',
-  ARENDA: 'blue',
-  ART: 'green',
-  BIRZHA: 'yellow',
-  BS: 'gray',
-};
 
 type BoardToolbarProps = {
   views: DealBoardViewRecord[];
@@ -99,7 +85,7 @@ export const BoardToolbar = ({
   canResetFilters = false,
 }: BoardToolbarProps) => {
   const theme = useTheme();
-  const { colors, font, spacing, radius, colorScheme } = theme;
+  const { colors, font, spacing, radius } = theme;
 
   const prefixCounts = useMemo(() => countDealsByPrefix(deals), [deals]);
   const turnoverRub = useMemo(
@@ -206,8 +192,8 @@ export const BoardToolbar = ({
         backgroundColor: 'transparent',
         padding: `${spacing.sm} ${spacing.md}`,
         display: 'flex',
-        alignItems: 'stretch',
-        gap: spacing.md,
+        alignItems: 'center',
+        gap: spacing.sm,
         minWidth: 0,
       }}
     >
@@ -216,146 +202,121 @@ export const BoardToolbar = ({
           flex: '1 1 auto',
           minWidth: 0,
           display: 'flex',
-          flexDirection: 'column',
+          flexWrap: 'wrap',
+          alignItems: 'center',
           gap: spacing.sm,
         }}
       >
+        <ViewSwitcher
+          views={views}
+          activeViewId={activeViewId}
+          onSelectView={onSelectView}
+          onCreateView={onCreateView}
+        />
+        <FilterBar
+          value={filterValue}
+          viewClauses={viewClauses}
+          onChange={onFilterChange}
+          onReset={handleFilterResetClick}
+          parentFields={parentFields}
+          childFields={childFields}
+          layout="compact-top"
+        />
         <div
           style={{
+            flex: 1,
+            minWidth: 180,
             display: 'flex',
             alignItems: 'center',
-            gap: spacing.sm,
+            gap: 6,
             flexWrap: 'wrap',
-            minWidth: 0,
+            minHeight: 34,
+            padding: '4px 8px',
+            borderRadius: radius.md,
+            border: `1px solid ${colors.border}`,
+            backgroundColor: colors.bgElevated,
           }}
         >
-          <ViewSwitcher
-            views={views}
-            activeViewId={activeViewId}
-            onSelectView={onSelectView}
-            onCreateView={onCreateView}
-          />
-          <FilterBar
-            value={filterValue}
-            viewClauses={viewClauses}
-            onChange={onFilterChange}
-            onReset={handleFilterResetClick}
-            parentFields={parentFields}
-            childFields={childFields}
-            layout="compact-top"
-          />
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: spacing.sm,
-            minWidth: 0,
-            flexWrap: 'wrap',
-          }}
-        >
-          <div
-            style={{
-              flex: 1,
-              minWidth: 0,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              flexWrap: 'wrap',
-              minHeight: 34,
-              padding: '4px 8px',
-              borderRadius: radius.md,
-              border: `1px solid ${colors.border}`,
-              backgroundColor: colors.bgElevated,
-            }}
-          >
-            {searchTerms.map((term) => (
-              <button
-                key={term}
-                type="button"
-                onClick={() => removeTerm(term)}
-                title={`Убрать «${term}»`}
+          {searchTerms.map((term) => (
+            <button
+              key={term}
+              type="button"
+              onClick={() => removeTerm(term)}
+              title={`Убрать «${term}»`}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '2px 8px',
+                borderRadius: radius.pill,
+                border: `1px solid ${colors.border}`,
+                backgroundColor: colors.accentMuted,
+                color: colors.accentText,
+                fontSize: font.sizeXs,
+                fontFamily: font.family,
+                cursor: 'pointer',
+                maxWidth: 180,
+              }}
+            >
+              <span
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '2px 8px',
-                  borderRadius: radius.pill,
-                  border: `1px solid ${colors.border}`,
-                  backgroundColor: colors.accentMuted,
-                  color: colors.accentText,
-                  fontSize: font.sizeXs,
-                  fontFamily: font.family,
-                  cursor: 'pointer',
-                  maxWidth: 180,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
                 }}
               >
-                <span
-                  style={{
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {term}
-                </span>
-                <span aria-hidden="true">×</span>
-              </button>
-            ))}
-            <Input
-              theme={theme}
-              type="text"
-              value={localSearch}
-              onChange={onSearchChange}
-              onFocus={() => {
-                searchFocusedRef.current = true;
-              }}
-              onBlur={() => {
-                searchFocusedRef.current = false;
-                clearSearchTimers();
-                flushSearchToParent(localSearch);
-              }}
-              onKeyDown={onSearchKeyDown}
-              placeholder={
-                searchTerms.length > 0
-                  ? 'Ещё слово + Enter…'
-                  : 'Поиск: слово + Enter для нескольких, или просто текст'
-              }
-              style={{
-                flex: 1,
-                minWidth: 140,
-                height: 26,
-                padding: '0 4px',
-                border: 'none',
-                background: 'transparent',
-                boxShadow: 'none',
-                fontSize: font.sizeSm,
-              }}
-            />
-          </div>
-          {showReset ? (
-            <Button theme={theme} variant="ghost" size="sm" onClick={handleFilterResetClick}>
-              Сбросить
-            </Button>
-          ) : null}
+                {term}
+              </span>
+              <span aria-hidden="true">×</span>
+            </button>
+          ))}
+          <Input
+            theme={theme}
+            type="text"
+            value={localSearch}
+            onChange={onSearchChange}
+            onFocus={() => {
+              searchFocusedRef.current = true;
+            }}
+            onBlur={() => {
+              searchFocusedRef.current = false;
+              clearSearchTimers();
+              flushSearchToParent(localSearch);
+            }}
+            onKeyDown={onSearchKeyDown}
+            placeholder={searchTerms.length > 0 ? 'Ещё слово + Enter…' : 'Поиск…'}
+            style={{
+              flex: 1,
+              minWidth: 140,
+              height: 26,
+              padding: '0 4px',
+              border: 'none',
+              background: 'transparent',
+              boxShadow: 'none',
+              fontSize: font.sizeSm,
+            }}
+          />
         </div>
+        {showReset ? (
+          <Button theme={theme} variant="ghost" size="sm" onClick={handleFilterResetClick}>
+            Сбросить
+          </Button>
+        ) : null}
       </div>
 
       <div
         style={{
-          flex: '0 1 340px',
+          flex: '0 0 auto',
           display: 'flex',
           flexWrap: 'wrap',
           alignItems: 'center',
           justifyContent: 'flex-end',
-          gap: 6,
-          alignContent: 'center',
-          minWidth: 0,
+          gap: 8,
         }}
       >
         {!isLoading ? (
           <span
+            title={formatPrefixCountsTitle(prefixCounts) || undefined}
             style={{
               fontSize: font.sizeXs,
               color: colors.textMuted,
@@ -366,42 +327,6 @@ export const BoardToolbar = ({
             {dealCount} сд
           </span>
         ) : null}
-        {DEAL_PREFIX_ORDER.map((prefix) => {
-          const count = prefixCounts[prefix];
-          if (count <= 0) return null;
-          const palette = getChipPalette(PREFIX_COLOR[prefix], colorScheme);
-          return (
-            <span
-              key={prefix}
-              title={DEAL_PREFIX_LABELS[prefix]}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                padding: '3px 8px',
-                borderRadius: radius.md,
-                backgroundColor: colors.bgElevated,
-                boxShadow: `inset 0 0 0 1px ${palette.text}44`,
-                fontSize: 10,
-                fontWeight: font.weightMedium,
-                color: colors.textSecondary,
-                fontVariantNumeric: 'tabular-nums',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              <span
-                aria-hidden
-                style={{
-                  width: 5,
-                  height: 5,
-                  borderRadius: '50%',
-                  backgroundColor: palette.text,
-                }}
-              />
-              {DEAL_PREFIX_LABELS[prefix]} {count}
-            </span>
-          );
-        })}
         <button
           type="button"
           onClick={onOpenAnalytics}
@@ -409,30 +334,20 @@ export const BoardToolbar = ({
           style={{
             border: 'none',
             cursor: 'pointer',
-            borderRadius: radius.pill,
-            padding: '4px 10px',
-            backgroundColor: colors.successMuted,
-            color: colors.success,
+            padding: '4px 6px',
+            borderRadius: radius.sm,
+            backgroundColor: 'transparent',
+            color: colors.text,
             fontFamily: font.family,
-            fontSize: font.sizeXs,
+            fontSize: font.sizeSm,
             fontWeight: font.weightSemibold,
             fontVariantNumeric: 'tabular-nums',
             whiteSpace: 'nowrap',
+            letterSpacing: '-0.02em',
           }}
         >
           {formatRub(turnoverRub)}
         </button>
-      </div>
-
-      <div
-        style={{
-          flex: '0 0 auto',
-          display: 'flex',
-          alignItems: 'center',
-          gap: spacing.sm,
-          alignSelf: 'center',
-        }}
-      >
         <ExpandModeToggle />
         <ToolbarSettingsCluster
           disabled={settingsDisabled}
