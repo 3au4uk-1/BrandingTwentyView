@@ -37,42 +37,77 @@ def gql(base: str, api_key: str, query: str, variables: dict | None = None) -> d
     return payload["data"]
 
 
-def main() -> None:
-    base = os.environ["TWENTY_BASE_URL"].rstrip("/")
-    api_key = os.environ["TWENTY_API_KEY"]
-
+def find_tip_field(base: str, api_key: str) -> dict:
+    # Prefer object → fields (works across Twenty metadata schema versions).
     data = gql(
         base,
         api_key,
         """
         query {
-          fields(filter: { name: { eq: "tip" } }, paging: { first: 50 }) {
-            edges { node { id name options object { nameSingular } } }
+          objects(paging: { first: 200 }) {
+            edges {
+              node {
+                id
+                nameSingular
+                fieldsList {
+                  id
+                  name
+                  options
+                }
+              }
+            }
           }
         }
         """,
     )
-    edges = data["fields"]["edges"]
-    tip = next(
-        (
-            e["node"]
-            for e in edges
-            if e["node"]["name"] == "tip"
-            and (e["node"].get("object") or {}).get("nameSingular") == "dealLineItem"
-        ),
-        None,
-    )
-    if tip is None:
-        tip = next((e["node"] for e in edges if e["node"]["name"] == "tip"), None)
-    if tip is None:
-        raise SystemExit("tip field not found")
+    for edge in data["objects"]["edges"]:
+        node = edge["node"]
+        if node.get("nameSingular") != "dealLineItem":
+            continue
+        fields = node.get("fieldsList") or []
+        tip = next((f for f in fields if f.get("name") == "tip"), None)
+        if tip:
+            return tip
 
+    # Fallback: flat fields connection without name filter.
+    data = gql(
+        base,
+        api_key,
+        """
+        query {
+          fields(paging: { first: 500 }) {
+            edges {
+              node {
+                id
+                name
+                options
+                object { nameSingular }
+              }
+            }
+          }
+        }
+        """,
+    )
+    for edge in data["fields"]["edges"]:
+        node = edge["node"]
+        if node.get("name") != "tip":
+            continue
+        obj = node.get("object") or {}
+        if obj.get("nameSingular") in (None, "dealLineItem"):
+            return node
+    raise SystemExit("tip field not found on dealLineItem")
+
+
+def main() -> None:
+    base = os.environ["TWENTY_BASE_URL"].rstrip("/")
+    api_key = os.environ["TWENTY_API_KEY"]
+
+    tip = find_tip_field(base, api_key)
     options = list(tip.get("options") or [])
     if any(opt.get("value") == "PROIZVODSTVO" for opt in options):
         print(f"OK already present on {base} field={tip['id']} options={len(options)}")
         return
 
-    # Insert after PODRYAD when possible; otherwise append before NE_NASHE/RESTAVRACIYA tail.
     new_opt = {
         "id": str(uuid.uuid4()),
         "value": PROIZVODSTVO["value"],
@@ -89,18 +124,31 @@ def main() -> None:
     for i, opt in enumerate(options):
         opt["position"] = i
 
+    # Drop unknown keys Twenty may reject on input.
+    clean_options = [
+        {
+            "id": opt["id"],
+            "value": opt["value"],
+            "label": opt["label"],
+            "color": opt.get("color") or "gray",
+            "position": opt["position"],
+        }
+        for opt in options
+        if opt.get("id") and opt.get("value") and opt.get("label") is not None
+    ]
+
     updated = gql(
         base,
         api_key,
         """
-        mutation($id: UUID!, $options: [FieldMetadataOptionInput!]!) {
-          updateOneField(input: { id: $id, update: { options: $options } }) {
+        mutation($id: UUID!, $update: UpdateFieldInput!) {
+          updateOneField(input: { id: $id, update: $update }) {
             id
             options
           }
         }
         """,
-        {"id": tip["id"], "options": options},
+        {"id": tip["id"], "update": {"options": clean_options}},
     )
     values = [o.get("value") for o in (updated["updateOneField"].get("options") or [])]
     print(f"OK updated {base} field={tip['id']} values={values}")
