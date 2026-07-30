@@ -4,6 +4,7 @@ import {
   joinPrintComment,
   parsePrintComment,
   plenkaSnippet,
+  PRINT_COMMENT_PRESET_GROUPS,
   PRINT_COMMENT_PRESETS,
 } from 'src/constants/print-presets';
 
@@ -550,56 +551,78 @@ export const SheetQueuePanel = ({
             >
               Комментарий
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {PRINT_COMMENT_PRESETS.map((preset) => {
-                const active = selectedPresets.includes(preset);
-                return (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => togglePreset(preset)}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {PRINT_COMMENT_PRESET_GROUPS.map((group) => (
+                <div key={group.category} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div
                     style={{
-                      padding: '6px 10px',
-                      borderRadius: radius.pill,
-                      border: `1px solid ${active ? colors.accent : colors.borderSubtle}`,
-                      background: active ? colors.accentMuted : colors.bgElevated,
-                      color: active ? colors.accentText : colors.text,
-                      cursor: 'pointer',
-                      font: 'inherit',
                       fontSize: font.sizeXs,
-                      fontWeight: font.weightMedium,
+                      fontWeight: font.weightSemibold,
+                      color: colors.textMuted,
+                      letterSpacing: '0.02em',
+                      textTransform: 'uppercase',
                     }}
                   >
-                    {preset}
-                  </button>
-                );
-              })}
-              <button
-                type="button"
-                onClick={() => {
-                  const next = !showOther;
-                  setShowOther(next);
-                  if (!next) {
-                    setOtherText('');
-                    void patch({
-                      [fields.comment]: joinPrintComment(selectedPresets, ''),
-                    });
-                  }
-                }}
-                style={{
-                  padding: '6px 10px',
-                  borderRadius: radius.pill,
-                  border: `1px solid ${showOther ? colors.accent : colors.borderSubtle}`,
-                  background: showOther ? colors.accentMuted : colors.bgElevated,
-                  color: showOther ? colors.accentText : colors.text,
-                  cursor: 'pointer',
-                  font: 'inherit',
-                  fontSize: font.sizeXs,
-                  fontWeight: font.weightMedium,
-                }}
-              >
-                другое
-              </button>
+                    {group.category}
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {group.presets.map((preset) => {
+                      const active = selectedPresets.includes(preset);
+                      return (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => togglePreset(preset)}
+                          style={{
+                            padding: '6px 10px',
+                            borderRadius: radius.pill,
+                            border: `1px solid ${active ? colors.accent : colors.borderSubtle}`,
+                            background: active ? colors.accentMuted : colors.bgElevated,
+                            color: active ? colors.accentText : colors.text,
+                            cursor: 'pointer',
+                            font: 'inherit',
+                            fontSize: font.sizeXs,
+                            fontWeight: font.weightMedium,
+                            textAlign: 'left',
+                            lineHeight: 1.35,
+                            maxWidth: '100%',
+                          }}
+                        >
+                          {preset}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !showOther;
+                    setShowOther(next);
+                    if (!next) {
+                      setOtherText('');
+                      void patch({
+                        [fields.comment]: joinPrintComment(selectedPresets, ''),
+                      });
+                    }
+                  }}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: radius.pill,
+                    border: `1px solid ${showOther ? colors.accent : colors.borderSubtle}`,
+                    background: showOther ? colors.accentMuted : colors.bgElevated,
+                    color: showOther ? colors.accentText : colors.text,
+                    cursor: 'pointer',
+                    font: 'inherit',
+                    fontSize: font.sizeXs,
+                    fontWeight: font.weightMedium,
+                  }}
+                >
+                  другое
+                </button>
+              </div>
             </div>
             {showOther ? (
               <Textarea

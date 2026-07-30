@@ -1,13 +1,33 @@
-export const PRINT_COMMENT_PRESETS = [
-  'баннер бб с люверсами',
-  'баннер бб без люверсов',
-  'пленка бб лам',
-  'плоттер',
+export const PRINT_COMMENT_PRESET_GROUPS = [
+  {
+    category: 'Пленка',
+    presets: [
+      'Пленка ББ + лам + резка по формату (кол-во прописано)',
+      'Пленка НЕ ББ + лам + резка по формату (кол-во прописано)',
+    ],
+  },
+  {
+    category: 'Баннер',
+    presets: [
+      'Баннер ББ + резка по формату (кол-во прописано)',
+      'Баннер ББ + ЛЮВЕРСЫ по периметру + резка по формату (кол-во прописано)',
+    ],
+  },
+  {
+    category: 'Плоттер',
+    presets: ['Плоттер с выборкой на монтажке'],
+  },
 ] as const;
+
+export const PRINT_COMMENT_PRESETS = PRINT_COMMENT_PRESET_GROUPS.flatMap(
+  (group) => group.presets,
+);
 
 export type PrintCommentPreset = (typeof PRINT_COMMENT_PRESETS)[number];
 
-const PRESET_SET = new Set<string>(PRINT_COMMENT_PRESETS);
+const PRESET_BY_NORMALIZED = new Map(
+  PRINT_COMMENT_PRESETS.map((preset) => [preset.toLowerCase(), preset] as const),
+);
 
 const PRESET_JOIN = '; ';
 
@@ -29,13 +49,9 @@ export const parsePrintComment = (value: string | null | undefined): ParsedPrint
   const otherParts: string[] = [];
 
   for (const part of parts) {
-    const normalized = part.toLowerCase();
-    const match = PRINT_COMMENT_PRESETS.find((preset) => preset === normalized || preset === part);
+    const match = PRESET_BY_NORMALIZED.get(part.toLowerCase());
     if (match && !presets.includes(match)) {
       presets.push(match);
-    } else if (PRESET_SET.has(normalized)) {
-      const preset = PRINT_COMMENT_PRESETS.find((p) => p === normalized);
-      if (preset && !presets.includes(preset)) presets.push(preset);
     } else {
       otherParts.push(part);
     }
