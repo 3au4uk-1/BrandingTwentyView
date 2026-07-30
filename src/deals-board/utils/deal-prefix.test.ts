@@ -1,6 +1,20 @@
 import { describe, expect, it } from 'vitest';
 
-import { countDealsByPrefix, parseDealPrefix } from './deal-prefix';
+import {
+  countDealsByPrefix,
+  formatPrefixCountsTitle,
+  parseDealPrefix,
+  type DealPrefix,
+} from './deal-prefix';
+
+const emptyCounts = (): Record<DealPrefix, number> => ({
+  PRO: 0,
+  ARENDA: 0,
+  ART: 0,
+  BIRZHA: 0,
+  BS: 0,
+  OTHER: 0,
+});
 
 describe('parseDealPrefix', () => {
   it('maps known prefixes', () => {
@@ -33,5 +47,29 @@ describe('countDealsByPrefix', () => {
     expect(counts.BS).toBe(1);
     expect(counts.OTHER).toBe(1);
     expect(counts.ARENDA).toBe(0);
+  });
+});
+
+describe('formatPrefixCountsTitle', () => {
+  it('returns empty string when all prefix counts are zero', () => {
+    expect(formatPrefixCountsTitle(emptyCounts())).toBe('');
+  });
+
+  it('joins only positive counts in DEAL_PREFIX_ORDER with labels', () => {
+    const counts = emptyCounts();
+    counts.PRO = 15;
+    counts.ARENDA = 15;
+    counts.ART = 12;
+    counts.BIRZHA = 5;
+    expect(formatPrefixCountsTitle(counts)).toBe(
+      'ПРО 15 Аренда 15 АРТ 12 Биржа лидов 5',
+    );
+  });
+
+  it('skips zero counts and ignores OTHER', () => {
+    const counts = emptyCounts();
+    counts.ART = 2;
+    counts.OTHER = 99;
+    expect(formatPrefixCountsTitle(counts)).toBe('АРТ 2');
   });
 });

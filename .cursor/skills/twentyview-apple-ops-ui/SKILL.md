@@ -14,6 +14,7 @@ Quiet, readable ops UI — SF/system fonts, iOS HIG colors, low chrome. Not agen
 - Tokens: `src/deals-board/theme/tokens.ts`
 - Global CSS: `src/deals-board/theme/GlobalThemeStyles.tsx`
 - Chips: `src/deals-board/Chip.tsx`
+- Toolbar: `src/deals-board/BoardToolbar.tsx`
 - Top insight panel: `src/deals-board/BoardInsightPanel.tsx`
 - Row stage cue: `src/deals-board/utils/stage-row-styles.ts`
 
@@ -26,7 +27,8 @@ Quiet, readable ops UI — SF/system fonts, iOS HIG colors, low chrome. Not agen
 - Radius: 6 / 10 / 14 / pill
 - Motion: `cubic-bezier(0.25, 0.1, 0.25, 1)`; active `scale(0.98)`
 - Labels: sentence case — **no** mono + SCREAMING uppercase chrome
-- **Top block:** one `BoardInsightPanel` — attention strip (dot chips) + collapsible category summary + prefix counts; shared surface, not two separate bars
+- **Top block:** compact `BoardToolbar` (view · filters · search · deal count · quiet turnover · toggles) + one `BoardInsightPanel` (attention ghost chips + collapsible flat category rows). Prefix counts live in `{N} сд` `title`, not toolbar chips. Shared insight surface, not two separate bars. No emoji / tip glyphs — dots only.
+- **Turnover control:** tabular text button (opens analytics) — never success-green pill
 - **Category color = small cue only:** 6px dots / ghost select text — never paint whole cards or rows in tip color
 - **Stage rows:** no wash — solid 4px left rail only; filled stage select carries the readable color chip
 - **Category/tip:** ghost select (colored text); tip colors via dots in insight panel only
@@ -44,6 +46,8 @@ Quiet, readable ops UI — SF/system fonts, iOS HIG colors, low chrome. Not agen
 - Inter / Roboto / purple glow / multi-shadow stacks
 - Competing design skills (brutalist, gpt-taste, brandkit) unless user explicitly asks
 - Separate AttentionStrip + ProductionScoreboard stacks (use BoardInsightPanel)
+- Green money pills or tip-colored category card fills in the top block
+- Permanent PRO/Аренда/АРТ prefix chip row in the toolbar
 
 ## When polishing
 
