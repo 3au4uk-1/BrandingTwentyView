@@ -1,6 +1,7 @@
 import { MetadataApiClient } from 'twenty-client-sdk/metadata';
 
 import { DEAL_LINE_ITEM_PREVYU_OKLEYKI_FIELD_UNIVERSAL_IDENTIFIER } from 'src/constants/universal-identifiers';
+import { sanitizePrevyuFileRefs } from 'src/logic-functions/shared/prevyu-upload-service';
 
 import type { LineItemFileRef } from '../types';
 
@@ -16,23 +17,26 @@ export const PREVYU_UPLOAD_MAX_FILES = 6;
 export const mergePrevyuFiles = (
   current: LineItemFileRef[] | null | undefined,
   next: LineItemFileRef,
-): LineItemFileRef[] => [...(current ?? []), next].slice(0, PREVYU_UPLOAD_MAX_FILES);
+): LineItemFileRef[] =>
+  sanitizePrevyuFileRefs([...(current ?? []), next]).slice(0, PREVYU_UPLOAD_MAX_FILES);
 
 export const mergePrevyuFileList = (
   current: LineItemFileRef[] | null | undefined,
   next: LineItemFileRef[],
-): LineItemFileRef[] => [...(current ?? []), ...next].slice(0, PREVYU_UPLOAD_MAX_FILES);
+): LineItemFileRef[] =>
+  sanitizePrevyuFileRefs([...(current ?? []), ...next]).slice(0, PREVYU_UPLOAD_MAX_FILES);
 
 export const removePrevyuFile = (
   current: LineItemFileRef[] | null | undefined,
   fileId: string,
-): LineItemFileRef[] => (current ?? []).filter((file) => file.fileId !== fileId);
+): LineItemFileRef[] =>
+  sanitizePrevyuFileRefs(current).filter((file) => file.fileId !== fileId);
 
 export const movePrevyuFileToFront = (
   current: LineItemFileRef[] | null | undefined,
   fileId: string,
 ): LineItemFileRef[] => {
-  const files = [...(current ?? [])];
+  const files = sanitizePrevyuFileRefs(current);
   const index = files.findIndex((file) => file.fileId === fileId);
   if (index <= 0) return files;
   const [picked] = files.splice(index, 1);

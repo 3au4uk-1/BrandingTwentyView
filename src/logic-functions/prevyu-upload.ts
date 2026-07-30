@@ -13,7 +13,7 @@ import {
   decodePrevyuUploadBytes,
   parsePrevyuUploadBody,
   PREVYU_UPLOAD_MAX_FILES,
-  type PrevyuFileRefLike,
+  sanitizePrevyuFileRefs,
 } from './shared/prevyu-upload-service';
 
 const jsonResponse = (status: number, body: unknown) =>
@@ -35,7 +35,7 @@ const parseBody = (raw: unknown): unknown => {
   }
 };
 
-const readCurrentFiles = async (lineItemId: string): Promise<PrevyuFileRefLike[]> => {
+const readCurrentFiles = async (lineItemId: string) => {
   const client = new RestApiClient();
   const row = await client.get<Record<string, unknown>>(
     `/rest/dealLineItems/${encodeURIComponent(lineItemId)}`,
@@ -45,12 +45,7 @@ const readCurrentFiles = async (lineItemId: string): Promise<PrevyuFileRefLike[]
     row?.dealLineItem ??
     row;
   const record = (data && typeof data === 'object' ? data : {}) as Record<string, unknown>;
-  const raw = record.prevyuOkleyki;
-  if (!Array.isArray(raw)) return [];
-  return raw.filter(
-    (file): file is PrevyuFileRefLike =>
-      Boolean(file) && typeof file === 'object' && typeof (file as PrevyuFileRefLike).fileId === 'string',
-  );
+  return sanitizePrevyuFileRefs(record.prevyuOkleyki);
 };
 
 const handler = async (event: RoutePayload) => {

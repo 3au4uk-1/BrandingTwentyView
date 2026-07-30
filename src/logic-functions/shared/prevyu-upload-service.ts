@@ -8,6 +8,30 @@ export type PrevyuFileRefLike = { fileId: string; label?: string };
 
 export const PREVYU_UPLOAD_MAX_FILES = 6;
 
+/**
+ * Twenty FILES PATCH input is strict `{ fileId, label }` only.
+ * GET/list responses also include `extension` / `url` — re-sending those → 400.
+ */
+export const sanitizePrevyuFileRef = (file: unknown): PrevyuFileRefLike | null => {
+  if (!file || typeof file !== 'object') return null;
+  const record = file as Record<string, unknown>;
+  if (typeof record.fileId !== 'string' || !record.fileId.trim()) return null;
+  const label =
+    typeof record.label === 'string' && record.label.trim()
+      ? record.label.trim()
+      : record.fileId;
+  return { fileId: record.fileId, label };
+};
+
+export const sanitizePrevyuFileRefs = (
+  raw: unknown,
+): PrevyuFileRefLike[] => {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map(sanitizePrevyuFileRef)
+    .filter((file): file is PrevyuFileRefLike => file !== null);
+};
+
 export const parsePrevyuUploadBody = (
   body: unknown,
 ): PrevyuUploadPostBody | { error: string } => {
@@ -59,7 +83,7 @@ export const buildNextPrevyuFiles = (
   uploaded: { id: string; url?: string },
   filename: string,
 ): PrevyuFileRefLike[] => {
-  const next = [...(current ?? [])];
+  const next = sanitizePrevyuFileRefs(current);
   if (next.length >= PREVYU_UPLOAD_MAX_FILES) {
     return next.slice(0, PREVYU_UPLOAD_MAX_FILES);
   }
