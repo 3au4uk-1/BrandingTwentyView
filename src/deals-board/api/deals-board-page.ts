@@ -1,5 +1,4 @@
 import {
-  capLineItemIdsForListStatus,
   groupLineItemsByOpportunityId,
   shouldUseDealsBoardPageFallback,
 } from 'src/logic-functions/shared/deals-board-page-core';
@@ -12,7 +11,6 @@ import type {
 import type { LineItemQueryFilters } from './line-items';
 import { fetchLineItemsByOpportunityIds } from './line-items';
 import { fetchOpportunities } from './opportunities';
-import { fetchLineItemsListStatusBatch } from './crmparser';
 import type { DealBoardFilters, DealBoardSort } from '../types';
 import { getTwentyFunctionsBaseUrl } from '../utils/twenty-functions-base-url';
 
@@ -131,22 +129,7 @@ export const fetchLegacyDealsBoardPage = async (
 
   const lineItems = await fetchLineItemsByOpportunityIds(opportunityIds, params.lineItemFilters);
 
-  let listStatusByLineItemId: Record<string, unknown> | undefined;
-  if (request.includeListStatus) {
-    const lineItemIds = capLineItemIdsForListStatus(
-      lineItems
-        .map((item) => (typeof item.id === 'string' ? item.id : ''))
-        .filter(Boolean),
-    );
-    if (lineItemIds.length > 0) {
-      const statuses = await fetchLineItemsListStatusBatch(lineItemIds);
-      if (Object.keys(statuses).length > 0) {
-        listStatusByLineItemId = statuses;
-      }
-    }
-  }
-
-  return assembleDealsBoardPageFromLegacy({ records, totalCount }, lineItems, listStatusByLineItemId);
+  return assembleDealsBoardPageFromLegacy({ records, totalCount }, lineItems);
 };
 
 export const fetchDealsBoardPage = async (

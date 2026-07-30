@@ -5,7 +5,6 @@ import {
   fetchDealsBoardPage,
   fetchLegacyDealsBoardPage,
 } from './deals-board-page';
-import { fetchLineItemsListStatusBatch } from './crmparser';
 import { fetchLineItemsByOpportunityIds } from './line-items';
 import { fetchOpportunities } from './opportunities';
 
@@ -15,10 +14,6 @@ vi.mock('./opportunities', () => ({
 
 vi.mock('./line-items', () => ({
   fetchLineItemsByOpportunityIds: vi.fn(),
-}));
-
-vi.mock('./crmparser', () => ({
-  fetchLineItemsListStatusBatch: vi.fn(),
 }));
 
 describe('assembleDealsBoardPageFromLegacy', () => {
@@ -276,7 +271,7 @@ describe('fetchLegacyDealsBoardPage', () => {
     vi.restoreAllMocks();
   });
 
-  it('assembles legacy multi-call response with optional list status', async () => {
+  it('assembles legacy multi-call response without list status', async () => {
     vi.mocked(fetchOpportunities).mockResolvedValue({
       records: [{ id: 'o1', name: 'Deal 1' }],
       totalCount: 1,
@@ -284,9 +279,6 @@ describe('fetchLegacyDealsBoardPage', () => {
     vi.mocked(fetchLineItemsByOpportunityIds).mockResolvedValue([
       { id: 'l1', opportunityId: 'o1', name: 'Item 1' } as never,
     ]);
-    vi.mocked(fetchLineItemsListStatusBatch).mockResolvedValue({
-      l1: { blacklisted: false, restorationMatch: true, pattern: null, dealId: null, dealTwentyId: null },
-    });
 
     const result = await fetchLegacyDealsBoardPage(
       {
@@ -312,21 +304,11 @@ describe('fetchLegacyDealsBoardPage', () => {
       }),
     );
     expect(fetchLineItemsByOpportunityIds).toHaveBeenCalledWith(['o1'], undefined);
-    expect(fetchLineItemsListStatusBatch).toHaveBeenCalledWith(['l1']);
     expect(result).toEqual({
       opportunities: [{ id: 'o1', name: 'Deal 1' }],
       totalCount: 1,
       lineItemsByOppId: {
         o1: [{ id: 'l1', opportunityId: 'o1', name: 'Item 1' }],
-      },
-      listStatusByLineItemId: {
-        l1: {
-          blacklisted: false,
-          restorationMatch: true,
-          pattern: null,
-          dealId: null,
-          dealTwentyId: null,
-        },
       },
     });
   });

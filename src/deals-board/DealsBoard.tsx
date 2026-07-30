@@ -5,7 +5,11 @@ import {
   DEFAULT_CHILD_COLUMNS,
   DEFAULT_PARENT_COLUMNS,
 } from 'src/constants/column-definitions';
-import { FUTURE_DEALS_VIEW_NAME } from 'src/constants/future-deals-view';
+import {
+  FUTURE_DEALS_VIEW_FILTERS,
+  FUTURE_DEALS_VIEW_NAME,
+  FUTURE_DEALS_VIEW_SORT,
+} from 'src/constants/future-deals-view';
 import { MOBILE_VIEW_NAME } from 'src/constants/mobile-view';
 import {
   BOARD_STREAM,
@@ -83,6 +87,10 @@ import {
   MOBILE_MAX_RECORDS,
   MOBILE_PAGE_SIZE,
 } from './utils/pagination';
+import {
+  provisionalAggregateViewId,
+  shouldEnableAggregateColdLoad,
+} from './utils/aggregate-cold-load-gate';
 import { applyPrintGroupSeed } from './utils/column-groups';
 import { asArray } from './utils/parse-json-field';
 import { filterLineItemsForSearch, resolveSearchTerms } from './utils/search';
@@ -183,9 +191,11 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     setAttentionTip(null);
   }, [activeView?.id]);
 
+  const resolvedViewFilters = activeView?.filters ?? FUTURE_DEALS_VIEW_FILTERS;
+
   const viewClauses = useMemo(
-    () => migrateLegacyFilters(activeView?.filters ?? {}),
-    [activeView?.filters],
+    () => migrateLegacyFilters(resolvedViewFilters),
+    [resolvedViewFilters],
   );
 
   const effectiveClauses = useMemo(
@@ -196,16 +206,16 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
   const mergedFilters = useMemo(() => {
     const sessionSearchTerms = resolveSessionOverride(
       filterSession.searchTerms,
-      activeView?.filters?.searchTerms,
+      resolvedViewFilters.searchTerms,
     );
     const boardFilters = clausesToDealBoardFilters(
       effectiveClauses,
-      resolveSessionOverride(filterSession.datePreset, activeView?.filters?.datePreset),
-      resolveSessionOverride(filterSession.dateFrom, activeView?.filters?.dateFrom),
-      resolveSessionOverride(filterSession.dateTo, activeView?.filters?.dateTo),
+      resolveSessionOverride(filterSession.datePreset, resolvedViewFilters.datePreset),
+      resolveSessionOverride(filterSession.dateFrom, resolvedViewFilters.dateFrom),
+      resolveSessionOverride(filterSession.dateTo, resolvedViewFilters.dateTo),
       sessionSearchTerms !== undefined
         ? undefined
-        : resolveSessionOverride(filterSession.search, activeView?.filters?.search),
+        : resolveSessionOverride(filterSession.search, resolvedViewFilters.search),
       sessionSearchTerms,
     );
 
@@ -214,11 +224,11 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
       showAll: showAllPreference,
     };
   }, [
-    activeView?.filters?.dateFrom,
-    activeView?.filters?.datePreset,
-    activeView?.filters?.dateTo,
-    activeView?.filters?.search,
-    activeView?.filters?.searchTerms,
+    resolvedViewFilters.dateFrom,
+    resolvedViewFilters.datePreset,
+    resolvedViewFilters.dateTo,
+    resolvedViewFilters.search,
+    resolvedViewFilters.searchTerms,
     effectiveClauses,
     filterSession.dateFrom,
     filterSession.datePreset,
@@ -278,7 +288,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     [effectiveClauses],
   );
 
-  const effectiveSort = sortSession ?? activeView?.sort ?? [];
+  const effectiveSort = sortSession ?? activeView?.sort ?? FUTURE_DEALS_VIEW_SORT;
 
   const effectiveSortKey = useMemo(
     () => effectiveSort.map((entry) => `${entry.field}:${entry.direction}`).join('|'),
@@ -397,6 +407,11 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     Boolean(activeView) &&
     !parentFieldsQuery.isLoading;
 
+  const aggregateColdLoadEnabled = shouldEnableAggregateColdLoad({
+    useAggregateColdPath,
+    viewsIsError: Boolean(viewsQuery.isError),
+  });
+
   const opportunitiesQuery = useOpportunities({
     viewId: activeView?.id,
     filters: mergedFilters,
@@ -414,7 +429,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
   });
 
   const dealsBoardPageQuery = useDealsBoardPage({
-    viewId: activeView?.id,
+    viewId: provisionalAggregateViewId(activeView?.id),
     filters: mergedFilters,
     sort: effectiveSort,
     page,
@@ -424,7 +439,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     includeCompanyRelation,
     fieldTypesByName: parentFieldTypesByName,
     lineItemFilters: lineItemQueryFilters,
-    enabled: baseColdLoadEnabled && useAggregateColdPath,
+    enabled: aggregateColdLoadEnabled,
   });
 
   const coldLoadQuery = useAggregateColdPath ? dealsBoardPageQuery : opportunitiesQuery;
@@ -679,18 +694,9 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     () => displayLineItems.map((item) => item.id).filter(Boolean),
     [displayLineItems],
   );
-  const activeLineItemsLoading = useAggregateColdPath
-    ? activeColdLoadLoading
-    : lineItemsQuery.isLoading;
-  const listStatusHydratedFromAggregate =
-    useAggregateColdPath && Boolean(dealsBoardPageQuery.data?.listStatusHydrated);
-  const listStatusReady =
-    !activeColdLoadLoading &&
-    !activeLineItemsLoading &&
-    listStatusLineItemIds.length > 0;
   usePrefetchLineItemListStatuses(
     listStatusLineItemIds,
-    listStatusReady && !listStatusHydratedFromAggregate,
+    listStatusLineItemIds.length > 0 && !activeColdLoadLoading,
   );
 
   const loadError = viewsQuery.error ?? coldLoadQuery.error ?? null;

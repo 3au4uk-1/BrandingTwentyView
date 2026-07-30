@@ -1,17 +1,16 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 
 import {
   collectImageFiles,
   collectImageFilesFromDataTransfer,
-  mergePrevyuFileList,
   movePrevyuFileToFront,
   readImagesFromClipboardApi,
   removePrevyuFile,
-  toPrevyuFileRef,
-  uploadPrevyuImageFile,
+  uploadPrevyuFilesViaLogicFunction,
 } from '../../api/files-field';
 import { useUpdateLineItem } from '../../hooks/useLineItems';
-import type { LineItemFileRef } from '../../types';
+import type { LineItemFileRef, LineItemRow } from '../../types';
 import { openRecordSidePanel } from '../../utils/open-record-side-panel';
 import {
   isPrevyuRemoteDomUploadError,
@@ -30,11 +29,29 @@ export const usePrevyuMediaActions = ({
   files,
   remoteDomFallback = 'side-panel',
 }: UsePrevyuMediaActionsArgs) => {
+  const queryClient = useQueryClient();
   const updateMutation = useUpdateLineItem();
   const [isUploading, setIsUploading] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
 
   const clearError = useCallback(() => setLastError(null), []);
+
+  const patchPrevyuInLineItemCaches = useCallback(
+    (prevyuOkleyki: LineItemFileRef[]) => {
+      for (const [queryKey, items] of queryClient.getQueriesData<LineItemRow[]>({
+        queryKey: ['lineItems'],
+      })) {
+        if (!items?.some((item) => item.id === itemId)) continue;
+        queryClient.setQueryData(
+          queryKey,
+          items.map((item) =>
+            item.id === itemId ? { ...item, prevyuOkleyki } : item,
+          ),
+        );
+      }
+    },
+    [itemId, queryClient],
+  );
 
   const addFiles = useCallback(
     async (incoming: File[]) => {
@@ -58,14 +75,10 @@ export const usePrevyuMediaActions = ({
       setIsUploading(true);
       setLastError(null);
       try {
-        let next = files ?? [];
-
         for (const file of toUpload) {
           try {
-            const uploaded = await uploadPrevyuImageFile(file);
-            next = mergePrevyuFileList(next, [
-              toPrevyuFileRef(uploaded, file.name || 'prevyu'),
-            ]);
+            const next = await uploadPrevyuFilesViaLogicFunction(itemId, file);
+            patchPrevyuInLineItemCaches(next);
           } catch (error) {
             const message =
               error instanceof Error ? error.message : 'Не удалось загрузить превью.';
@@ -81,23 +94,11 @@ export const usePrevyuMediaActions = ({
             return;
           }
         }
-
-        try {
-          await updateMutation.mutateAsync({
-            id: itemId,
-            data: { prevyuOkleyki: next },
-          });
-        } catch (error) {
-          const message =
-            error instanceof Error ? error.message : 'Не удалось сохранить превью.';
-          setLastError(message);
-          window.alert(`Не удалось сохранить превью.${message ? ` ${message}` : ''}`);
-        }
       } finally {
         setIsUploading(false);
       }
     },
-    [files, itemId, remoteDomFallback, updateMutation],
+    [files, itemId, patchPrevyuInLineItemCaches, remoteDomFallback],
   );
 
   const addFromDataTransfer = useCallback(
