@@ -57,6 +57,7 @@ export const PrevyuUploadModal = ({
       files: files ?? [],
       postUrl,
       accessToken,
+      uploadMode: 'parent',
     });
   }, [isOpen, postUrl, accessToken, itemId, itemName, files]);
 
@@ -92,18 +93,83 @@ export const PrevyuUploadModal = ({
   }, [isOpen, srcDoc]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !postUrl || !accessToken) return;
+
+    const view = typeof window !== 'undefined' ? window : undefined;
+
+    const reply = (
+      source: MessageEventSource | null,
+      payload: Record<string, unknown>,
+    ) => {
+      try {
+        (source as Window | null)?.postMessage?.(payload, '*');
+      } catch {
+        // ignore
+      }
+    };
 
     const onMessage = (event: MessageEvent) => {
       const data = event.data;
       if (!data || typeof data !== 'object') return;
-      const payload = data as { type?: string; lineItemId?: string };
+      const payload = data as {
+        type?: string;
+        lineItemId?: string;
+        requestId?: string;
+        filename?: string;
+        contentType?: string;
+        dataBase64?: string;
+      };
+
+      if (payload.type === 'prevyu-upload-request') {
+        if (payload.lineItemId && payload.lineItemId !== itemId) return;
+        if (!payload.requestId || !payload.dataBase64) return;
+
+        void (async () => {
+          try {
+            const response = await fetch(postUrl, {
+              method: 'POST',
+              credentials: 'omit',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${accessToken}`,
+              },
+              body: JSON.stringify({
+                filename: payload.filename || 'prevyu.png',
+                contentType: payload.contentType || 'image/png',
+                dataBase64: payload.dataBase64,
+              }),
+            });
+            const body = (await response.json().catch(() => ({}))) as Record<
+              string,
+              unknown
+            >;
+            reply(event.source, {
+              type: 'prevyu-upload-response',
+              requestId: payload.requestId,
+              ok: response.ok,
+              body,
+            });
+            if (response.ok) refreshLineItems();
+          } catch (error) {
+            reply(event.source, {
+              type: 'prevyu-upload-response',
+              requestId: payload.requestId,
+              ok: false,
+              body: {
+                error:
+                  error instanceof Error ? error.message : 'Сеть недоступна',
+              },
+            });
+          }
+        })();
+        return;
+      }
+
       if (payload.type !== 'prevyu-upload' && payload.type !== 'uploaded') return;
       if (payload.lineItemId && payload.lineItemId !== itemId) return;
       refreshLineItems();
     };
 
-    const view = typeof window !== 'undefined' ? window : undefined;
     view?.addEventListener?.('message', onMessage);
 
     let channel: BroadcastChannel | null = null;
@@ -132,7 +198,7 @@ export const PrevyuUploadModal = ({
       }
       if (poll != null) view?.clearInterval?.(poll);
     };
-  }, [isOpen, itemId, queryClient]);
+  }, [isOpen, itemId, queryClient, postUrl, accessToken]);
 
   const handleClose = () => {
     refreshLineItems();

@@ -21,5 +21,19 @@ describe('buildPrevyuUploadHtml', () => {
     expect(html).toContain('Authorization');
     expect(html).toContain('pasteCatch');
     expect(html).toContain('contenteditable');
+    expect(html).toContain('uploadMode');
+  });
+
+  it('uses parent upload mode for board modal', () => {
+    const html = buildPrevyuUploadHtml({
+      lineItemId: 'li-1',
+      lineItemName: 'X',
+      files: [],
+      postUrl: 'https://t.test/s/prevyu-upload/li-1',
+      accessToken: 'tok',
+      uploadMode: 'parent',
+    });
+    expect(html).toContain('"parent"');
+    expect(html).toContain('prevyu-upload-request');
   });
 });

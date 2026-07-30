@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import {
   isDefaultLineItemHiddenByFilters,
@@ -10,6 +10,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { Button } from '../ui/Button';
 import type { ColumnConfig, ColumnGroupConfig, LineItemRow } from '../types';
 import type { BoardStream } from 'src/constants/product-stream';
+import { sortLineItemsByStageBands } from '../utils/line-item-order';
 import { MobileLineItemRow } from './MobileLineItemRow';
 
 type MobileLineItemListProps = {
@@ -40,6 +41,7 @@ export const MobileLineItemList = ({
     text: string;
   } | null>(null);
   const isHiddenByFilters = isDefaultLineItemHiddenByFilters(filters);
+  const sortedItems = useMemo(() => sortLineItemsByStageBands(items), [items]);
 
   const handleCreate = async () => {
     if (isCreatingRef.current) return;
@@ -110,7 +112,7 @@ export const MobileLineItemList = ({
         </p>
       ) : null}
 
-      {items.length === 0 ? (
+      {sortedItems.length === 0 ? (
         <p style={{ margin: 0, fontSize: font.sizeSm, color: colors.textMuted }}>
           Нет позиций
         </p>
@@ -123,14 +125,14 @@ export const MobileLineItemList = ({
             padding: `0 ${spacing.sm}`,
           }}
         >
-          {items.map((item, index) => (
+          {sortedItems.map((item, index) => (
             <MobileLineItemRow
               key={item.id}
               item={item}
               columns={columns}
               groups={groups}
               descriptorByField={descriptorByField}
-              isLast={index === items.length - 1}
+              isLast={index === sortedItems.length - 1}
               boardStream={boardStream}
             />
           ))}

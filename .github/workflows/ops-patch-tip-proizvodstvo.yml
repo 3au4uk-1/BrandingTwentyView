@@ -1,0 +1,24 @@
+﻿name: Ops patch tip PROIZVODSTVO
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Twenty environment
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+          - prod
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch tip SELECT
+        env:
+          TWENTY_API_KEY: ${{ secrets.TWENTY_DEPLOY_API_KEY }}
+          TWENTY_BASE_URL: ${{ inputs.target == 'staging' && 'https://twenty-staging.dosugmayak.ru' || 'https://twenty.dosugmayak.ru' }}
+        run: python3 scripts/patch-tip-proizvodstvo.py
