@@ -83,6 +83,23 @@ describe('buildOpportunityFilter', () => {
       and: [{ or: [{ name: { ilike: '%a%' } }, { name: { ilike: '%b%' } }] }],
     });
   });
+
+  it('restricts to line-item matched ids when there is no search', () => {
+    expect(buildOpportunityFilter({ datePreset: 'future' }, ['opp-1', 'opp-2'])).toEqual({
+      and: [
+        {
+          or: [{ loadDate: expect.any(Object) }, { closeDate: expect.any(Object) }],
+        },
+        { id: { in: ['opp-1', 'opp-2'] } },
+      ],
+    });
+  });
+
+  it('allows empty id list to force no matches without search', () => {
+    expect(buildOpportunityFilter({}, [])).toEqual({
+      and: [{ id: { in: [] } }],
+    });
+  });
 });
 
 describe('opportunityMatchesSearch', () => {
