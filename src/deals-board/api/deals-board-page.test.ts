@@ -115,6 +115,54 @@ describe('fetchDealsBoardPage', () => {
         headers: expect.objectContaining({
           Authorization: 'Bearer app-token',
         }),
+        signal: expect.any(AbortSignal),
+      }),
+    );
+  });
+
+  it('falls back when aggregate fetch aborts (timeout)', async () => {
+    globalThis.process = {
+      env: {
+        TWENTY_FUNCTIONS_URL: 'https://twenty.test/functions',
+        TWENTY_APP_ACCESS_TOKEN: 'app-token',
+      },
+    } as NodeJS.Process;
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((_url: string, init?: RequestInit) => {
+        return new Promise((_resolve, reject) => {
+          const signal = init?.signal;
+          if (!signal) {
+            reject(new Error('expected AbortSignal'));
+            return;
+          }
+          if (signal.aborted) {
+            reject(Object.assign(new Error('Aborted'), { name: 'AbortError' }));
+            return;
+          }
+          signal.addEventListener('abort', () => {
+            reject(Object.assign(new Error('Aborted'), { name: 'AbortError' }));
+          });
+        });
+      }),
+    );
+
+    const legacyPayload = {
+      opportunities: [{ id: 'o-legacy' }],
+      totalCount: 1,
+      lineItemsByOppId: {},
+    };
+    const legacy = vi.fn().mockResolvedValue(legacyPayload);
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    await expect(fetchDealsBoardPage(request, legacy)).resolves.toEqual(legacyPayload);
+    expect(legacy).toHaveBeenCalledOnce();
+    expect(warnSpy).toHaveBeenCalled();
+    expect(fetch).toHaveBeenCalledWith(
+      'https://twenty.test/functions/deals-board/page',
+      expect.objectContaining({
+        signal: expect.any(AbortSignal),
       }),
     );
   });

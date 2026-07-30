@@ -37,6 +37,8 @@ const getAppAccessToken = (): string | null => {
   return token || null;
 };
 
+export const DEALS_BOARD_PAGE_FETCH_TIMEOUT_MS = 3000;
+
 const createDealsBoardPageError = (
   message: string,
   status?: number,
@@ -57,29 +59,37 @@ const postDealsBoardPage = async (
     throw createDealsBoardPageError('Deals board page proxy not configured', undefined, 'NOT_CONFIGURED');
   }
 
-  const response = await fetch(`${baseUrl}/deals-board/page`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(request),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), DEALS_BOARD_PAGE_FETCH_TIMEOUT_MS);
 
-  const body = (await response.json().catch(() => ({}))) as DealsBoardPageResponse & {
-    error?: string;
-    messages?: string[];
-  };
+  try {
+    const response = await fetch(`${baseUrl}/deals-board/page`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+      signal: controller.signal,
+    });
 
-  if (!response.ok) {
-    const detail =
-      (typeof body.error === 'string' && body.error) ||
-      (Array.isArray(body.messages) ? body.messages[0] : undefined) ||
-      `Deals board page error ${response.status}`;
-    throw createDealsBoardPageError(detail, response.status);
+    const body = (await response.json().catch(() => ({}))) as DealsBoardPageResponse & {
+      error?: string;
+      messages?: string[];
+    };
+
+    if (!response.ok) {
+      const detail =
+        (typeof body.error === 'string' && body.error) ||
+        (Array.isArray(body.messages) ? body.messages[0] : undefined) ||
+        `Deals board page error ${response.status}`;
+      throw createDealsBoardPageError(detail, response.status);
+    }
+
+    return body;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  return body;
 };
 
 export const assembleDealsBoardPageFromLegacy = <T extends LineItemRowLike>(

@@ -65,4 +65,10 @@ describe('shouldUseDealsBoardPageFallback', () => {
     ).toBe(true);
     expect(shouldUseDealsBoardPageFallback({ code: 'NOT_CONFIGURED' })).toBe(true);
   });
+
+  it('falls back on AbortError (fetch timeout)', () => {
+    expect(
+      shouldUseDealsBoardPageFallback(Object.assign(new Error('Aborted'), { name: 'AbortError' })),
+    ).toBe(true);
+  });
 });
