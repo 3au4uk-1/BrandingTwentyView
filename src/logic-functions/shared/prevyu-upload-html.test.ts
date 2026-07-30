@@ -24,16 +24,17 @@ describe('buildPrevyuUploadHtml', () => {
     expect(html).toContain('uploadMode');
   });
 
-  it('uses parent upload mode for board modal', () => {
+  it('uses auto upload mode with bridge hook for board modal', () => {
     const html = buildPrevyuUploadHtml({
       lineItemId: 'li-1',
       lineItemName: 'X',
       files: [],
       postUrl: 'https://t.test/s/prevyu-upload/li-1',
       accessToken: 'tok',
-      uploadMode: 'parent',
+      uploadMode: 'auto',
     });
-    expect(html).toContain('"parent"');
-    expect(html).toContain('prevyu-upload-request');
+    expect(html).toContain('"auto"');
+    expect(html).toContain('__prevyuUpload');
+    expect(html).toContain('NO_BRIDGE');
   });
 });
