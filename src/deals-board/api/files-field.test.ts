@@ -19,15 +19,38 @@ describe('mergePrevyuFiles / removePrevyuFile', () => {
     expect(mergePrevyuFiles(merged, { fileId: 'f6' })).toHaveLength(6);
   });
 
-  it('merges a list', () => {
+  it('merges a list and fills missing labels', () => {
     expect(
       mergePrevyuFileList([{ fileId: 'a' }], [{ fileId: 'b' }, { fileId: 'c' }]),
-    ).toEqual([{ fileId: 'a' }, { fileId: 'b' }, { fileId: 'c' }]);
+    ).toEqual([
+      { fileId: 'a', label: 'a' },
+      { fileId: 'b', label: 'b' },
+      { fileId: 'c', label: 'c' },
+    ]);
+  });
+
+  it('strips GET-only fields (extension/url) before PATCH shape', () => {
+    expect(
+      mergePrevyuFileList(
+        [
+          {
+            fileId: 'a',
+            label: 'a.png',
+            extension: '.png',
+            url: 'https://cdn/a',
+          } as { fileId: string; label: string },
+        ],
+        [{ fileId: 'b', label: 'b.png' }],
+      ),
+    ).toEqual([
+      { fileId: 'a', label: 'a.png' },
+      { fileId: 'b', label: 'b.png' },
+    ]);
   });
 
   it('removes by fileId', () => {
     expect(removePrevyuFile([{ fileId: 'a' }, { fileId: 'b' }], 'a')).toEqual([
-      { fileId: 'b' },
+      { fileId: 'b', label: 'b' },
     ]);
   });
 });
@@ -39,13 +62,21 @@ describe('movePrevyuFileToFront', () => {
         [{ fileId: 'a' }, { fileId: 'b' }, { fileId: 'c' }],
         'b',
       ),
-    ).toEqual([{ fileId: 'b' }, { fileId: 'a' }, { fileId: 'c' }]);
+    ).toEqual([
+      { fileId: 'b', label: 'b' },
+      { fileId: 'a', label: 'a' },
+      { fileId: 'c', label: 'c' },
+    ]);
   });
 
   it('returns same order when fileId missing or already first', () => {
     const files = [{ fileId: 'a' }, { fileId: 'b' }];
-    expect(movePrevyuFileToFront(files, 'a')).toEqual(files);
-    expect(movePrevyuFileToFront(files, 'z')).toEqual(files);
+    const normalized = [
+      { fileId: 'a', label: 'a' },
+      { fileId: 'b', label: 'b' },
+    ];
+    expect(movePrevyuFileToFront(files, 'a')).toEqual(normalized);
+    expect(movePrevyuFileToFront(files, 'z')).toEqual(normalized);
     expect(movePrevyuFileToFront(null, 'a')).toEqual([]);
   });
 });

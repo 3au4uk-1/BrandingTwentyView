@@ -5,6 +5,8 @@ import {
   decodePrevyuUploadBytes,
   isAllowedPrevyuContentType,
   parsePrevyuUploadBody,
+  sanitizePrevyuFileRef,
+  sanitizePrevyuFileRefs,
 } from './prevyu-upload-service';
 
 describe('parsePrevyuUploadBody', () => {
@@ -39,10 +41,49 @@ describe('isAllowedPrevyuContentType', () => {
   });
 });
 
+describe('sanitizePrevyuFileRefs', () => {
+  it('strips extension/url so PATCH payload stays strict', () => {
+    expect(
+      sanitizePrevyuFileRefs([
+        {
+          fileId: '803855ed-6f13-4124-a872-adb519883491',
+          label: 'shot.png',
+          extension: '.png',
+          url: 'https://example/file',
+        },
+      ]),
+    ).toEqual([{ fileId: '803855ed-6f13-4124-a872-adb519883491', label: 'shot.png' }]);
+  });
+
+  it('defaults missing label to fileId', () => {
+    expect(sanitizePrevyuFileRef({ fileId: 'f1' })).toEqual({ fileId: 'f1', label: 'f1' });
+  });
+});
+
 describe('buildNextPrevyuFiles', () => {
   it('appends uploaded file ref with url label', () => {
     expect(
       buildNextPrevyuFiles([], { id: 'f1', url: 'https://cdn/x.png' }, 'shot.png'),
     ).toEqual([{ fileId: 'f1', label: 'https://cdn/x.png' }]);
+  });
+
+  it('sanitizes existing GET-shaped refs before append', () => {
+    expect(
+      buildNextPrevyuFiles(
+        [
+          {
+            fileId: 'f1',
+            label: 'a.png',
+            extension: '.png',
+            url: 'https://cdn/a.png',
+          } as { fileId: string; label: string },
+        ],
+        { id: 'f2', url: 'https://cdn/b.png' },
+        'b.png',
+      ),
+    ).toEqual([
+      { fileId: 'f1', label: 'a.png' },
+      { fileId: 'f2', label: 'https://cdn/b.png' },
+    ]);
   });
 });
