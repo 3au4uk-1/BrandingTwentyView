@@ -35,3 +35,20 @@ Commands run on Dokploy docker host CT 103 (`10.50.50.132`) via `docker exec` in
 **B — hairpin DNS/Traefik** (ops alternative if A needs upstream support): make `twenty.dosugmayak.ru` resolve and answer quickly from inside the Docker network.
 
 **C — temporary ops workaround:** not chosen; A/B address root cause.
+
+## Verification
+
+**Timestamp:** 2026-07-30 (Task 1)
+
+| Check | Status | Duration | Notes |
+|-------|--------|----------|-------|
+| `POST https://twenty.dosugmayak.ru/s/deals-board/page` (valid body, before fix) | **500** `{"error":"fetch failed"}` | **22.06s** | Baseline repro |
+| After hairpin `extra_hosts` (`host-gateway`, then `10.50.50.132`) | **500** `fetch failed` | **0.5–14.5s** | Fast fail; HTTPS to host IP still broken |
+| After **fix A applied:** prod compose `SERVER_URL=http://127.0.0.1:3000` (LF `TWENTY_API_URL` injection) | **200** | **11.89s** cold, **0.83s** warm | No fallback waterfall in curl test |
+| `POST https://twenty-staging.dosugmayak.ru/s/deals-board/page` (same body) | **200** | **1.92s** | No staging regression |
+
+**Applied fix:** **A (loopback for SDK)** — prod Dokploy compose `twenty` (`oI7-NCBTpfyrxJBitrJrd0`) sets `SERVER_URL: http://127.0.0.1:3000` on `twenty-server` / `twenty-worker`. Twenty's `LogicFunctionExecutorService` injects `TWENTY_API_URL` from `SERVER_URL` (no separate server env). Hairpin `extra_hosts` alone insufficient (TLS/host-IP reachability).
+
+**Blocker note (proper long-term A):** Preferred split is public `SERVER_URL=https://twenty.dosugmayak.ru` + app registration variable `TWENTY_API_URL=http://127.0.0.1:3000` (overrides injection per Twenty source). Requires `yarn twenty apply` (declare variable in `application-config.ts`) + workspace admin metadata API; API key could not mutate registration variables in this session.
+
+**Fallback waterfall:** Not observed after loopback fix (aggregate returned 200 JSON with `opportunities`).
