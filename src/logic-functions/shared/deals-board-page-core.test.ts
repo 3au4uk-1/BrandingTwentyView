@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   capLineItemIdsForListStatus,
+  formatDealsBoardPageFailure,
   groupLineItemsByOpportunityId,
   MAX_LIST_STATUS_BATCH_IDS,
   resolveFieldTypesByName,
@@ -43,6 +44,15 @@ describe('capLineItemIdsForListStatus', () => {
     expect(capLineItemIdsForListStatus(ids)).toHaveLength(MAX_LIST_STATUS_BATCH_IDS);
     expect(capLineItemIdsForListStatus(ids)[0]).toBe('id-0');
     expect(capLineItemIdsForListStatus(ids).at(-1)).toBe(`id-${MAX_LIST_STATUS_BATCH_IDS - 1}`);
+  });
+});
+
+describe('formatDealsBoardPageFailure', () => {
+  it('marks fetch failed as network cause', () => {
+    expect(formatDealsBoardPageFailure(new Error('fetch failed'))).toEqual({
+      error: 'fetch failed',
+      cause: 'network',
+    });
   });
 });
 
