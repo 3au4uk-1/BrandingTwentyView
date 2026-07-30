@@ -2,7 +2,7 @@ import { RestApiClient } from 'twenty-client-sdk/rest';
 
 import type { LineItemRow, OpportunityRow } from '../types';
 import { extractRestPageInfo, normalizeRestListResponse } from '../api/rest-list';
-import { getApiClient } from '../api/client';
+import { enrichOpportunityRowsWithRestFields } from '../api/opportunity-link-fields-rest';
 import { asArray } from '../utils/parse-json-field';
 
 const PAGE_LIMIT = 200;
@@ -54,26 +54,15 @@ export const fetchOkleykaSalaryLineItems = async (): Promise<LineItemRow[]> => {
   return all;
 };
 
+/**
+ * Load deal name + Bitrix link for salary rows.
+ * Use REST (not GraphQL): app Core GraphQL often omits workspace LINKS fields
+ * (`bitrixLink` / `tonyLink`) even when metadata has them — same pattern as the board.
+ */
 export const fetchOpportunitiesByIdsForSalary = async (
   ids: string[],
 ): Promise<OpportunityRow[]> => {
   if (ids.length === 0) return [];
-  const client = getApiClient();
-  const unique = [...new Set(ids)];
-  const result = await client.query({
-    opportunities: {
-      __args: {
-        filter: { id: { in: unique } },
-        first: Math.min(unique.length, 200),
-      },
-      edges: {
-        node: {
-          id: true,
-          name: true,
-          bitrixLink: { primaryLinkUrl: true, primaryLinkLabel: true },
-        },
-      },
-    },
-  });
-  return asArray<{ node: OpportunityRow }>(result.opportunities?.edges).map((e) => e.node);
+  const stubs: OpportunityRow[] = [...new Set(ids)].map((id) => ({ id, name: '' }));
+  return enrichOpportunityRowsWithRestFields(stubs, ['name', 'bitrixLink']);
 };
