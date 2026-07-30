@@ -52,3 +52,33 @@ Commands run on Dokploy docker host CT 103 (`10.50.50.132`) via `docker exec` in
 **Blocker note (proper long-term A):** Preferred split is public `SERVER_URL=https://twenty.dosugmayak.ru` + app registration variable `TWENTY_API_URL=http://127.0.0.1:3000` (overrides injection per Twenty source). Requires `yarn twenty apply` (declare variable in `application-config.ts`) + workspace admin metadata API; API key could not mutate registration variables in this session.
 
 **Fallback waterfall:** Not observed after loopback fix (aggregate returned 200 JSON with `opportunities`).
+
+## Verification (Task 1 review fix — 2026-07-30)
+
+**Timestamp:** 2026-07-30 ~12:55 UTC+3
+
+### Browser (prod «Реализация» / «Будущие»)
+
+**Blocker:** `cursor-ide-browser` MCP cannot create a tab — every `browser_navigate` (with `newTab: true` / `position: active`) returns `No browser tab available. Please navigate to a page first.` Network waterfall not captured in-browser; curl + authenticated POST used instead.
+
+### Authenticated POST (Bearer API key, same body as Task 0)
+
+After Dokploy redeploy (`Task1 cold remeasure`, compose still on interim `SERVER_URL: http://127.0.0.1:3000`):
+
+| Check | Status | Duration | Notes |
+|-------|--------|----------|-------|
+| `GET /healthz` (cold, post-redeploy) | **200** | **0.29s** | No ~11s hairpin on healthz |
+| `POST /s/deals-board/page` (cold, post-redeploy) | **200** | **4.34s** | JSON includes `opportunities`; **≪ 11s** |
+| `GET /healthz` (warm) | **200** | **0.07s** | |
+| `POST /s/deals-board/page` (warm) | **200** | **0.87s** | Prior warm runs **1.23–1.54s** same day |
+
+**Cold vs hairpin:** Previous **~11.89s** cold was measured before review remeasure; with loopback `SERVER_URL`, cold healthz is sub-second and cold page is **~4.3s** (LF/container warm-up, not public-URL hairpin). Warm page **≪ 11s**.
+
+**Fallback waterfall:** Not observed — single aggregate POST returns **200** with `opportunities` payload (~182 KB); no separate opportunities+dealLineItems storm in curl path.
+
+### SERVER_URL / TWENTY_API_URL split (interim)
+
+- **Still interim:** prod compose `composeFile` sets `SERVER_URL: http://127.0.0.1:3000` on server/worker (Dokploy `env` block still lists public URL but compose override wins).
+- **Blast radius:** All server-side URL generation (emails, OAuth callbacks, etc.) uses loopback until split is applied.
+- **Prep landed:** `src/application-config.ts` declares `TWENTY_API_URL` server variable for proper override (`http://127.0.0.1:3000`) while restoring public `SERVER_URL=https://twenty.dosugmayak.ru`.
+- **Apply blocked:** `node node_modules/twenty-sdk/dist/cli.cjs apply` works (yarn shim fails on Cyrillic path); prod apply needs `TWENTY_DEPLOY_API_KEY` / CD remote — not available in this session. GraphQL API key cannot mutate app registration server variables. **Do not restore public SERVER_URL until TWENTY_API_URL is set on prod registration.**

@@ -11,6 +11,12 @@ export default defineApplication({
   displayName: APP_DISPLAY_NAME,
   description: APP_DESCRIPTION,
   serverVariables: {
+    TWENTY_API_URL: {
+      description:
+        'Внутренний base URL Twenty API для LOCAL logic functions (например http://127.0.0.1:3000). Переопределяет инъекцию из SERVER_URL.',
+      isSecret: false,
+      isRequired: false,
+    },
     CRMPARSER_API_URL: {
       description:
         'Публичный URL парсера с суффиксом /api, например https://parser.example.com/api',
