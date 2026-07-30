@@ -14,6 +14,7 @@ Quiet, readable ops UI — SF/system fonts, iOS HIG colors, low chrome. Not agen
 - Tokens: `src/deals-board/theme/tokens.ts`
 - Global CSS: `src/deals-board/theme/GlobalThemeStyles.tsx`
 - Chips: `src/deals-board/Chip.tsx`
+- Toolbar: `src/deals-board/BoardToolbar.tsx`
 - Top insight panel: `src/deals-board/BoardInsightPanel.tsx`
 - Row stage cue: `src/deals-board/utils/stage-row-styles.ts`
 

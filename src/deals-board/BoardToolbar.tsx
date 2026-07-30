@@ -330,6 +330,12 @@ export const BoardToolbar = ({
         <button
           type="button"
           onClick={onOpenAnalytics}
+          onMouseEnter={(event) => {
+            event.currentTarget.style.backgroundColor = colors.bgElevated;
+          }}
+          onMouseLeave={(event) => {
+            event.currentTarget.style.backgroundColor = 'transparent';
+          }}
           title="Оборот по текущему фильтру · открыть аналитику"
           style={{
             border: 'none',
