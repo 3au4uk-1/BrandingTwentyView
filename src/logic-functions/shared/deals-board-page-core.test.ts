@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   capLineItemIdsForListStatus,
+  formatDealsBoardPageFailure,
   groupLineItemsByOpportunityId,
   MAX_LIST_STATUS_BATCH_IDS,
   resolveFieldTypesByName,
@@ -46,6 +47,15 @@ describe('capLineItemIdsForListStatus', () => {
   });
 });
 
+describe('formatDealsBoardPageFailure', () => {
+  it('marks fetch failed as network cause', () => {
+    expect(formatDealsBoardPageFailure(new Error('fetch failed'))).toEqual({
+      error: 'fetch failed',
+      cause: 'network',
+    });
+  });
+});
+
 describe('shouldUseDealsBoardPageFallback', () => {
   it('falls back on 5xx-shaped errors', () => {
     expect(shouldUseDealsBoardPageFallback({ status: 503 })).toBe(true);
@@ -64,5 +74,11 @@ describe('shouldUseDealsBoardPageFallback', () => {
       shouldUseDealsBoardPageFallback(new Error('Deals board page proxy not configured')),
     ).toBe(true);
     expect(shouldUseDealsBoardPageFallback({ code: 'NOT_CONFIGURED' })).toBe(true);
+  });
+
+  it('falls back on AbortError (fetch timeout)', () => {
+    expect(
+      shouldUseDealsBoardPageFallback(Object.assign(new Error('Aborted'), { name: 'AbortError' })),
+    ).toBe(true);
   });
 });

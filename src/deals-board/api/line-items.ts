@@ -92,6 +92,20 @@ const appendLineItemFilters = (
   return `and(${baseFilter},${parts.join(',')})`;
 };
 
+export const buildDealLineItemsAttributeFilter = (
+  filters: LineItemQueryFilters,
+): string | null => {
+  const parts: string[] = [];
+  if (filters.stages?.length) {
+    parts.push(`stage[in]:${JSON.stringify(filters.stages)}`);
+  }
+  if (filters.types?.length) {
+    parts.push(`tip[in]:${JSON.stringify(filters.types)}`);
+  }
+  if (!parts.length) return null;
+  return parts.length === 1 ? parts[0] : `and(${parts.join(',')})`;
+};
+
 export const buildDealLineItemsFilter = (
   opportunityIds: string[],
   filters?: LineItemQueryFilters,
@@ -297,6 +311,38 @@ export const fetchLineItemOpportunityIdsBySearch = async (
       after = page.nextCursor;
     } while (after);
   }
+
+  return [...allIds];
+};
+
+export const fetchLineItemOpportunityIdsByFilters = async (
+  filters?: LineItemQueryFilters,
+): Promise<string[]> => {
+  const attributeFilter = filters ? buildDealLineItemsAttributeFilter(filters) : null;
+  if (!attributeFilter) return [];
+
+  const client = getRestClient();
+  const allIds = new Set<string>();
+  let after: string | undefined;
+
+  do {
+    const query: Record<string, string | number> = {
+      limit: PAGE_LIMIT,
+      filter: attributeFilter,
+    };
+    if (after) query.after = after;
+
+    const response = await client.get<unknown>('/rest/dealLineItems', { query });
+    const items = normalizeLineItemRows(
+      normalizeRestListResponse<unknown>(response, 'dealLineItems'),
+    );
+    for (const item of items) {
+      allIds.add(item.opportunityId);
+    }
+    const pageInfo = extractRestPageInfo(response);
+    after =
+      pageInfo.hasNextPage && pageInfo.endCursor ? String(pageInfo.endCursor) : undefined;
+  } while (after);
 
   return [...allIds];
 };

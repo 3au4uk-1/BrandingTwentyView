@@ -90,3 +90,13 @@ export const shouldUseDealsBoardPageFallback = (error: unknown): boolean => {
 
   return isTimeoutLikeError(error) || isNetworkLikeError(error);
 };
+
+export const formatDealsBoardPageFailure = (
+  error: unknown,
+): { error: string; cause?: string } => {
+  const message = error instanceof Error ? error.message : 'deals-board page failed';
+  if (/fetch failed/i.test(message)) {
+    return { error: message, cause: 'network' };
+  }
+  return { error: message };
+};

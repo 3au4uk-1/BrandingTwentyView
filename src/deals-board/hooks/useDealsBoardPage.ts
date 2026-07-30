@@ -6,7 +6,10 @@ import {
   fetchLegacyDealsBoardPage,
 } from '../api/deals-board-page';
 import type { LineItemQueryFilters } from '../api/line-items';
-import { fetchLineItemOpportunityIdsBySearch } from '../api/line-items';
+import {
+  fetchLineItemOpportunityIdsByFilters,
+  fetchLineItemOpportunityIdsBySearch,
+} from '../api/line-items';
 import { isCrmparserConfigured } from '../api/crmparser';
 import type { DealBoardFilters, DealBoardSort, LineItemRow, OpportunityRow } from '../types';
 import { buildOpportunityFilter, resolveSearchTerms } from '../utils/search';
@@ -75,7 +78,7 @@ export const hydrateDealsBoardPageCache = (
   }
 };
 
-export const useDealsBoardPage = (params: {
+export type DealsBoardPageQueryParams = {
   viewId?: string;
   filters: DealBoardFilters;
   sort: DealBoardSort[];
@@ -86,15 +89,92 @@ export const useDealsBoardPage = (params: {
   includeCompanyRelation?: boolean;
   fieldTypesByName?: Readonly<Record<string, string>>;
   lineItemFilters?: LineItemQueryFilters;
-  enabled?: boolean;
-}) => {
-  const queryClient = useQueryClient();
+};
+
+export const fetchDealsBoardPageQueryData = async (
+  params: DealsBoardPageQueryParams,
+  queryClient: QueryClient,
+): Promise<DealsBoardPageQueryData> => {
   const pageSize = params.pageSize ?? 50;
   const visibleCrmFieldNames = params.visibleCrmFieldNames ?? [];
   const restFieldNames = params.restFieldNames ?? [];
   const includeCompanyRelation = params.includeCompanyRelation ?? false;
   const fieldTypesByName = params.fieldTypesByName ?? {};
   const effectiveSort = getEffectiveOpportunitySort(params.sort);
+  const lineItemFilters = params.lineItemFilters;
+
+  const searchTerms = resolveSearchTerms(params.filters);
+  const hasLineItemAttributeFilters = Boolean(
+    lineItemFilters?.stages?.length || lineItemFilters?.types?.length,
+  );
+
+  let lineItemMatchedOpportunityIds: string[] | undefined;
+
+  if (searchTerms.length) {
+    lineItemMatchedOpportunityIds = await fetchLineItemOpportunityIdsBySearch(
+      searchTerms,
+      lineItemFilters,
+    );
+  } else if (hasLineItemAttributeFilters) {
+    lineItemMatchedOpportunityIds = await fetchLineItemOpportunityIdsByFilters(lineItemFilters);
+  }
+
+  const opportunityFilter = buildOpportunityFilter(params.filters, lineItemMatchedOpportunityIds);
+  const orderBy = effectiveSort.map((entry) => ({ [entry.field]: entry.direction }));
+  const includeListStatus = isCrmparserConfigured();
+
+  const request = {
+    limit: pageSize,
+    offset: params.page * pageSize,
+    opportunityFilter,
+    orderBy,
+    visibleCrmFieldNames,
+    includeCompanyRelation,
+    restFieldNames: [...restFieldNames],
+    includeListStatus,
+    fieldTypesByName: { ...fieldTypesByName },
+  };
+
+  const response = await fetchDealsBoardPage(request, () =>
+    fetchLegacyDealsBoardPage(request, {
+      sort: effectiveSort,
+      filters: params.filters,
+      lineItemFilters,
+    }),
+  );
+
+  const records = sortOpportunitiesWithCancelledLast(
+    response.opportunities as OpportunityRow[],
+    effectiveSort,
+  );
+  const opportunityIds = records
+    .map((record) => record.id)
+    .filter((id): id is string => Boolean(id));
+
+  hydrateDealsBoardPageCache(queryClient, {
+    opportunityIds,
+    lineItemFilters,
+    lineItemsByOppId: response.lineItemsByOppId,
+    listStatusByLineItemId: response.listStatusByLineItemId,
+  });
+
+  return {
+    records,
+    totalCount: response.totalCount,
+    listStatusHydrated:
+      includeListStatus &&
+      Boolean(response.listStatusByLineItemId) &&
+      Object.keys(response.listStatusByLineItemId ?? {}).length > 0,
+  };
+};
+
+export const useDealsBoardPage = (params: DealsBoardPageQueryParams & { enabled?: boolean }) => {
+  const queryClient = useQueryClient();
+  const effectiveSort = getEffectiveOpportunitySort(params.sort);
+  const visibleCrmFieldNames = params.visibleCrmFieldNames ?? [];
+  const restFieldNames = params.restFieldNames ?? [];
+  const includeCompanyRelation = params.includeCompanyRelation ?? false;
+  const fieldTypesByName = params.fieldTypesByName ?? {};
   const lineItemFilters = params.lineItemFilters;
 
   return useQuery({
@@ -109,62 +189,7 @@ export const useDealsBoardPage = (params: {
       fieldTypesByName,
       lineItemFilters,
     ),
-    queryFn: async (): Promise<DealsBoardPageQueryData> => {
-      const searchTerms = resolveSearchTerms(params.filters);
-      const lineItemMatchedOpportunityIds = searchTerms.length
-        ? await fetchLineItemOpportunityIdsBySearch(searchTerms, lineItemFilters)
-        : undefined;
-      const opportunityFilter = buildOpportunityFilter(
-        params.filters,
-        lineItemMatchedOpportunityIds,
-      );
-      const orderBy = effectiveSort.map((entry) => ({ [entry.field]: entry.direction }));
-      const includeListStatus = isCrmparserConfigured();
-
-      const request = {
-        limit: pageSize,
-        offset: params.page * pageSize,
-        opportunityFilter,
-        orderBy,
-        visibleCrmFieldNames,
-        includeCompanyRelation,
-        restFieldNames: [...restFieldNames],
-        includeListStatus,
-        fieldTypesByName: { ...fieldTypesByName },
-      };
-
-      const response = await fetchDealsBoardPage(request, () =>
-        fetchLegacyDealsBoardPage(request, {
-          sort: effectiveSort,
-          filters: params.filters,
-          lineItemFilters,
-        }),
-      );
-
-      const records = sortOpportunitiesWithCancelledLast(
-        response.opportunities as OpportunityRow[],
-        effectiveSort,
-      );
-      const opportunityIds = records
-        .map((record) => record.id)
-        .filter((id): id is string => Boolean(id));
-
-      hydrateDealsBoardPageCache(queryClient, {
-        opportunityIds,
-        lineItemFilters,
-        lineItemsByOppId: response.lineItemsByOppId,
-        listStatusByLineItemId: response.listStatusByLineItemId,
-      });
-
-      return {
-        records,
-        totalCount: response.totalCount,
-        listStatusHydrated:
-          includeListStatus &&
-          Boolean(response.listStatusByLineItemId) &&
-          Object.keys(response.listStatusByLineItemId ?? {}).length > 0,
-      };
-    },
+    queryFn: () => fetchDealsBoardPageQueryData(params, queryClient),
     enabled: params.enabled !== false,
     placeholderData: keepPreviousData,
   });

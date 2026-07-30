@@ -53,6 +53,19 @@ Commands run on Dokploy docker host CT 103 (`10.50.50.132`) via `docker exec` in
 
 **Fallback waterfall:** Not observed after loopback fix (aggregate returned 200 JSON with `opportunities`).
 
+## Proper split applied (2026-07-30, after SERVER_URL rollback)
+
+**Do not set compose `SERVER_URL` to `127.0.0.1` — that breaks `/client-config` (`frontDomain`).**
+
+| Step | Result |
+|------|--------|
+| CD merge PR #10 → prod install | `TWENTY_API_URL` registration variable created (empty) |
+| Metadata mutation `updateApplicationRegistrationVariable` | value `http://127.0.0.1:3000`, `isFilled: true` |
+| `GET /client-config` | `frontDomain=twenty.dosugmayak.ru`, no loopback |
+| `POST /s/deals-board/page` | **200** ~0.7–1.1s, `opportunities` present |
+
+Compose `SERVER_URL` remains `https://twenty.dosugmayak.ru`. LF override is app registration `TWENTY_API_URL` only.
+
 ## Verification (Task 1 review fix — 2026-07-30)
 
 **Timestamp:** 2026-07-30 ~12:55 UTC+3

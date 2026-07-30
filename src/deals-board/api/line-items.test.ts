@@ -1,4 +1,10 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('twenty-client-sdk/rest', () => ({
+  RestApiClient: vi.fn(),
+}));
+
+import { RestApiClient } from 'twenty-client-sdk/rest';
 
 import {
   DEFAULT_MANUAL_LINE_ITEM_NAME,
@@ -7,11 +13,13 @@ import {
 
 import {
   buildCreateLineItemInput,
+  buildDealLineItemsAttributeFilter,
   buildDealLineItemsFilter,
   buildDealLineItemsQuery,
   buildDealLineItemsSearchFilter,
   createLineItemWithClient,
   extractCreatedLineItemId,
+  fetchLineItemOpportunityIdsByFilters,
   resolveCreatedLineItemId,
   fetchLineItemsForOpportunityIdsWithClient,
   filterLineItemsByQueryFilters,
@@ -293,6 +301,74 @@ describe('buildDealLineItemsQuery', () => {
       limit: 200,
       filter: 'opportunityId[in]:["id-1"]',
       after: 'cursor-1',
+    });
+  });
+});
+
+describe('buildDealLineItemsAttributeFilter', () => {
+  it('returns null when no stage/tip filters', () => {
+    expect(buildDealLineItemsAttributeFilter({})).toBeNull();
+    expect(buildDealLineItemsAttributeFilter({ stages: [], types: [] })).toBeNull();
+  });
+
+  it('builds stage/tip REST filter without opportunityId clause', () => {
+    expect(buildDealLineItemsAttributeFilter({ stages: ['V_RABOTE'] })).toBe(
+      'stage[in]:["V_RABOTE"]',
+    );
+    expect(
+      buildDealLineItemsAttributeFilter({ stages: ['NOVYY'], types: ['PLENKA'] }),
+    ).toBe('and(stage[in]:["NOVYY"],tip[in]:["PLENKA"])');
+  });
+});
+
+describe('fetchLineItemOpportunityIdsByFilters', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns [] without calling REST when filters empty', async () => {
+    const get = vi.fn();
+    vi.mocked(RestApiClient).mockImplementation(
+      () =>
+        ({
+          get,
+        }) as unknown as RestApiClient,
+    );
+
+    await expect(fetchLineItemOpportunityIdsByFilters(undefined)).resolves.toEqual([]);
+    await expect(fetchLineItemOpportunityIdsByFilters({})).resolves.toEqual([]);
+    await expect(
+      fetchLineItemOpportunityIdsByFilters({ stages: [], types: [] }),
+    ).resolves.toEqual([]);
+    expect(get).not.toHaveBeenCalled();
+    expect(RestApiClient).not.toHaveBeenCalled();
+  });
+
+  it('returns unique opportunity ids from REST line items', async () => {
+    const get = vi.fn().mockResolvedValue({
+      data: [
+        { id: 'item-1', name: 'A', opportunityId: 'opp-1' },
+        { id: 'item-2', name: 'B', opportunityId: 'opp-2' },
+        { id: 'item-3', name: 'C', opportunityId: 'opp-1' },
+      ],
+    });
+
+    vi.mocked(RestApiClient).mockImplementation(
+      () =>
+        ({
+          get,
+        }) as unknown as RestApiClient,
+    );
+
+    await expect(
+      fetchLineItemOpportunityIdsByFilters({ stages: ['V_RABOTE'] }),
+    ).resolves.toEqual(['opp-1', 'opp-2']);
+
+    expect(get).toHaveBeenCalledWith('/rest/dealLineItems', {
+      query: {
+        limit: 200,
+        filter: 'stage[in]:["V_RABOTE"]',
+      },
     });
   });
 });

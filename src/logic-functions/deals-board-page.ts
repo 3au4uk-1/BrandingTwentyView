@@ -8,6 +8,7 @@ import { DEALS_BOARD_PAGE_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER } from 'src/consta
 import { crmparserProxyFetch, jsonProxyResponse } from './shared/crmparser-proxy';
 import {
   capLineItemIdsForListStatus,
+  formatDealsBoardPageFailure,
   groupLineItemsByOpportunityId,
   resolveFieldTypesByName,
 } from './shared/deals-board-page-core';
@@ -131,9 +132,7 @@ const handler = async (event: RoutePayload) => {
 
     return jsonProxyResponse(200, response);
   } catch (error) {
-    return jsonProxyResponse(500, {
-      error: error instanceof Error ? error.message : 'deals-board page failed',
-    });
+    return jsonProxyResponse(500, formatDealsBoardPageFailure(error));
   }
 };
 
