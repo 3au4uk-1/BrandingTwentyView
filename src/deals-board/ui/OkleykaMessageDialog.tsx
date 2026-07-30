@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 
 import {
   buildOkleykaDraft,
+  formatOkleykaAlreadySentNotice,
   formatOkleykaMessage,
   type OkleykaMessageDraft,
 } from '../automations/okleyka-message';
@@ -37,12 +38,18 @@ export const OkleykaMessageDialogProvider = ({
   const portalHostRef = usePortalHost();
   const [payload, setPayload] = useState<OkleykaNotifyPayload | null>(null);
   const [draft, setDraft] = useState<OkleykaMessageDraft | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+  const [alreadySentAt, setAlreadySentAt] = useState<string | null>(null);
   const { colors, radius, font, spacing, zIndex } = theme;
 
   useEffect(() => {
     registerOkleykaMessageHandler((next) => {
-      setCopied(false);
+      setSending(false);
+      setSendError(null);
+      setSent(false);
+      setAlreadySentAt(null);
       setPayload(next);
       setDraft(buildOkleykaDraft(next));
     });
@@ -52,7 +59,10 @@ export const OkleykaMessageDialogProvider = ({
   const handleDismiss = useCallback(() => {
     setPayload(null);
     setDraft(null);
-    setCopied(false);
+    setSending(false);
+    setSendError(null);
+    setSent(false);
+    setAlreadySentAt(null);
   }, []);
 
   const updateDraft = useCallback(
@@ -62,13 +72,35 @@ export const OkleykaMessageDialogProvider = ({
     [],
   );
 
-  const handleCopy = useCallback(async () => {
-    if (!draft || !payload) return;
-    const text = formatOkleykaMessage(draft);
-    const fileUrls = resolvePrevyuFileUrls(payload.lineItem.prevyuOkleyki);
-    const result = await sendOkleykaPayload({ text, fileUrls });
-    setCopied(result.copiedText || result.copiedUrls);
-  }, [draft, payload]);
+  const handleSend = useCallback(
+    async (force = false) => {
+      if (!draft || !payload || sending) return;
+      setSending(true);
+      setSendError(null);
+      const text = formatOkleykaMessage(draft);
+      const fileUrls = resolvePrevyuFileUrls(payload.lineItem.prevyuOkleyki);
+      const result = await sendOkleykaPayload({
+        text,
+        fileUrls,
+        lineItemId: payload.lineItemId,
+        opportunityId: payload.opportunityId,
+        force,
+      });
+      setSending(false);
+      if (result.alreadySent && !force) {
+        setAlreadySentAt(result.lastSentAt ?? '');
+        return;
+      }
+      if (!result.ok) {
+        setSendError(result.error ?? 'Не удалось отправить');
+        return;
+      }
+      setAlreadySentAt(null);
+      setSent(true);
+      window.setTimeout(() => handleDismiss(), 800);
+    },
+    [draft, payload, sending, handleDismiss],
+  );
 
   useEffect(() => {
     if (!draft) return;
@@ -255,6 +287,36 @@ export const OkleykaMessageDialogProvider = ({
             {previewText}
           </pre>
 
+          {alreadySentAt !== null ? (
+            <div
+              role="status"
+              data-okleyka-already-sent
+              style={{
+                padding: spacing.sm,
+                borderRadius: radius.md,
+                backgroundColor: colors.warningMuted,
+                color: colors.warning,
+                fontSize: font.sizeSm,
+              }}
+            >
+              {formatOkleykaAlreadySentNotice(alreadySentAt)}
+            </div>
+          ) : null}
+
+          {sendError ? (
+            <div
+              style={{
+                padding: spacing.sm,
+                borderRadius: radius.md,
+                backgroundColor: colors.dangerMuted,
+                color: colors.danger,
+                fontSize: font.sizeSm,
+              }}
+            >
+              {sendError}
+            </div>
+          ) : null}
+
           <div style={{ display: 'flex', gap: spacing.xs, justifyContent: 'flex-end' }}>
             <Button theme={theme} variant="ghost" size="sm" onClick={handleDismiss}>
               Отмена
@@ -263,9 +325,16 @@ export const OkleykaMessageDialogProvider = ({
               theme={theme}
               variant="primary"
               size="sm"
-              onClick={() => void handleCopy()}
+              disabled={sending}
+              onClick={() => void handleSend(alreadySentAt !== null)}
             >
-              {copied ? 'Скопировано' : 'Копировать'}
+              {sent
+                ? 'Отправлено'
+                : sending
+                  ? 'Отправка…'
+                  : alreadySentAt !== null
+                    ? 'Отправить ещё раз'
+                    : 'Отправить в чат'}
             </Button>
           </div>
         </div>

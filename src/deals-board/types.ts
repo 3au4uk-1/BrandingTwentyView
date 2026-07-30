@@ -92,6 +92,12 @@ export type LineItemRow = {
   ssylkaNaMakety?: { primaryLinkUrl?: string; primaryLinkLabel?: string };
   plenka?: { markdown?: string };
   prevyuOkleyki?: LineItemFileRef[] | null;
+  okleykaTelegramSentAt?: string | null;
+  okleykaTelegramSentBy?: string | null;
+  okleykaTelegramChatId?: string | null;
   productStream?: ProductStream | null;
+  stoimostPechati?: { amountMicros: number; currencyCode: string };
+  stoimostFrezy?: { amountMicros: number; currencyCode: string };
+  stoimostOkleyki?: { amountMicros: number; currencyCode: string } | null;
   [key: string]: unknown;
 };

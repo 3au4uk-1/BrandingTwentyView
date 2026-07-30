@@ -4,6 +4,7 @@ import {
   buildOkleykaDraft,
   buildOkleykaMessage,
   extractBookingId,
+  formatOkleykaAlreadySentNotice,
   formatOkleykaMessage,
 } from './okleyka-message';
 
@@ -64,5 +65,25 @@ describe('buildOkleykaDraft / formatOkleykaMessage', () => {
     expect(text).not.toContain('Комментарий:');
     expect(text).toContain('Плёнка: 312');
     expect(text).toContain('Бронь: 12345');
+  });
+});
+
+describe('formatOkleykaAlreadySentNotice', () => {
+  it('includes lastSentAt when present', () => {
+    expect(formatOkleykaAlreadySentNotice('2026-07-29T12:00:00.000Z')).toBe(
+      'Уже отправляли 2026-07-29T12:00:00.000Z.',
+    );
+  });
+
+  it('falls back when lastSentAt missing', () => {
+    expect(formatOkleykaAlreadySentNotice(null)).toBe(
+      'Уже отправляли эту позицию.',
+    );
+    expect(formatOkleykaAlreadySentNotice(undefined)).toBe(
+      'Уже отправляли эту позицию.',
+    );
+    expect(formatOkleykaAlreadySentNotice('  ')).toBe(
+      'Уже отправляли эту позицию.',
+    );
   });
 });

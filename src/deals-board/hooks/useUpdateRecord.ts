@@ -111,9 +111,11 @@ export const useUpdateRecord = (objectName: BoardObjectName) => {
         });
       }
 
-      queryClient.invalidateQueries({
-        queryKey: objectName === 'dealLineItem' ? ['lineItems'] : ['opportunities'],
-      });
+      if (error) {
+        queryClient.invalidateQueries({
+          queryKey: objectName === 'dealLineItem' ? ['lineItems'] : ['opportunities'],
+        });
+      }
     },
   });
 };

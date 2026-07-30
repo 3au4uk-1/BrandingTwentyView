@@ -44,7 +44,7 @@ describe('applyObjectRecordEvent', () => {
     expect(queryClient.getQueryData<{ records: OpportunityRow[] }>(queryKey)?.records[0]?.stage).toBe(
       'WON',
     );
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['deals-board-page'] });
+    expect(invalidateSpy).not.toHaveBeenCalled();
   });
 
   it('patches a line item row when it is already in cache', () => {
