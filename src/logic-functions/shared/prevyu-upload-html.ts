@@ -9,10 +9,11 @@ export type BuildPrevyuUploadHtmlOpts = {
   /** App access token for Authorization on POST (iframe navigation cannot send Bearer). */
   accessToken: string;
   /**
-   * `parent` — postMessage to embedding board (avoids srcdoc/null-origin CORS).
-   * `direct` — fetch from the iframe (GET page / same-origin).
+   * `bridge` — call `window.__prevyuUpload` injected by the board modal (preferred).
+   * `direct` — fetch from the iframe (GET page / fallback).
+   * `auto` — bridge if present, else direct.
    */
-  uploadMode?: 'parent' | 'direct';
+  uploadMode?: 'bridge' | 'direct' | 'auto';
 };
 
 const escapeHtml = (value: string): string =>
@@ -34,7 +35,7 @@ export const buildPrevyuUploadHtml = ({
   files,
   postUrl,
   accessToken,
-  uploadMode = 'direct',
+  uploadMode = 'auto',
 }: BuildPrevyuUploadHtmlOpts): string => {
   const safeId = escapeHtml(lineItemId);
   const safeName = escapeHtml(lineItemName || 'Позиция');
@@ -230,39 +231,27 @@ export const buildPrevyuUploadHtml = ({
     focusPaste();
   }
 
-  function uploadViaParent(filename, contentType, dataBase64) {
-    return new Promise(function (resolve, reject) {
-      if (!window.parent || window.parent === window) {
-        reject(new Error('Нет родительского окна для загрузки'));
-        return;
+  function uploadViaBridge(filename, contentType, dataBase64) {
+    var uploader = null;
+    try {
+      if (typeof window.__prevyuUpload === 'function') {
+        uploader = window.__prevyuUpload;
+      } else if (
+        window.parent &&
+        window.parent !== window &&
+        typeof window.parent.__prevyuUpload === 'function'
+      ) {
+        uploader = window.parent.__prevyuUpload.bind(window.parent);
       }
-      var requestId = 'prevyu-' + Date.now() + '-' + Math.random().toString(16).slice(2);
-      var timer = setTimeout(function () {
-        window.removeEventListener('message', onMsg);
-        reject(new Error('Таймаут загрузки через родительское окно'));
-      }, 120000);
-      function onMsg(event) {
-        var data = event.data;
-        if (!data || data.type !== 'prevyu-upload-response' || data.requestId !== requestId) return;
-        clearTimeout(timer);
-        window.removeEventListener('message', onMsg);
-        resolve({ ok: !!data.ok, body: data.body || {} });
+    } catch (e) {
+      uploader = null;
+    }
+    if (!uploader) return Promise.reject(new Error('NO_BRIDGE'));
+    return Promise.resolve(uploader(filename, contentType, dataBase64)).then(function (result) {
+      if (!result || typeof result !== 'object') {
+        return { ok: false, body: { error: 'Пустой ответ загрузчика' } };
       }
-      window.addEventListener('message', onMsg);
-      try {
-        window.parent.postMessage({
-          type: 'prevyu-upload-request',
-          requestId: requestId,
-          lineItemId: lineItemId,
-          filename: filename,
-          contentType: contentType,
-          dataBase64: dataBase64,
-        }, '*');
-      } catch (e) {
-        clearTimeout(timer);
-        window.removeEventListener('message', onMsg);
-        reject(e);
-      }
+      return { ok: !!result.ok, body: result.body || {} };
     });
   }
 
@@ -286,16 +275,29 @@ export const buildPrevyuUploadHtml = ({
       setStatus('Максимум 6 файлов', 'err');
       return Promise.resolve();
     }
-    var useParent = uploadMode === 'parent';
-    if (!useParent && (!postUrl || !accessToken)) {
+    var preferBridge = uploadMode === 'bridge' || uploadMode === 'auto';
+    var allowDirect = uploadMode === 'direct' || uploadMode === 'auto';
+    if (!preferBridge && (!postUrl || !accessToken)) {
       setStatus('Нет URL или токена для загрузки', 'err');
       return Promise.resolve();
     }
     busy = true;
     setStatus('Загрузка…');
-    var chain = useParent
-      ? uploadViaParent(filename, contentType, dataBase64)
-      : uploadDirect(filename, contentType, dataBase64);
+
+    var chain = Promise.reject(new Error('NO_BRIDGE'));
+    if (preferBridge) {
+      chain = uploadViaBridge(filename, contentType, dataBase64);
+    }
+    chain = chain.catch(function (err) {
+      if (!allowDirect || (err && err.message !== 'NO_BRIDGE' && uploadMode === 'bridge')) {
+        throw err;
+      }
+      if (!postUrl || !accessToken) {
+        throw new Error('Нет URL или токена для загрузки');
+      }
+      return uploadDirect(filename, contentType, dataBase64);
+    });
+
     return chain
       .then(applyUploadResult)
       .catch(function (err) {

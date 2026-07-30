@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { buildPrevyuUploadHtml } from 'src/logic-functions/shared/prevyu-upload-html';
@@ -26,10 +26,20 @@ const readAppAccessToken = (): string | null => {
   return token || null;
 };
 
+type PrevyuBridgeResult = { ok: boolean; body: Record<string, unknown> };
+
+type PrevyuBridgeWindow = Window & {
+  __prevyuUpload?: (
+    filename: string,
+    contentType: string,
+    dataBase64: string,
+  ) => Promise<PrevyuBridgeResult>;
+};
+
 /**
  * Modal shell + srcdoc iframe (main-thread HTML).
- * Avoids navigating iframe to /s/... without Bearer (Missing authentication token).
- * POST uses embedded TWENTY_APP_ACCESS_TOKEN.
+ * Injects `__prevyuUpload` into the iframe window so paste/upload does not depend
+ * on cross-frame postMessage (Remote DOM often drops those → hung "Загрузка…").
  */
 export const PrevyuUploadModal = ({
   itemId,
@@ -57,114 +67,90 @@ export const PrevyuUploadModal = ({
       files: files ?? [],
       postUrl,
       accessToken,
-      uploadMode: 'parent',
+      uploadMode: 'auto',
     });
   }, [isOpen, postUrl, accessToken, itemId, itemName, files]);
 
-  const refreshLineItems = () => {
+  const refreshLineItems = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ['lineItems'] });
-  };
+  }, [queryClient]);
+
+  const installBridge = useCallback(() => {
+    if (!postUrl || !accessToken) return;
+    const iframeWindow = iframeRef.current?.contentWindow as PrevyuBridgeWindow | null;
+    if (!iframeWindow) return;
+
+    iframeWindow.__prevyuUpload = async (filename, contentType, dataBase64) => {
+      try {
+        const response = await fetch(postUrl, {
+          method: 'POST',
+          credentials: 'omit',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            filename: filename || 'prevyu.png',
+            contentType: contentType || 'image/png',
+            dataBase64,
+          }),
+        });
+        const body = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+        if (response.ok) refreshLineItems();
+        return { ok: response.ok, body };
+      } catch (error) {
+        return {
+          ok: false,
+          body: {
+            error: error instanceof Error ? error.message : 'Сеть недоступна',
+          },
+        };
+      }
+    };
+  }, [accessToken, postUrl, refreshLineItems]);
 
   useEffect(() => {
     if (!isOpen || !srcDoc) return;
 
-    const focusIframe = () => {
+    const focusAndBridge = () => {
+      installBridge();
       const iframe = iframeRef.current;
       if (!iframe) return;
       try {
         iframe.focus();
         iframe.contentWindow?.focus();
-        const catcher = iframe.contentDocument?.getElementById('pasteCatch');
-        catcher?.focus?.();
+        iframe.contentDocument?.getElementById('pasteCatch')?.focus?.();
       } catch {
         // Remote DOM / cross-frame focus may throw
       }
     };
 
-    const t0 = globalThis.setTimeout?.(focusIframe, 0);
-    const t1 = globalThis.setTimeout?.(focusIframe, 100);
-    const t2 = globalThis.setTimeout?.(focusIframe, 400);
+    const t0 = globalThis.setTimeout?.(focusAndBridge, 0);
+    const t1 = globalThis.setTimeout?.(focusAndBridge, 100);
+    const t2 = globalThis.setTimeout?.(focusAndBridge, 400);
 
     return () => {
       if (t0 != null) globalThis.clearTimeout?.(t0);
       if (t1 != null) globalThis.clearTimeout?.(t1);
       if (t2 != null) globalThis.clearTimeout?.(t2);
-    };
-  }, [isOpen, srcDoc]);
-
-  useEffect(() => {
-    if (!isOpen || !postUrl || !accessToken) return;
-
-    const view = typeof window !== 'undefined' ? window : undefined;
-
-    const reply = (
-      source: MessageEventSource | null,
-      payload: Record<string, unknown>,
-    ) => {
       try {
-        (source as Window | null)?.postMessage?.(payload, '*');
+        const iframeWindow = iframeRef.current?.contentWindow as PrevyuBridgeWindow | null;
+        if (iframeWindow) delete iframeWindow.__prevyuUpload;
       } catch {
         // ignore
       }
     };
+  }, [isOpen, srcDoc, installBridge]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const view = typeof window !== 'undefined' ? window : undefined;
 
     const onMessage = (event: MessageEvent) => {
       const data = event.data;
       if (!data || typeof data !== 'object') return;
-      const payload = data as {
-        type?: string;
-        lineItemId?: string;
-        requestId?: string;
-        filename?: string;
-        contentType?: string;
-        dataBase64?: string;
-      };
-
-      if (payload.type === 'prevyu-upload-request') {
-        if (payload.lineItemId && payload.lineItemId !== itemId) return;
-        if (!payload.requestId || !payload.dataBase64) return;
-
-        void (async () => {
-          try {
-            const response = await fetch(postUrl, {
-              method: 'POST',
-              credentials: 'omit',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${accessToken}`,
-              },
-              body: JSON.stringify({
-                filename: payload.filename || 'prevyu.png',
-                contentType: payload.contentType || 'image/png',
-                dataBase64: payload.dataBase64,
-              }),
-            });
-            const body = (await response.json().catch(() => ({}))) as Record<
-              string,
-              unknown
-            >;
-            reply(event.source, {
-              type: 'prevyu-upload-response',
-              requestId: payload.requestId,
-              ok: response.ok,
-              body,
-            });
-            if (response.ok) refreshLineItems();
-          } catch (error) {
-            reply(event.source, {
-              type: 'prevyu-upload-response',
-              requestId: payload.requestId,
-              ok: false,
-              body: {
-                error:
-                  error instanceof Error ? error.message : 'Сеть недоступна',
-              },
-            });
-          }
-        })();
-        return;
-      }
-
+      const payload = data as { type?: string; lineItemId?: string };
       if (payload.type !== 'prevyu-upload' && payload.type !== 'uploaded') return;
       if (payload.lineItemId && payload.lineItemId !== itemId) return;
       refreshLineItems();
@@ -198,7 +184,7 @@ export const PrevyuUploadModal = ({
       }
       if (poll != null) view?.clearInterval?.(poll);
     };
-  }, [isOpen, itemId, queryClient, postUrl, accessToken]);
+  }, [isOpen, itemId, refreshLineItems]);
 
   const handleClose = () => {
     refreshLineItems();
@@ -256,6 +242,7 @@ export const PrevyuUploadModal = ({
           srcDoc={srcDoc}
           sandbox="allow-scripts allow-same-origin allow-forms"
           onLoad={() => {
+            installBridge();
             try {
               iframeRef.current?.contentWindow?.focus();
               iframeRef.current?.contentDocument?.getElementById('pasteCatch')?.focus();
