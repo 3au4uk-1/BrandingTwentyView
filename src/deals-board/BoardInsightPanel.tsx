@@ -18,15 +18,6 @@ import type { LineItemRow, OpportunityRow } from './types';
 
 const SCOREBOARD_COLLAPSED_KEY = 'tv.dealsBoard.scoreboardCollapsed';
 
-const TIP_ICON: Partial<Record<LineItemType, string>> = {
-  BANNERA: '▣',
-  PLENKA: '▭',
-  PODRYAD: '◇',
-  PROIZVODSTVO: '⬡',
-  RESTAVRACIYA: '↻',
-  NE_NASHE: '·',
-};
-
 const STAGE_DOT = {
   print: '#ffd60a',
   work: '#bf5af2',
@@ -119,9 +110,6 @@ export const BoardInsightPanel = ({
                 whiteSpace: 'nowrap',
               }}
             >
-              <span aria-hidden style={{ color: colors.warning }}>
-                ⚠
-              </span>
               Требует внимания
               <span
                 style={{
@@ -307,9 +295,16 @@ export const BoardInsightPanel = ({
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    <span aria-hidden style={{ color: palette.text, opacity: 0.9 }}>
-                      {TIP_ICON[tip] ?? '·'}
-                    </span>
+                    <span
+                      aria-hidden
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        backgroundColor: palette.text,
+                        flexShrink: 0,
+                      }}
+                    />
                     {getLineItemTypeLabel(tip)}
                   </span>
                   <span
