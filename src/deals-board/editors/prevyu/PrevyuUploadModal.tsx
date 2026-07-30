@@ -71,9 +71,32 @@ export const PrevyuUploadModal = ({
     });
   }, [isOpen, postUrl, accessToken, itemId, itemName, files]);
 
+  /**
+   * Aggregate cold path keeps `useLineItems` disabled and only hydrates its cache
+   * from `deals-board-page`. Invalidating `lineItems` alone does not refetch —
+   * UI stays stale until F5. Always invalidate the page query too.
+   */
   const refreshLineItems = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ['lineItems'] });
+    void queryClient.invalidateQueries({ queryKey: ['deals-board-page'] });
   }, [queryClient]);
+
+  const patchPrevyuInLineItemCaches = useCallback(
+    (files: LineItemFileRef[]) => {
+      for (const [queryKey, items] of queryClient.getQueriesData<
+        Array<{ id: string; prevyuOkleyki?: LineItemFileRef[] | null }>
+      >({ queryKey: ['lineItems'] })) {
+        if (!items?.some((item) => item.id === itemId)) continue;
+        queryClient.setQueryData(
+          queryKey,
+          items.map((item) =>
+            item.id === itemId ? { ...item, prevyuOkleyki: files } : item,
+          ),
+        );
+      }
+    },
+    [itemId, queryClient],
+  );
 
   const installBridge = useCallback(() => {
     if (!postUrl || !accessToken) return;
@@ -96,7 +119,12 @@ export const PrevyuUploadModal = ({
           }),
         });
         const body = (await response.json().catch(() => ({}))) as Record<string, unknown>;
-        if (response.ok) refreshLineItems();
+        if (response.ok) {
+          if (Array.isArray(body.files)) {
+            patchPrevyuInLineItemCaches(body.files as LineItemFileRef[]);
+          }
+          refreshLineItems();
+        }
         return { ok: response.ok, body };
       } catch (error) {
         return {
@@ -107,7 +135,7 @@ export const PrevyuUploadModal = ({
         };
       }
     };
-  }, [accessToken, postUrl, refreshLineItems]);
+  }, [accessToken, patchPrevyuInLineItemCaches, postUrl, refreshLineItems]);
 
   useEffect(() => {
     if (!isOpen || !srcDoc) return;
