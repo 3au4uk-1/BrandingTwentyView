@@ -1,0 +1,520 @@
+import { useMemo, useState, type KeyboardEvent } from 'react';
+
+import { useTheme } from '../theme/ThemeContext';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { formatSalaryRub } from './compute';
+import { formatPeriodLabel, type SalaryPeriod } from './date-range';
+import {
+  createSalaryEntry,
+  deleteSalaryEntry,
+  updateSalaryEntry,
+} from './salary-entries-api';
+import { entrySumRub, latestRateByName, pickPreviousPeriodEntries, type OkleykaSalaryEntry } from './fund';
+
+type SalaryPanelProps = {
+  periods: SalaryPeriod[];
+  entries: OkleykaSalaryEntry[];
+  historyEntries: OkleykaSalaryEntry[];
+  fund: { fundRub: number; spentRub: number; remainderRub: number };
+  isLoading: boolean;
+  onChanged: () => void;
+  onDistribute: () => void;
+  distributeDisabledReason: string | null;
+};
+
+const parseNonNegative = (raw: string): number | null => {
+  const trimmed = raw.trim().replace(',', '.');
+  if (!trimmed) return null;
+  const parsed = Number(trimmed);
+  if (Number.isNaN(parsed) || parsed < 0) return null;
+  return parsed;
+};
+
+type EntryRowProps = {
+  entry: OkleykaSalaryEntry;
+  busy: boolean;
+  onBusy: (value: boolean) => void;
+  onChanged: () => void;
+  onError: (message: string) => void;
+  onClearError: () => void;
+};
+
+const EntryRow = ({ entry, busy, onBusy, onChanged, onError, onClearError }: EntryRowProps) => {
+  const theme = useTheme();
+  const { colors, font, spacing, radius } = theme;
+  const [hoursDraft, setHoursDraft] = useState(String(entry.hours));
+  const [rateDraft, setRateDraft] = useState(String(entry.rateRub));
+
+  const commitHours = async () => {
+    const parsed = parseNonNegative(hoursDraft);
+    if (parsed === null) {
+      setHoursDraft(String(entry.hours));
+      return;
+    }
+    if (parsed === entry.hours) return;
+    onClearError();
+    onBusy(true);
+    try {
+      await updateSalaryEntry(entry.id, { hours: parsed });
+      onChanged();
+    } catch (error) {
+      setHoursDraft(String(entry.hours));
+      onError(error instanceof Error ? error.message : 'Ошибка сохранения');
+    } finally {
+      onBusy(false);
+    }
+  };
+
+  const commitRate = async () => {
+    const parsed = parseNonNegative(rateDraft);
+    if (parsed === null) {
+      setRateDraft(String(entry.rateRub));
+      return;
+    }
+    if (parsed === entry.rateRub) return;
+    onClearError();
+    onBusy(true);
+    try {
+      await updateSalaryEntry(entry.id, { rateRub: parsed });
+      onChanged();
+    } catch (error) {
+      setRateDraft(String(entry.rateRub));
+      onError(error instanceof Error ? error.message : 'Ошибка сохранения');
+    } finally {
+      onBusy(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    onClearError();
+    onBusy(true);
+    try {
+      await deleteSalaryEntry(entry.id);
+      onChanged();
+    } catch (error) {
+      onError(error instanceof Error ? error.message : 'Ошибка сохранения');
+    } finally {
+      onBusy(false);
+    }
+  };
+
+  const onEnterCommit = (event: KeyboardEvent<HTMLInputElement>, commit: () => void) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      void commit();
+    }
+  };
+
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 56px 72px auto 24px',
+        gap: spacing.xs,
+        alignItems: 'center',
+        fontSize: font.sizeSm,
+      }}
+    >
+      <span
+        title={entry.name}
+        style={{
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          fontWeight: font.weightMedium,
+        }}
+      >
+        {entry.name}
+      </span>
+      <Input
+        theme={theme}
+        type="number"
+        min={0}
+        step="any"
+        value={hoursDraft}
+        disabled={busy}
+        onChange={(event) => {
+          onClearError();
+          setHoursDraft(event.target.value);
+        }}
+        onBlur={() => void commitHours()}
+        onKeyDown={(event) => onEnterCommit(event, commitHours)}
+        style={{ width: 56, padding: '4px 6px', fontSize: font.sizeXs }}
+      />
+      <Input
+        theme={theme}
+        type="number"
+        min={0}
+        step="any"
+        value={rateDraft}
+        disabled={busy}
+        onChange={(event) => {
+          onClearError();
+          setRateDraft(event.target.value);
+        }}
+        onBlur={() => void commitRate()}
+        onKeyDown={(event) => onEnterCommit(event, commitRate)}
+        style={{ width: 72, padding: '4px 6px', fontSize: font.sizeXs }}
+      />
+      <span style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', fontSize: font.sizeXs }}>
+        {formatSalaryRub(entrySumRub({ ...entry, hours: Number(hoursDraft) || 0, rateRub: Number(rateDraft) || 0 }))}
+      </span>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => void handleDelete()}
+        aria-label="Удалить"
+        style={{
+          width: 24,
+          height: 24,
+          padding: 0,
+          border: 'none',
+          borderRadius: radius.sm,
+          background: 'transparent',
+          color: colors.textMuted,
+          cursor: busy ? 'wait' : 'pointer',
+          fontSize: font.sizeSm,
+          lineHeight: 1,
+        }}
+      >
+        ×
+      </button>
+    </div>
+  );
+};
+
+type PeriodSectionProps = {
+  period: SalaryPeriod;
+  periodEntries: OkleykaSalaryEntry[];
+  historyEntries: OkleykaSalaryEntry[];
+  nameSuggestions: string[];
+  busy: boolean;
+  onBusy: (value: boolean) => void;
+  onChanged: () => void;
+  onError: (message: string) => void;
+  onClearError: () => void;
+};
+
+const PeriodSection = ({
+  period,
+  periodEntries,
+  historyEntries,
+  nameSuggestions,
+  busy,
+  onBusy,
+  onChanged,
+  onError,
+  onClearError,
+}: PeriodSectionProps) => {
+  const theme = useTheme();
+  const { colors, font, spacing } = theme;
+  const datalistId = `okleyka-names-${period.dateFrom}-${period.dateTo}`;
+  const [addName, setAddName] = useState('');
+  const [addHours, setAddHours] = useState('');
+  const [addRate, setAddRate] = useState('');
+  const [rateTouched, setRateTouched] = useState(false);
+
+  const previousEntries = useMemo(
+    () => pickPreviousPeriodEntries(historyEntries),
+    [historyEntries],
+  );
+
+  const handleNameChange = (name: string) => {
+    onClearError();
+    setAddName(name);
+    if (!rateTouched) {
+      const rate = latestRateByName(historyEntries, name);
+      if (rate !== null) setAddRate(String(rate));
+    }
+  };
+
+  const handleAdd = async () => {
+    const name = addName.trim();
+    if (!name) return;
+    const hours = parseNonNegative(addHours) ?? 0;
+    const rateRub = parseNonNegative(addRate) ?? 0;
+    onClearError();
+    onBusy(true);
+    try {
+      await createSalaryEntry({
+        name,
+        hours,
+        rateRub,
+        periodStart: period.dateFrom,
+        periodEnd: period.dateTo,
+      });
+      setAddName('');
+      setAddHours('');
+      setAddRate('');
+      setRateTouched(false);
+      onChanged();
+    } catch (error) {
+      onError(error instanceof Error ? error.message : 'Ошибка сохранения');
+    } finally {
+      onBusy(false);
+    }
+  };
+
+  const handleCopyFromPrevious = async () => {
+    if (previousEntries.length === 0) return;
+    onClearError();
+    onBusy(true);
+    try {
+      for (const prev of previousEntries) {
+        await createSalaryEntry({
+          name: prev.name,
+          hours: 0,
+          rateRub: prev.rateRub,
+          periodStart: period.dateFrom,
+          periodEnd: period.dateTo,
+        });
+      }
+      onChanged();
+    } catch (error) {
+      onError(error instanceof Error ? error.message : 'Ошибка сохранения');
+    } finally {
+      onBusy(false);
+    }
+  };
+
+  return (
+    <section style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm }}>
+      <h3
+        style={{
+          margin: 0,
+          fontSize: font.sizeSm,
+          fontWeight: font.weightSemibold,
+          color: colors.textSecondary,
+        }}
+      >
+        {formatPeriodLabel(period)}
+      </h3>
+      {periodEntries.length > 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
+          {periodEntries.map((entry) => (
+            <EntryRow
+              key={entry.id}
+              entry={entry}
+              busy={busy}
+              onBusy={onBusy}
+              onChanged={onChanged}
+              onError={onError}
+              onClearError={onClearError}
+            />
+          ))}
+        </div>
+      ) : (
+        <Button
+          theme={theme}
+          size="sm"
+          variant="ghost"
+          disabled={busy || previousEntries.length === 0}
+          title={previousEntries.length === 0 ? 'Нет данных за прошлый период' : undefined}
+          onClick={() => void handleCopyFromPrevious()}
+          style={{ alignSelf: 'flex-start' }}
+        >
+          Из прошлого периода
+        </Button>
+      )}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 56px 72px auto',
+          gap: spacing.xs,
+          alignItems: 'center',
+        }}
+      >
+        <Input
+          theme={theme}
+          list={datalistId}
+          placeholder="Имя"
+          value={addName}
+          disabled={busy}
+          onChange={(event) => handleNameChange(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') void handleAdd();
+          }}
+          style={{ padding: '4px 8px', fontSize: font.sizeXs }}
+        />
+        <datalist id={datalistId}>
+          {nameSuggestions.map((name) => (
+            <option key={name} value={name} />
+          ))}
+        </datalist>
+        <Input
+          theme={theme}
+          type="number"
+          min={0}
+          step="any"
+          placeholder="ч"
+          value={addHours}
+          disabled={busy}
+          onChange={(event) => {
+            onClearError();
+            setAddHours(event.target.value);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') void handleAdd();
+          }}
+          style={{ width: 56, padding: '4px 6px', fontSize: font.sizeXs }}
+        />
+        <Input
+          theme={theme}
+          type="number"
+          min={0}
+          step="any"
+          placeholder="₽/ч"
+          value={addRate}
+          disabled={busy}
+          onChange={(event) => {
+            onClearError();
+            setRateTouched(true);
+            setAddRate(event.target.value);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') void handleAdd();
+          }}
+          style={{ width: 72, padding: '4px 6px', fontSize: font.sizeXs }}
+        />
+        <Button
+          theme={theme}
+          size="sm"
+          variant="secondary"
+          disabled={busy || !addName.trim()}
+          onClick={() => void handleAdd()}
+        >
+          Добавить
+        </Button>
+      </div>
+    </section>
+  );
+};
+
+export const SalaryPanel = ({
+  periods,
+  entries,
+  historyEntries,
+  fund,
+  isLoading,
+  onChanged,
+  onDistribute,
+  distributeDisabledReason,
+}: SalaryPanelProps) => {
+  const theme = useTheme();
+  const { colors, font, spacing, radius } = theme;
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const clearError = () => setError(null);
+  const setMutationError = (message: string) => setError(message);
+
+  const nameSuggestions = useMemo(
+    () => [...new Set(historyEntries.map((e) => e.name).filter(Boolean))],
+    [historyEntries],
+  );
+
+  const remainderColor =
+    fund.remainderRub < 0 ? colors.danger : (colors.success ?? colors.text);
+
+  const cardStyle = {
+    backgroundColor: colors.bgSecondary,
+    borderRadius: radius.lg,
+    boxShadow: `inset 0 0 0 1px ${colors.borderSubtle}`,
+    padding: spacing.md,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: spacing.md,
+    fontSize: font.sizeSm,
+  };
+
+  if (periods.length === 0) {
+    return (
+      <div style={cardStyle}>
+        <p style={{ margin: 0, color: colors.textMuted, fontSize: font.sizeSm }}>
+          Выберите месяц или полупериод, чтобы работать с фондом ЗП
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={cardStyle}>
+      {error ? (
+        <div style={{ color: colors.danger, fontSize: font.sizeXs }}>{error}</div>
+      ) : null}
+      {isLoading ? (
+        <span style={{ color: colors.textMuted, fontSize: font.sizeXs }}>загрузка…</span>
+      ) : null}
+      {periods.map((period) => {
+        const periodEntries = entries
+          .filter((e) => e.periodStart === period.dateFrom && e.periodEnd === period.dateTo)
+          .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+        return (
+          <PeriodSection
+            key={`${period.dateFrom}_${period.dateTo}`}
+            period={period}
+            periodEntries={periodEntries}
+            historyEntries={historyEntries}
+            nameSuggestions={nameSuggestions}
+            busy={busy}
+            onBusy={setBusy}
+            onChanged={onChanged}
+            onError={setMutationError}
+            onClearError={clearError}
+          />
+        );
+      })}
+      <footer
+        style={{
+          borderTop: `1px solid ${colors.borderSubtle}`,
+          paddingTop: spacing.sm,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: spacing.sm,
+        }}
+      >
+        <div
+          style={{
+            fontVariantNumeric: 'tabular-nums',
+            fontSize: font.sizeXs,
+            color: colors.textSecondary,
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: spacing.xs,
+          }}
+        >
+          <span>
+            Фонд <strong style={{ color: colors.text }}>{formatSalaryRub(fund.fundRub)}</strong>
+          </span>
+          <span>·</span>
+          <span>
+            Раскидано{' '}
+            <strong style={{ color: colors.text }}>{formatSalaryRub(fund.spentRub)}</strong>
+          </span>
+          <span>·</span>
+          <span>
+            Остаток{' '}
+            <strong style={{ color: remainderColor }}>{formatSalaryRub(fund.remainderRub)}</strong>
+          </span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
+          <Button
+            theme={theme}
+            size="sm"
+            variant="primary"
+            disabled={busy || distributeDisabledReason !== null}
+            onClick={() => onDistribute()}
+          >
+            Распределить остаток
+          </Button>
+          {distributeDisabledReason ? (
+            <span style={{ color: colors.textMuted, fontSize: font.sizeXs }}>
+              {distributeDisabledReason}
+            </span>
+          ) : null}
+        </div>
+      </footer>
+    </div>
+  );
+};

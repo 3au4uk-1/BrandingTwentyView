@@ -2,28 +2,20 @@ import { buildXlsxFromRows, XLSX_MIME } from 'src/logic-functions/shared/build-x
 
 import {
   buildOkleykaSalaryFilename,
-  salaryRowsToXlsxMatrix,
-  type OkleykaSalaryRow,
+  dealGroupsToXlsxMatrix,
+  type OkleykaDealGroup,
 } from './compute';
 
-export const buildOkleykaSalaryExcelBlobFromRows = (rows: OkleykaSalaryRow[]): Blob => {
-  const bytes = buildXlsxFromRows(salaryRowsToXlsxMatrix(rows));
-  // Copy into a plain ArrayBuffer — Remote DOM Blob often rejects SharedArrayBuffer views.
+export const buildOkleykaSalaryExcelBlobFromGroups = (groups: OkleykaDealGroup[]): Blob => {
+  const bytes = buildXlsxFromRows(dealGroupsToXlsxMatrix(groups));
   const copy = new Uint8Array(bytes.byteLength);
   copy.set(bytes);
   return new Blob([copy.buffer], { type: XLSX_MIME });
 };
 
-/**
- * Build Excel from the caller's filtered rows (source of truth).
- * LF okleyka-salary-export is skipped — it loads unfiltered history without date params.
- */
 export const fetchOkleykaSalaryExcelBlob = async (
-  rows: OkleykaSalaryRow[],
+  groups: OkleykaDealGroup[],
 ): Promise<{ blob: Blob; filename: string }> => {
-  const filename = buildOkleykaSalaryFilename();
-  if (!rows.length) {
-    throw new Error('Нет строк для экспорта.');
-  }
-  return { blob: buildOkleykaSalaryExcelBlobFromRows(rows), filename };
+  if (!groups.length) throw new Error('Нет строк для экспорта.');
+  return { blob: buildOkleykaSalaryExcelBlobFromGroups(groups), filename: buildOkleykaSalaryFilename() };
 };
