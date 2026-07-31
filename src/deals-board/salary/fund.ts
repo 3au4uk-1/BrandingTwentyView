@@ -38,27 +38,74 @@ export const saleShareHintRub = (
   return Math.round((fundRub * dealSaleRub) / totalSale);
 };
 
-/** Spread remainder over deals with empty/zero okleyka, proportional to sale. */
+export type DistributeRule = 'sale' | 'equal' | 'margin';
+
+export const DISTRIBUTE_RULES: Array<{ key: DistributeRule; label: string; hint: string }> = [
+  { key: 'sale', label: 'По продаже', hint: 'пропорционально сумме продажи' },
+  { key: 'equal', label: 'Поровну', hint: 'одинаковая сумма каждой сделке' },
+  { key: 'margin', label: 'Выровнять маржу', hint: 'после распределения маржа сделок сравняется' },
+];
+
+/** Raw (unrounded) shares per target deal for a given rule. */
+const ruleShares = (
+  targets: OkleykaDealGroup[],
+  remainderRub: number,
+  rule: DistributeRule,
+): Map<string, number> => {
+  const shares = new Map<string, number>();
+  if (rule === 'equal') {
+    const each = remainderRub / targets.length;
+    for (const g of targets) shares.set(g.opportunityId, each);
+    return shares;
+  }
+  if (rule === 'margin') {
+    // Water-filling: pick a common margin level m so that
+    // okleyka_i = profit_i − m·sale_i, Σ okleyka_i = remainder, okleyka_i ≥ 0.
+    let active = [...targets];
+    for (;;) {
+      const profitSum = active.reduce((s, g) => s + g.profitRub, 0);
+      const saleSum = active.reduce((s, g) => s + g.saleRub, 0);
+      if (active.length === 0 || saleSum <= 0) break;
+      const m = (profitSum - remainderRub) / saleSum;
+      const next = active.filter((g) => g.profitRub - m * g.saleRub > 0);
+      if (next.length === active.length) {
+        for (const g of targets) shares.set(g.opportunityId, 0);
+        for (const g of active) shares.set(g.opportunityId, g.profitRub - m * g.saleRub);
+        return shares;
+      }
+      if (next.length === 0) break;
+      active = next;
+    }
+    // Degenerate case — fall back to sale-proportional.
+  }
+  const totalSale = targets.reduce((s, g) => s + g.saleRub, 0);
+  for (const g of targets) {
+    shares.set(g.opportunityId, totalSale > 0 ? (remainderRub * g.saleRub) / totalSale : 0);
+  }
+  return shares;
+};
+
+/** Spread remainder over deals with empty/zero okleyka using the selected rule. */
 export const distributeRemainder = (
   groups: OkleykaDealGroup[],
   remainderRub: number,
+  rule: DistributeRule = 'sale',
 ): Array<{ opportunityId: string; okleykaRub: number }> => {
   if (remainderRub <= 0) return [];
   const targets = groups.filter(
     (g) => (g.okleykaCostRub === null || g.okleykaCostRub === 0) && g.saleRub > 0,
   );
-  const totalSale = targets.reduce((s, g) => s + g.saleRub, 0);
-  if (targets.length === 0 || totalSale <= 0) return [];
+  if (targets.length === 0) return [];
 
+  const shares = ruleShares(targets, remainderRub, rule);
   const result = targets.map((g) => ({
     opportunityId: g.opportunityId,
-    okleykaRub: Math.round((remainderRub * g.saleRub) / totalSale),
+    okleykaRub: Math.round(shares.get(g.opportunityId) ?? 0),
   }));
   const diff = remainderRub - result.reduce((s, r) => s + r.okleykaRub, 0);
   if (diff !== 0) {
-    const largest = targets.reduce((max, g) => (g.saleRub > max.saleRub ? g : max), targets[0]!);
-    const target = result.find((r) => r.opportunityId === largest.opportunityId)!;
-    target.okleykaRub += diff;
+    const largest = result.reduce((max, r) => (r.okleykaRub > max.okleykaRub ? r : max), result[0]!);
+    largest.okleykaRub += diff;
   }
   return result.filter((r) => r.okleykaRub > 0);
 };

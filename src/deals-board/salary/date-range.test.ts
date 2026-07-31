@@ -1,13 +1,17 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   clampSplitDay,
+  entryHalf,
   formatPeriodLabel,
   getCurrentMonthMode,
   halfPeriod,
+  inferSplitDayFromEntries,
   periodKey,
+  readStoredSplitDay,
   resolveOkleykaDateRange,
   salaryPeriodsForMode,
+  storeSplitDay,
 } from './date-range';
 
 describe('okleyka date-range', () => {
@@ -97,5 +101,44 @@ describe('half periods', () => {
     expect(formatPeriodLabel({ dateFrom: '2026-07-16', dateTo: '2026-07-31' })).toBe(
       '16–31 июл',
     );
+  });
+});
+
+describe('split day memory', () => {
+  it('assigns entries to halves by period start day', () => {
+    expect(entryHalf('2026-07-01')).toBe('first');
+    expect(entryHalf('2026-07-16')).toBe('second');
+    expect(entryHalf('2026-07-18')).toBe('second');
+  });
+
+  it('infers split day from saved entries', () => {
+    expect(
+      inferSplitDayFromEntries([{ periodStart: '2026-07-01', periodEnd: '2026-07-16' }]),
+    ).toBe(16);
+    expect(
+      inferSplitDayFromEntries([{ periodStart: '2026-07-18', periodEnd: '2026-07-31' }]),
+    ).toBe(17);
+    expect(inferSplitDayFromEntries([])).toBeNull();
+    expect(
+      inferSplitDayFromEntries([{ periodStart: '2026-07-01', periodEnd: '2026-07-31' }]),
+    ).toBeNull();
+  });
+
+  it('stores and reads split day per month via localStorage', () => {
+    const store = new Map<string, string>();
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+    });
+    try {
+      expect(readStoredSplitDay(2026, 6)).toBeNull();
+      storeSplitDay(2026, 6, 16);
+      expect(readStoredSplitDay(2026, 6)).toBe(16);
+      expect(readStoredSplitDay(2026, 7)).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

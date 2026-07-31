@@ -76,6 +76,51 @@ describe('okleyka salary fund', () => {
     expect(distributeRemainder([group({ saleRub: 0 })], 500)).toEqual([]);
   });
 
+  it('equal rule gives every target the same share', () => {
+    const groups = [
+      group({ opportunityId: 'a', saleRub: 200 }),
+      group({ opportunityId: 'b', saleRub: 100, okleykaCostRub: 0 }),
+    ];
+    const result = distributeRemainder(groups, 1001, 'equal');
+    const byId = Object.fromEntries(result.map((r) => [r.opportunityId, r.okleykaRub]));
+    expect(byId.a! + byId.b!).toBe(1001);
+    expect(Math.abs(byId.a! - byId.b!)).toBeLessThanOrEqual(1);
+  });
+
+  it('margin rule equalizes margins across targets', () => {
+    const groups = [
+      group({ opportunityId: 'a', saleRub: 1000, profitRub: 1000 }),
+      group({
+        opportunityId: 'b',
+        saleRub: 1000,
+        printCostRub: 500,
+        costRub: 500,
+        profitRub: 500,
+      }),
+    ];
+    const result = distributeRemainder(groups, 700, 'margin');
+    const byId = Object.fromEntries(result.map((r) => [r.opportunityId, r.okleykaRub]));
+    // m = (1500 − 700) / 2000 = 40% → a: 1000 − 400 = 600, b: 500 − 400 = 100
+    expect(byId.a).toBe(600);
+    expect(byId.b).toBe(100);
+  });
+
+  it('margin rule never assigns negative okleyka to low-margin deals', () => {
+    const groups = [
+      group({ opportunityId: 'a', saleRub: 1000, profitRub: 1000 }),
+      group({
+        opportunityId: 'b',
+        saleRub: 1000,
+        printCostRub: 500,
+        costRub: 500,
+        profitRub: 500,
+      }),
+    ];
+    const result = distributeRemainder(groups, 300, 'margin');
+    // m over both would take from b (500 − 600 < 0) → b excluded, a takes all
+    expect(result).toEqual([{ opportunityId: 'a', okleykaRub: 300 }]);
+  });
+
   it('picks the latest finished period', () => {
     const entries = [
       entry({ id: '1', periodStart: '2026-06-16', periodEnd: '2026-06-30' }),

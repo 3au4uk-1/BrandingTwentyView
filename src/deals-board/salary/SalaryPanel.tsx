@@ -4,13 +4,20 @@ import { useTheme } from '../theme/ThemeContext';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { formatSalaryRub } from './compute';
-import { formatPeriodLabel, type SalaryPeriod } from './date-range';
+import { entryHalf, formatPeriodLabel, type SalaryPeriod } from './date-range';
 import {
   createSalaryEntry,
   deleteSalaryEntry,
   updateSalaryEntry,
 } from './salary-entries-api';
-import { entrySumRub, latestRateByName, pickPreviousPeriodEntries, type OkleykaSalaryEntry } from './fund';
+import {
+  DISTRIBUTE_RULES,
+  entrySumRub,
+  latestRateByName,
+  pickPreviousPeriodEntries,
+  type DistributeRule,
+  type OkleykaSalaryEntry,
+} from './fund';
 
 type SalaryPanelProps = {
   periods: SalaryPeriod[];
@@ -19,6 +26,10 @@ type SalaryPanelProps = {
   fund: { fundRub: number; spentRub: number; remainderRub: number };
   isLoading: boolean;
   onChanged: () => void;
+  distributeRule: DistributeRule;
+  onDistributeRuleChange: (rule: DistributeRule) => void;
+  distributionTotalRub: number;
+  distributionCount: number;
   onDistribute: () => void;
   distributeDisabledReason: string | null;
 };
@@ -188,6 +199,7 @@ type PeriodSectionProps = {
   period: SalaryPeriod;
   periodEntries: OkleykaSalaryEntry[];
   historyEntries: OkleykaSalaryEntry[];
+  sameMonthPreviousEntries: OkleykaSalaryEntry[];
   nameSuggestions: string[];
   busy: boolean;
   onBusy: (value: boolean) => void;
@@ -200,6 +212,7 @@ const PeriodSection = ({
   period,
   periodEntries,
   historyEntries,
+  sameMonthPreviousEntries,
   nameSuggestions,
   busy,
   onBusy,
@@ -216,8 +229,11 @@ const PeriodSection = ({
   const [rateTouched, setRateTouched] = useState(false);
 
   const previousEntries = useMemo(
-    () => pickPreviousPeriodEntries(historyEntries),
-    [historyEntries],
+    () =>
+      sameMonthPreviousEntries.length > 0
+        ? sameMonthPreviousEntries
+        : pickPreviousPeriodEntries(historyEntries),
+    [sameMonthPreviousEntries, historyEntries],
   );
 
   const handleNameChange = (name: string) => {
@@ -398,6 +414,10 @@ export const SalaryPanel = ({
   fund,
   isLoading,
   onChanged,
+  distributeRule,
+  onDistributeRuleChange,
+  distributionTotalRub,
+  distributionCount,
   onDistribute,
   distributeDisabledReason,
 }: SalaryPanelProps) => {
@@ -405,6 +425,7 @@ export const SalaryPanel = ({
   const { colors, font, spacing, radius } = theme;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmingDistribute, setConfirmingDistribute] = useState(false);
 
   const clearError = () => setError(null);
   const setMutationError = (message: string) => setError(message);
@@ -447,15 +468,21 @@ export const SalaryPanel = ({
         <span style={{ color: colors.textMuted, fontSize: font.sizeXs }}>загрузка…</span>
       ) : null}
       {periods.map((period) => {
+        const half = entryHalf(period.dateFrom);
         const periodEntries = entries
-          .filter((e) => e.periodStart === period.dateFrom && e.periodEnd === period.dateTo)
+          .filter((e) => entryHalf(e.periodStart) === half)
           .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+        const sameMonthPreviousEntries =
+          half === 'second'
+            ? entries.filter((e) => entryHalf(e.periodStart) === 'first')
+            : [];
         return (
           <PeriodSection
             key={`${period.dateFrom}_${period.dateTo}`}
             period={period}
             periodEntries={periodEntries}
             historyEntries={historyEntries}
+            sameMonthPreviousEntries={sameMonthPreviousEntries}
             nameSuggestions={nameSuggestions}
             busy={busy}
             onBusy={setBusy}
@@ -499,15 +526,63 @@ export const SalaryPanel = ({
           </span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
-          <Button
-            theme={theme}
-            size="sm"
-            variant="primary"
-            disabled={busy || distributeDisabledReason !== null}
-            onClick={() => onDistribute()}
-          >
-            Распределить остаток
-          </Button>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.xs }}>
+            {DISTRIBUTE_RULES.map((rule) => (
+              <Button
+                key={rule.key}
+                theme={theme}
+                size="sm"
+                variant={distributeRule === rule.key ? 'secondary' : 'ghost'}
+                title={rule.hint}
+                onClick={() => {
+                  setConfirmingDistribute(false);
+                  onDistributeRuleChange(rule.key);
+                }}
+              >
+                {rule.label}
+              </Button>
+            ))}
+          </div>
+          {confirmingDistribute && distributeDisabledReason === null ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
+              <span style={{ color: colors.textSecondary, fontSize: font.sizeXs }}>
+                Раскидать {formatSalaryRub(distributionTotalRub)} по {distributionCount}{' '}
+                сделкам?
+              </span>
+              <div style={{ display: 'flex', gap: spacing.xs }}>
+                <Button
+                  theme={theme}
+                  size="sm"
+                  variant="primary"
+                  disabled={busy}
+                  onClick={() => {
+                    setConfirmingDistribute(false);
+                    onDistribute();
+                  }}
+                >
+                  Да, распределить
+                </Button>
+                <Button
+                  theme={theme}
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setConfirmingDistribute(false)}
+                >
+                  Отмена
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button
+              theme={theme}
+              size="sm"
+              variant="primary"
+              disabled={busy || distributeDisabledReason !== null}
+              onClick={() => setConfirmingDistribute(true)}
+            >
+              Распределить остаток
+            </Button>
+          )}
           {distributeDisabledReason ? (
             <span style={{ color: colors.textMuted, fontSize: font.sizeXs }}>
               {distributeDisabledReason}

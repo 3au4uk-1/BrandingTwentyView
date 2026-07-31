@@ -1,3 +1,4 @@
+import { readLocalStorage, writeLocalStorage } from '../utils/browser-storage';
 import { toInputDate } from '../utils/date-filters';
 
 export type OkleykaHalf = 'first' | 'second';
@@ -15,6 +16,44 @@ export const clampSplitDay = (value: number): number => {
 };
 
 export type SalaryPeriod = { dateFrom: string; dateTo: string };
+
+export const monthKeyOf = (year: number, monthIndex: number): string =>
+  `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
+
+const splitDayStorageKey = (year: number, monthIndex: number): string =>
+  `okleyka-split-day:${monthKeyOf(year, monthIndex)}`;
+
+export const readStoredSplitDay = (year: number, monthIndex: number): number | null => {
+  const raw = readLocalStorage(splitDayStorageKey(year, monthIndex));
+  if (raw === null) return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? clampSplitDay(parsed) : null;
+};
+
+export const storeSplitDay = (year: number, monthIndex: number, day: number): void => {
+  writeLocalStorage(splitDayStorageKey(year, monthIndex), String(clampSplitDay(day)));
+};
+
+/** First half always starts on day 1; anything else belongs to the second half. */
+export const entryHalf = (periodStart: string): OkleykaHalf =>
+  periodStart.slice(8, 10) === '01' ? 'first' : 'second';
+
+/**
+ * Infer the split day of a month from already saved salary entries, so the
+ * chosen boundary survives reloads and is shared between users.
+ */
+export const inferSplitDayFromEntries = (
+  entries: Array<{ periodStart: string; periodEnd: string }>,
+): number | null => {
+  for (const e of entries) {
+    const day =
+      entryHalf(e.periodStart) === 'first'
+        ? Number(e.periodEnd.slice(8, 10))
+        : Number(e.periodStart.slice(8, 10)) - 1;
+    if (Number.isFinite(day) && day >= 10 && day <= 25) return day;
+  }
+  return null;
+};
 
 export const halfPeriod = (
   year: number,

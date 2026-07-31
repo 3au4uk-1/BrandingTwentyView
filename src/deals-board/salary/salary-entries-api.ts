@@ -1,7 +1,7 @@
 import { RestApiClient } from 'twenty-client-sdk/rest';
 
 import { extractRestPageInfo, normalizeRestListResponse } from '../api/rest-list';
-import type { SalaryPeriod } from './date-range';
+import { toInputDate } from '../utils/date-filters';
 import type { OkleykaSalaryEntry } from './fund';
 
 const ENDPOINT = '/rest/okleykaSalaryEntries';
@@ -45,11 +45,15 @@ const fetchList = async (filter: string, maxRecords: number): Promise<OkleykaSal
   return all;
 };
 
-export const fetchSalaryEntriesForPeriod = (period: SalaryPeriod) =>
-  fetchList(
-    `and(periodStart[eq]:"${period.dateFrom}",periodEnd[eq]:"${period.dateTo}")`,
-    1000,
-  );
+/**
+ * All entries whose period starts inside the month. Fetching by month (not by
+ * exact period dates) keeps people visible when the split day changes.
+ */
+export const fetchSalaryEntriesForMonth = (year: number, monthIndex: number) => {
+  const from = toInputDate(new Date(year, monthIndex, 1));
+  const to = toInputDate(new Date(year, monthIndex + 1, 0));
+  return fetchList(`and(periodStart[gte]:"${from}",periodStart[lte]:"${to}")`, 1000);
+};
 
 export const fetchEntriesEndedBefore = (dateFrom: string, limit = 400) =>
   fetchList(`periodEnd[lt]:"${dateFrom}"`, limit);
@@ -67,7 +71,13 @@ export const createSalaryEntry = async (input: {
 
 export const updateSalaryEntry = async (
   id: string,
-  patch: Partial<{ name: string; hours: number; rateRub: number }>,
+  patch: Partial<{
+    name: string;
+    hours: number;
+    rateRub: number;
+    periodStart: string;
+    periodEnd: string;
+  }>,
 ): Promise<void> => {
   const client = new RestApiClient();
   await client.patch<unknown>(`${ENDPOINT}/${id}`, patch);

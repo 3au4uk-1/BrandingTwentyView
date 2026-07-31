@@ -23,14 +23,20 @@ import {
   type OkleykaDealGroup,
   type OkleykaSortKey,
 } from './compute';
+import { buildCopySrcDoc, COPY_DONE_MESSAGE_TYPE } from '../utils/copy-text';
 import {
 
   clampSplitDay,
   DEFAULT_SPLIT_DAY,
+  entryHalf,
   getCurrentMonthMode,
-  periodKey,
+  halfPeriod,
+  inferSplitDayFromEntries,
+  monthKeyOf,
+  readStoredSplitDay,
   resolveOkleykaDateRange,
   salaryPeriodsForMode,
+  storeSplitDay,
   type OkleykaDateMode,
 } from './date-range';
 import { fetchOkleykaSalaryExcelBlob } from './export-excel';
@@ -38,12 +44,14 @@ import {
   buildFundSummary,
   distributeRemainder,
   saleShareHintRub,
+  type DistributeRule,
 } from './fund';
 import { OkleykaDealCostCell } from './OkleykaDealCostCell';
 import { SalaryPanel } from './SalaryPanel';
 import {
   fetchEntriesEndedBefore,
-  fetchSalaryEntriesForPeriod,
+  fetchSalaryEntriesForMonth,
+  updateSalaryEntry,
 } from './salary-entries-api';
 
 const SORTABLE_BEFORE_COST: { key: OkleykaSortKey; label: string }[] = [
@@ -88,7 +96,6 @@ const OkleykaSalaryPageInner = () => {
   const { colors, font, spacing, radius } = theme;
   const queryClient = useQueryClient();
   const [refreshKey, setRefreshKey] = useState(0);
-  const [splitDay, setSplitDay] = useState(DEFAULT_SPLIT_DAY);
   const [dateMode, setDateMode] = useState<OkleykaDateMode>(() => getCurrentMonthMode());
   const [exportPending, setExportPending] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -99,9 +106,24 @@ const OkleykaSalaryPageInner = () => {
     null,
   );
   const [copyToast, setCopyToast] = useState<{ id: string; ok: boolean } | null>(null);
+  const [copyRequest, setCopyRequest] = useState<{ id: string; srcDoc: string } | null>(null);
   const [distributeError, setDistributeError] = useState<string | null>(null);
+  const [distributeRule, setDistributeRule] = useState<DistributeRule>('sale');
+  const [splitError, setSplitError] = useState<string | null>(null);
   const [overrides, setOverrides] = useState<Record<string, number | null>>({});
   const [focusId, setFocusId] = useState<string | null>(null);
+
+  const { year, monthIndex } = yearMonthFromMode(dateMode);
+  const monthKey = monthKeyOf(year, monthIndex);
+  const [splitDay, setSplitDay] = useState(
+    () => readStoredSplitDay(year, monthIndex) ?? DEFAULT_SPLIT_DAY,
+  );
+  const [splitDraft, setSplitDraft] = useState<string | null>(null);
+  useEffect(() => {
+    setSplitDay(readStoredSplitDay(year, monthIndex) ?? DEFAULT_SPLIT_DAY);
+    setSplitDraft(null);
+    setSplitError(null);
+  }, [year, monthIndex]);
 
   const resolved = resolveOkleykaDateRange(dateMode, splitDay);
 
@@ -130,17 +152,32 @@ const OkleykaSalaryPageInner = () => {
   );
 
   const periods = useMemo(() => salaryPeriodsForMode(dateMode, splitDay), [dateMode, splitDay]);
-  const periodsKey = periods.map(periodKey).join('|');
 
   const entriesQuery = useQuery({
-    queryKey: ['okleyka-salary-entries', periodsKey],
+    queryKey: ['okleyka-salary-entries', monthKey],
     enabled: periods.length > 0,
-    queryFn: async () => {
-      const lists = await Promise.all(periods.map((p) => fetchSalaryEntriesForPeriod(p)));
-      return lists.flat();
-    },
+    queryFn: () => fetchSalaryEntriesForMonth(year, monthIndex),
   });
-  const entries = entriesQuery.data ?? [];
+  const monthEntries = useMemo(() => entriesQuery.data ?? [], [entriesQuery.data]);
+
+  const entries = useMemo(
+    () =>
+      dateMode.kind === 'half'
+        ? monthEntries.filter((e) => entryHalf(e.periodStart) === dateMode.half)
+        : monthEntries,
+    [monthEntries, dateMode],
+  );
+
+  // Remember the split day chosen for this month: saved entries are the shared
+  // source of truth, localStorage covers months without entries yet.
+  useEffect(() => {
+    if (monthEntries.length === 0) return;
+    if (readStoredSplitDay(year, monthIndex) !== null) return;
+    const inferred = inferSplitDayFromEntries(monthEntries);
+    if (inferred !== null) {
+      setSplitDay((current) => (current === inferred ? current : inferred));
+    }
+  }, [monthEntries, year, monthIndex]);
 
   const historyQuery = useQuery({
     queryKey: ['okleyka-salary-history', periods[0]?.dateFrom ?? ''],
@@ -155,15 +192,54 @@ const OkleykaSalaryPageInner = () => {
   );
 
   const refetchEntries = () =>
-    queryClient.invalidateQueries({ queryKey: ['okleyka-salary-entries', periodsKey] });
+    queryClient.invalidateQueries({ queryKey: ['okleyka-salary-entries', monthKey] });
 
   const hintFor = (g: OkleykaDealGroup): number | null =>
     periods.length > 0 ? saleShareHintRub(g.saleRub, displayGroups, fund.fundRub) : null;
 
   const distribution = useMemo(
-    () => distributeRemainder(displayGroups, fund.remainderRub),
-    [displayGroups, fund.remainderRub],
+    () => distributeRemainder(displayGroups, fund.remainderRub, distributeRule),
+    [displayGroups, fund.remainderRub, distributeRule],
   );
+  const distributionTotalRub = useMemo(
+    () => distribution.reduce((s, d) => s + d.okleykaRub, 0),
+    [distribution],
+  );
+
+  /**
+   * Changing the boundary moves the existing entries of this month onto the
+   * new period dates, so the people list never resets.
+   */
+  const commitSplitDay = async (raw: string) => {
+    setSplitDraft(null);
+    if (!raw.trim() || !Number.isFinite(Number(raw))) return;
+    const next = clampSplitDay(Number(raw));
+    if (next === splitDay) return;
+    setSplitError(null);
+    setSplitDay(next);
+    storeSplitDay(year, monthIndex, next);
+
+    const first = halfPeriod(year, monthIndex, 'first', next);
+    const second = halfPeriod(year, monthIndex, 'second', next);
+    const stale = monthEntries.filter((e) => {
+      const target = entryHalf(e.periodStart) === 'first' ? first : second;
+      return e.periodStart !== target.dateFrom || e.periodEnd !== target.dateTo;
+    });
+    if (stale.length === 0) return;
+    const results = await Promise.allSettled(
+      stale.map((e) => {
+        const target = entryHalf(e.periodStart) === 'first' ? first : second;
+        return updateSalaryEntry(e.id, {
+          periodStart: target.dateFrom,
+          periodEnd: target.dateTo,
+        });
+      }),
+    );
+    if (results.some((r) => r.status === 'rejected')) {
+      setSplitError('Не удалось перенести часть записей на новые даты периода');
+    }
+    void refetchEntries();
+  };
 
   const distributeDisabledReason =
     periods.length === 0
@@ -213,11 +289,6 @@ const OkleykaSalaryPageInner = () => {
   );
 
   const handleDistribute = async () => {
-    const total = distribution.reduce((s, d) => s + d.okleykaRub, 0);
-    const confirmed = window.confirm(
-      `Распределить ${formatSalaryRub(total)} по ${distribution.length} сделкам без оклейки?`,
-    );
-    if (!confirmed) return;
     setDistributeError(null);
     let hadFailure = false;
     for (const d of distribution) {
@@ -291,6 +362,27 @@ const OkleykaSalaryPageInner = () => {
       if (timer != null) globalThis.clearTimeout?.(timer);
     };
   }, [copyToast]);
+  useEffect(() => {
+    if (!copyRequest) return;
+
+    const onMessage = (event: MessageEvent) => {
+      const data = event.data as { type?: string; ok?: boolean } | null;
+      if (data?.type === COPY_DONE_MESSAGE_TYPE) {
+        setCopyToast({ id: copyRequest.id, ok: Boolean(data.ok) });
+        setCopyRequest(null);
+      }
+    };
+    window.addEventListener('message', onMessage);
+
+    const timer = globalThis.setTimeout?.(() => {
+      setCopyToast({ id: copyRequest.id, ok: false });
+      setCopyRequest(null);
+    }, 3_000);
+    return () => {
+      window.removeEventListener('message', onMessage);
+      if (timer != null) globalThis.clearTimeout?.(timer);
+    };
+  }, [copyRequest]);
 
   const handleSortClick = (key: OkleykaSortKey) => {
     setSort((prev) => {
@@ -309,13 +401,9 @@ const OkleykaSalaryPageInner = () => {
     });
   };
 
-  const copyDealName = async (opportunityId: string, dealName: string) => {
-    try {
-      await navigator.clipboard.writeText(dealName);
-      setCopyToast({ id: opportunityId, ok: true });
-    } catch {
-      setCopyToast({ id: opportunityId, ok: false });
-    }
+  const copyDealName = (opportunityId: string, dealName: string) => {
+    setCopyToast(null);
+    setCopyRequest({ id: opportunityId, srcDoc: buildCopySrcDoc(dealName) });
   };
 
   const handleExportExcel = async () => {
@@ -413,6 +501,21 @@ const OkleykaSalaryPageInner = () => {
           title="okleyka-excel-download"
           srcDoc={downloadSrcDoc}
           sandbox="allow-scripts allow-downloads"
+          style={{
+            position: 'absolute',
+            width: 1,
+            height: 1,
+            opacity: 0,
+            pointerEvents: 'none',
+            border: 0,
+          }}
+        />
+      ) : null}
+      {copyRequest ? (
+        <iframe
+          title="okleyka-copy"
+          srcDoc={copyRequest.srcDoc}
+          sandbox="allow-scripts allow-same-origin"
           style={{
             position: 'absolute',
             width: 1,
@@ -603,11 +706,21 @@ const OkleykaSalaryPageInner = () => {
               type="number"
               min={10}
               max={25}
-              value={splitDay}
-              onChange={(event) => setSplitDay(clampSplitDay(Number(event.target.value)))}
+              value={splitDraft ?? String(splitDay)}
+              onChange={(event) => setSplitDraft(event.target.value)}
+              onBlur={(event) => void commitSplitDay(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  void commitSplitDay((event.target as HTMLInputElement).value);
+                }
+              }}
               style={{ width: 56, padding: '5px 8px', fontSize: font.sizeSm }}
             />
           </label>
+          {splitError ? (
+            <span style={{ color: colors.danger, fontSize: font.sizeXs }}>{splitError}</span>
+          ) : null}
         </div>
       </header>
       {exportError ? (
@@ -715,7 +828,10 @@ const OkleykaSalaryPageInner = () => {
                       <tr
                         style={{
                           borderBottom: `1px solid ${colors.borderSubtle}`,
-                          backgroundColor: colors.bgTertiary,
+                          backgroundColor:
+                            group.okleykaCostRub !== null
+                              ? colors.successMuted
+                              : colors.bgTertiary,
                         }}
                       >
                         <td style={{ padding: cellPad, verticalAlign: 'middle' }}>
@@ -780,7 +896,7 @@ const OkleykaSalaryPageInner = () => {
                             ) : null}
                             <button
                               type="button"
-                              onClick={() => void copyDealName(group.opportunityId, group.dealName)}
+                              onClick={() => copyDealName(group.opportunityId, group.dealName)}
                               style={{
                                 padding: '2px 6px',
                                 border: `1px solid ${colors.borderSubtle}`,
@@ -925,11 +1041,15 @@ const OkleykaSalaryPageInner = () => {
           ) : null}
           <SalaryPanel
             periods={periods}
-            entries={entries}
+            entries={monthEntries}
             historyEntries={historyEntries}
             fund={fund}
             isLoading={entriesQuery.isLoading || historyQuery.isLoading}
             onChanged={refetchEntries}
+            distributeRule={distributeRule}
+            onDistributeRuleChange={setDistributeRule}
+            distributionTotalRub={distributionTotalRub}
+            distributionCount={distribution.length}
             onDistribute={() => void handleDistribute()}
             distributeDisabledReason={distributeDisabledReason}
           />
