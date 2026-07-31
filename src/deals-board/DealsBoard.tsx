@@ -407,9 +407,18 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     Boolean(activeView) &&
     !parentFieldsQuery.isLoading;
 
+  // Wait for opportunity field descriptors before aggregate page fetch.
+  // Without them mergeColumns drops saved columns → visibleCrmFieldNames=[] and
+  // React Query refires 2–3 heavy /s/deals-board/page POSTs as metadata arrives.
+  // Still skip isSeedingDefault so seed mutations do not block the first page.
+  const parentFieldsReady =
+    !parentFieldsQuery.isLoading && Array.isArray(parentFieldsQuery.data);
+
   const aggregateColdLoadEnabled = shouldEnableAggregateColdLoad({
     useAggregateColdPath,
     viewsIsError: Boolean(viewsQuery.isError),
+    parentFieldsReady,
+    viewsReady: !viewsQuery.isLoading,
   });
 
   const opportunitiesQuery = useOpportunities({
