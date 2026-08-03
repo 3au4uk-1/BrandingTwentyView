@@ -4,7 +4,12 @@ import { useTheme } from '../theme/ThemeContext';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { formatSalaryRub } from './compute';
-import { entryHalf, formatPeriodLabel, type SalaryPeriod } from './date-range';
+import {
+  entryHalf,
+  formatPeriodLabel,
+  type OkleykaHalf,
+  type SalaryPeriod,
+} from './date-range';
 import {
   createSalaryEntry,
   deleteSalaryEntry,
@@ -19,19 +24,30 @@ import {
   type OkleykaSalaryEntry,
 } from './fund';
 
+export type HalfDistributeUi = {
+  half: OkleykaHalf;
+  fund: { fundRub: number; spentRub: number; remainderRub: number };
+  distributionTotalRub: number;
+  distributionCount: number;
+  disabledReason: string | null;
+};
+
 type SalaryPanelProps = {
   periods: SalaryPeriod[];
   entries: OkleykaSalaryEntry[];
   historyEntries: OkleykaSalaryEntry[];
-  fund: { fundRub: number; spentRub: number; remainderRub: number };
   isLoading: boolean;
   onChanged: () => void;
   distributeRule: DistributeRule;
   onDistributeRuleChange: (rule: DistributeRule) => void;
-  distributionTotalRub: number;
-  distributionCount: number;
-  onDistribute: () => void;
-  distributeDisabledReason: string | null;
+  /** One item in half mode; two in month mode; empty in range. */
+  halfDistribute: HalfDistributeUi[];
+  onDistributeHalf: (half: OkleykaHalf) => void;
+};
+
+const distributeButtonLabel = (half: OkleykaHalf, monthMode: boolean): string => {
+  if (!monthMode) return 'Раскидать';
+  return half === 'first' ? 'Раскидать 1-ю' : 'Раскидать 2-ю';
 };
 
 const parseNonNegative = (raw: string): number | null => {
@@ -407,25 +423,125 @@ const PeriodSection = ({
   );
 };
 
+type HalfDistributeBlockProps = {
+  halfUi: HalfDistributeUi;
+  monthMode: boolean;
+  busy: boolean;
+  confirmingHalf: OkleykaHalf | null;
+  onConfirmStart: (half: OkleykaHalf) => void;
+  onConfirmCancel: () => void;
+  onDistributeHalf: (half: OkleykaHalf) => void;
+};
+
+const HalfDistributeBlock = ({
+  halfUi,
+  monthMode,
+  busy,
+  confirmingHalf,
+  onConfirmStart,
+  onConfirmCancel,
+  onDistributeHalf,
+}: HalfDistributeBlockProps) => {
+  const theme = useTheme();
+  const { colors, font, spacing } = theme;
+  const remainderColor =
+    halfUi.fund.remainderRub < 0 ? colors.danger : (colors.success ?? colors.text);
+  const isConfirming = confirmingHalf === halfUi.half;
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: spacing.xs,
+        paddingTop: spacing.xs,
+        borderTop: `1px solid ${colors.borderSubtle}`,
+      }}
+    >
+      <div
+        style={{
+          fontVariantNumeric: 'tabular-nums',
+          fontSize: font.sizeXs,
+          color: colors.textSecondary,
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: spacing.xs,
+        }}
+      >
+        <span>
+          Фонд{' '}
+          <strong style={{ color: colors.text }}>{formatSalaryRub(halfUi.fund.fundRub)}</strong>
+        </span>
+        <span>·</span>
+        <span>
+          Раскидано{' '}
+          <strong style={{ color: colors.text }}>{formatSalaryRub(halfUi.fund.spentRub)}</strong>
+        </span>
+        <span>·</span>
+        <span>
+          Остаток{' '}
+          <strong style={{ color: remainderColor }}>
+            {formatSalaryRub(halfUi.fund.remainderRub)}
+          </strong>
+        </span>
+      </div>
+      {isConfirming && halfUi.disabledReason === null ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
+          <span style={{ color: colors.textSecondary, fontSize: font.sizeXs }}>
+            Раскидать {formatSalaryRub(halfUi.distributionTotalRub)} по {halfUi.distributionCount}{' '}
+            сделкам?
+          </span>
+          <div style={{ display: 'flex', gap: spacing.xs }}>
+            <Button
+              theme={theme}
+              size="sm"
+              variant="primary"
+              disabled={busy}
+              onClick={() => onDistributeHalf(halfUi.half)}
+            >
+              Да, распределить
+            </Button>
+            <Button theme={theme} size="sm" variant="ghost" onClick={onConfirmCancel}>
+              Отмена
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <Button
+          theme={theme}
+          size="sm"
+          variant="primary"
+          disabled={busy || halfUi.disabledReason !== null}
+          onClick={() => onConfirmStart(halfUi.half)}
+        >
+          {distributeButtonLabel(halfUi.half, monthMode)}
+        </Button>
+      )}
+      {halfUi.disabledReason ? (
+        <span style={{ color: colors.textMuted, fontSize: font.sizeXs }}>
+          {halfUi.disabledReason}
+        </span>
+      ) : null}
+    </div>
+  );
+};
+
 export const SalaryPanel = ({
   periods,
   entries,
   historyEntries,
-  fund,
   isLoading,
   onChanged,
   distributeRule,
   onDistributeRuleChange,
-  distributionTotalRub,
-  distributionCount,
-  onDistribute,
-  distributeDisabledReason,
+  halfDistribute,
+  onDistributeHalf,
 }: SalaryPanelProps) => {
   const theme = useTheme();
   const { colors, font, spacing, radius } = theme;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [confirmingDistribute, setConfirmingDistribute] = useState(false);
+  const [confirmingHalf, setConfirmingHalf] = useState<OkleykaHalf | null>(null);
 
   const clearError = () => setError(null);
   const setMutationError = (message: string) => setError(message);
@@ -435,8 +551,7 @@ export const SalaryPanel = ({
     [historyEntries],
   );
 
-  const remainderColor =
-    fund.remainderRub < 0 ? colors.danger : (colors.success ?? colors.text);
+  const monthMode = halfDistribute.length === 2;
 
   const cardStyle = {
     backgroundColor: colors.bgSecondary,
@@ -469,6 +584,7 @@ export const SalaryPanel = ({
       ) : null}
       {periods.map((period) => {
         const half = entryHalf(period.dateFrom);
+        const halfUi = halfDistribute.find((row) => row.half === half);
         const periodEntries = entries
           .filter((e) => entryHalf(e.periodStart) === half)
           .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
@@ -477,119 +593,66 @@ export const SalaryPanel = ({
             ? entries.filter((e) => entryHalf(e.periodStart) === 'first')
             : [];
         return (
-          <PeriodSection
+          <div
             key={`${period.dateFrom}_${period.dateTo}`}
-            period={period}
-            periodEntries={periodEntries}
-            historyEntries={historyEntries}
-            sameMonthPreviousEntries={sameMonthPreviousEntries}
-            nameSuggestions={nameSuggestions}
-            busy={busy}
-            onBusy={setBusy}
-            onChanged={onChanged}
-            onError={setMutationError}
-            onClearError={clearError}
-          />
+            style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm }}
+          >
+            <PeriodSection
+              period={period}
+              periodEntries={periodEntries}
+              historyEntries={historyEntries}
+              sameMonthPreviousEntries={sameMonthPreviousEntries}
+              nameSuggestions={nameSuggestions}
+              busy={busy}
+              onBusy={setBusy}
+              onChanged={onChanged}
+              onError={setMutationError}
+              onClearError={clearError}
+            />
+            {halfUi ? (
+              <HalfDistributeBlock
+                halfUi={halfUi}
+                monthMode={monthMode}
+                busy={busy}
+                confirmingHalf={confirmingHalf}
+                onConfirmStart={setConfirmingHalf}
+                onConfirmCancel={() => setConfirmingHalf(null)}
+                onDistributeHalf={(targetHalf) => {
+                  setConfirmingHalf(null);
+                  onDistributeHalf(targetHalf);
+                }}
+              />
+            ) : null}
+          </div>
         );
       })}
-      <footer
-        style={{
-          borderTop: `1px solid ${colors.borderSubtle}`,
-          paddingTop: spacing.sm,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: spacing.sm,
-        }}
-      >
-        <div
+      {halfDistribute.length > 0 ? (
+        <footer
           style={{
-            fontVariantNumeric: 'tabular-nums',
-            fontSize: font.sizeXs,
-            color: colors.textSecondary,
+            borderTop: `1px solid ${colors.borderSubtle}`,
+            paddingTop: spacing.sm,
             display: 'flex',
             flexWrap: 'wrap',
             gap: spacing.xs,
           }}
         >
-          <span>
-            Фонд <strong style={{ color: colors.text }}>{formatSalaryRub(fund.fundRub)}</strong>
-          </span>
-          <span>·</span>
-          <span>
-            Раскидано{' '}
-            <strong style={{ color: colors.text }}>{formatSalaryRub(fund.spentRub)}</strong>
-          </span>
-          <span>·</span>
-          <span>
-            Остаток{' '}
-            <strong style={{ color: remainderColor }}>{formatSalaryRub(fund.remainderRub)}</strong>
-          </span>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.xs }}>
-            {DISTRIBUTE_RULES.map((rule) => (
-              <Button
-                key={rule.key}
-                theme={theme}
-                size="sm"
-                variant={distributeRule === rule.key ? 'secondary' : 'ghost'}
-                title={rule.hint}
-                onClick={() => {
-                  setConfirmingDistribute(false);
-                  onDistributeRuleChange(rule.key);
-                }}
-              >
-                {rule.label}
-              </Button>
-            ))}
-          </div>
-          {confirmingDistribute && distributeDisabledReason === null ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
-              <span style={{ color: colors.textSecondary, fontSize: font.sizeXs }}>
-                Раскидать {formatSalaryRub(distributionTotalRub)} по {distributionCount}{' '}
-                сделкам?
-              </span>
-              <div style={{ display: 'flex', gap: spacing.xs }}>
-                <Button
-                  theme={theme}
-                  size="sm"
-                  variant="primary"
-                  disabled={busy}
-                  onClick={() => {
-                    setConfirmingDistribute(false);
-                    onDistribute();
-                  }}
-                >
-                  Да, распределить
-                </Button>
-                <Button
-                  theme={theme}
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setConfirmingDistribute(false)}
-                >
-                  Отмена
-                </Button>
-              </div>
-            </div>
-          ) : (
+          {DISTRIBUTE_RULES.map((rule) => (
             <Button
+              key={rule.key}
               theme={theme}
               size="sm"
-              variant="primary"
-              disabled={busy || distributeDisabledReason !== null}
-              onClick={() => setConfirmingDistribute(true)}
+              variant={distributeRule === rule.key ? 'secondary' : 'ghost'}
+              title={rule.hint}
+              onClick={() => {
+                setConfirmingHalf(null);
+                onDistributeRuleChange(rule.key);
+              }}
             >
-              Распределить остаток
+              {rule.label}
             </Button>
-          )}
-          {distributeDisabledReason ? (
-            <span style={{ color: colors.textMuted, fontSize: font.sizeXs }}>
-              {distributeDisabledReason}
-            </span>
-          ) : null}
-        </div>
-      </footer>
+          ))}
+        </footer>
+      ) : null}
     </div>
   );
 };

@@ -38,11 +38,11 @@ import {
   salaryPeriodsForMode,
   storeSplitDay,
   type OkleykaDateMode,
+  type OkleykaHalf,
 } from './date-range';
 import { fetchOkleykaSalaryExcelBlob } from './export-excel';
 import {
-  buildFundSummary,
-  distributeRemainder,
+  buildHalfDistributeScope,
   saleShareHintRub,
   type DistributeRule,
 } from './fund';
@@ -160,14 +160,6 @@ const OkleykaSalaryPageInner = () => {
   });
   const monthEntries = useMemo(() => entriesQuery.data ?? [], [entriesQuery.data]);
 
-  const entries = useMemo(
-    () =>
-      dateMode.kind === 'half'
-        ? monthEntries.filter((e) => entryHalf(e.periodStart) === dateMode.half)
-        : monthEntries,
-    [monthEntries, dateMode],
-  );
-
   // Remember the split day chosen for this month: saved entries are the shared
   // source of truth, localStorage covers months without entries yet.
   useEffect(() => {
@@ -186,25 +178,59 @@ const OkleykaSalaryPageInner = () => {
   });
   const historyEntries = historyQuery.data ?? [];
 
-  const fund = useMemo(
-    () => buildFundSummary(entries, displayGroups),
-    [entries, displayGroups],
-  );
-
   const refetchEntries = () =>
     queryClient.invalidateQueries({ queryKey: ['okleyka-salary-entries', monthKey] });
 
-  const hintFor = (g: OkleykaDealGroup): number | null =>
-    periods.length > 0 ? saleShareHintRub(g.saleRub, displayGroups, fund.fundRub) : null;
+  const halfDistribute = useMemo(() => {
+    if (dateMode.kind === 'range') return [];
+    const halves: OkleykaHalf[] =
+      dateMode.kind === 'half' ? [dateMode.half] : ['first', 'second'];
+    return halves.map((half) => {
+      const scope = buildHalfDistributeScope({
+        half,
+        year,
+        monthIndex,
+        splitDay,
+        entries: monthEntries,
+        groups: displayGroups,
+        rule: distributeRule,
+      });
+      const disabledReason =
+        scope.fund.remainderRub <= 0
+          ? 'Остаток фонда пуст'
+          : scope.distribution.length === 0
+            ? 'Нет сделок без оклейки'
+            : null;
+      return {
+        half,
+        fund: scope.fund,
+        distributionTotalRub: scope.distribution.reduce((s, d) => s + d.okleykaRub, 0),
+        distributionCount: scope.distribution.length,
+        disabledReason,
+        distribution: scope.distribution,
+      };
+    });
+  }, [dateMode, year, monthIndex, splitDay, monthEntries, displayGroups, distributeRule]);
 
-  const distribution = useMemo(
-    () => distributeRemainder(displayGroups, fund.remainderRub, distributeRule),
-    [displayGroups, fund.remainderRub, distributeRule],
-  );
-  const distributionTotalRub = useMemo(
-    () => distribution.reduce((s, d) => s + d.okleykaRub, 0),
-    [distribution],
-  );
+  const hintFor = (g: OkleykaDealGroup): number | null => {
+    if (periods.length === 0) return null;
+    const half: OkleykaHalf =
+      dateMode.kind === 'half'
+        ? dateMode.half
+        : g.eventDate.slice(0, 10) <= halfPeriod(year, monthIndex, 'first', splitDay).dateTo
+          ? 'first'
+          : 'second';
+    const scope = buildHalfDistributeScope({
+      half,
+      year,
+      monthIndex,
+      splitDay,
+      entries: monthEntries,
+      groups: displayGroups,
+      rule: distributeRule,
+    });
+    return saleShareHintRub(g.saleRub, scope.groups, scope.fund.fundRub);
+  };
 
   /**
    * Changing the boundary moves the existing entries of this month onto the
@@ -240,15 +266,6 @@ const OkleykaSalaryPageInner = () => {
     }
     void refetchEntries();
   };
-
-  const distributeDisabledReason =
-    periods.length === 0
-      ? 'Нужен месяц или полупериод'
-      : fund.remainderRub <= 0
-        ? 'Остаток фонда пуст'
-        : distribution.length === 0
-          ? 'Нет сделок без оклейки'
-          : null;
 
   const totals = useMemo(() => sumOkleykaDealTotals(displayGroups), [displayGroups]);
 
@@ -292,10 +309,19 @@ const OkleykaSalaryPageInner = () => {
     [baseGroups],
   );
 
-  const handleDistribute = async () => {
+  const handleDistributeHalf = async (half: OkleykaHalf) => {
     setDistributeError(null);
+    const scope = buildHalfDistributeScope({
+      half,
+      year,
+      monthIndex,
+      splitDay,
+      entries: monthEntries,
+      groups: displayGroups,
+      rule: distributeRule,
+    });
     let hadFailure = false;
-    for (const d of distribution) {
+    for (const d of scope.distribution) {
       const prev =
         displayGroups.find((group) => group.opportunityId === d.opportunityId)?.okleykaCostRub ??
         null;
@@ -309,7 +335,7 @@ const OkleykaSalaryPageInner = () => {
     }
     if (hadFailure) {
       setDistributeError('Не удалось распределить оклейку по одной или нескольким сделкам');
-    } else if (distribution.length > 0) {
+    } else if (scope.distribution.length > 0) {
       void queryClient.invalidateQueries({ queryKey: ['okleyka-salary'] });
     }
   };
@@ -1050,15 +1076,12 @@ const OkleykaSalaryPageInner = () => {
             periods={periods}
             entries={monthEntries}
             historyEntries={historyEntries}
-            fund={fund}
             isLoading={entriesQuery.isLoading || historyQuery.isLoading}
             onChanged={refetchEntries}
             distributeRule={distributeRule}
             onDistributeRuleChange={setDistributeRule}
-            distributionTotalRub={distributionTotalRub}
-            distributionCount={distribution.length}
-            onDistribute={() => void handleDistribute()}
-            distributeDisabledReason={distributeDisabledReason}
+            halfDistribute={halfDistribute}
+            onDistributeHalf={(half) => void handleDistributeHalf(half)}
           />
         </aside>
       </div>
