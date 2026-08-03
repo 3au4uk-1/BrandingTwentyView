@@ -48,14 +48,20 @@ import {
 } from './date-range';
 import { fetchOkleykaSalaryExcelBlob } from './export-excel';
 import {
-  buildHalfDistributeScope,
+  buildFundSummary,
+  entrySumRub,
   filledOkleykaDealIds,
-  saleShareHintRub,
-  type DistributeRule,
+  filterGroupsInPeriod,
 } from './fund';
-import { OkleykaDealCostCell } from './OkleykaDealCostCell';
+import { PersonShareCell } from './PersonShareCell';
 import { countRestorationMatches } from './restoration-count';
 import { SalaryPanel } from './SalaryPanel';
+import {
+  deleteShares,
+  fetchSharesForOpportunities,
+  upsertShare,
+} from './shares-api';
+import { planHalfPersonDistribute, sumSharesByOpportunity } from './shares';
 import {
   fetchEntriesEndedBefore,
   fetchSalaryEntriesForMonth,
@@ -66,7 +72,6 @@ const SORTABLE_BEFORE_COST: { key: OkleykaSortKey; label: string }[] = [
   { key: 'sale', label: 'Продажа' },
   { key: 'print', label: 'Печать' },
   { key: 'freza', label: 'Фреза' },
-  { key: 'okleyka', label: 'Оклейка' },
 ];
 const SORTABLE_AFTER_COST: { key: OkleykaSortKey; label: string }[] = [
   { key: 'profit', label: 'Прибыль' },
@@ -149,10 +154,8 @@ const OkleykaSalaryPageInner = () => {
   const [copyToast, setCopyToast] = useState<{ id: string; ok: boolean } | null>(null);
   const [copyRequest, setCopyRequest] = useState<{ id: string; srcDoc: string } | null>(null);
   const [distributeError, setDistributeError] = useState<string | null>(null);
-  const [distributeRule, setDistributeRule] = useState<DistributeRule>('sale');
   const [splitError, setSplitError] = useState<string | null>(null);
   const [overrides, setOverrides] = useState<Record<string, number | null>>({});
-  const [focusId, setFocusId] = useState<string | null>(null);
 
   const { year, monthIndex } = yearMonthFromMode(dateMode);
   const monthKey = monthKeyOf(year, monthIndex);
@@ -242,51 +245,30 @@ const OkleykaSalaryPageInner = () => {
     const halves: OkleykaHalf[] =
       dateMode.kind === 'half' ? [dateMode.half] : ['first', 'second'];
     return halves.map((half) => {
-      const scope = buildHalfDistributeScope({
-        half,
-        year,
-        monthIndex,
-        splitDay,
-        entries: monthEntries,
-        groups: displayGroups,
-        rule: distributeRule,
-      });
+      const period = halfPeriod(year, monthIndex, half, splitDay);
+      const halfEntries = monthEntries.filter((e) => entryHalf(e.periodStart) === half);
+      const halfGroups = filterGroupsInPeriod(displayGroups, period);
+      const opportunityIds = halfGroups.map((group) => group.opportunityId);
+      const planned = planHalfPersonDistribute({ entries: halfEntries, opportunityIds });
+      const fund = buildFundSummary(halfEntries, halfGroups);
+      const distributionTotalRub = halfEntries.reduce((sum, entry) => sum + entrySumRub(entry), 0);
       const disabledReason =
-        scope.fund.remainderRub <= 0
-          ? 'Остаток фонда пуст'
-          : scope.distribution.length === 0
-            ? 'Нет сделок без оклейки'
-            : null;
+        halfEntries.length === 0
+          ? 'Нет людей в периоде'
+          : opportunityIds.length === 0
+            ? 'Нет сделок в периоде'
+            : planned.length === 0
+              ? 'Нечего распределять'
+              : null;
       return {
         half,
-        fund: scope.fund,
-        distributionTotalRub: scope.distribution.reduce((s, d) => s + d.okleykaRub, 0),
-        distributionCount: scope.distribution.length,
+        fund,
+        distributionTotalRub,
+        distributionCount: opportunityIds.length,
         disabledReason,
-        distribution: scope.distribution,
       };
     });
-  }, [dateMode, year, monthIndex, splitDay, monthEntries, displayGroups, distributeRule]);
-
-  const hintFor = (g: OkleykaDealGroup): number | null => {
-    if (periods.length === 0) return null;
-    const half: OkleykaHalf =
-      dateMode.kind === 'half'
-        ? dateMode.half
-        : g.eventDate.slice(0, 10) <= halfPeriod(year, monthIndex, 'first', splitDay).dateTo
-          ? 'first'
-          : 'second';
-    const scope = buildHalfDistributeScope({
-      half,
-      year,
-      monthIndex,
-      splitDay,
-      entries: monthEntries,
-      groups: displayGroups,
-      rule: distributeRule,
-    });
-    return saleShareHintRub(g.saleRub, scope.groups, scope.fund.fundRub);
-  };
+  }, [dateMode, year, monthIndex, splitDay, monthEntries, displayGroups]);
 
   /**
    * Changing the boundary moves the existing entries of this month onto the
@@ -331,20 +313,52 @@ const OkleykaSalaryPageInner = () => {
   }, [displayGroups, sort]);
 
   const flatIds = useMemo(() => groups.map((group) => group.opportunityId), [groups]);
+  const opportunityIdsKey = flatIds.join(',');
 
-  const onMove = useCallback(
-    (id: string, direction: 1 | -1) => {
-      const idx = flatIds.indexOf(id);
-      if (idx < 0) return;
+  const sharesQuery = useQuery({
+    queryKey: ['okleyka-shares', opportunityIdsKey],
+    enabled: flatIds.length > 0,
+    queryFn: () => fetchSharesForOpportunities(flatIds),
+  });
+  const allShares = sharesQuery.data ?? [];
 
-      const next = flatIds[idx + direction];
-      if (next) setFocusId(next);
-    },
-    [flatIds],
+  const sharesByKey = useMemo(() => {
+    const map = new Map<string, (typeof allShares)[number]>();
+    for (const share of allShares) {
+      map.set(`${share.opportunityId}:${share.salaryEntryId}`, share);
+    }
+    return map;
+  }, [allShares]);
+
+  const sharesByOpportunity = useMemo(() => {
+    const map = new Map<string, typeof allShares>();
+    for (const share of allShares) {
+      const list = map.get(share.opportunityId) ?? [];
+      list.push(share);
+      map.set(share.opportunityId, list);
+    }
+    return map;
+  }, [allShares]);
+
+  const dealShareSumByOpportunity = useMemo(
+    () => sumSharesByOpportunity(allShares),
+    [allShares],
   );
+
+  const visiblePersonEntries = useMemo(() => {
+    if (dateMode.kind === 'range') return [];
+    const halves: OkleykaHalf[] =
+      dateMode.kind === 'half' ? [dateMode.half] : ['first', 'second'];
+    return monthEntries
+      .filter((entry) => halves.includes(entryHalf(entry.periodStart)))
+      .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+  }, [dateMode, monthEntries]);
+
+  const tableColSpan = 11 + visiblePersonEntries.length;
 
   const handlePersisted = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ['okleyka-salary'] });
+    void queryClient.invalidateQueries({ queryKey: ['okleyka-shares'] });
   }, [queryClient]);
 
   const handleOptimistic = useCallback((id: string, next: number | null) => {
@@ -365,43 +379,107 @@ const OkleykaSalaryPageInner = () => {
     [baseGroups],
   );
 
+  const invalidateSharesAndSalary = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ['okleyka-salary'] });
+    void queryClient.invalidateQueries({ queryKey: ['okleyka-shares'] });
+  }, [queryClient]);
+
+  const dealOkleykaAfterPlannedShares = (
+    opportunityId: string,
+    existingShares: Array<{ opportunityId: string; salaryEntryId: string; amountRub: number }>,
+    planned: Array<{ opportunityId: string; salaryEntryId: string; amountRub: number }>,
+  ): number => {
+    const plannedForDeal = planned.filter((row) => row.opportunityId === opportunityId);
+    const plannedEntryIds = new Set(plannedForDeal.map((row) => row.salaryEntryId));
+    let sum = 0;
+    for (const share of existingShares) {
+      if (share.opportunityId !== opportunityId) continue;
+      if (plannedEntryIds.has(share.salaryEntryId)) continue;
+      sum += share.amountRub;
+    }
+    for (const row of plannedForDeal) sum += row.amountRub;
+    return sum;
+  };
+
   const handleDistributeHalf = async (half: OkleykaHalf) => {
     setDistributeError(null);
-    const scope = buildHalfDistributeScope({
-      half,
-      year,
-      monthIndex,
-      splitDay,
-      entries: monthEntries,
-      groups: displayGroups,
-      rule: distributeRule,
-    });
+    const period = halfPeriod(year, monthIndex, half, splitDay);
+    const halfEntries = monthEntries.filter((e) => entryHalf(e.periodStart) === half);
+    const halfGroups = filterGroupsInPeriod(displayGroups, period);
+    const opportunityIds = halfGroups.map((group) => group.opportunityId);
+    const planned = planHalfPersonDistribute({ entries: halfEntries, opportunityIds });
+    if (planned.length === 0) return;
+
+    let existingShares;
+    try {
+      existingShares = await fetchSharesForOpportunities(opportunityIds);
+    } catch {
+      setDistributeError('Не удалось загрузить доли по сделкам');
+      return;
+    }
+
+    const existingByKey = new Map(
+      existingShares.map((share) => [`${share.opportunityId}:${share.salaryEntryId}`, share]),
+    );
+
     let hadFailure = false;
-    for (const d of scope.distribution) {
-      const prev =
-        displayGroups.find((group) => group.opportunityId === d.opportunityId)?.okleykaCostRub ??
-        null;
-      handleOptimistic(d.opportunityId, d.okleykaRub);
+    for (const row of planned) {
+      const existing = existingByKey.get(`${row.opportunityId}:${row.salaryEntryId}`);
       try {
-        await patchOkleykaDealCost(d.opportunityId, d.okleykaRub);
+        await upsertShare({ ...row, existingId: existing?.id });
       } catch {
         hadFailure = true;
-        handleRollback(d.opportunityId, prev);
       }
     }
+
+    for (const opportunityId of opportunityIds) {
+      const nextRub = dealOkleykaAfterPlannedShares(opportunityId, existingShares, planned);
+      const prev =
+        displayGroups.find((group) => group.opportunityId === opportunityId)?.okleykaCostRub ?? null;
+      const nextCost = nextRub > 0 ? nextRub : null;
+      handleOptimistic(opportunityId, nextCost);
+      try {
+        await patchOkleykaDealCost(opportunityId, nextCost);
+      } catch {
+        hadFailure = true;
+        handleRollback(opportunityId, prev);
+      }
+    }
+
     if (hadFailure) {
       setDistributeError('Не удалось распределить оклейку по одной или нескольким сделкам');
-    } else if (scope.distribution.length > 0) {
-      void queryClient.invalidateQueries({ queryKey: ['okleyka-salary'] });
+    } else {
+      invalidateSharesAndSalary();
     }
   };
 
   const handleResetOkleyka = async () => {
     setDistributeError(null);
-    const ids = filledOkleykaDealIds(displayGroups);
+    const opportunityIds = displayGroups.map((group) => group.opportunityId);
+    if (opportunityIds.length === 0) return;
+
+    let existingShares;
+    try {
+      existingShares = await fetchSharesForOpportunities(opportunityIds);
+    } catch {
+      setDistributeError('Не удалось загрузить доли по сделкам');
+      return;
+    }
+
     let hadFailure = false;
-    for (const id of ids) {
-      const prev = displayGroups.find((g) => g.opportunityId === id)?.okleykaCostRub ?? null;
+    try {
+      await deleteShares(existingShares.map((share) => share.id));
+    } catch {
+      hadFailure = true;
+    }
+
+    const dealIdsToClear = new Set([
+      ...filledOkleykaDealIds(displayGroups),
+      ...existingShares.map((share) => share.opportunityId),
+    ]);
+
+    for (const id of dealIdsToClear) {
+      const prev = displayGroups.find((group) => group.opportunityId === id)?.okleykaCostRub ?? null;
       handleOptimistic(id, null);
       try {
         await patchOkleykaDealCost(id, null);
@@ -410,16 +488,14 @@ const OkleykaSalaryPageInner = () => {
         handleRollback(id, prev);
       }
     }
+
     if (hadFailure) {
       setDistributeError('Не удалось сбросить оклейку по одной или нескольким сделкам');
-    } else if (ids.length > 0) {
-      void queryClient.invalidateQueries({ queryKey: ['okleyka-salary'] });
+    } else if (dealIdsToClear.size > 0 || existingShares.length > 0) {
+      invalidateSharesAndSalary();
     }
   };
 
-  const handleFocusConsumed = useCallback(() => {
-    setFocusId(null);
-  }, []);
   useEffect(() => {
     setOverrides((prev) => {
       const keys = Object.keys(prev);
@@ -917,6 +993,16 @@ const OkleykaSalaryPageInner = () => {
                   <th style={thStyle}>Сделка</th>
                   <th style={thStyle}>Позиции</th>
                   {SORTABLE_BEFORE_COST.map(({ key, label }) => renderSortableHeader(key, label))}
+                  {visiblePersonEntries.map((entry) => (
+                    <th
+                      key={entry.id}
+                      style={thStyle}
+                      title={entry.name}
+                    >
+                      {entry.name}
+                    </th>
+                  ))}
+                  <th style={thStyle}>Сумма</th>
                   <th style={thStyle}>Расход</th>
                   {SORTABLE_AFTER_COST.map(({ key, label }) => renderSortableHeader(key, label))}
                 </tr>
@@ -924,13 +1010,18 @@ const OkleykaSalaryPageInner = () => {
               <tbody>
                 {groups.length === 0 && !query.isLoading ? (
                   <tr>
-                    <td colSpan={11} style={{ padding: spacing.lg, color: colors.textMuted }}>
+                    <td colSpan={tableColSpan} style={{ padding: spacing.lg, color: colors.textMuted }}>
                       Нет подходящих позиций
                     </td>
                   </tr>
                 ) : null}
                 {groups.map((group) => {
                   const isCollapsed = collapsed.has(group.opportunityId);
+                  const dealShares = sharesByOpportunity.get(group.opportunityId) ?? [];
+                  const dealShareSum =
+                    dealShareSumByOpportunity.get(group.opportunityId) ??
+                    group.okleykaCostRub ??
+                    0;
 
                   const groupMarginColor = marginColor(colors, group.marginPct);
                   return (
@@ -939,9 +1030,7 @@ const OkleykaSalaryPageInner = () => {
                         style={{
                           borderBottom: `1px solid ${colors.borderSubtle}`,
                           backgroundColor:
-                            (group.okleykaCostRub ?? 0) > 0
-                              ? colors.successMuted
-                              : colors.bgTertiary,
+                            dealShareSum > 0 ? colors.successMuted : colors.bgTertiary,
                         }}
                       >
                         <td style={{ padding: cellPad, verticalAlign: 'middle' }}>
@@ -1061,18 +1150,27 @@ const OkleykaSalaryPageInner = () => {
                         <td style={{ padding: cellPad, ...moneyCellStyle }}>
                           {formatOptionalCost(group.frezaCostRub)}
                         </td>
-                        <td style={{ padding: cellPad, ...moneyCellStyle }}>
-                          <OkleykaDealCostCell
-                            opportunityId={group.opportunityId}
-                            valueRub={group.okleykaCostRub}
-                            hintRub={hintFor(group)}
-                            autoFocus={focusId === group.opportunityId}
-                            onOptimistic={handleOptimistic}
-                            onRollback={handleRollback}
-                            onMove={onMove}
-                            onFocusConsumed={handleFocusConsumed}
-                            onPersisted={handlePersisted}
-                          />
+                        {visiblePersonEntries.map((entry) => (
+                          <td key={entry.id} style={{ padding: cellPad, ...moneyCellStyle }}>
+                            <PersonShareCell
+                              opportunityId={group.opportunityId}
+                              salaryEntryId={entry.id}
+                              share={sharesByKey.get(`${group.opportunityId}:${entry.id}`) ?? null}
+                              dealShares={dealShares}
+                              onOptimisticDealCost={handleOptimistic}
+                              onRollbackDealCost={handleRollback}
+                              onPersisted={handlePersisted}
+                            />
+                          </td>
+                        ))}
+                        <td
+                          style={{
+                            padding: cellPad,
+                            ...moneyCellStyle,
+                            fontWeight: font.weightSemibold,
+                          }}
+                        >
+                          {dealShareSum > 0 ? formatSalaryRub(dealShareSum) : '—'}
                         </td>
                         <td style={{ padding: cellPad, ...moneyCellStyle }}>
                           {formatSalaryRub(group.costRub)}
@@ -1127,6 +1225,9 @@ const OkleykaSalaryPageInner = () => {
                               </td>
                               <td style={{ padding: cellPad }} />
                               <td style={{ padding: cellPad }} />
+                              {visiblePersonEntries.map((entry) => (
+                                <td key={entry.id} style={{ padding: cellPad }} />
+                              ))}
                               <td style={{ padding: cellPad }} />
                               <td style={{ padding: cellPad }} />
                               <td style={{ padding: cellPad }} />
@@ -1169,8 +1270,6 @@ const OkleykaSalaryPageInner = () => {
             historyEntries={historyEntries}
             isLoading={entriesQuery.isLoading || historyQuery.isLoading}
             onChanged={refetchEntries}
-            distributeRule={distributeRule}
-            onDistributeRuleChange={setDistributeRule}
             halfDistribute={halfDistribute}
             onDistributeHalf={(half) => void handleDistributeHalf(half)}
             filledOkleykaCount={filledOkleykaDealIds(displayGroups).length}
