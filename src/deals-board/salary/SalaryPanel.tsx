@@ -16,11 +16,9 @@ import {
   updateSalaryEntry,
 } from './salary-entries-api';
 import {
-  DISTRIBUTE_RULES,
   entrySumRub,
   latestRateByName,
   pickPreviousPeriodEntries,
-  type DistributeRule,
   type OkleykaSalaryEntry,
 } from './fund';
 
@@ -38,8 +36,6 @@ type SalaryPanelProps = {
   historyEntries: OkleykaSalaryEntry[];
   isLoading: boolean;
   onChanged: () => void;
-  distributeRule: DistributeRule;
-  onDistributeRuleChange: (rule: DistributeRule) => void;
   /** One item in half mode; two in month mode; empty in range. */
   halfDistribute: HalfDistributeUi[];
   onDistributeHalf: (half: OkleykaHalf) => void;
@@ -599,8 +595,6 @@ export const SalaryPanel = ({
   historyEntries,
   isLoading,
   onChanged,
-  distributeRule,
-  onDistributeRuleChange,
   halfDistribute,
   onDistributeHalf,
   filledOkleykaCount,
@@ -691,26 +685,6 @@ export const SalaryPanel = ({
             gap: spacing.sm,
           }}
         >
-          {halfDistribute.length > 0 ? (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.xs }}>
-              {DISTRIBUTE_RULES.map((rule) => (
-                <Button
-                  key={rule.key}
-                  theme={theme}
-                  size="sm"
-                  variant={distributeRule === rule.key ? 'secondary' : 'ghost'}
-                  title={rule.hint}
-                  onClick={() => {
-                    setConfirmingHalf(null);
-                    setConfirmingReset(false);
-                    onDistributeRuleChange(rule.key);
-                  }}
-                >
-                  {rule.label}
-                </Button>
-              ))}
-            </div>
-          ) : null}
           {confirmingReset ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
               <span style={{ color: colors.textSecondary, fontSize: font.sizeXs }}>
