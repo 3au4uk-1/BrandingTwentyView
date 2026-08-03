@@ -147,7 +147,23 @@ export const sumOkleykaDealTotals = (groups: OkleykaDealGroup[]): OkleykaDealTot
   };
 };
 
-export type OkleykaSortKey = 'sale' | 'print' | 'freza' | 'okleyka' | 'profit' | 'margin';
+export type OkleykaSortKey =
+  | 'date'
+  | 'sale'
+  | 'print'
+  | 'freza'
+  | 'okleyka'
+  | 'profit'
+  | 'margin';
+
+const shortDateFormatter = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short' });
+
+export const formatOkleykaEventDate = (eventDate: string): string => {
+  if (!eventDate) return '—';
+  const date = new Date(eventDate.length === 10 ? `${eventDate}T12:00:00` : eventDate);
+  if (Number.isNaN(date.getTime())) return '—';
+  return shortDateFormatter.format(date);
+};
 
 const groupMetric = (group: OkleykaDealGroup, key: OkleykaSortKey): number => {
   if (key === 'sale') return group.saleRub;
@@ -164,7 +180,17 @@ export const sortOkleykaDealGroups = (
   direction: 'asc' | 'desc',
 ): OkleykaDealGroup[] => {
   const sign = direction === 'asc' ? 1 : -1;
-  return [...groups].sort((a, b) => sign * (groupMetric(a, key) - groupMetric(b, key)));
+  return [...groups].sort((a, b) => {
+    if (key === 'date') {
+      const aEmpty = !a.eventDate;
+      const bEmpty = !b.eventDate;
+      if (aEmpty && bEmpty) return 0;
+      if (aEmpty) return 1;
+      if (bEmpty) return -1;
+      return sign * a.eventDate.localeCompare(b.eventDate);
+    }
+    return sign * (groupMetric(a, key) - groupMetric(b, key));
+  });
 };
 
 export const dealGroupsToXlsxMatrix = (
@@ -173,6 +199,7 @@ export const dealGroupsToXlsxMatrix = (
   const header = [
     'Bitrix',
     'Сделка',
+    'Дата',
     'Позиций',
     'Продажа',
     'Расход печать',
@@ -187,6 +214,7 @@ export const dealGroupsToXlsxMatrix = (
     ...groups.map((g) => [
       g.bitrixUrl,
       g.dealName,
+      g.eventDate || '',
       g.positions.length,
       Math.round(g.saleRub),
       Math.round(g.printCostRub),

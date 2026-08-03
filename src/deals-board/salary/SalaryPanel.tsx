@@ -72,6 +72,7 @@ const EntryRow = ({ entry, busy, onBusy, onChanged, onError, onClearError }: Ent
   const { colors, font, spacing, radius } = theme;
   const [hoursDraft, setHoursDraft] = useState(String(entry.hours));
   const [rateDraft, setRateDraft] = useState(String(entry.rateRub));
+  const [bonusDraft, setBonusDraft] = useState(String(entry.bonusRub));
 
   const commitHours = async () => {
     const parsed = parseNonNegative(hoursDraft);
@@ -113,6 +114,26 @@ const EntryRow = ({ entry, busy, onBusy, onChanged, onError, onClearError }: Ent
     }
   };
 
+  const commitBonus = async () => {
+    const parsed = parseNonNegative(bonusDraft);
+    if (parsed === null) {
+      setBonusDraft(String(entry.bonusRub));
+      return;
+    }
+    if (parsed === entry.bonusRub) return;
+    onClearError();
+    onBusy(true);
+    try {
+      await updateSalaryEntry(entry.id, { bonusRub: parsed });
+      onChanged();
+    } catch (error) {
+      setBonusDraft(String(entry.bonusRub));
+      onError(error instanceof Error ? error.message : 'Ошибка сохранения');
+    } finally {
+      onBusy(false);
+    }
+  };
+
   const handleDelete = async () => {
     onClearError();
     onBusy(true);
@@ -137,7 +158,7 @@ const EntryRow = ({ entry, busy, onBusy, onChanged, onError, onClearError }: Ent
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 56px 72px auto 24px',
+        gridTemplateColumns: '1fr 48px 56px 56px auto 24px',
         gap: spacing.xs,
         alignItems: 'center',
         fontSize: font.sizeSm,
@@ -167,7 +188,7 @@ const EntryRow = ({ entry, busy, onBusy, onChanged, onError, onClearError }: Ent
         }}
         onBlur={() => void commitHours()}
         onKeyDown={(event) => onEnterCommit(event, commitHours)}
-        style={{ width: 56, padding: '4px 6px', fontSize: font.sizeXs }}
+        style={{ width: 48, padding: '4px 6px', fontSize: font.sizeXs }}
       />
       <Input
         theme={theme}
@@ -182,10 +203,32 @@ const EntryRow = ({ entry, busy, onBusy, onChanged, onError, onClearError }: Ent
         }}
         onBlur={() => void commitRate()}
         onKeyDown={(event) => onEnterCommit(event, commitRate)}
-        style={{ width: 72, padding: '4px 6px', fontSize: font.sizeXs }}
+        style={{ width: 56, padding: '4px 6px', fontSize: font.sizeXs }}
+      />
+      <Input
+        theme={theme}
+        type="number"
+        min={0}
+        step="any"
+        value={bonusDraft}
+        disabled={busy}
+        onChange={(event) => {
+          onClearError();
+          setBonusDraft(event.target.value);
+        }}
+        onBlur={() => void commitBonus()}
+        onKeyDown={(event) => onEnterCommit(event, commitBonus)}
+        style={{ width: 56, padding: '4px 6px', fontSize: font.sizeXs }}
       />
       <span style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', fontSize: font.sizeXs }}>
-        {formatSalaryRub(entrySumRub({ ...entry, hours: Number(hoursDraft) || 0, rateRub: Number(rateDraft) || 0 }))}
+        {formatSalaryRub(
+          entrySumRub({
+            ...entry,
+            hours: Number(hoursDraft) || 0,
+            rateRub: Number(rateDraft) || 0,
+            bonusRub: Number(bonusDraft) || 0,
+          }),
+        )}
       </span>
       <button
         type="button"
@@ -242,6 +285,7 @@ const PeriodSection = ({
   const [addName, setAddName] = useState('');
   const [addHours, setAddHours] = useState('');
   const [addRate, setAddRate] = useState('');
+  const [addBonus, setAddBonus] = useState('');
   const [rateTouched, setRateTouched] = useState(false);
 
   const previousEntries = useMemo(
@@ -266,6 +310,7 @@ const PeriodSection = ({
     if (!name) return;
     const hours = parseNonNegative(addHours) ?? 0;
     const rateRub = parseNonNegative(addRate) ?? 0;
+    const bonusRub = parseNonNegative(addBonus) ?? 0;
     onClearError();
     onBusy(true);
     try {
@@ -273,12 +318,14 @@ const PeriodSection = ({
         name,
         hours,
         rateRub,
+        bonusRub,
         periodStart: period.dateFrom,
         periodEnd: period.dateTo,
       });
       setAddName('');
       setAddHours('');
       setAddRate('');
+      setAddBonus('');
       setRateTouched(false);
       onChanged();
     } catch (error) {
@@ -298,6 +345,7 @@ const PeriodSection = ({
           name: prev.name,
           hours: 0,
           rateRub: prev.rateRub,
+          bonusRub: prev.bonusRub,
           periodStart: period.dateFrom,
           periodEnd: period.dateTo,
         });
@@ -352,7 +400,7 @@ const PeriodSection = ({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 56px 72px auto',
+          gridTemplateColumns: '1fr 48px 56px 56px auto',
           gap: spacing.xs,
           alignItems: 'center',
         }}
@@ -389,7 +437,7 @@ const PeriodSection = ({
           onKeyDown={(event) => {
             if (event.key === 'Enter') void handleAdd();
           }}
-          style={{ width: 56, padding: '4px 6px', fontSize: font.sizeXs }}
+          style={{ width: 48, padding: '4px 6px', fontSize: font.sizeXs }}
         />
         <Input
           theme={theme}
@@ -407,7 +455,24 @@ const PeriodSection = ({
           onKeyDown={(event) => {
             if (event.key === 'Enter') void handleAdd();
           }}
-          style={{ width: 72, padding: '4px 6px', fontSize: font.sizeXs }}
+          style={{ width: 56, padding: '4px 6px', fontSize: font.sizeXs }}
+        />
+        <Input
+          theme={theme}
+          type="number"
+          min={0}
+          step="any"
+          placeholder="бон"
+          value={addBonus}
+          disabled={busy}
+          onChange={(event) => {
+            onClearError();
+            setAddBonus(event.target.value);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') void handleAdd();
+          }}
+          style={{ width: 56, padding: '4px 6px', fontSize: font.sizeXs }}
         />
         <Button
           theme={theme}

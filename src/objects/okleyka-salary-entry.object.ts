@@ -1,5 +1,6 @@
 import { defineObject, FieldType, NumberDataType } from 'twenty-sdk/define';
 import {
+  OKLEYKA_SALARY_ENTRY_BONUS_RUB_FIELD_UNIVERSAL_IDENTIFIER,
   OKLEYKA_SALARY_ENTRY_HOURS_FIELD_UNIVERSAL_IDENTIFIER,
   OKLEYKA_SALARY_ENTRY_OBJECT_UNIVERSAL_IDENTIFIER,
   OKLEYKA_SALARY_ENTRY_PERIOD_END_FIELD_UNIVERSAL_IDENTIFIER,
@@ -31,6 +32,14 @@ export default defineObject({
       type: FieldType.NUMBER,
       label: 'Ставка ₽/час',
       icon: 'IconCurrencyRubel',
+      settings: { dataType: NumberDataType.FLOAT, decimals: 2 },
+    },
+    {
+      universalIdentifier: OKLEYKA_SALARY_ENTRY_BONUS_RUB_FIELD_UNIVERSAL_IDENTIFIER,
+      name: 'bonusRub',
+      type: FieldType.NUMBER,
+      label: 'Бонус ₽',
+      icon: 'IconCoin',
       settings: { dataType: NumberDataType.FLOAT, decimals: 2 },
     },
     {
