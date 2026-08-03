@@ -142,4 +142,12 @@ describe('okleyka salary compute', () => {
       'okleyka-salary-2026-07-30.xlsx',
     );
   });
+
+  it('stores calendar eventDate from loadDate', () => {
+    const groups = buildOkleykaDealGroups(
+      [item({ id: 'li1', opportunityId: 'd1' })],
+      new Map([['d1', deal('d1', { loadDate: '2026-07-20T12:00:00.000Z' })]]),
+    );
+    expect(groups[0]?.eventDate).toMatch(/^2026-07-20/);
+  });
 });

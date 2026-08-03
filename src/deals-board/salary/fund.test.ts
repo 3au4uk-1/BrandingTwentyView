@@ -3,8 +3,10 @@ import { describe, expect, it } from 'vitest';
 import type { OkleykaDealGroup } from './compute';
 import {
   buildFundSummary,
+  buildHalfDistributeScope,
   distributeRemainder,
   entrySumRub,
+  filterGroupsInPeriod,
   latestRateByName,
   pickPreviousPeriodEntries,
   saleShareHintRub,
@@ -34,6 +36,7 @@ const group = (over: Partial<OkleykaDealGroup>): OkleykaDealGroup => ({
   costRub: 0,
   profitRub: 100,
   marginPct: 100,
+  eventDate: '2026-07-01',
   ...over,
 });
 
@@ -139,5 +142,57 @@ describe('okleyka salary fund', () => {
     ];
     expect(latestRateByName(entries, 'иван')).toBe(550);
     expect(latestRateByName(entries, 'Нет такого')).toBeNull();
+  });
+
+  it('filterGroupsInPeriod keeps deals whose eventDate is inside period', () => {
+    const groups = [
+      group({ opportunityId: 'a', eventDate: '2026-07-10', saleRub: 100 }),
+      group({ opportunityId: 'b', eventDate: '2026-07-20', saleRub: 100 }),
+    ];
+    expect(
+      filterGroupsInPeriod(groups, { dateFrom: '2026-07-01', dateTo: '2026-07-15' }).map(
+        (g) => g.opportunityId,
+      ),
+    ).toEqual(['a']);
+  });
+
+  it('buildHalfDistributeScope does not spend first-half fund on second-half deals', () => {
+    const entries = [
+      entry({
+        id: 'e1',
+        hours: 10,
+        rateRub: 100,
+        periodStart: '2026-07-01',
+        periodEnd: '2026-07-15',
+      }),
+    ];
+    const groups = [
+      group({
+        opportunityId: 'early',
+        eventDate: '2026-07-10',
+        saleRub: 100,
+        okleykaCostRub: null,
+        profitRub: 100,
+      }),
+      group({
+        opportunityId: 'late',
+        eventDate: '2026-07-20',
+        saleRub: 900,
+        okleykaCostRub: null,
+        profitRub: 900,
+      }),
+    ];
+    const scope = buildHalfDistributeScope({
+      half: 'first',
+      year: 2026,
+      monthIndex: 6,
+      splitDay: 15,
+      entries,
+      groups,
+      rule: 'sale',
+    });
+    expect(scope.fund.fundRub).toBe(1000);
+    expect(scope.distribution.map((d) => d.opportunityId)).toEqual(['early']);
+    expect(scope.distribution[0]?.okleykaRub).toBe(1000);
   });
 });

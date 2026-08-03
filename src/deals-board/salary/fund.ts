@@ -1,4 +1,5 @@
 import type { OkleykaDealGroup } from './compute';
+import { entryHalf, halfPeriod, type OkleykaHalf, type SalaryPeriod } from './date-range';
 
 export type OkleykaSalaryEntry = {
   id: string;
@@ -139,4 +140,30 @@ export const latestRateByName = (
     }
   }
   return rate;
+};
+
+export const filterGroupsInPeriod = (
+  groups: OkleykaDealGroup[],
+  period: SalaryPeriod,
+): OkleykaDealGroup[] =>
+  groups.filter((g) => {
+    const day = g.eventDate.slice(0, 10);
+    return day >= period.dateFrom && day <= period.dateTo;
+  });
+
+export const buildHalfDistributeScope = (args: {
+  half: OkleykaHalf;
+  year: number;
+  monthIndex: number;
+  splitDay: number;
+  entries: OkleykaSalaryEntry[];
+  groups: OkleykaDealGroup[];
+  rule: DistributeRule;
+}) => {
+  const period = halfPeriod(args.year, args.monthIndex, args.half, args.splitDay);
+  const halfEntries = args.entries.filter((e) => entryHalf(e.periodStart) === args.half);
+  const halfGroups = filterGroupsInPeriod(args.groups, period);
+  const fund = buildFundSummary(halfEntries, halfGroups);
+  const distribution = distributeRemainder(halfGroups, fund.remainderRub, args.rule);
+  return { period, entries: halfEntries, groups: halfGroups, fund, distribution };
 };

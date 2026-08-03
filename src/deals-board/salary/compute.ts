@@ -1,5 +1,7 @@
 import { currencyToRub, formatRub, type CurrencyAmount } from '../analytics/compute';
 import type { LineItemRow, OpportunityRow } from '../types';
+import { toLocalInputDate } from '../utils/date-filters';
+import { getOpportunityEffectiveDate } from '../utils/resolve-opportunity-date';
 
 export const isOkleykaSalaryLineItem = (item: LineItemRow): boolean =>
   item.tip === 'PLENKA' &&
@@ -27,6 +29,7 @@ export type OkleykaDealGroup = {
   costRub: number;
   profitRub: number;
   marginPct: number | null;
+  eventDate: string;
 };
 
 const currencyToRubOrNull = (value: unknown): number | null => {
@@ -81,6 +84,10 @@ export const buildOkleykaDealGroups = (
     const printCostRub = currencyToRub(deal.rashodPechat as CurrencyAmount | undefined);
     const frezaCostRub = currencyToRub(deal.rashodFrezerovka as CurrencyAmount | undefined);
     const okleykaCostRub = currencyToRubOrNull(deal.rashodOkleyka);
+    const effective = getOpportunityEffectiveDate(deal);
+    const eventDate = effective
+      ? (toLocalInputDate(effective) ?? effective.slice(0, 10))
+      : '';
     groups.push({
       opportunityId,
       dealName: deal.name || '—',
@@ -92,6 +99,7 @@ export const buildOkleykaDealGroups = (
       printCostRub,
       frezaCostRub,
       okleykaCostRub,
+      eventDate,
       ...dealEconomics(saleRub, printCostRub, frezaCostRub, okleykaCostRub),
     });
   }

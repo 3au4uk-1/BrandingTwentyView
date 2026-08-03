@@ -155,6 +155,7 @@ describe('fetchOkleykaSalaryPageData', () => {
         costRub: 0,
         profitRub: 0,
         marginPct: null,
+        eventDate: '2026-07-10',
       },
     ]);
 
