@@ -6,12 +6,13 @@ export type OkleykaSalaryEntry = {
   name: string;
   hours: number;
   rateRub: number;
+  bonusRub: number;
   periodStart: string;
   periodEnd: string;
 };
 
 export const entrySumRub = (entry: OkleykaSalaryEntry): number =>
-  entry.hours * entry.rateRub;
+  entry.hours * entry.rateRub + entry.bonusRub;
 
 export const sumFundRub = (entries: OkleykaSalaryEntry[]): number =>
   entries.reduce((s, e) => s + entrySumRub(e), 0);

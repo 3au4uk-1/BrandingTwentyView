@@ -19,6 +19,7 @@ const entry = (over: Partial<OkleykaSalaryEntry>): OkleykaSalaryEntry => ({
   name: 'Иван',
   hours: 10,
   rateRub: 500,
+  bonusRub: 0,
   periodStart: '2026-07-01',
   periodEnd: '2026-07-15',
   ...over,
@@ -41,6 +42,20 @@ const group = (over: Partial<OkleykaDealGroup>): OkleykaDealGroup => ({
 });
 
 describe('okleyka salary fund', () => {
+  it('entrySumRub includes bonus', () => {
+    expect(entrySumRub(entry({ hours: 10, rateRub: 500, bonusRub: 1000 }))).toBe(6000);
+    expect(entrySumRub(entry({ hours: 10, rateRub: 500, bonusRub: 0 }))).toBe(5000);
+  });
+
+  it('sumFundRub includes bonuses', () => {
+    expect(
+      sumFundRub([
+        entry({ hours: 10, rateRub: 500, bonusRub: 500 }),
+        entry({ id: 'e2', hours: 8, rateRub: 600, bonusRub: 200 }),
+      ]),
+    ).toBe(10500);
+  });
+
   it('fund and remainder', () => {
     const entries = [entry({}), entry({ id: 'e2', hours: 8, rateRub: 600 })];
     expect(entrySumRub(entries[0]!)).toBe(5000);

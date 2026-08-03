@@ -21,6 +21,10 @@ const normalizeEntry = (raw: unknown): OkleykaSalaryEntry | null => {
     hours: typeof record.hours === 'number' && Number.isFinite(record.hours) ? record.hours : 0,
     rateRub:
       typeof record.rateRub === 'number' && Number.isFinite(record.rateRub) ? record.rateRub : 0,
+    bonusRub:
+      typeof record.bonusRub === 'number' && Number.isFinite(record.bonusRub)
+        ? record.bonusRub
+        : 0,
     periodStart: toDateString(record.periodStart),
     periodEnd: toDateString(record.periodEnd),
   };
@@ -62,6 +66,7 @@ export const createSalaryEntry = async (input: {
   name: string;
   hours: number;
   rateRub: number;
+  bonusRub?: number;
   periodStart: string;
   periodEnd: string;
 }): Promise<void> => {
@@ -75,6 +80,7 @@ export const updateSalaryEntry = async (
     name: string;
     hours: number;
     rateRub: number;
+    bonusRub: number;
     periodStart: string;
     periodEnd: string;
   }>,

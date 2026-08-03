@@ -1,16 +1,34 @@
 import { describe, expect, it } from 'vitest';
 
 import type { LineItemRow, OpportunityRow } from '../types';
+import type { OkleykaDealGroup } from './compute';
 import {
   applyDealOkleykaOverride,
   buildOkleykaDealGroups,
   buildOkleykaSalaryFilename,
   dealGroupsToXlsxMatrix,
+  formatOkleykaEventDate,
   isOkleykaSalaryLineItem,
   marginPctTone,
   sortOkleykaDealGroups,
   sumOkleykaDealTotals,
 } from './compute';
+
+const group = (over: Partial<OkleykaDealGroup>): OkleykaDealGroup => ({
+  opportunityId: 'd1',
+  dealName: 'Сделка',
+  bitrixUrl: '',
+  positions: [],
+  saleRub: 100,
+  printCostRub: 0,
+  frezaCostRub: 0,
+  okleykaCostRub: null,
+  costRub: 0,
+  profitRub: 100,
+  marginPct: 100,
+  eventDate: '2026-07-01',
+  ...over,
+});
 
 const deal = (id: string, over: Partial<OpportunityRow> = {}): OpportunityRow => ({
   id,
@@ -110,12 +128,37 @@ describe('okleyka salary compute', () => {
     expect(sorted.map((g) => g.opportunityId)).toEqual(['d2', 'd1']);
   });
 
+  it('formatOkleykaEventDate uses ru short or em dash', () => {
+    expect(formatOkleykaEventDate('')).toBe('—');
+    expect(formatOkleykaEventDate('2026-07-20')).toMatch(/20/);
+  });
+
+  it('sorts by date asc with empty last', () => {
+    const groups = [
+      group({ opportunityId: 'b', eventDate: '2026-07-20', dealName: 'B' }),
+      group({ opportunityId: 'a', eventDate: '2026-07-10', dealName: 'A' }),
+      group({ opportunityId: 'z', eventDate: '', dealName: 'Z' }),
+    ];
+    const sorted = sortOkleykaDealGroups(groups, 'date', 'asc');
+    expect(sorted.map((g) => g.opportunityId)).toEqual(['a', 'b', 'z']);
+  });
+
+  it('xlsx includes Дата column as YYYY-MM-DD', () => {
+    const matrix = dealGroupsToXlsxMatrix([
+      group({ eventDate: '2026-07-10', dealName: 'A' }),
+    ]);
+    expect(matrix[0]).toContain('Дата');
+    const dateIdx = matrix[0]!.indexOf('Дата');
+    expect(matrix[1]![dateIdx]).toBe('2026-07-10');
+  });
+
   it('xlsx matrix: one row per deal, null okleyka → empty cell', () => {
     const groups = buildOkleykaDealGroups([item({})], new Map([['d1', deal('d1')]]));
     const matrix = dealGroupsToXlsxMatrix(groups);
     expect(matrix[0]).toEqual([
       'Bitrix',
       'Сделка',
+      'Дата',
       'Позиций',
       'Продажа',
       'Расход печать',
@@ -126,8 +169,8 @@ describe('okleyka salary compute', () => {
       'Маржа %',
     ]);
     const row = matrix[1]!;
-    expect(row[2]).toBe(1);
-    expect(row[6]).toBe('');
+    expect(row[3]).toBe(1);
+    expect(row[7]).toBe('');
   });
 
   it('marginPctTone thresholds', () => {

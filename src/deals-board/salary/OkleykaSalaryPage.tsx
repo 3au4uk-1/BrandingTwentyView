@@ -1,5 +1,10 @@
 import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Fragment, useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { Chip } from '../Chip';
+import {
+  useLineItemListStatus,
+  usePrefetchLineItemListStatuses,
+} from '../hooks/useLineItemListStatus';
 import { ThemeProvider, useTheme } from '../theme/ThemeContext';
 import type { ThemeTokens } from '../theme/tokens';
 import { Button } from '../ui/Button';
@@ -16,6 +21,7 @@ import {
 
   applyDealOkleykaOverride,
   formatMarginPct,
+  formatOkleykaEventDate,
   formatSalaryRub,
   marginPctTone,
   sortOkleykaDealGroups,
@@ -47,6 +53,7 @@ import {
   type DistributeRule,
 } from './fund';
 import { OkleykaDealCostCell } from './OkleykaDealCostCell';
+import { countRestorationMatches } from './restoration-count';
 import { SalaryPanel } from './SalaryPanel';
 import {
   fetchEntriesEndedBefore,
@@ -73,6 +80,39 @@ const moneyCellStyle: CSSProperties = {
 
 const formatOptionalCost = (value: number): string =>
   value > 0 ? formatSalaryRub(value) : '—';
+
+const PositionNameCell = ({
+  lineItemId,
+  positionName,
+}: {
+  lineItemId: string;
+  positionName: string;
+}) => {
+  const theme = useTheme();
+  const { colors } = theme;
+  const { data } = useLineItemListStatus(lineItemId);
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+      <span
+        title={positionName}
+        style={{
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          color: colors.textSecondary,
+          minWidth: 0,
+          flex: 1,
+        }}
+      >
+        {positionName}
+      </span>
+      {data?.restorationMatch ? (
+        <Chip text="реставрация · 0 ₽" color="yellow" theme={theme} />
+      ) : null}
+    </div>
+  );
+};
 
 const marginColor = (colors: ThemeTokens['colors'], marginPct: number | null): string => {
   const tone = marginPctTone(marginPct);
@@ -150,6 +190,21 @@ const OkleykaSalaryPageInner = () => {
       ),
     [baseGroups, overrides],
   );
+
+  const lineItemIds = useMemo(
+    () => displayGroups.flatMap((g) => g.positions.map((p) => p.lineItemId)),
+    [displayGroups],
+  );
+  const listStatusQuery = usePrefetchLineItemListStatuses(
+    lineItemIds,
+    lineItemIds.length > 0,
+  );
+  const restorationCount = useMemo(() => {
+    const statuses = listStatusQuery.data
+      ? lineItemIds.map((id) => listStatusQuery.data?.[id])
+      : [];
+    return countRestorationMatches(statuses);
+  }, [listStatusQuery.data, lineItemIds]);
 
   const periods = useMemo(() => salaryPeriodsForMode(dateMode, splitDay), [dateMode, splitDay]);
 
@@ -269,10 +324,10 @@ const OkleykaSalaryPageInner = () => {
 
   const totals = useMemo(() => sumOkleykaDealTotals(displayGroups), [displayGroups]);
 
-  const groups = useMemo(
-    () => (sort ? sortOkleykaDealGroups(displayGroups, sort.key, sort.direction) : displayGroups),
-    [displayGroups, sort],
-  );
+  const groups = useMemo(() => {
+    if (sort) return sortOkleykaDealGroups(displayGroups, sort.key, sort.direction);
+    return sortOkleykaDealGroups(displayGroups, 'date', 'asc');
+  }, [displayGroups, sort]);
 
   const flatIds = useMemo(() => groups.map((group) => group.opportunityId), [groups]);
 
@@ -836,6 +891,7 @@ const OkleykaSalaryPageInner = () => {
               <thead>
                 <tr>
                   <th style={{ ...thStyle, width: 36 }} aria-label="Развернуть" />
+                  {renderSortableHeader('date', 'Дата')}
                   <th style={thStyle}>Сделка</th>
                   <th style={thStyle}>Позиции</th>
                   {SORTABLE_BEFORE_COST.map(({ key, label }) => renderSortableHeader(key, label))}
@@ -846,7 +902,7 @@ const OkleykaSalaryPageInner = () => {
               <tbody>
                 {groups.length === 0 && !query.isLoading ? (
                   <tr>
-                    <td colSpan={10} style={{ padding: spacing.lg, color: colors.textMuted }}>
+                    <td colSpan={11} style={{ padding: spacing.lg, color: colors.textMuted }}>
                       Нет подходящих позиций
                     </td>
                   </tr>
@@ -889,6 +945,16 @@ const OkleykaSalaryPageInner = () => {
                           >
                             {isCollapsed ? '▸' : '▾'}
                           </button>
+                        </td>
+                        <td
+                          style={{
+                            padding: cellPad,
+                            color: colors.textSecondary,
+                            fontSize: font.sizeXs,
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {formatOkleykaEventDate(group.eventDate)}
                         </td>
                         <td style={{ padding: cellPad, maxWidth: 280 }}>
                           <div
@@ -1017,19 +1083,12 @@ const OkleykaSalaryPageInner = () => {
                             >
                               <td style={{ padding: cellPad }} />
                               <td style={{ padding: cellPad }} />
+                              <td style={{ padding: cellPad }} />
                               <td style={{ padding: cellPad, maxWidth: 240 }}>
-                                <span
-                                  title={position.positionName}
-                                  style={{
-                                    display: 'block',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap',
-                                    color: colors.textSecondary,
-                                  }}
-                                >
-                                  {position.positionName}
-                                </span>
+                                <PositionNameCell
+                                  lineItemId={position.lineItemId}
+                                  positionName={position.positionName}
+                                />
                                 <span
                                   style={{
                                     display: 'block',
@@ -1060,7 +1119,7 @@ const OkleykaSalaryPageInner = () => {
             </table>
           </div>
         </div>
-        <aside style={{ width: 320, flexShrink: 0, minHeight: 0, overflow: 'auto' }}>
+        <aside style={{ width: 360, flexShrink: 0, minHeight: 0, overflow: 'auto' }}>
           {distributeError ? (
             <div
               style={{
@@ -1072,6 +1131,16 @@ const OkleykaSalaryPageInner = () => {
               {distributeError}
             </div>
           ) : null}
+          <div
+            style={{
+              fontSize: font.sizeSm,
+              color: colors.textSecondary,
+              marginBottom: spacing.xs,
+            }}
+          >
+            Реставрации:{' '}
+            <strong style={{ color: colors.text }}>{restorationCount}</strong>
+          </div>
           <SalaryPanel
             periods={periods}
             entries={monthEntries}
