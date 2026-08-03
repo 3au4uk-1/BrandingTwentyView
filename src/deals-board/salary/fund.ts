@@ -28,6 +28,9 @@ export const buildFundSummary = (
   return { fundRub, spentRub, remainderRub: fundRub - spentRub };
 };
 
+export const filledOkleykaDealIds = (groups: OkleykaDealGroup[]): string[] =>
+  groups.filter((g) => (g.okleykaCostRub ?? 0) > 0).map((g) => g.opportunityId);
+
 /** «по продаже ≈ N ₽» — deal's proportional share of the fund by sale. */
 export const saleShareHintRub = (
   dealSaleRub: number,
@@ -95,11 +98,18 @@ export const distributeRemainder = (
 ): Array<{ opportunityId: string; okleykaRub: number }> => {
   if (remainderRub <= 0) return [];
   const targets = groups.filter(
-    (g) => (g.okleykaCostRub === null || g.okleykaCostRub === 0) && g.saleRub > 0,
+    (g) => g.okleykaCostRub === null || g.okleykaCostRub === 0,
   );
   if (targets.length === 0) return [];
 
-  const shares = ruleShares(targets, remainderRub, rule);
+  const totalSale = targets.reduce((s, g) => s + g.saleRub, 0);
+  const hasZeroSaleTarget = targets.some((g) => g.saleRub === 0);
+  const effectiveRule: DistributeRule =
+    (rule === 'sale' || rule === 'margin') && (hasZeroSaleTarget || totalSale === 0)
+      ? 'equal'
+      : rule;
+
+  const shares = ruleShares(targets, remainderRub, effectiveRule);
   const result = targets.map((g) => ({
     opportunityId: g.opportunityId,
     okleykaRub: Math.round(shares.get(g.opportunityId) ?? 0),
