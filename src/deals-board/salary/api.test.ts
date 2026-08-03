@@ -6,31 +6,21 @@ vi.mock('twenty-client-sdk/rest', () => ({
 
 vi.mock('../api/opportunities', () => ({
   fetchOpportunities: vi.fn(),
-}));
-
-vi.mock('../api/line-items', () => ({
-  updateLineItem: vi.fn(),
-}));
-
-vi.mock('../api/opportunity-link-fields-rest', () => ({
-  enrichOpportunityRowsWithRestFields: vi.fn(),
+  patchOpportunity: vi.fn(),
 }));
 
 vi.mock('./compute', () => ({
-  buildOkleykaSalaryRows: vi.fn(),
+  buildOkleykaDealGroups: vi.fn(),
 }));
 
 import { RestApiClient } from 'twenty-client-sdk/rest';
 
-import { fetchOpportunities } from '../api/opportunities';
-import { updateLineItem } from '../api/line-items';
-import { enrichOpportunityRowsWithRestFields } from '../api/opportunity-link-fields-rest';
-import { buildOkleykaSalaryRows } from './compute';
+import { fetchOpportunities, patchOpportunity } from '../api/opportunities';
+import { buildOkleykaDealGroups } from './compute';
 import {
   buildOkleykaSalaryLineItemsFilter,
   fetchOkleykaSalaryPageData,
-  fetchOpportunitiesByIdsForSalary,
-  patchOkleykaCost,
+  patchOkleykaDealCost,
 } from './api';
 
 describe('buildOkleykaSalaryLineItemsFilter', () => {
@@ -68,12 +58,20 @@ describe('fetchOkleykaSalaryPageData', () => {
       sort: [],
       filters: { datePreset: 'custom', dateFrom: '2026-07-01', dateTo: '2026-07-31' },
       visibleCrmFieldNames: ['loadDate'],
-      restFieldNames: ['name', 'bitrixLink', 'loadDate', 'closeDate'],
+      restFieldNames: [
+        'name',
+        'bitrixLink',
+        'loadDate',
+        'closeDate',
+        'rashodPechat',
+        'rashodFrezerovka',
+        'rashodOkleyka',
+      ],
       includeCompanyRelation: false,
       fetchAll: true,
     });
     expect(get).not.toHaveBeenCalled();
-    expect(buildOkleykaSalaryRows).not.toHaveBeenCalled();
+    expect(buildOkleykaDealGroups).not.toHaveBeenCalled();
   });
 
   it('chunks opportunity ids by 50 for line-item fetches', async () => {
@@ -93,7 +91,7 @@ describe('fetchOkleykaSalaryPageData', () => {
       })),
       totalCount: 51,
     });
-    vi.mocked(buildOkleykaSalaryRows).mockReturnValue([]);
+    vi.mocked(buildOkleykaDealGroups).mockReturnValue([]);
 
     await fetchOkleykaSalaryPageData('2026-07-01', '2026-07-31');
 
@@ -108,7 +106,7 @@ describe('fetchOkleykaSalaryPageData', () => {
     expect(filters[0]).toContain('OKLEYKA');
   });
 
-  it('builds salary rows from line items and date-filtered deals', async () => {
+  it('builds deal groups from line items and date-filtered deals', async () => {
     const lineItem = {
       id: 'li-1',
       name: 'Pos',
@@ -135,32 +133,40 @@ describe('fetchOkleykaSalaryPageData', () => {
       ],
       totalCount: 1,
     });
-    vi.mocked(buildOkleykaSalaryRows).mockReturnValue([
+    vi.mocked(buildOkleykaDealGroups).mockReturnValue([
       {
-        lineItemId: 'li-1',
         opportunityId: 'opp-1',
-        bitrixUrl: 'https://bitrix.example/1',
         dealName: 'Deal',
-        positionName: 'Pos',
-        qty: 1,
+        bitrixUrl: 'https://bitrix.example/1',
+        positions: [
+          {
+            lineItemId: 'li-1',
+            opportunityId: 'opp-1',
+            positionName: 'Pos',
+            qty: 1,
+            unitPriceRub: 0,
+            saleRub: 0,
+          },
+        ],
         saleRub: 0,
         printCostRub: 0,
         frezaCostRub: 0,
-        okleykaCostRub: 0,
+        okleykaCostRub: null,
         costRub: 0,
         profitRub: 0,
         marginPct: null,
+        eventDate: '2026-07-10',
       },
     ]);
 
-    const rows = await fetchOkleykaSalaryPageData('2026-07-01', '2026-07-31');
+    const groups = await fetchOkleykaSalaryPageData('2026-07-01', '2026-07-31');
 
-    expect(rows).toHaveLength(1);
-    expect(buildOkleykaSalaryRows).toHaveBeenCalledWith(
+    expect(groups).toHaveLength(1);
+    expect(buildOkleykaDealGroups).toHaveBeenCalledWith(
       [expect.objectContaining({ id: 'li-1', opportunityId: 'opp-1' })],
       expect.any(Map),
     );
-    const dealsById = vi.mocked(buildOkleykaSalaryRows).mock.calls[0]?.[1] as Map<
+    const dealsById = vi.mocked(buildOkleykaDealGroups).mock.calls[0]?.[1] as Map<
       string,
       { id: string; name: string }
     >;
@@ -201,65 +207,34 @@ describe('fetchOkleykaSalaryPageData', () => {
       ],
       totalCount: 1,
     });
-    vi.mocked(buildOkleykaSalaryRows).mockReturnValue([]);
+    vi.mocked(buildOkleykaDealGroups).mockReturnValue([]);
 
     await fetchOkleykaSalaryPageData('2026-07-01', '2026-07-31');
 
-    expect(buildOkleykaSalaryRows).toHaveBeenCalledWith(
+    expect(buildOkleykaDealGroups).toHaveBeenCalledWith(
       [expect.objectContaining({ id: 'li-1', opportunityId: 'opp-1' })],
       expect.any(Map),
     );
   });
 });
 
-describe('patchOkleykaCost', () => {
+describe('patchOkleykaDealCost', () => {
   beforeEach(() => {
-    vi.mocked(updateLineItem).mockReset();
+    vi.mocked(patchOpportunity).mockReset();
   });
 
-  it('clears stoimostOkleyki when rubles is null', async () => {
-    await patchOkleykaCost('li-1', null);
-
-    expect(updateLineItem).toHaveBeenCalledWith('li-1', { stoimostOkleyki: null });
+  it('patchOkleykaDealCost writes currency micros for positive rubles', async () => {
+    await patchOkleykaDealCost('opp-1', 1500);
+    expect(patchOpportunity).toHaveBeenCalledWith('opp-1', {
+      rashodOkleyka: { amountMicros: 1_500_000_000, currencyCode: 'RUB' },
+    });
   });
 
-  it('writes RUB micros when rubles is a number', async () => {
-    await patchOkleykaCost('li-1', 123.45);
-
-    expect(updateLineItem).toHaveBeenCalledWith('li-1', {
-      stoimostOkleyki: {
-        amountMicros: 123_450_000,
-        currencyCode: 'RUB',
-      },
+  it('patchOkleykaDealCost clears with amountMicros null object', async () => {
+    await patchOkleykaDealCost('opp-1', null);
+    expect(patchOpportunity).toHaveBeenCalledWith('opp-1', {
+      rashodOkleyka: { amountMicros: null, currencyCode: 'RUB' },
     });
   });
 });
 
-describe('fetchOpportunitiesByIdsForSalary', () => {
-  beforeEach(() => {
-    vi.mocked(enrichOpportunityRowsWithRestFields).mockReset();
-  });
-
-  it('returns empty without calling REST when ids are empty', async () => {
-    await expect(fetchOpportunitiesByIdsForSalary([])).resolves.toEqual([]);
-    expect(enrichOpportunityRowsWithRestFields).not.toHaveBeenCalled();
-  });
-
-  it('loads name + bitrixLink via REST enrichment (not GraphQL)', async () => {
-    vi.mocked(enrichOpportunityRowsWithRestFields).mockResolvedValue([
-      {
-        id: 'opp-1',
-        name: 'Deal',
-        bitrixLink: { primaryLinkUrl: 'https://bitrix.example/1' },
-      },
-    ]);
-
-    const rows = await fetchOpportunitiesByIdsForSalary(['opp-1', 'opp-1']);
-
-    expect(enrichOpportunityRowsWithRestFields).toHaveBeenCalledWith(
-      [{ id: 'opp-1', name: '' }],
-      ['name', 'bitrixLink'],
-    );
-    expect(rows[0]?.bitrixLink?.primaryLinkUrl).toBe('https://bitrix.example/1');
-  });
-});

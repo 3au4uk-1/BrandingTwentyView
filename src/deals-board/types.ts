@@ -73,6 +73,9 @@ export type OpportunityRow = {
   oplata?: string | null;
   stage?: string | null;
   stageZakreplen?: boolean | null;
+  rashodPechat?: { amountMicros: number; currencyCode: string } | null;
+  rashodFrezerovka?: { amountMicros: number; currencyCode: string } | null;
+  rashodOkleyka?: { amountMicros: number; currencyCode: string } | null;
   [key: string]: unknown;
 };
 

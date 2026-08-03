@@ -2,17 +2,19 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 
 import { useTheme } from '../theme/ThemeContext';
 import { Input } from '../ui/Input';
-import { patchOkleykaCost } from './api';
+import { patchOkleykaDealCost } from './api';
 import { formatSalaryRub } from './compute';
 
 type Props = {
-  lineItemId: string;
-  valueRub: number;
+  opportunityId: string;
+  valueRub: number | null;
+  hintRub: number | null;
   autoFocus?: boolean;
-  onOptimistic: (lineItemId: string, nextRub: number) => void;
-  onRollback: (lineItemId: string, prevRub: number) => void;
-  onMove: (lineItemId: string, direction: 1 | -1) => void;
+  onOptimistic: (opportunityId: string, nextRub: number | null) => void;
+  onRollback: (opportunityId: string, prevRub: number | null) => void;
+  onMove: (opportunityId: string, direction: 1 | -1) => void;
   onFocusConsumed?: () => void;
+  onPersisted?: (opportunityId: string) => void;
 };
 
 const parseDraftRub = (draft: string): { ok: true; rub: number | null } | { ok: false } => {
@@ -23,14 +25,19 @@ const parseDraftRub = (draft: string): { ok: true; rub: number | null } | { ok: 
   return { ok: true, rub: parsed };
 };
 
-export const OkleykaCostCell = ({
-  lineItemId,
+/** Empty / zero draft values persist as null in CRM. */
+export const okleykaRubForSave = (rub: number | null): number | null => (rub === 0 ? null : rub);
+
+export const OkleykaDealCostCell = ({
+  opportunityId,
   valueRub,
+  hintRub,
   autoFocus,
   onOptimistic,
   onRollback,
   onMove,
   onFocusConsumed,
+  onPersisted,
 }: Props) => {
   const theme = useTheme();
   const { colors, font } = theme;
@@ -41,7 +48,7 @@ export const OkleykaCostCell = ({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const draftFromValue = (rub: number): string => (rub > 0 ? String(rub) : '');
+  const draftFromValue = (rub: number | null): string => (rub === null ? '' : String(rub));
 
   const openEditor = () => {
     skipBlurSaveRef.current = false;
@@ -65,7 +72,7 @@ export const OkleykaCostCell = ({
     setError(null);
     setIsEditing(true);
     onFocusConsumed?.();
-  }, [autoFocus, lineItemId, valueRub, onFocusConsumed]);
+  }, [autoFocus, opportunityId, valueRub, onFocusConsumed]);
 
   const save = async (move?: 1 | -1) => {
     if (isSaving) return;
@@ -76,26 +83,27 @@ export const OkleykaCostCell = ({
       return;
     }
 
-    const nextRub = parsed.rub === null ? 0 : parsed.rub;
+    const nextRub = okleykaRubForSave(parsed.rub);
     const prevRub = valueRub;
-    if (nextRub === prevRub && parsed.rub !== null) {
+    if (nextRub === prevRub) {
       setIsEditing(false);
       setError(null);
-      if (move) onMove(lineItemId, move);
+      if (move) onMove(opportunityId, move);
       return;
     }
 
     setIsSaving(true);
     setError(null);
-    onOptimistic(lineItemId, nextRub);
+    onOptimistic(opportunityId, nextRub);
 
     try {
-      await patchOkleykaCost(lineItemId, parsed.rub);
+      await patchOkleykaDealCost(opportunityId, nextRub);
+      onPersisted?.(opportunityId);
       setIsSaving(false);
       setIsEditing(false);
-      if (move) onMove(lineItemId, move);
+      if (move) onMove(opportunityId, move);
     } catch (saveError) {
-      onRollback(lineItemId, prevRub);
+      onRollback(opportunityId, prevRub);
       setIsSaving(false);
       setError(saveError instanceof Error ? saveError.message : 'Ошибка сохранения');
     }
@@ -145,6 +153,10 @@ export const OkleykaCostCell = ({
           <span style={{ color: colors.textMuted, fontSize: font.sizeXs }}>сохранение</span>
         ) : error ? (
           <span style={{ color: colors.danger, fontSize: font.sizeXs }}>{error}</span>
+        ) : hintRub !== null ? (
+          <span style={{ color: colors.textMuted, fontSize: font.sizeXs, whiteSpace: 'nowrap' }}>
+            по продаже ≈ {formatSalaryRub(hintRub)}
+          </span>
         ) : null}
       </div>
     );
@@ -170,7 +182,7 @@ export const OkleykaCostCell = ({
           textAlign: 'left',
         }}
       >
-        {isSaving ? '…' : valueRub > 0 ? formatSalaryRub(valueRub) : '—'}
+        {isSaving ? '…' : valueRub === null ? '—' : formatSalaryRub(valueRub)}
       </button>
       {error ? (
         <span style={{ color: colors.danger, fontSize: font.sizeXs }}>{error}</span>
