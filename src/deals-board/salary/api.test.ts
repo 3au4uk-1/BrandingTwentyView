@@ -223,13 +223,18 @@ describe('patchOkleykaDealCost', () => {
     vi.mocked(patchOpportunity).mockReset();
   });
 
-  it('patchOkleykaDealCost writes currency or null', async () => {
+  it('patchOkleykaDealCost writes currency micros for positive rubles', async () => {
     await patchOkleykaDealCost('opp-1', 1500);
     expect(patchOpportunity).toHaveBeenCalledWith('opp-1', {
       rashodOkleyka: { amountMicros: 1_500_000_000, currencyCode: 'RUB' },
     });
+  });
+
+  it('patchOkleykaDealCost clears with amountMicros null object', async () => {
     await patchOkleykaDealCost('opp-1', null);
-    expect(patchOpportunity).toHaveBeenCalledWith('opp-1', { rashodOkleyka: null });
+    expect(patchOpportunity).toHaveBeenCalledWith('opp-1', {
+      rashodOkleyka: { amountMicros: null, currencyCode: 'RUB' },
+    });
   });
 });
 

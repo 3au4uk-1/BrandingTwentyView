@@ -118,7 +118,9 @@ export const patchOkleykaDealCost = async (
   rubles: number | null,
 ): Promise<void> => {
   if (rubles === null) {
-    await patchOpportunity(opportunityId, { rashodOkleyka: null });
+    await patchOpportunity(opportunityId, {
+      rashodOkleyka: { amountMicros: null, currencyCode: 'RUB' },
+    });
     return;
   }
 

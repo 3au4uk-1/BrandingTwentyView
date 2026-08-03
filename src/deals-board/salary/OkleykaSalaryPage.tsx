@@ -270,6 +270,10 @@ const OkleykaSalaryPageInner = () => {
     [flatIds],
   );
 
+  const handlePersisted = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ['okleyka-salary'] });
+  }, [queryClient]);
+
   const handleOptimistic = useCallback((id: string, next: number | null) => {
     setOverrides((prev) => ({ ...prev, [id]: next }));
   }, []);
@@ -305,6 +309,8 @@ const OkleykaSalaryPageInner = () => {
     }
     if (hadFailure) {
       setDistributeError('Не удалось распределить оклейку по одной или нескольким сделкам');
+    } else if (distribution.length > 0) {
+      void queryClient.invalidateQueries({ queryKey: ['okleyka-salary'] });
     }
   };
 
@@ -829,7 +835,7 @@ const OkleykaSalaryPageInner = () => {
                         style={{
                           borderBottom: `1px solid ${colors.borderSubtle}`,
                           backgroundColor:
-                            group.okleykaCostRub !== null
+                            (group.okleykaCostRub ?? 0) > 0
                               ? colors.successMuted
                               : colors.bgTertiary,
                         }}
@@ -951,6 +957,7 @@ const OkleykaSalaryPageInner = () => {
                             onRollback={handleRollback}
                             onMove={onMove}
                             onFocusConsumed={handleFocusConsumed}
+                            onPersisted={handlePersisted}
                           />
                         </td>
                         <td style={{ padding: cellPad, ...moneyCellStyle }}>

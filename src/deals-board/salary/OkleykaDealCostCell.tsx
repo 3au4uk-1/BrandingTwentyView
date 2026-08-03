@@ -14,6 +14,7 @@ type Props = {
   onRollback: (opportunityId: string, prevRub: number | null) => void;
   onMove: (opportunityId: string, direction: 1 | -1) => void;
   onFocusConsumed?: () => void;
+  onPersisted?: (opportunityId: string) => void;
 };
 
 const parseDraftRub = (draft: string): { ok: true; rub: number | null } | { ok: false } => {
@@ -24,6 +25,9 @@ const parseDraftRub = (draft: string): { ok: true; rub: number | null } | { ok: 
   return { ok: true, rub: parsed };
 };
 
+/** Empty / zero draft values persist as null in CRM. */
+export const okleykaRubForSave = (rub: number | null): number | null => (rub === 0 ? null : rub);
+
 export const OkleykaDealCostCell = ({
   opportunityId,
   valueRub,
@@ -33,6 +37,7 @@ export const OkleykaDealCostCell = ({
   onRollback,
   onMove,
   onFocusConsumed,
+  onPersisted,
 }: Props) => {
   const theme = useTheme();
   const { colors, font } = theme;
@@ -78,7 +83,7 @@ export const OkleykaDealCostCell = ({
       return;
     }
 
-    const nextRub = parsed.rub;
+    const nextRub = okleykaRubForSave(parsed.rub);
     const prevRub = valueRub;
     if (nextRub === prevRub) {
       setIsEditing(false);
@@ -93,6 +98,7 @@ export const OkleykaDealCostCell = ({
 
     try {
       await patchOkleykaDealCost(opportunityId, nextRub);
+      onPersisted?.(opportunityId);
       setIsSaving(false);
       setIsEditing(false);
       if (move) onMove(opportunityId, move);
