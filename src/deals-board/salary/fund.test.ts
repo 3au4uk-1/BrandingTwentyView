@@ -6,6 +6,7 @@ import {
   buildHalfDistributeScope,
   distributeRemainder,
   entrySumRub,
+  filledOkleykaDealIds,
   filterGroupsInPeriod,
   latestRateByName,
   pickPreviousPeriodEntries,
@@ -91,7 +92,47 @@ describe('okleyka salary fund', () => {
   it('distribution edge cases', () => {
     expect(distributeRemainder([group({})], 0)).toEqual([]);
     expect(distributeRemainder([group({ okleykaCostRub: 10 })], 500)).toEqual([]);
-    expect(distributeRemainder([group({ saleRub: 0 })], 500)).toEqual([]);
+  });
+
+  it('includes zero-sale deals as distribute targets', () => {
+    const groups = [
+      group({ opportunityId: 'zero', saleRub: 0, okleykaCostRub: null }),
+      group({ opportunityId: 'paid', saleRub: 100, okleykaCostRub: 10 }),
+    ];
+    const result = distributeRemainder(groups, 600, 'equal');
+    expect(result.map((r) => r.opportunityId)).toEqual(['zero']);
+    expect(result[0]?.okleykaRub).toBe(600);
+  });
+
+  it('sale rule falls back to equal when any target has zero sale', () => {
+    const groups = [
+      group({ opportunityId: 'a', saleRub: 200, okleykaCostRub: null }),
+      group({ opportunityId: 'b', saleRub: 0, okleykaCostRub: 0 }),
+    ];
+    const result = distributeRemainder(groups, 1001, 'sale');
+    const byId = Object.fromEntries(result.map((r) => [r.opportunityId, r.okleykaRub]));
+    expect(byId.a! + byId.b!).toBe(1001);
+    expect(Math.abs(byId.a! - byId.b!)).toBeLessThanOrEqual(1);
+  });
+
+  it('margin rule falls back to equal when total sale is zero', () => {
+    const groups = [
+      group({ opportunityId: 'a', saleRub: 0, profitRub: 0, okleykaCostRub: null }),
+      group({ opportunityId: 'b', saleRub: 0, profitRub: 0, okleykaCostRub: 0 }),
+    ];
+    const result = distributeRemainder(groups, 999, 'margin');
+    const byId = Object.fromEntries(result.map((r) => [r.opportunityId, r.okleykaRub]));
+    expect(byId.a! + byId.b!).toBe(999);
+    expect(Math.abs(byId.a! - byId.b!)).toBeLessThanOrEqual(1);
+  });
+
+  it('filledOkleykaDealIds returns ids with positive okleyka cost', () => {
+    const groups = [
+      group({ opportunityId: 'filled', okleykaCostRub: 100 }),
+      group({ opportunityId: 'empty', okleykaCostRub: null }),
+      group({ opportunityId: 'zero', okleykaCostRub: 0 }),
+    ];
+    expect(filledOkleykaDealIds(groups)).toEqual(['filled']);
   });
 
   it('equal rule gives every target the same share', () => {

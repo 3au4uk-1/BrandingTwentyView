@@ -49,6 +49,7 @@ import {
 import { fetchOkleykaSalaryExcelBlob } from './export-excel';
 import {
   buildHalfDistributeScope,
+  filledOkleykaDealIds,
   saleShareHintRub,
   type DistributeRule,
 } from './fund';
@@ -391,6 +392,27 @@ const OkleykaSalaryPageInner = () => {
     if (hadFailure) {
       setDistributeError('Не удалось распределить оклейку по одной или нескольким сделкам');
     } else if (scope.distribution.length > 0) {
+      void queryClient.invalidateQueries({ queryKey: ['okleyka-salary'] });
+    }
+  };
+
+  const handleResetOkleyka = async () => {
+    setDistributeError(null);
+    const ids = filledOkleykaDealIds(displayGroups);
+    let hadFailure = false;
+    for (const id of ids) {
+      const prev = displayGroups.find((g) => g.opportunityId === id)?.okleykaCostRub ?? null;
+      handleOptimistic(id, null);
+      try {
+        await patchOkleykaDealCost(id, null);
+      } catch {
+        hadFailure = true;
+        handleRollback(id, prev);
+      }
+    }
+    if (hadFailure) {
+      setDistributeError('Не удалось сбросить оклейку по одной или нескольким сделкам');
+    } else if (ids.length > 0) {
       void queryClient.invalidateQueries({ queryKey: ['okleyka-salary'] });
     }
   };
@@ -1151,6 +1173,8 @@ const OkleykaSalaryPageInner = () => {
             onDistributeRuleChange={setDistributeRule}
             halfDistribute={halfDistribute}
             onDistributeHalf={(half) => void handleDistributeHalf(half)}
+            filledOkleykaCount={filledOkleykaDealIds(displayGroups).length}
+            onResetOkleyka={() => void handleResetOkleyka()}
           />
         </aside>
       </div>

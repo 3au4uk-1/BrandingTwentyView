@@ -43,6 +43,8 @@ type SalaryPanelProps = {
   /** One item in half mode; two in month mode; empty in range. */
   halfDistribute: HalfDistributeUi[];
   onDistributeHalf: (half: OkleykaHalf) => void;
+  filledOkleykaCount: number;
+  onResetOkleyka: () => void;
 };
 
 const distributeButtonLabel = (half: OkleykaHalf, monthMode: boolean): string => {
@@ -601,12 +603,15 @@ export const SalaryPanel = ({
   onDistributeRuleChange,
   halfDistribute,
   onDistributeHalf,
+  filledOkleykaCount,
+  onResetOkleyka,
 }: SalaryPanelProps) => {
   const theme = useTheme();
   const { colors, font, spacing, radius } = theme;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmingHalf, setConfirmingHalf] = useState<OkleykaHalf | null>(null);
+  const [confirmingReset, setConfirmingReset] = useState(false);
 
   const clearError = () => setError(null);
   const setMutationError = (message: string) => setError(message);
@@ -649,7 +654,6 @@ export const SalaryPanel = ({
       ) : null}
       {periods.map((period) => {
         const half = entryHalf(period.dateFrom);
-        const halfUi = halfDistribute.find((row) => row.half === half);
         const periodEntries = entries
           .filter((e) => entryHalf(e.periodStart) === half)
           .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
@@ -674,47 +678,98 @@ export const SalaryPanel = ({
               onError={setMutationError}
               onClearError={clearError}
             />
-            {halfUi ? (
-              <HalfDistributeBlock
-                halfUi={halfUi}
-                monthMode={monthMode}
-                busy={busy}
-                confirmingHalf={confirmingHalf}
-                onConfirmStart={setConfirmingHalf}
-                onConfirmCancel={() => setConfirmingHalf(null)}
-                onDistributeHalf={(targetHalf) => {
-                  setConfirmingHalf(null);
-                  onDistributeHalf(targetHalf);
-                }}
-              />
-            ) : null}
           </div>
         );
       })}
-      {halfDistribute.length > 0 ? (
+      {halfDistribute.length > 0 || filledOkleykaCount > 0 ? (
         <footer
           style={{
             borderTop: `1px solid ${colors.borderSubtle}`,
             paddingTop: spacing.sm,
             display: 'flex',
-            flexWrap: 'wrap',
-            gap: spacing.xs,
+            flexDirection: 'column',
+            gap: spacing.sm,
           }}
         >
-          {DISTRIBUTE_RULES.map((rule) => (
+          {halfDistribute.length > 0 ? (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing.xs }}>
+              {DISTRIBUTE_RULES.map((rule) => (
+                <Button
+                  key={rule.key}
+                  theme={theme}
+                  size="sm"
+                  variant={distributeRule === rule.key ? 'secondary' : 'ghost'}
+                  title={rule.hint}
+                  onClick={() => {
+                    setConfirmingHalf(null);
+                    setConfirmingReset(false);
+                    onDistributeRuleChange(rule.key);
+                  }}
+                >
+                  {rule.label}
+                </Button>
+              ))}
+            </div>
+          ) : null}
+          {confirmingReset ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
+              <span style={{ color: colors.textSecondary, fontSize: font.sizeXs }}>
+                Сбросить {filledOkleykaCount} сделок?
+              </span>
+              <div style={{ display: 'flex', gap: spacing.xs }}>
+                <Button
+                  theme={theme}
+                  size="sm"
+                  variant="primary"
+                  disabled={busy}
+                  onClick={() => {
+                    setConfirmingReset(false);
+                    onResetOkleyka();
+                  }}
+                >
+                  Да, сбросить
+                </Button>
+                <Button
+                  theme={theme}
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setConfirmingReset(false)}
+                >
+                  Отмена
+                </Button>
+              </div>
+            </div>
+          ) : (
             <Button
-              key={rule.key}
               theme={theme}
               size="sm"
-              variant={distributeRule === rule.key ? 'secondary' : 'ghost'}
-              title={rule.hint}
+              variant="primary"
+              disabled={busy || filledOkleykaCount === 0}
               onClick={() => {
                 setConfirmingHalf(null);
-                onDistributeRuleChange(rule.key);
+                setConfirmingReset(true);
               }}
             >
-              {rule.label}
+              Сбросить оклейку
             </Button>
+          )}
+          {halfDistribute.map((halfUi) => (
+            <HalfDistributeBlock
+              key={halfUi.half}
+              halfUi={halfUi}
+              monthMode={monthMode}
+              busy={busy}
+              confirmingHalf={confirmingHalf}
+              onConfirmStart={(half) => {
+                setConfirmingReset(false);
+                setConfirmingHalf(half);
+              }}
+              onConfirmCancel={() => setConfirmingHalf(null)}
+              onDistributeHalf={(targetHalf) => {
+                setConfirmingHalf(null);
+                onDistributeHalf(targetHalf);
+              }}
+            />
           ))}
         </footer>
       ) : null}
