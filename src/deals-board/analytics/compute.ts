@@ -69,7 +69,10 @@ export const computeMonthlyFinance = (
   lineItems: LineItemRow[],
   monthKey: string,
 ): MonthlyFinance => {
-  const deals = opportunities.filter((opportunity) => opportunityInMonth(opportunity, monthKey));
+  const deals = opportunities.filter(
+    (opportunity) =>
+      opportunityInMonth(opportunity, monthKey) && opportunity.stage !== 'OTMENA',
+  );
   const dealIds = new Set(deals.map((deal) => deal.id));
 
   const positions = lineItems.filter(
