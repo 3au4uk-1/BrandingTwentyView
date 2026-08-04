@@ -64,4 +64,39 @@ describe('analytics compute', () => {
     expect(finance.marginPct).toBe(80);
     expect(finance.breakdown.pechat).toBe(100);
   });
+
+  it('excludes OTMENA opportunities from dealCount and expense', () => {
+    const monthKey = getMonthKey(new Date(2026, 6, 15));
+    const finance = computeMonthlyFinance(
+      [
+        {
+          id: 'd1',
+          name: 'Active',
+          stage: 'NOVYY',
+          loadDate: '2026-07-10T10:00:00.000Z',
+          rashodItogo: { amountMicros: 200_000_000 },
+        },
+        {
+          id: 'd2',
+          name: 'Cancelled',
+          stage: 'OTMENA',
+          loadDate: '2026-07-11T10:00:00.000Z',
+          rashodItogo: { amountMicros: 999_000_000 },
+        },
+      ],
+      [
+        {
+          id: 'i1',
+          opportunityId: 'd1',
+          name: 'A',
+          stage: 'NOVYY',
+          amount: { amountMicros: 1_000_000_000, currencyCode: 'RUB' },
+        },
+      ],
+      monthKey,
+    );
+    expect(finance.dealCount).toBe(1);
+    expect(finance.expenseRub).toBe(200);
+    expect(finance.turnoverRub).toBe(1000);
+  });
 });
