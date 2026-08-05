@@ -14,6 +14,7 @@ export const PrintPanelChip = ({ item }: PrintPanelChipProps) => (
     chipLabel="Печать пленки"
     title="Печать пленки"
     dataChipAttr="data-print-chip"
+    enableSendToPrint
     fields={{
       date: 'dataGotovnostiPechati',
       time: 'vremyaGotovnostiPechati',

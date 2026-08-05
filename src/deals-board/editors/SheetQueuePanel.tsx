@@ -22,6 +22,11 @@ import {
   PRINT_WORK_HOURS,
   snapMinuteToTen,
 } from '../utils/normalize-print-time';
+import {
+  getPrintSendUiState,
+  PRINT_SEND_HINTS,
+  type PrintSendUiState,
+} from './print-send-state';
 
 export type SheetQueueFieldMap = {
   date: string;
@@ -42,6 +47,7 @@ export type SheetQueuePanelProps = {
   title: string;
   fields: SheetQueueFieldMap;
   dataChipAttr?: string;
+  enableSendToPrint?: boolean;
 };
 
 const MINUTES = ['00', '10', '20', '30', '40', '50'] as const;
@@ -142,6 +148,7 @@ export const SheetQueuePanel = ({
   title,
   fields,
   dataChipAttr = 'data-sheet-queue-chip',
+  enableSendToPrint = false,
 }: SheetQueuePanelProps) => {
   const theme = useTheme();
   const { colors, font, spacing, radius } = theme;
@@ -302,10 +309,27 @@ export const SheetQueuePanel = ({
     gotovo ? snippet || null : null,
   ].filter(Boolean);
 
-  const readyHint =
-    dateValue && hour && minute
+  const timeValue = hour && minute ? `${hour}:${minute}` : '';
+  const printSendState: PrintSendUiState | null = enableSendToPrint
+    ? getPrintSendUiState({
+        date: dateValue,
+        time: timeValue,
+        requested: item.printSheetExportRequested === true,
+        sessionId: item.printSheetSessionId,
+        stage: item.stage,
+      })
+    : null;
+
+  const sendHint = printSendState ? PRINT_SEND_HINTS[printSendState] : '';
+  const readyHint = enableSendToPrint
+    ? sendHint
+    : dateValue && hour && minute
       ? `К отправке · ${dateValue} ${hour}:${minute}`
       : 'Заполни дату и время — уйдёт в таблицу при стадии «В печати»';
+
+  const sendToPrint = () => {
+    void patch({ printSheetExportRequested: true });
+  };
 
   return (
     <>
@@ -361,6 +385,17 @@ export const SheetQueuePanel = ({
                 onClick={() => void patch({ [fields.restoration!]: !restoration })}
               >
                 Реставрация
+              </Button>
+            ) : null}
+            {enableSendToPrint ? (
+              <Button
+                theme={theme}
+                size="sm"
+                variant="primary"
+                disabled={printSendState !== 'ready'}
+                onClick={sendToPrint}
+              >
+                Отправить в печать
               </Button>
             ) : null}
             <div style={{ flex: 1 }} />
