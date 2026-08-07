@@ -83,3 +83,38 @@ masked the first probe run.
 
 Design for the replacement transport (event hub in crmparserv2 + long-poll through a logic
 function): `docs/superpowers/specs/2026-08-07-deals-board-realtime-longpoll-design.md`.
+
+## Staging verification (2026-08-07) — webhook + long-poll hub live
+
+SSE in the front component was replaced by Twenty webhooks → crmparser journal →
+`GET /api/twenty/events` long-poll → logic function `GET /deals-board/events` → board client.
+
+**Staging deploy**
+- `crmparserv2` `staging` pushed through `ff2d603`; image `ghcr.io/3au4uk-1/crmparserv2:staging`;
+  Dokploy compose `crmparser-staging` has `TWENTY_WEBHOOK_SECRET` wired in env + compose file.
+- `BrandingTwentyView` `staging` pushed through `2da8550`; CD Deploy+Install to
+  `https://twenty-staging.dosugmayak.ru` succeeded.
+
+**Webhook**
+- Target: `https://crm-staging.dosugmayak.ru/api/twenty-webhook`
+- Webhook id: `5542834d-d026-460b-8bd3-535a41b46d98` (18 operations: six watched objects ×
+  created/updated/deleted). Secret matches Dokploy.
+- Bad-signature POST → `401`. Live CRM edits → journal cursor advances; no signature rejects
+  observed during checks.
+
+**Long-poll**
+- `GET /api/twenty/events` (Bearer `TWENTY_APP_API_SECRET`) returns epoch/cursor immediately.
+- While events exist, poll returns in ~200–400 ms with `opportunity` / `dealLineItem` UPDATED
+  payloads (observed under active board editing on staging).
+- After hard compose stop/start, clients with a stale epoch get `reset: true` and a new epoch
+  (verified: `c4286389-…` → `b92eefe1-…`).
+
+**Proxy route**
+- `GET https://twenty-staging.dosugmayak.ru/s/deals-board/events` is mounted (`isAuthRequired`);
+  unauthenticated call returns missing-token (expected). Full board path needs session /
+  application token inside the front component.
+
+**Still pending human**
+- Two-browser «Реализация» acceptance (stage / line-item / comment ≤2s without F5).
+- Kill-switch check (`TWENTY_EVENTS_ENABLED=false` → `{disabled:true}` then restore).
+- Production repeat of secret + webhook + deploy.
