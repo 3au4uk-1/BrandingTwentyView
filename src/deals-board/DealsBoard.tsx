@@ -41,7 +41,7 @@ import { usePrefetchLineItemListStatuses } from './hooks/useLineItemListStatus';
 import { useShowAllPreference } from './hooks/useShowAllPreference';
 import { resolveOpportunitiesFetchAll, useOpportunities } from './hooks/useOpportunities';
 import { useOpportunityRashodFields } from './hooks/useOpportunityRashodFields';
-import { useDealsBoardRealtimeSync } from './realtime/useDealsBoardRealtimeSync';
+import { useDealsBoardEventsSync } from './realtime/useDealsBoardEventsSync';
 import { crmFieldNamesFromColumns, fieldTypesByNameFromDescriptors, needsCompanyRelation } from './metadata/crm-field-names';
 import { mergeColumns } from './metadata/merge-columns';
 import { pinChildColumnFirst } from './utils/pin-child-column';
@@ -118,7 +118,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
   const [accumulatedRecords, setAccumulatedRecords] = useState<OpportunityRow[]>([]);
   const viewsQuery = useDealBoardViews(boardKind);
   const updateViewMutation = useUpdateDealBoardView();
-  useDealsBoardRealtimeSync(!viewsQuery.isLoading);
+  useDealsBoardEventsSync(!viewsQuery.isLoading);
   const [activeViewId, setActiveViewId] = useState<string>();
   const [page, setPage] = useState(0);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
