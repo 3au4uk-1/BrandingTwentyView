@@ -5,6 +5,7 @@ import type { LineItemRow } from '../types';
 import { patchOpportunityInCache } from '../utils/opportunity-cache';
 import { syncDealStage } from '../utils/sync-deal-stage';
 import { WATCHED_OBJECT_NAMES } from './constants';
+import { resolveEventPatch } from './resolve-event-patch';
 import type { ObjectRecordEvent } from './types';
 
 const isWatchedObject = (objectNameSingular: string): boolean =>
@@ -73,13 +74,12 @@ export const applyObjectRecordEvent = (
     return;
   }
 
-  const patch = event.properties.after;
+  const patch = resolveEventPatch(event.properties);
   const canPatch =
     (event.action === 'UPDATED' || event.action === 'UPSERTED' || event.action === 'RESTORED') &&
-    patch &&
-    typeof patch === 'object';
+    Boolean(patch);
 
-  if (canPatch) {
+  if (canPatch && patch) {
     const didPatch =
       event.objectNameSingular === 'opportunity'
         ? patchOpportunityInCache(queryClient, event.recordId, patch)
