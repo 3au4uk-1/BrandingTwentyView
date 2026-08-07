@@ -8,19 +8,17 @@ import {
   unregisterDealsBoardEventStreamQueries,
 } from './event-stream-api';
 import { ON_EVENT_SUBSCRIPTION } from './on-event-subscription';
+import { logDealsBoardSseError } from './sse-log';
+import { computeReconnectDelayMs, MAX_CONSECUTIVE_SSE_FAILURES } from './sse-reconnect';
 import type { EventSubscriptionPayload } from './types';
 import { getMetadataGraphqlUrl, resolveAccessToken } from './twenty-runtime';
 import { createId } from '../utils/create-id';
-
-const createEventStreamId = (): string => createId();
 
 const extractSubscriptionPayload = (
   data: unknown,
 ): EventSubscriptionPayload | undefined => {
   if (!data || typeof data !== 'object') return undefined;
-
-  const payload = (data as { onEventSubscription?: EventSubscriptionPayload }).onEventSubscription;
-  return payload;
+  return (data as { onEventSubscription?: EventSubscriptionPayload }).onEventSubscription;
 };
 
 export const useDealsBoardRealtimeSync = (enabled = true): void => {
@@ -30,74 +28,155 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
     if (!enabled) return;
 
     let disposed = false;
-    let eventStreamId: string | null = null;
-    let streamReady = false;
-    let disposeSubscription: (() => void) | undefined;
+    let consecutiveFailures = 0;
+    let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+    let activeDispose: (() => void) | undefined;
+    let activeStreamId: string | null = null;
+    let didRegister = false;
 
     const metadataUrl = getMetadataGraphqlUrl();
-    const sseClient = createClient({
-      url: metadataUrl,
-      headers: async () => ({
-        Authorization: `Bearer ${await resolveAccessToken()}`,
-      }),
-    });
 
-    const ensureQueryListeners = async (streamId: string) => {
-      try {
-        await registerDealsBoardEventStreamQueries(streamId);
-      } catch (error) {
-        console.error('Deals Board SSE: failed to register query listeners', error);
+    const clearReconnectTimer = () => {
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = undefined;
       }
     };
 
-    const handleSubscriptionPayload = (payload: EventSubscriptionPayload | undefined) => {
-      if (!payload || disposed) return;
+    const teardownActive = () => {
+      const streamId = activeStreamId;
+      const shouldUnregister = didRegister && streamId;
+      activeStreamId = null;
+      didRegister = false;
 
-      if (!streamReady) {
-        streamReady = true;
-        if (eventStreamId) {
-          void ensureQueryListeners(eventStreamId);
+      activeDispose?.();
+      activeDispose = undefined;
+
+      if (shouldUnregister && streamId) {
+        void unregisterDealsBoardEventStreamQueries(streamId).catch((error) => {
+          logDealsBoardSseError('register', error);
+        });
+      }
+    };
+
+    const scheduleRestart = () => {
+      if (disposed) return;
+      if (consecutiveFailures >= MAX_CONSECUTIVE_SSE_FAILURES) {
+        logDealsBoardSseError(
+          'subscribe',
+          new Error(`paused after ${MAX_CONSECUTIVE_SSE_FAILURES} consecutive failures`),
+        );
+        return;
+      }
+      const delay = computeReconnectDelayMs(consecutiveFailures);
+      clearReconnectTimer();
+      reconnectTimer = setTimeout(() => {
+        startSession();
+      }, delay);
+    };
+
+    const startSession = () => {
+      if (disposed) return;
+      teardownActive();
+
+      const eventStreamId = createId();
+      activeStreamId = eventStreamId;
+      didRegister = false;
+      let registerInFlight = false;
+
+      const sseClient = createClient({
+        url: metadataUrl,
+        retryAttempts: 0,
+        headers: async () => ({
+          Authorization: `Bearer ${await resolveAccessToken()}`,
+        }),
+      });
+
+      const ensureQueryListeners = async () => {
+        if (disposed || activeStreamId !== eventStreamId || didRegister || registerInFlight) {
+          return;
         }
-      }
+        registerInFlight = true;
+        try {
+          await registerDealsBoardEventStreamQueries(eventStreamId);
+          if (disposed || activeStreamId !== eventStreamId) {
+            void unregisterDealsBoardEventStreamQueries(eventStreamId).catch(() => undefined);
+            return;
+          }
+          didRegister = true;
+          consecutiveFailures = 0;
+        } catch (error) {
+          logDealsBoardSseError('register', error);
+          consecutiveFailures += 1;
+          teardownActive();
+          scheduleRestart();
+        } finally {
+          registerInFlight = false;
+        }
+      };
 
-      for (const item of payload.objectRecordEventsWithQueryIds ?? []) {
-        applyObjectRecordEvent(queryClient, item.objectRecordEvent);
-      }
+      const handleSubscriptionPayload = (payload: EventSubscriptionPayload | undefined) => {
+        if (!payload || disposed || activeStreamId !== eventStreamId) return;
+        try {
+          for (const item of payload.objectRecordEventsWithQueryIds ?? []) {
+            applyObjectRecordEvent(queryClient, item.objectRecordEvent);
+          }
+        } catch (error) {
+          logDealsBoardSseError('apply', error);
+        }
+      };
+
+      const disposeSubscription = sseClient.subscribe(
+        {
+          query: ON_EVENT_SUBSCRIPTION,
+          variables: { eventStreamId },
+        },
+        {
+          next: (result) => {
+            handleSubscriptionPayload(extractSubscriptionPayload(result.data));
+          },
+          error: (error) => {
+            if (disposed || activeStreamId !== eventStreamId) return;
+            logDealsBoardSseError('subscribe', error);
+            consecutiveFailures += 1;
+            teardownActive();
+            scheduleRestart();
+          },
+          complete: () => {
+            if (disposed || activeStreamId !== eventStreamId) return;
+            consecutiveFailures += 1;
+            teardownActive();
+            scheduleRestart();
+          },
+        },
+        {
+          connected: () => {
+            void ensureQueryListeners();
+          },
+          message: ({ data, event }) => {
+            if (event !== 'next') return;
+            handleSubscriptionPayload(extractSubscriptionPayload(data));
+          },
+        },
+      );
+
+      const fallbackRegisterTimer = setTimeout(() => {
+        void ensureQueryListeners();
+      }, 0);
+
+      activeDispose = () => {
+        clearTimeout(fallbackRegisterTimer);
+        disposeSubscription();
+        sseClient.dispose();
+      };
     };
 
-    eventStreamId = createEventStreamId();
-
-    disposeSubscription = sseClient.subscribe(
-      {
-        query: ON_EVENT_SUBSCRIPTION,
-        variables: { eventStreamId },
-      },
-      {
-        next: (result) => {
-          handleSubscriptionPayload(extractSubscriptionPayload(result.data));
-        },
-        error: (error) => {
-          console.error('Deals Board SSE: subscription error', error);
-        },
-      },
-      {
-        message: ({ data, event }) => {
-          if (event !== 'next') return;
-          handleSubscriptionPayload(extractSubscriptionPayload(data));
-        },
-      },
-    );
+    startSession();
 
     return () => {
       disposed = true;
-      disposeSubscription?.();
-      sseClient.dispose();
-
-      if (streamReady && eventStreamId) {
-        void unregisterDealsBoardEventStreamQueries(eventStreamId).catch((error) => {
-          console.error('Deals Board SSE: failed to unregister query listeners', error);
-        });
-      }
+      clearReconnectTimer();
+      teardownActive();
     };
   }, [enabled, queryClient]);
 };

@@ -121,4 +121,47 @@ describe('applyObjectRecordEvent', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['lineItems'] });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['deals-board-page'] });
   });
+
+  it('patches from diff when after is missing', () => {
+    const queryClient = new QueryClient();
+    const filters = {};
+    const queryKey = opportunitiesQueryKey(undefined, filters, 0, [], [], false, {}, false, false);
+    queryClient.setQueryData(queryKey, {
+      records: [{ id: 'opp-1', name: 'Deal A', stage: 'NEW' } satisfies OpportunityRow],
+      totalCount: 1,
+    });
+
+    applyObjectRecordEvent(
+      queryClient,
+      baseEvent({
+        properties: { diff: { stage: { before: 'NEW', after: 'WON' } } },
+      }),
+    );
+
+    expect(queryClient.getQueryData<{ records: OpportunityRow[] }>(queryKey)?.records[0]?.stage).toBe(
+      'WON',
+    );
+  });
+
+  it('patches deals-board-page root when opportunity is only there', () => {
+    const queryClient = new QueryClient();
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+    const pageKey = ['deals-board-page', 'view-1'] as const;
+    queryClient.setQueryData(pageKey, {
+      records: [{ id: 'opp-1', name: 'Deal A', stage: 'NEW' } satisfies OpportunityRow],
+      totalCount: 1,
+    });
+
+    applyObjectRecordEvent(
+      queryClient,
+      baseEvent({
+        properties: { after: { stage: 'WON' } },
+      }),
+    );
+
+    expect(
+      queryClient.getQueryData<{ records: OpportunityRow[] }>(pageKey)?.records[0]?.stage,
+    ).toBe('WON');
+    expect(invalidateSpy).not.toHaveBeenCalled();
+  });
 });

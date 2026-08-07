@@ -91,6 +91,7 @@ import {
   provisionalAggregateViewId,
   shouldEnableAggregateColdLoad,
 } from './utils/aggregate-cold-load-gate';
+import { mergeAccumulatedRecords } from './utils/merge-accumulated-records';
 import { applyPrintGroupSeed } from './utils/column-groups';
 import { asArray } from './utils/parse-json-field';
 import { filterLineItemsForSearch, resolveSearchTerms } from './utils/search';
@@ -631,17 +632,11 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
       setAccumulatedRecords(visibleRecords);
       return;
     }
-    setAccumulatedRecords((prev) => {
-      const seen = new Set(prev.map((record) => record.id));
-      const merged = [...prev];
-      for (const record of visibleRecords) {
-        if (!seen.has(record.id)) merged.push(record);
-      }
-      if (mobileLayoutActive && merged.length > MOBILE_MAX_RECORDS) {
-        return merged.slice(0, MOBILE_MAX_RECORDS);
-      }
-      return merged;
-    });
+    setAccumulatedRecords((prev) =>
+      mergeAccumulatedRecords(prev, visibleRecords, {
+        maxLength: mobileLayoutActive ? MOBILE_MAX_RECORDS : undefined,
+      }),
+    );
   }, [effectiveShowAll, mobileLayoutActive, page, visibleRecords]);
 
   const mobileRecords = !effectiveShowAll ? accumulatedRecords : visibleRecords;
