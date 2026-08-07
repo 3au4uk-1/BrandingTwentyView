@@ -33,7 +33,6 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
     let activeDispose: (() => void) | undefined;
     let activeStreamId: string | null = null;
     let didRegister = false;
-    let registerInFlight = false;
 
     const metadataUrl = getMetadataGraphqlUrl();
 
@@ -45,12 +44,14 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
     };
 
     const teardownActive = () => {
-      activeDispose?.();
-      activeDispose = undefined;
       const streamId = activeStreamId;
       const shouldUnregister = didRegister && streamId;
       activeStreamId = null;
       didRegister = false;
+
+      activeDispose?.();
+      activeDispose = undefined;
+
       if (shouldUnregister && streamId) {
         void unregisterDealsBoardEventStreamQueries(streamId).catch((error) => {
           logDealsBoardSseError('register', error);
@@ -81,6 +82,7 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
       const eventStreamId = createId();
       activeStreamId = eventStreamId;
       didRegister = false;
+      let registerInFlight = false;
 
       const sseClient = createClient({
         url: metadataUrl,
