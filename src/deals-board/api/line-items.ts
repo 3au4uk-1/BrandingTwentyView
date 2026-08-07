@@ -6,7 +6,7 @@ import {
 } from 'src/constants/line-item-origin';
 
 import type { LineItemRow } from '../types';
-import { extractRestPageInfo, normalizeRestListResponse } from './rest-list';
+import { extractRestPageInfo, normalizeRestListResponse, resolveNextRestCursor } from './rest-list';
 
 let restClient: RestApiClient | null = null;
 
@@ -73,6 +73,11 @@ export const filterLineItemsByQueryFilters = (
 const getRestClient = (): RestApiClient => {
   if (!restClient) restClient = new RestApiClient();
   return restClient;
+};
+
+/** Test-only: drop cached REST client so mocks apply per test. */
+export const resetDealLineItemsRestClientForTests = (): void => {
+  restClient = null;
 };
 
 const appendLineItemFilters = (
@@ -199,8 +204,7 @@ const fetchLineItemsPage = async (
     normalizeRestListResponse<unknown>(response, 'dealLineItems'),
   );
   const pageInfo = extractRestPageInfo(response);
-  const nextCursor =
-    pageInfo.hasNextPage && pageInfo.endCursor ? String(pageInfo.endCursor) : undefined;
+  const nextCursor = resolveNextRestCursor(after, pageInfo);
 
   return { items, nextCursor };
 };
@@ -285,8 +289,7 @@ const fetchLineItemOpportunityIdsPage = async (
   );
   const opportunityIds = [...new Set(items.map((item) => item.opportunityId))];
   const pageInfo = extractRestPageInfo(response);
-  const nextCursor =
-    pageInfo.hasNextPage && pageInfo.endCursor ? String(pageInfo.endCursor) : undefined;
+  const nextCursor = resolveNextRestCursor(after, pageInfo);
 
   return { opportunityIds, nextCursor };
 };
@@ -340,8 +343,7 @@ export const fetchLineItemOpportunityIdsByFilters = async (
       allIds.add(item.opportunityId);
     }
     const pageInfo = extractRestPageInfo(response);
-    after =
-      pageInfo.hasNextPage && pageInfo.endCursor ? String(pageInfo.endCursor) : undefined;
+    after = resolveNextRestCursor(after, pageInfo);
   } while (after);
 
   return [...allIds];

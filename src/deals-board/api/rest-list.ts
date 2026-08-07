@@ -50,3 +50,21 @@ export const extractRestPageInfo = (response: unknown): RestPageInfo => {
 
   return pageInfo as RestPageInfo;
 };
+
+/**
+ * Next cursor for REST list pagination. Returns undefined when pagination should stop,
+ * including when Twenty reports hasNextPage but endCursor did not advance (infinite loop).
+ */
+export const resolveNextRestCursor = (
+  previousCursor: string | undefined,
+  pageInfo: RestPageInfo,
+): string | undefined => {
+  if (!pageInfo.hasNextPage || pageInfo.endCursor == null || pageInfo.endCursor === '') {
+    return undefined;
+  }
+  const next = String(pageInfo.endCursor);
+  if (previousCursor !== undefined && next === previousCursor) {
+    return undefined;
+  }
+  return next;
+};

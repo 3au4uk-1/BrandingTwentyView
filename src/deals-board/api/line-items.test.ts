@@ -20,6 +20,8 @@ import {
   createLineItemWithClient,
   extractCreatedLineItemId,
   fetchLineItemOpportunityIdsByFilters,
+  fetchLineItemOpportunityIdsBySearch,
+  resetDealLineItemsRestClientForTests,
   resolveCreatedLineItemId,
   fetchLineItemsForOpportunityIdsWithClient,
   filterLineItemsByQueryFilters,
@@ -321,9 +323,51 @@ describe('buildDealLineItemsAttributeFilter', () => {
   });
 });
 
+describe('fetchLineItemOpportunityIdsBySearch', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetDealLineItemsRestClientForTests();
+  });
+
+  it('stops when pageInfo endCursor does not advance', async () => {
+    const stuckCursor = 'eyJpZCI6IjkzMmY4YTQ0LWU1OWQtNDMzMi1iNThkLTc5YzNlMzNlNTc3YiJ9';
+    const get = vi
+      .fn()
+      .mockResolvedValueOnce({
+        data: [{ id: 'item-1', name: '1-a', opportunityId: 'opp-1' }],
+        pageInfo: { hasNextPage: true, endCursor: stuckCursor },
+      })
+      .mockResolvedValue({
+        data: [{ id: 'item-2', name: '1-b', opportunityId: 'opp-2' }],
+        pageInfo: { hasNextPage: true, endCursor: stuckCursor },
+      });
+
+    vi.mocked(RestApiClient).mockImplementation(
+      () =>
+        ({
+          get,
+        }) as unknown as RestApiClient,
+    );
+
+    await expect(fetchLineItemOpportunityIdsBySearch('1')).resolves.toEqual([
+      'opp-1',
+      'opp-2',
+    ]);
+    expect(get).toHaveBeenCalledTimes(2);
+    expect(get).toHaveBeenNthCalledWith(2, '/rest/dealLineItems', {
+      query: {
+        limit: 200,
+        filter: 'name[ilike]:"%1%"',
+        after: stuckCursor,
+      },
+    });
+  });
+});
+
 describe('fetchLineItemOpportunityIdsByFilters', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetDealLineItemsRestClientForTests();
   });
 
   it('returns [] without calling REST when filters empty', async () => {
