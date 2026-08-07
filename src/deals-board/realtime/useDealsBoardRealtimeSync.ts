@@ -15,7 +15,7 @@ import { getMetadataGraphqlUrl, resolveAccessToken } from './twenty-runtime';
 import { createId } from '../utils/create-id';
 
 /** In-place register retries while keeping the SSE session open (stream may not be in Redis yet). */
-const MAX_REGISTER_ATTEMPTS = 8;
+const MAX_REGISTER_ATTEMPTS = 16;
 const REGISTER_RETRY_DELAY_MS = 250;
 
 const extractSubscriptionPayload = (
@@ -92,11 +92,12 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
       let registerInFlight = false;
       let registerAttempts = 0;
       let registerRetryTimer: ReturnType<typeof setTimeout> | undefined;
-      let sawSubscriptionNext = false;
 
       const sseClient = createClient({
         url: metadataUrl,
         retryAttempts: 0,
+        // Front component may be cross-origin; include cookies as a backup to Bearer.
+        credentials: 'include',
         headers: async () => ({
           Authorization: `Bearer ${await resolveAccessToken()}`,
         }),
@@ -114,8 +115,7 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
           disposed ||
           activeStreamId !== eventStreamId ||
           didRegister ||
-          registerInFlight ||
-          !sawSubscriptionNext
+          registerInFlight
         ) {
           return;
         }
@@ -165,12 +165,9 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
 
       const onSubscriptionNext = (data: unknown) => {
         if (disposed || activeStreamId !== eventStreamId) return;
-        // Twenty creates the Redis stream in onEventSubscription, then yields an
-        // initial next. Register only after that — earlier calls return false.
-        if (!sawSubscriptionNext) {
-          sawSubscriptionNext = true;
-          void ensureQueryListeners();
-        }
+        // Stream is definitely ready once a next arrives — register if connected
+        // path has not succeeded yet (or is still retrying "not ready").
+        void ensureQueryListeners();
         handleSubscriptionPayload(extractSubscriptionPayload(data));
       };
 
@@ -198,6 +195,14 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
           },
         },
         {
+          // Prod HAR (2026-08-07): board SSE stayed open ~36s with zero
+          // addQueryToEventStream calls — sink.next never fired, so waiting only
+          // on next left the stream with no listeners. Register as soon as the
+          // HTTP SSE connection is up; retries handle Redis "not ready".
+          connected: () => {
+            if (disposed || activeStreamId !== eventStreamId) return;
+            void ensureQueryListeners();
+          },
           message: ({ data, event }) => {
             if (event !== 'next') return;
             onSubscriptionNext(data);
