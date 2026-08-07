@@ -84,7 +84,7 @@ describe('applyObjectRecordEvent', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['deals-board-page'] });
   });
 
-  it('ignores unrelated objects', () => {
+  it('invalidates company names when a company is updated', () => {
     const queryClient = new QueryClient();
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
@@ -96,7 +96,7 @@ describe('applyObjectRecordEvent', () => {
       }),
     );
 
-    expect(invalidateSpy).not.toHaveBeenCalled();
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['companyNames'] });
   });
 
   it('archives a synced manual line item on delete', async () => {
@@ -162,6 +162,37 @@ describe('applyObjectRecordEvent', () => {
     expect(
       queryClient.getQueryData<{ records: OpportunityRow[] }>(pageKey)?.records[0]?.stage,
     ).toBe('WON');
+    expect(invalidateSpy).not.toHaveBeenCalled();
+  });
+
+  it('invalidates registry keys for objects without a row cache', () => {
+    const queryClient = new QueryClient();
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+    applyObjectRecordEvent(queryClient, {
+      action: 'UPDATED',
+      objectNameSingular: 'okleykaSalaryEntry',
+      recordId: 'entry-1',
+      properties: { updatedFields: ['amount'], diff: { amount: { before: 1, after: 2 } } },
+    });
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['okleyka-salary-entries'] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['okleyka-salary'] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['okleyka-salary-history'] });
+    expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ['lineItems'] });
+  });
+
+  it('ignores objects outside the registry', () => {
+    const queryClient = new QueryClient();
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+    applyObjectRecordEvent(queryClient, {
+      action: 'UPDATED',
+      objectNameSingular: 'note',
+      recordId: 'note-1',
+      properties: { updatedFields: ['body'] },
+    });
+
     expect(invalidateSpy).not.toHaveBeenCalled();
   });
 });

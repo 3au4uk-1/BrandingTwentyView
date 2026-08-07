@@ -4,12 +4,19 @@ import { archiveManualLineItem } from '../api/crmparser';
 import type { LineItemRow } from '../types';
 import { patchOpportunityInCache } from '../utils/opportunity-cache';
 import { syncDealStage } from '../utils/sync-deal-stage';
-import { WATCHED_OBJECT_NAMES } from './constants';
+import {
+  PATCHABLE_OBJECT_NAMES,
+  WATCHED_QUERY_KEYS,
+  type WatchedObjectName,
+} from './query-key-registry';
 import { resolveEventPatch } from './resolve-event-patch';
 import type { ObjectRecordEvent } from './types';
 
-const isWatchedObject = (objectNameSingular: string): boolean =>
-  WATCHED_OBJECT_NAMES.includes(objectNameSingular as (typeof WATCHED_OBJECT_NAMES)[number]);
+const isWatchedObject = (objectNameSingular: string): objectNameSingular is WatchedObjectName =>
+  objectNameSingular in WATCHED_QUERY_KEYS;
+
+const isPatchableObject = (objectNameSingular: WatchedObjectName): boolean =>
+  (PATCHABLE_OBJECT_NAMES as readonly string[]).includes(objectNameSingular);
 
 const patchLineItemInCache = (
   queryClient: QueryClient,
@@ -47,16 +54,12 @@ const findLineItemOpportunityId = (
   return undefined;
 };
 
-const invalidateObjectQueries = (queryClient: QueryClient, objectNameSingular: string): void => {
-  if (objectNameSingular === 'opportunity') {
-    queryClient.invalidateQueries({ queryKey: ['opportunities'] });
-    queryClient.invalidateQueries({ queryKey: ['deals-board-page'] });
-    return;
-  }
-
-  if (objectNameSingular === 'dealLineItem') {
-    queryClient.invalidateQueries({ queryKey: ['lineItems'] });
-    queryClient.invalidateQueries({ queryKey: ['deals-board-page'] });
+const invalidateObjectQueries = (
+  queryClient: QueryClient,
+  objectNameSingular: WatchedObjectName,
+): void => {
+  for (const queryKey of WATCHED_QUERY_KEYS[objectNameSingular]) {
+    queryClient.invalidateQueries({ queryKey: [queryKey] });
   }
 };
 
@@ -76,6 +79,7 @@ export const applyObjectRecordEvent = (
 
   const patch = resolveEventPatch(event.properties);
   const canPatch =
+    isPatchableObject(event.objectNameSingular) &&
     (event.action === 'UPDATED' || event.action === 'UPSERTED' || event.action === 'RESTORED') &&
     Boolean(patch);
 

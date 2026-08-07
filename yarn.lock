@@ -1380,7 +1380,6 @@ __metadata:
     "@types/node": "npm:^24.7.2"
     "@types/react": "npm:^19.0.0"
     graphql: "npm:^16.8.1"
-    graphql-sse: "npm:^2.6.0"
     oxlint: "npm:^0.16.0"
     react: "npm:^19.0.0"
     react-dom: "npm:^19.0.0"
@@ -1788,7 +1787,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graphql-sse@npm:^2.5.4, graphql-sse@npm:^2.6.0":
+"graphql-sse@npm:^2.5.4":
   version: 2.6.0
   resolution: "graphql-sse@npm:2.6.0"
   peerDependencies:

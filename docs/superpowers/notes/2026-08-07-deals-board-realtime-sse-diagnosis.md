@@ -54,3 +54,67 @@ Remote board edits invisible until F5. Persistence OK → live delivery broken.
 2. Console: `Deals Board SSE: register — attempt via timer-…` then `register — ok`
 3. Network: two `AddQueryToEventStream` for `deals-board-opportunities` / `deals-board-line-items` → `true`
 4. Colleague stage edit → observer ≤2s without F5
+
+## RESOLVED (Aug 7 ~16:00Z) — SSE cannot work in a front component
+
+Every hypothesis above (token type, register timing, Traefik) is dead. Root cause is the host
+fetch bridge. Front components run in a Web Worker with an opaque origin, so the host replaces
+their `fetch` with a `postMessage` bridge that buffers the whole body:
+
+```js
+d4 = async (response) => {
+  ...
+  let body = await response.text();            // never resolves for an open stream
+  return { status, statusText, headers, body }; // serialized string
+}
+```
+
+The host performs the request itself with `credentials: "omit"` (so our `credentials: 'include'`
+was inert) and awaits `response.text()`. For `text/event-stream` the worker's `fetch` promise
+never resolves, so `graphql-sse` gets no `Response`, no `connected`, no `next` — matching the
+HAR exactly (stream open 48s/228s, register only via our timers). The bridge has no
+`ReadableStream` and no `text/event-stream` handling; streaming is unsupported by design. The
+bridge API also exposes no way to subscribe to the host's own record events.
+
+Server side is fully healthy. Live Node probe with the same application token and the same
+`operationSignature` received `CREATED`, `UPDATED` (`updatedFields: ["name"]`) and `DESTROYED`
+in 150–500 ms. Twenty publishes nothing when an update does not change a value — that is what
+masked the first probe run.
+
+Design for the replacement transport (event hub in crmparserv2 + long-poll through a logic
+function): `docs/superpowers/specs/2026-08-07-deals-board-realtime-longpoll-design.md`.
+
+## Staging verification (2026-08-07) — webhook + long-poll hub live
+
+SSE in the front component was replaced by Twenty webhooks → crmparser journal →
+`GET /api/twenty/events` long-poll → logic function `GET /deals-board/events` → board client.
+
+**Staging deploy**
+- `crmparserv2` `staging` pushed through `ff2d603`; image `ghcr.io/3au4uk-1/crmparserv2:staging`;
+  Dokploy compose `crmparser-staging` has `TWENTY_WEBHOOK_SECRET` wired in env + compose file.
+- `BrandingTwentyView` `staging` pushed through `2da8550`; CD Deploy+Install to
+  `https://twenty-staging.dosugmayak.ru` succeeded.
+
+**Webhook**
+- Target: `https://crm-staging.dosugmayak.ru/api/twenty-webhook`
+- Webhook id: `5542834d-d026-460b-8bd3-535a41b46d98` (18 operations: six watched objects ×
+  created/updated/deleted). Secret matches Dokploy.
+- Bad-signature POST → `401`. Live CRM edits → journal cursor advances; no signature rejects
+  observed during checks.
+
+**Long-poll**
+- `GET /api/twenty/events` (Bearer `TWENTY_APP_API_SECRET`) returns epoch/cursor immediately.
+- While events exist, poll returns in ~200–400 ms with `opportunity` / `dealLineItem` UPDATED
+  payloads (observed under active board editing on staging).
+- After hard compose stop/start, clients with a stale epoch get `reset: true` and a new epoch
+  (verified: `c4286389-…` → `b92eefe1-…`).
+
+**Proxy route**
+- `GET https://twenty-staging.dosugmayak.ru/s/deals-board/events` is mounted (`isAuthRequired`);
+  unauthenticated call returns missing-token (expected). Full board path needs session /
+  application token inside the front component.
+
+**Still pending human**
+- Two-browser «Реализация» acceptance (stage / line-item / comment ≤2s without F5).
+- Kill-switch check (`TWENTY_EVENTS_ENABLED=false` → `{disabled:true}` then restore).
+- Production repeat of secret + webhook + deploy.
