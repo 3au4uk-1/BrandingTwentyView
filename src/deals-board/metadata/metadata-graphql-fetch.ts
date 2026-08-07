@@ -8,8 +8,9 @@ type MetadataGraphqlResponse<T> = {
 export const queryMetadataGraphql = async <T>(
   query: string,
   variables?: Record<string, unknown>,
+  options?: { token?: string },
 ): Promise<T> => {
-  const client = new RestApiClient();
+  const client = new RestApiClient(options?.token ? { token: options.token } : undefined);
   const body = await client.post<MetadataGraphqlResponse<T>>('/metadata', {
     query,
     variables,

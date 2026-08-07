@@ -1,5 +1,6 @@
 import { queryMetadataGraphql } from '../metadata/metadata-graphql-fetch';
 import { DEALS_BOARD_SSE_QUERY_IDS, type WatchedObjectName } from './constants';
+import { resolveAccessToken } from './twenty-runtime';
 import type { RecordOperationSignature } from './types';
 
 const ADD_QUERY_TO_EVENT_STREAM_MUTATION = `
@@ -19,11 +20,21 @@ const buildOperationSignature = (objectNameSingular: WatchedObjectName): RecordO
   variables: {},
 });
 
+const queryEventStreamMetadata = async <T>(
+  query: string,
+  variables?: Record<string, unknown>,
+): Promise<T> => {
+  // Must use the same user token as the SSE subscription (not RestApiClient's
+  // default env app token), or addQuery / publish auth contexts diverge.
+  const token = await resolveAccessToken();
+  return queryMetadataGraphql<T>(query, variables, { token });
+};
+
 export const registerDealsBoardEventStreamQueries = async (
   eventStreamId: string,
 ): Promise<void> => {
   for (const objectNameSingular of Object.keys(DEALS_BOARD_SSE_QUERY_IDS) as WatchedObjectName[]) {
-    const result = await queryMetadataGraphql<{ addQueryToEventStream: boolean }>(
+    const result = await queryEventStreamMetadata<{ addQueryToEventStream: boolean }>(
       ADD_QUERY_TO_EVENT_STREAM_MUTATION,
       {
         input: {
@@ -48,7 +59,7 @@ export const unregisterDealsBoardEventStreamQueries = async (
 ): Promise<void> => {
   await Promise.all(
     (Object.keys(DEALS_BOARD_SSE_QUERY_IDS) as WatchedObjectName[]).map((objectNameSingular) =>
-      queryMetadataGraphql<{ removeQueryFromEventStream: boolean }>(
+      queryEventStreamMetadata<{ removeQueryFromEventStream: boolean }>(
         REMOVE_QUERY_FROM_EVENT_STREAM_MUTATION,
         {
           input: {
