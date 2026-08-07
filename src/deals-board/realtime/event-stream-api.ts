@@ -35,7 +35,10 @@ export const registerDealsBoardEventStreamQueries = async (
     );
 
     if (result.addQueryToEventStream !== true) {
-      throw new Error(`Failed to register SSE listener for ${objectNameSingular}`);
+      // Twenty returns false when Redis has no stream for this id yet (or it expired).
+      throw new Error(
+        `Event stream not ready for ${objectNameSingular} (addQueryToEventStream returned false)`,
+      );
     }
   }
 };

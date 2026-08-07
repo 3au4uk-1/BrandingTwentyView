@@ -14,12 +14,19 @@ import type { EventSubscriptionPayload } from './types';
 import { getMetadataGraphqlUrl, resolveAccessToken } from './twenty-runtime';
 import { createId } from '../utils/create-id';
 
+/** In-place register retries while keeping the SSE session open (stream may not be in Redis yet). */
+const MAX_REGISTER_ATTEMPTS = 8;
+const REGISTER_RETRY_DELAY_MS = 250;
+
 const extractSubscriptionPayload = (
   data: unknown,
 ): EventSubscriptionPayload | undefined => {
   if (!data || typeof data !== 'object') return undefined;
   return (data as { onEventSubscription?: EventSubscriptionPayload }).onEventSubscription;
 };
+
+const isStreamNotReadyError = (error: unknown): boolean =>
+  error instanceof Error && error.message.includes('Event stream not ready');
 
 export const useDealsBoardRealtimeSync = (enabled = true): void => {
   const queryClient = useQueryClient();
@@ -83,6 +90,9 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
       activeStreamId = eventStreamId;
       didRegister = false;
       let registerInFlight = false;
+      let registerAttempts = 0;
+      let registerRetryTimer: ReturnType<typeof setTimeout> | undefined;
+      let sawSubscriptionNext = false;
 
       const sseClient = createClient({
         url: metadataUrl,
@@ -92,8 +102,21 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
         }),
       });
 
+      const clearRegisterRetryTimer = () => {
+        if (registerRetryTimer) {
+          clearTimeout(registerRetryTimer);
+          registerRetryTimer = undefined;
+        }
+      };
+
       const ensureQueryListeners = async () => {
-        if (disposed || activeStreamId !== eventStreamId || didRegister || registerInFlight) {
+        if (
+          disposed ||
+          activeStreamId !== eventStreamId ||
+          didRegister ||
+          registerInFlight ||
+          !sawSubscriptionNext
+        ) {
           return;
         }
         registerInFlight = true;
@@ -105,8 +128,22 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
           }
           didRegister = true;
           consecutiveFailures = 0;
+          registerAttempts = 0;
         } catch (error) {
           logDealsBoardSseError('register', error);
+          if (
+            isStreamNotReadyError(error) &&
+            registerAttempts < MAX_REGISTER_ATTEMPTS &&
+            !disposed &&
+            activeStreamId === eventStreamId
+          ) {
+            registerAttempts += 1;
+            clearRegisterRetryTimer();
+            registerRetryTimer = setTimeout(() => {
+              void ensureQueryListeners();
+            }, REGISTER_RETRY_DELAY_MS);
+            return;
+          }
           consecutiveFailures += 1;
           teardownActive();
           scheduleRestart();
@@ -126,6 +163,17 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
         }
       };
 
+      const onSubscriptionNext = (data: unknown) => {
+        if (disposed || activeStreamId !== eventStreamId) return;
+        // Twenty creates the Redis stream in onEventSubscription, then yields an
+        // initial next. Register only after that — earlier calls return false.
+        if (!sawSubscriptionNext) {
+          sawSubscriptionNext = true;
+          void ensureQueryListeners();
+        }
+        handleSubscriptionPayload(extractSubscriptionPayload(data));
+      };
+
       const disposeSubscription = sseClient.subscribe(
         {
           query: ON_EVENT_SUBSCRIPTION,
@@ -133,7 +181,7 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
         },
         {
           next: (result) => {
-            handleSubscriptionPayload(extractSubscriptionPayload(result.data));
+            onSubscriptionNext(result.data);
           },
           error: (error) => {
             if (disposed || activeStreamId !== eventStreamId) return;
@@ -150,22 +198,15 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
           },
         },
         {
-          connected: () => {
-            void ensureQueryListeners();
-          },
           message: ({ data, event }) => {
             if (event !== 'next') return;
-            handleSubscriptionPayload(extractSubscriptionPayload(data));
+            onSubscriptionNext(data);
           },
         },
       );
 
-      const fallbackRegisterTimer = setTimeout(() => {
-        void ensureQueryListeners();
-      }, 0);
-
       activeDispose = () => {
-        clearTimeout(fallbackRegisterTimer);
+        clearRegisterRetryTimer();
         disposeSubscription();
         sseClient.dispose();
       };
