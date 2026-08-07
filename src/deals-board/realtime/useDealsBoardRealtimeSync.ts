@@ -8,7 +8,7 @@ import {
   unregisterDealsBoardEventStreamQueries,
 } from './event-stream-api';
 import { ON_EVENT_SUBSCRIPTION } from './on-event-subscription';
-import { logDealsBoardSseError } from './sse-log';
+import { logDealsBoardSseError, logDealsBoardSseInfo } from './sse-log';
 import { computeReconnectDelayMs, MAX_CONSECUTIVE_SSE_FAILURES } from './sse-reconnect';
 import type { EventSubscriptionPayload } from './types';
 import { getMetadataGraphqlUrl, resolveAccessToken } from './twenty-runtime';
@@ -17,6 +17,8 @@ import { createId } from '../utils/create-id';
 /** In-place register retries while keeping the SSE session open (stream may not be in Redis yet). */
 const MAX_REGISTER_ATTEMPTS = 16;
 const REGISTER_RETRY_DELAY_MS = 250;
+/** Kick register without waiting for graphql-sse connected/next (prod HAR: both silent). */
+const REGISTER_KICK_DELAYS_MS = [0, 300, 1000, 2500] as const;
 
 const extractSubscriptionPayload = (
   data: unknown,
@@ -92,14 +94,23 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
       let registerInFlight = false;
       let registerAttempts = 0;
       let registerRetryTimer: ReturnType<typeof setTimeout> | undefined;
+      const kickTimers: Array<ReturnType<typeof setTimeout>> = [];
+      // Reuse the token from SSE headers — a second host refresh can hang and
+      // block addQuery forever (FLEET HAR: open SSE, zero deals-board addQuery).
+      let sessionToken: string | null = null;
+
+      const resolveSessionToken = async (): Promise<string> => {
+        if (sessionToken) return sessionToken;
+        sessionToken = await resolveAccessToken();
+        return sessionToken;
+      };
 
       const sseClient = createClient({
         url: metadataUrl,
         retryAttempts: 0,
-        // Front component may be cross-origin; include cookies as a backup to Bearer.
         credentials: 'include',
         headers: async () => ({
-          Authorization: `Bearer ${await resolveAccessToken()}`,
+          Authorization: `Bearer ${await resolveSessionToken()}`,
         }),
       });
 
@@ -110,7 +121,12 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
         }
       };
 
-      const ensureQueryListeners = async () => {
+      const clearKickTimers = () => {
+        for (const timer of kickTimers) clearTimeout(timer);
+        kickTimers.length = 0;
+      };
+
+      const ensureQueryListeners = async (reason: string) => {
         if (
           disposed ||
           activeStreamId !== eventStreamId ||
@@ -120,8 +136,12 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
           return;
         }
         registerInFlight = true;
+        logDealsBoardSseInfo('register', `attempt via ${reason} stream=${eventStreamId}`);
         try {
-          await registerDealsBoardEventStreamQueries(eventStreamId);
+          // Prefer cached session token for the metadata mutation (same as SSE).
+          await registerDealsBoardEventStreamQueries(eventStreamId, {
+            token: await resolveSessionToken(),
+          });
           if (disposed || activeStreamId !== eventStreamId) {
             void unregisterDealsBoardEventStreamQueries(eventStreamId).catch(() => undefined);
             return;
@@ -129,6 +149,7 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
           didRegister = true;
           consecutiveFailures = 0;
           registerAttempts = 0;
+          logDealsBoardSseInfo('register', `ok stream=${eventStreamId}`);
         } catch (error) {
           logDealsBoardSseError('register', error);
           if (
@@ -140,7 +161,7 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
             registerAttempts += 1;
             clearRegisterRetryTimer();
             registerRetryTimer = setTimeout(() => {
-              void ensureQueryListeners();
+              void ensureQueryListeners(`retry-${registerAttempts}`);
             }, REGISTER_RETRY_DELAY_MS);
             return;
           }
@@ -165,9 +186,7 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
 
       const onSubscriptionNext = (data: unknown) => {
         if (disposed || activeStreamId !== eventStreamId) return;
-        // Stream is definitely ready once a next arrives — register if connected
-        // path has not succeeded yet (or is still retrying "not ready").
-        void ensureQueryListeners();
+        void ensureQueryListeners('subscription-next');
         handleSubscriptionPayload(extractSubscriptionPayload(data));
       };
 
@@ -195,13 +214,9 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
           },
         },
         {
-          // Prod HAR (2026-08-07): board SSE stayed open ~36s with zero
-          // addQueryToEventStream calls — sink.next never fired, so waiting only
-          // on next left the stream with no listeners. Register as soon as the
-          // HTTP SSE connection is up; retries handle Redis "not ready".
           connected: () => {
             if (disposed || activeStreamId !== eventStreamId) return;
-            void ensureQueryListeners();
+            void ensureQueryListeners('sse-connected');
           },
           message: ({ data, event }) => {
             if (event !== 'next') return;
@@ -210,8 +225,21 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
         },
       );
 
+      // Prod FLEET HAR (2026-08-07): board OnEventSubscription stayed open ~228s with
+      // zero deals-board addQuery — graphql-sse connected/next never drove register.
+      // Kick register on timers so Redis listeners are attached even when the SSE
+      // client stays silent after HTTP headers.
+      for (const delayMs of REGISTER_KICK_DELAYS_MS) {
+        kickTimers.push(
+          setTimeout(() => {
+            void ensureQueryListeners(`timer-${delayMs}ms`);
+          }, delayMs),
+        );
+      }
+
       activeDispose = () => {
         clearRegisterRetryTimer();
+        clearKickTimers();
         disposeSubscription();
         sseClient.dispose();
       };
