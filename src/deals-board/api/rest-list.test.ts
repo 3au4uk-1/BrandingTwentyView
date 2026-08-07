@@ -1,8 +1,35 @@
 import { describe, expect, it } from 'vitest';
 
-import { normalizeRestListResponse } from './rest-list';
+import { normalizeRestListResponse, resolveNextRestCursor } from './rest-list';
 
 type Item = { id: string };
+
+describe('resolveNextRestCursor', () => {
+  it('returns endCursor when hasNextPage is true', () => {
+    expect(
+      resolveNextRestCursor(undefined, { hasNextPage: true, endCursor: 'c2' }),
+    ).toBe('c2');
+  });
+
+  it('returns undefined when hasNextPage is false', () => {
+    expect(
+      resolveNextRestCursor('c1', { hasNextPage: false, endCursor: 'c2' }),
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when endCursor is missing', () => {
+    expect(resolveNextRestCursor('c1', { hasNextPage: true })).toBeUndefined();
+    expect(
+      resolveNextRestCursor('c1', { hasNextPage: true, endCursor: null }),
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when endCursor did not advance (stuck pagination)', () => {
+    expect(
+      resolveNextRestCursor('c1', { hasNextPage: true, endCursor: 'c1' }),
+    ).toBeUndefined();
+  });
+});
 
 describe('normalizeRestListResponse', () => {
   it('returns a flat data array', () => {

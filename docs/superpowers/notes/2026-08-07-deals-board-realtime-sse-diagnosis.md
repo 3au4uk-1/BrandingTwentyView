@@ -1,82 +1,56 @@
 ﻿# Deals Board SSE diagnosis
 
 **Date:** 2026-08-07  
-**Last updated:** HAR `twenty.dosugmayak.ru _ new.har` (Aug 7 ~14:37Z)
+**Last updated:** FLEET HAR + prod bundle inspection (Aug 7 ~15:08–15:12Z)
 
-## Task 0 symptom (product owner)
+## Symptom
 
-- Any remote board edit (stage, line-item stage, comment/text field) is **invisible on other clients until F5**
-- After F5 data is correct → persistence OK, **live delivery broken** (total live blackout)
-- Initial diagnosis code: **D (unclear for Network specifics) with strong A/B lean** — total blackout for all watched fields is characteristic of subscription/register failure, not apply-only
+Remote board edits invisible until F5. Persistence OK → live delivery broken.
 
-## HAR follow-up (`twenty.dosugmayak.ru.har`, July)
+## Evidence chain
 
-- Board `OnEventSubscription` opens; both `addQueryToEventStream` calls return **`true`**
-- Twenty `ObjectRecordEventPublisher` skips publishing when stream auth has no usable `userWorkspaceId` (app/API token streams) — register can still be `true`
-- Fix: prefer host **user** token for SSE + event-stream register/unregister (`e22d43d`)
+### 1. July HAR — register OK, no publish
 
-## HAR `twenty.dosugmayak.ru _ new.har` (2026-08-07)
+- `addQueryToEventStream` returned `true` for deals-board queries
+- App/API token streams → publisher skips (no usable role intersection)
+- Fix shipped: prefer host user token (`e22d43d`)
 
-Timeline (observer):
+### 2. `twenty.dosugmayak.ru _ new.har` (~14:37Z)
 
-| Time (Z) | Event |
-|----------|--------|
-| 14:37:10 | Board SSE `07980f99…` opens, dies in ~53ms — **no** deals-board `addQuery` |
-| 14:37:24 | Host SSE `6a55f0d5…` opens |
-| 14:37:26 | Host `addQuery` `front-component-updated-…` → `true` |
-| 14:37:27 | Board SSE `b14158cb…` opens and stays ~36s — **still no** deals-board `addQuery` |
-| 14:37:39 | Local `PATCH dealLineItems` stage (own edit) + REST refetch |
+- Board SSE open, **zero** deals-board `addQuery`
+- Cause: code waited only for subscription `next`; `next` never arrived
+- Fix shipped: register on graphql-sse `connected` (`0a3e141`)
 
-**Finding:** After “register only after first subscription `next`” (`5b7f7bc`), prod never called `addQueryToEventStream` for `deals-board-opportunities` / `deals-board-line-items`. Host still registers. Empty `stream.queries` → publisher skips → UI dead until F5.
+### 3. FLEET HAR (`_ new_new_new_FLEET.har`, ~15:08Z) — after `0a3e141` CD
 
-**Fix:** Register on graphql-sse `connected` (with in-place Redis “not ready” retries) **and** on `next`; do not gate on `sawSubscriptionNext`. `credentials: 'include'` as cookie backup.
+| Fact | Detail |
+|------|--------|
+| Board SSE | `0db13278…` open **~228s** |
+| deals-board `addQuery` | **0** |
+| Host `addQuery` | `front-component-updated-…` → `true` |
+| Prod FC checksum | `8d17a2d9…` |
+| Prod bundle markers | `credentials:"include"`, `connected→register`, `deals-board-opportunities` — **new code is live** |
+| FC network fetch | **0** `/rest/front-components/…` (Cache Storage hit; content hash matches checksum) |
 
-## Code hardening completed (Tasks 1–4, commits through HEAD)
+**Conclusion:** Deployed code that registers on `connected` still never issues deals-board `addQuery`. So either `connected`/`next` never run the register path in this host/iframe environment, or register hangs before `fetch` (e.g. second `requestAccessTokenRefresh`). Traefik is **not** required to explain missing `addQuery` (client never POSTs it). Same `/metadata` path serves working host SSE+addQuery.
 
-| Task | Commit | Summary |
-|------|--------|---------|
-| 1 | `394ca39` | `resolveEventPatch` — patches from `after` or `diff` |
-| 2 | `02abd36` | Wire patch helper into `applyObjectRecordEvent`; patch `deals-board-page` without invalidate on success |
-| 3 | `5aa83ac` | `mergeAccumulatedRecords` — mobile accumulated rows refresh by id |
-| 4 | `5ea13d2` | Register SSE listeners on `connected` + fallback; reconnect with new `eventStreamId`, backoff, failure cap |
-| 4 fix | `6ac14b2` | Guard in-flight register; ignore dispose `complete` |
-| auth | `e22d43d` | Prefer host user token for SSE + register |
-| register | (this commit) | Register on `connected` again — do not wait only for `next` |
+### 4. Side finding (search flood) — separate bug
 
-**Design spec:** `docs/superpowers/specs/2026-08-07-deals-board-realtime-sse-hardening-design.md`  
-**Implementation plan:** `docs/superpowers/plans/2026-08-07-deals-board-realtime-sse-hardening.md`
+~1142 identical `GET /rest/dealLineItems?name[ilike]:"%1%"&after=<stuck cursor>` — pagination loop in `fetchLineItemOpportunityIdsBySearch`. Not the SSE root cause.
 
-Unit tests pass for helpers (`resolveEventPatch`, `applyObjectRecordEvent`, `mergeAccumulatedRecords`, `computeReconnectDelayMs`). Hook lifecycle verified by code review only.
+## Next fix (in progress)
 
-## `yarn twenty apply` (Task 5 Step 1)
+1. Kick `addQuery` on timers (`0 / 300 / 1000 / 2500 ms`) — do not depend on graphql-sse `connected`/`next`
+2. Cache session Bearer from first resolve — avoid re-entrant host token refresh before register
+3. `console.info` on register attempt/ok for Network+Console QA
 
-**SKIPPED** — agent environment: `yarn` not on PATH; `corepack yarn twenty apply` fails with `MODULE_NOT_FOUND` for `twenty-sdk` (dependencies not installed). No Twenty credentials/tokens available in this session. **Human must sync** before QA on a host that loads published app assets.
+## Traefik?
 
-## Manual two-browser QA — PENDING human verification
+**Unlikely primary cause.** Host and board share `/metadata` through the same edge. Missing deals-board `addQuery` is a client-side call that never appears. Traefik SSE buffering could still contribute to “no `next` events”, but only after listeners exist.
 
-Do **not** treat as pass until a human runs this on staging/production (or local docker app-dev) **after** `yarn twenty apply` + hard refresh.
+## Manual QA after next deploy
 
-On **observer** board (DevTools Network open), **without F5**:
-
-- [ ] Colleague changes **opportunity stage** → observer updates in ≤2s
-- [ ] Colleague changes **line-item stage** → observer updates in ≤2s
-- [ ] Colleague edits a **text/comment field** on opportunity or line item → observer updates in ≤2s
-- [ ] Network: `OnEventSubscription` stays open; `addQueryToEventStream` succeeds after connect for `deals-board-opportunities` and `deals-board-line-items`; subscription `next` payloads arrive on edit
-
-**Outcome:** _not yet recorded_
-
-## Escalation rule
-
-If after deploy + sync, manual QA still requires F5 **and** Network diagnosis shows:
-
-1. No open metadata EventStream / `OnEventSubscription`, **or**
-2. Subscription open but `addQueryToEventStream` missing or failing, **or**
-3. No subscription `next` events on remote edit
-
-→ **Stop.** Open a follow-up for **hybrid poll** transport (out of scope for this hardening plan). Do **not** implement poll in the current workstream.
-
-If QA passes all checklist items → record **"SSE restored"** here and in PR description.
-
-## Structured logs (for QA debugging)
-
-Console errors use prefix `Deals Board SSE:` with stage `subscribe` | `register` | `apply`. After 5 consecutive failures the hook pauses reconnect until remount/refresh.
+1. Hard refresh (or clear Cache Storage `front-component-source-v1` if checksum stuck)
+2. Console: `Deals Board SSE: register — attempt via timer-…` then `register — ok`
+3. Network: two `AddQueryToEventStream` for `deals-board-opportunities` / `deals-board-line-items` → `true`
+4. Colleague stage edit → observer ≤2s without F5

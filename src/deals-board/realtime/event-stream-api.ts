@@ -23,15 +23,17 @@ const buildOperationSignature = (objectNameSingular: WatchedObjectName): RecordO
 const queryEventStreamMetadata = async <T>(
   query: string,
   variables?: Record<string, unknown>,
+  options?: { token?: string },
 ): Promise<T> => {
   // Must use the same user token as the SSE subscription (not RestApiClient's
   // default env app token), or addQuery / publish auth contexts diverge.
-  const token = await resolveAccessToken();
+  const token = options?.token ?? (await resolveAccessToken());
   return queryMetadataGraphql<T>(query, variables, { token });
 };
 
 export const registerDealsBoardEventStreamQueries = async (
   eventStreamId: string,
+  options?: { token?: string },
 ): Promise<void> => {
   for (const objectNameSingular of Object.keys(DEALS_BOARD_SSE_QUERY_IDS) as WatchedObjectName[]) {
     const result = await queryEventStreamMetadata<{ addQueryToEventStream: boolean }>(
@@ -43,6 +45,7 @@ export const registerDealsBoardEventStreamQueries = async (
           operationSignature: buildOperationSignature(objectNameSingular),
         },
       },
+      options,
     );
 
     if (result.addQueryToEventStream !== true) {
@@ -56,6 +59,7 @@ export const registerDealsBoardEventStreamQueries = async (
 
 export const unregisterDealsBoardEventStreamQueries = async (
   eventStreamId: string,
+  options?: { token?: string },
 ): Promise<void> => {
   await Promise.all(
     (Object.keys(DEALS_BOARD_SSE_QUERY_IDS) as WatchedObjectName[]).map((objectNameSingular) =>
@@ -67,6 +71,7 @@ export const unregisterDealsBoardEventStreamQueries = async (
             queryId: DEALS_BOARD_SSE_QUERY_IDS[objectNameSingular],
           },
         },
+        options,
       ),
     ),
   );
