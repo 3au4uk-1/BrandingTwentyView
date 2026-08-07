@@ -33,6 +33,7 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
     let activeDispose: (() => void) | undefined;
     let activeStreamId: string | null = null;
     let didRegister = false;
+    let registerInFlight = false;
 
     const metadataUrl = getMetadataGraphqlUrl();
 
@@ -90,7 +91,10 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
       });
 
       const ensureQueryListeners = async () => {
-        if (disposed || activeStreamId !== eventStreamId || didRegister) return;
+        if (disposed || activeStreamId !== eventStreamId || didRegister || registerInFlight) {
+          return;
+        }
+        registerInFlight = true;
         try {
           await registerDealsBoardEventStreamQueries(eventStreamId);
           if (disposed || activeStreamId !== eventStreamId) {
@@ -104,6 +108,8 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
           consecutiveFailures += 1;
           teardownActive();
           scheduleRestart();
+        } finally {
+          registerInFlight = false;
         }
       };
 
@@ -128,13 +134,14 @@ export const useDealsBoardRealtimeSync = (enabled = true): void => {
             handleSubscriptionPayload(extractSubscriptionPayload(result.data));
           },
           error: (error) => {
+            if (disposed || activeStreamId !== eventStreamId) return;
             logDealsBoardSseError('subscribe', error);
             consecutiveFailures += 1;
             teardownActive();
             scheduleRestart();
           },
           complete: () => {
-            if (disposed) return;
+            if (disposed || activeStreamId !== eventStreamId) return;
             consecutiveFailures += 1;
             teardownActive();
             scheduleRestart();
