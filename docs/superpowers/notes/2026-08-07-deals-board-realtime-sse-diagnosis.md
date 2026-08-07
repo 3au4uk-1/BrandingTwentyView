@@ -54,3 +54,32 @@ Remote board edits invisible until F5. Persistence OK → live delivery broken.
 2. Console: `Deals Board SSE: register — attempt via timer-…` then `register — ok`
 3. Network: two `AddQueryToEventStream` for `deals-board-opportunities` / `deals-board-line-items` → `true`
 4. Colleague stage edit → observer ≤2s without F5
+
+## RESOLVED (Aug 7 ~16:00Z) — SSE cannot work in a front component
+
+Every hypothesis above (token type, register timing, Traefik) is dead. Root cause is the host
+fetch bridge. Front components run in a Web Worker with an opaque origin, so the host replaces
+their `fetch` with a `postMessage` bridge that buffers the whole body:
+
+```js
+d4 = async (response) => {
+  ...
+  let body = await response.text();            // never resolves for an open stream
+  return { status, statusText, headers, body }; // serialized string
+}
+```
+
+The host performs the request itself with `credentials: "omit"` (so our `credentials: 'include'`
+was inert) and awaits `response.text()`. For `text/event-stream` the worker's `fetch` promise
+never resolves, so `graphql-sse` gets no `Response`, no `connected`, no `next` — matching the
+HAR exactly (stream open 48s/228s, register only via our timers). The bridge has no
+`ReadableStream` and no `text/event-stream` handling; streaming is unsupported by design. The
+bridge API also exposes no way to subscribe to the host's own record events.
+
+Server side is fully healthy. Live Node probe with the same application token and the same
+`operationSignature` received `CREATED`, `UPDATED` (`updatedFields: ["name"]`) and `DESTROYED`
+in 150–500 ms. Twenty publishes nothing when an update does not change a value — that is what
+masked the first probe run.
+
+Design for the replacement transport (event hub in crmparserv2 + long-poll through a logic
+function): `docs/superpowers/specs/2026-08-07-deals-board-realtime-longpoll-design.md`.
