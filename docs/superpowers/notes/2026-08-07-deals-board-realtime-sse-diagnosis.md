@@ -1,13 +1,21 @@
 ﻿# Deals Board SSE diagnosis
 
 **Date:** 2026-08-07  
-**Last updated:** Task 5 (post-hardening documentation)
+**Last updated:** HAR follow-up (user-token SSE auth)
 
 ## Task 0 symptom (product owner)
 
 - Any remote board edit (stage, line-item stage, comment/text field) is **invisible on other clients until F5**
 - After F5 data is correct → persistence OK, **live delivery broken** (total live blackout)
 - Initial diagnosis code: **D (unclear for Network specifics) with strong A/B lean** — total blackout for all watched fields is characteristic of subscription/register failure, not apply-only
+
+## HAR follow-up (`twenty.dosugmayak.ru.har`)
+
+- Board `OnEventSubscription` opens; both `addQueryToEventStream` calls return **`true`**
+- So “register failed” is no longer the blocker after stream-ready timing fix
+- Twenty `ObjectRecordEventPublisher` skips publishing when stream auth has no usable `userWorkspaceId` (app/API token streams) — register can still be `true`
+- Root cause: `resolveAccessToken` preferred env app token over host `requestAccessTokenRefresh`
+- Fix: prefer host **user** token for SSE + event-stream register/unregister
 
 ## Code hardening completed (Tasks 1–4, commits through HEAD)
 
