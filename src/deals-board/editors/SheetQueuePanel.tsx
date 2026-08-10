@@ -328,7 +328,10 @@ export const SheetQueuePanel = ({
       : 'Заполни дату и время — уйдёт в таблицу при стадии «В печати»';
 
   const sendToPrint = () => {
-    void patch({ printSheetExportRequested: true });
+    void patch({
+      printSheetExportRequested: true,
+      stage: 'V_PECHATI',
+    });
   };
 
   return (
