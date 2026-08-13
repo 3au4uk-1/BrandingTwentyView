@@ -8,7 +8,7 @@ description: Develop and sync Twenty CRM Apps (twenty-sdk) for TwentyView / Bran
 ## Stack
 
 - App path: repo root (`TwentyView`)
-- Local CRM: Docker `twenty-app-dev` → `http://localhost:2020` (pin **2.19.0**, match SDK)
+- Local CRM: Docker `twenty-app-dev` → `http://localhost:2020` (pin **2.31.0**, match SDK)
 - Sync: `yarn twenty apply` or `yarn twenty dev`
 - Demo login (local): `tim@apple.dev` / `tim@apple.dev`
 

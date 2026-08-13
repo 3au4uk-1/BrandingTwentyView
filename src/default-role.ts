@@ -13,5 +13,9 @@ export default defineApplicationRole({
   canUpdateAllObjectRecords: true,
   canSoftDeleteAllObjectRecords: true,
   canDestroyAllObjectRecords: false,
-  permissionFlagUniversalIdentifiers: [SystemPermissionFlag.DATA_MODEL],
+  permissionFlagUniversalIdentifiers: [
+    SystemPermissionFlag.DATA_MODEL,
+    SystemPermissionFlag.UPLOAD_FILE,
+    SystemPermissionFlag.DOWNLOAD_FILE,
+  ],
 });
