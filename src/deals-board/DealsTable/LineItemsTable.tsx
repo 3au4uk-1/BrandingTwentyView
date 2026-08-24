@@ -28,6 +28,8 @@ import {
 } from '../utils/line-item-order';
 import { resolveFieldValue } from '../utils/resolve-field-value';
 import { getStageRowStyles } from '../utils/stage-row-styles';
+import { useTypeSections } from '../hooks/useTypeSections';
+import { buildTypeSectionRows } from '../type-sections/group';
 
 import type { ColumnConfig, ColumnGroupConfig, LineItemRow } from '../types';
 import { lineItemDragSession } from './line-item-drag-session';
@@ -193,6 +195,11 @@ export const LineItemsTable = ({
   const sortedItems = useMemo(() => sortLineItemsByStageBands(items), [items]);
   const displayItems = orderedItems ?? sortedItems;
   displayItemsRef.current = displayItems;
+  const { enabled: typeSectionsEnabled } = useTypeSections();
+  const bodyRows = typeSectionsEnabled
+    ? buildTypeSectionRows(displayItems)
+    : displayItems.map((item) => ({ kind: 'item' as const, item }));
+  const sectionColSpan = 2 + ungrouped.length;
   const itemsOrderSignature = useMemo(
     () =>
       items
@@ -535,7 +542,30 @@ export const LineItemsTable = ({
             </tr>
           </thead>
           <tbody ref={tbodyRef}>
-            {displayItems.map((item, rowIndex) => {
+            {bodyRows.map((bodyRow, rowIndex) => {
+              if (bodyRow.kind === 'separator') {
+                return (
+                  <tr key={`section-${bodyRow.key}`}>
+                    <td
+                      colSpan={sectionColSpan}
+                      style={{
+                        padding: `${spacing.xs} ${spacing.md}`,
+                        backgroundColor: colors.bgSecondary,
+                        borderTop: `1px solid ${colors.border}`,
+                        borderBottom: `1px solid ${colors.borderSubtle}`,
+                        fontSize: font.sizeXs,
+                        fontWeight: font.weightMedium,
+                        color: colors.textMuted,
+                        letterSpacing: '0.02em',
+                      }}
+                    >
+                      {bodyRow.label}
+                    </td>
+                  </tr>
+                );
+              }
+
+              const item = bodyRow.item;
               const stageValue = typeof item.stage === 'string' ? item.stage : null;
               const stageStyles = getStageRowStyles(stageValue, colorScheme, 'child');
               const rowBg = stageStyles.backgroundColor || colors.bgElevated;
@@ -549,7 +579,7 @@ export const LineItemsTable = ({
                   data-line-item-id={item.id}
                   style={{
                     borderBottom:
-                      rowIndex < displayItems.length - 1 ? `1px solid ${colors.borderSubtle}` : 'none',
+                      rowIndex < bodyRows.length - 1 ? `1px solid ${colors.borderSubtle}` : 'none',
                     backgroundColor: rowBg,
                     boxShadow: isDropTarget
                       ? `inset 0 2px 0 ${colors.accent}`
@@ -574,7 +604,7 @@ export const LineItemsTable = ({
                     <OrderDragHandle
                       itemId={item.id}
                       isActive={isDragging}
-                      disabled={false}
+                      disabled={typeSectionsEnabled}
                       onDragStart={startPointerDrag}
                     />
                   </td>

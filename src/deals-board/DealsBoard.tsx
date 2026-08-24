@@ -34,6 +34,7 @@ import { MobileDealsBoard } from './mobile/MobileDealsBoard';
 import { DealsTable } from './DealsTable/DealsTable';
 import { ExpandModeProvider } from './hooks/useExpandMode';
 import { GroupChipModeProvider } from './hooks/useGroupChipMode';
+import { TypeSectionsProvider } from './hooks/useTypeSections';
 import { useDealBoardViews, useUpdateDealBoardView } from './hooks/useDealBoardViews';
 import { useDealsBoardPage } from './hooks/useDealsBoardPage';
 import { useLineItems } from './hooks/useLineItems';
@@ -1031,9 +1032,11 @@ export const DealsBoard = ({
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <ExpandModeProvider>
-          <GroupChipModeProvider>
-            <DealsBoardContent boardStream={boardStream} />
-          </GroupChipModeProvider>
+          <TypeSectionsProvider>
+            <GroupChipModeProvider>
+              <DealsBoardContent boardStream={boardStream} />
+            </GroupChipModeProvider>
+          </TypeSectionsProvider>
         </ExpandModeProvider>
       </ThemeProvider>
     </QueryClientProvider>

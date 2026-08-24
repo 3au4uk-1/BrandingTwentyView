@@ -10,6 +10,7 @@ import {
 import { currencyToRub, formatRub, type CurrencyAmount } from './analytics/compute';
 import { FilterBar } from './FilterBar';
 import { ExpandModeToggle } from './ExpandModeToggle';
+import { TypeSectionsToggle } from './TypeSectionsToggle';
 import { ToolbarSettingsCluster } from './ToolbarSettingsCluster';
 import { ViewSwitcher } from './ViewSwitcher';
 import { useTheme } from './theme/ThemeContext';
@@ -355,6 +356,7 @@ export const BoardToolbar = ({
           {formatRub(turnoverRub)}
         </button>
         <ExpandModeToggle />
+        <TypeSectionsToggle />
         <ToolbarSettingsCluster
           disabled={settingsDisabled}
           onEditView={onEditView}
