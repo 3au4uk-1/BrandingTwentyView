@@ -301,6 +301,7 @@ describe('buildDealLineItemsQuery', () => {
   it('uses compact filter param and pagination cursor', () => {
     expect(buildDealLineItemsQuery(['id-1'], undefined, 'cursor-1')).toEqual({
       limit: 200,
+      depth: 1,
       filter: 'opportunityId[in]:["id-1"]',
       after: 'cursor-1',
     });
@@ -357,6 +358,7 @@ describe('fetchLineItemOpportunityIdsBySearch', () => {
     expect(get).toHaveBeenNthCalledWith(2, '/rest/dealLineItems', {
       query: {
         limit: 200,
+        depth: 1,
         filter: 'name[ilike]:"%1%"',
         after: stuckCursor,
       },
@@ -411,7 +413,37 @@ describe('fetchLineItemOpportunityIdsByFilters', () => {
     expect(get).toHaveBeenCalledWith('/rest/dealLineItems', {
       query: {
         limit: 200,
+        depth: 1,
         filter: 'stage[in]:["V_RABOTE"]',
+      },
+    });
+  });
+});
+
+describe('nested supplier on line items', () => {
+  it('copies supplierId from nested supplier { id, name }', async () => {
+    const get = vi.fn().mockResolvedValue({
+      data: [
+        {
+          id: 'item-1',
+          name: 'Position',
+          opportunityId: 'deal-1',
+          supplier: { id: 'sup-1', name: 'Юра' },
+        },
+      ],
+    });
+
+    const items = await fetchLineItemsForOpportunityIdsWithClient(
+      { get } as never,
+      ['deal-1'],
+    );
+
+    expect(items[0]?.supplierId).toBe('sup-1');
+    expect(get).toHaveBeenCalledWith('/rest/dealLineItems', {
+      query: {
+        limit: 200,
+        depth: 1,
+        filter: 'opportunityId[in]:["deal-1"]',
       },
     });
   });

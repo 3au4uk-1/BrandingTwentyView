@@ -58,6 +58,7 @@ const buildDealLineItemsQuery = (
 ): Record<string, string | number> => {
   const query: Record<string, string | number> = {
     limit: PAGE_LIMIT,
+    depth: 1,
     filter: buildDealLineItemsFilter(opportunityIds),
   };
   if (after) query.after = after;
@@ -78,7 +79,21 @@ const normalizeLineItemRow = (raw: unknown): LineItemRowLike | null => {
 
   if (!opportunityId) return null;
 
-  return { ...item, id: item.id, opportunityId } as LineItemRowLike;
+  const nestedSupplier = item.supplier;
+  const nestedSupplierId =
+    nestedSupplier &&
+    typeof nestedSupplier === 'object' &&
+    typeof (nestedSupplier as { id?: unknown }).id === 'string' &&
+    typeof (nestedSupplier as { name?: unknown }).name === 'string'
+      ? (nestedSupplier as { id: string }).id
+      : undefined;
+
+  return {
+    ...item,
+    id: item.id,
+    opportunityId,
+    ...(nestedSupplierId !== undefined ? { supplierId: nestedSupplierId } : {}),
+  } as LineItemRowLike;
 };
 
 const normalizeLineItemRows = (items: unknown[]): Array<Record<string, unknown>> =>
