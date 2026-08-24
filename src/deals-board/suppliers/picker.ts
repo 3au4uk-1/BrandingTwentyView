@@ -22,6 +22,32 @@ export const filterSuppliersForPicker = (
       (supplier.isActive || supplier.id === selectedId),
   );
 
+export type SupplierDropdownRow =
+  | { kind: 'option'; supplier: SupplierRow }
+  | { kind: 'create'; name: string };
+
+export const supplierDropdownRows = (
+  draft: string,
+  options: SupplierRow[],
+): SupplierDropdownRow[] => {
+  const trimmed = draft.trim();
+  const query = trimmed.toLowerCase();
+  const filtered = query
+    ? options.filter((supplier) => supplier.name.toLowerCase().includes(query))
+    : options;
+  const exact = Boolean(
+    query && options.some((supplier) => supplier.name.trim().toLowerCase() === query),
+  );
+  const rows: SupplierDropdownRow[] = filtered.map((supplier) => ({
+    kind: 'option',
+    supplier,
+  }));
+  if (query && !exact) {
+    rows.push({ kind: 'create', name: trimmed });
+  }
+  return rows;
+};
+
 export const nextSupplierOnTipChange = ({
   nextTip,
   currentSupplierId,

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { filterSuppliersForPicker, nextSupplierOnTipChange, usesSupplierPicker } from './picker';
+import {
+  filterSuppliersForPicker,
+  nextSupplierOnTipChange,
+  supplierDropdownRows,
+  usesSupplierPicker,
+} from './picker';
 
 const yura = {
   id: 's1',
@@ -27,6 +32,28 @@ describe('filterSuppliersForPicker', () => {
   it('keeps active matches plus current even if inactive', () => {
     const list = filterSuppliersForPicker([yura, hidden, print], 'BANNERA', 's2');
     expect(list.map((s) => s.id)).toEqual(['s1', 's2']);
+  });
+});
+
+describe('supplierDropdownRows', () => {
+  const options = [yura, print];
+
+  it('lists every option when the draft is empty', () => {
+    expect(supplierDropdownRows('', options)).toEqual([
+      { kind: 'option', supplier: yura },
+      { kind: 'option', supplier: print },
+    ]);
+  });
+
+  it('filters by substring and offers create when nothing matches exactly', () => {
+    expect(supplierDropdownRows('юр', options)).toEqual([
+      { kind: 'option', supplier: yura },
+      { kind: 'create', name: 'юр' },
+    ]);
+  });
+
+  it('does not offer create when the draft matches a name', () => {
+    expect(supplierDropdownRows('Юра', options)).toEqual([{ kind: 'option', supplier: yura }]);
   });
 });
 

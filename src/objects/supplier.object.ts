@@ -1,11 +1,8 @@
-import { defineObject, FieldType, RelationType } from 'twenty-sdk/define';
-import { DEAL_LINE_ITEM_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/constants/crm-objects';
+import { defineObject, FieldType } from 'twenty-sdk/define';
 import {
-  DEAL_LINE_ITEM_SUPPLIER_FIELD_UNIVERSAL_IDENTIFIER,
   SUPPLIER_ADDRESS_FIELD_UNIVERSAL_IDENTIFIER,
   SUPPLIER_COMMENT_FIELD_UNIVERSAL_IDENTIFIER,
   SUPPLIER_CONTACT_PERSON_FIELD_UNIVERSAL_IDENTIFIER,
-  SUPPLIER_DEAL_LINE_ITEMS_FIELD_UNIVERSAL_IDENTIFIER,
   SUPPLIER_DESCRIPTION_FIELD_UNIVERSAL_IDENTIFIER,
   SUPPLIER_DISK_FOLDER_URL_FIELD_UNIVERSAL_IDENTIFIER,
   SUPPLIER_EMAIL_FIELD_UNIVERSAL_IDENTIFIER,
@@ -79,20 +76,6 @@ export default defineObject({
       label: 'Активен',
       icon: 'IconCheck',
       defaultValue: true,
-    },
-    {
-      universalIdentifier: SUPPLIER_DEAL_LINE_ITEMS_FIELD_UNIVERSAL_IDENTIFIER,
-      type: FieldType.RELATION,
-      name: 'dealLineItems',
-      label: 'Позиции',
-      icon: 'IconList',
-      relationTargetObjectMetadataUniversalIdentifier:
-        DEAL_LINE_ITEM_OBJECT_UNIVERSAL_IDENTIFIER,
-      relationTargetFieldMetadataUniversalIdentifier:
-        DEAL_LINE_ITEM_SUPPLIER_FIELD_UNIVERSAL_IDENTIFIER,
-      universalSettings: {
-        relationType: RelationType.ONE_TO_MANY,
-      },
     },
   ],
 });

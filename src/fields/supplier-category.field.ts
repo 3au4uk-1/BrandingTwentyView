@@ -10,6 +10,7 @@ export default defineField({
   type: FieldType.SELECT,
   label: 'Категория',
   icon: 'IconTag',
+  isNullable: true,
   options: SUPPLIER_CATEGORY_OPTIONS.map((option, position) => ({
     value: option.value,
     label: option.label,
