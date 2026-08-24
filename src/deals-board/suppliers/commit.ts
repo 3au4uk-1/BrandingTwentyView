@@ -19,6 +19,48 @@ export const shouldCommitSupplierName = (
   currentLabel: string | null,
 ): boolean => !supplierNamesEqual(name, currentLabel ?? '');
 
+export type SupplierCommitInFlightGuard = {
+  tryAcquire: () => boolean;
+  release: () => void;
+};
+
+export const createSupplierCommitInFlightGuard = (): SupplierCommitInFlightGuard => {
+  let inFlight = false;
+  return {
+    tryAcquire() {
+      if (inFlight) {
+        return false;
+      }
+      inFlight = true;
+      return true;
+    },
+    release() {
+      inFlight = false;
+    },
+  };
+};
+
+export type GuardedCommitResult = 'committed' | 'skipped-in-flight' | 'skipped-unchanged';
+
+export const commitSupplierNameGuarded = async (
+  guard: SupplierCommitInFlightGuard,
+  deps: CommitSupplierDeps,
+): Promise<GuardedCommitResult> => {
+  if (!guard.tryAcquire()) {
+    return 'skipped-in-flight';
+  }
+
+  try {
+    if (!shouldCommitSupplierName(deps.name, deps.currentLabel)) {
+      return 'skipped-unchanged';
+    }
+    await commitSupplierName(deps);
+    return 'committed';
+  } finally {
+    guard.release();
+  }
+};
+
 export const commitSupplierName = async ({
   name,
   currentLabel,

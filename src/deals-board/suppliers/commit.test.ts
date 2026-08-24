@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { commitSupplierName } from './commit';
+import {
+  commitSupplierName,
+  commitSupplierNameGuarded,
+  createSupplierCommitInFlightGuard,
+} from './commit';
 import type { SupplierRow } from './picker';
 
 const yura: SupplierRow = {
@@ -172,5 +176,136 @@ describe('commitSupplierName', () => {
     expect(createSupplier).not.toHaveBeenCalled();
     expect(updateSupplier).not.toHaveBeenCalled();
     expect(updateLineItem).toHaveBeenCalledWith('li-1', { supplierId: null });
+  });
+});
+
+describe('commitSupplierNameGuarded', () => {
+  const baseDeps = {
+    currentLabel: '',
+    tip: 'BANNERA',
+    recordId: 'li-1',
+    currentSupplierId: null as string | null,
+    suppliers: [yura],
+    updateSupplier: vi.fn().mockResolvedValue(undefined),
+    updateLineItem: vi.fn().mockResolvedValue(undefined),
+  };
+
+  it('ignores a second commit while the first createSupplier is in flight', async () => {
+    let resolveCreate!: (row: SupplierRow) => void;
+    const createSupplier = vi.fn(
+      () =>
+        new Promise<SupplierRow>((resolve) => {
+          resolveCreate = resolve;
+        }),
+    );
+    const guard = createSupplierCommitInFlightGuard();
+
+    const first = commitSupplierNameGuarded(guard, {
+      ...baseDeps,
+      name: 'Новый',
+      createSupplier,
+    });
+    const second = commitSupplierNameGuarded(guard, {
+      ...baseDeps,
+      name: 'Новый',
+      createSupplier,
+    });
+
+    expect(await second).toBe('skipped-in-flight');
+
+    resolveCreate({
+      id: 's-new',
+      name: 'Новый',
+      category: 'BANNERA',
+      isActive: true,
+    });
+    expect(await first).toBe('committed');
+    expect(createSupplier).toHaveBeenCalledTimes(1);
+  });
+
+  it('still clears on empty name when not in flight', async () => {
+    const createSupplier = vi.fn();
+    const updateSupplier = vi.fn();
+    const updateLineItem = vi.fn().mockResolvedValue(undefined);
+    const guard = createSupplierCommitInFlightGuard();
+
+    const result = await commitSupplierNameGuarded(guard, {
+      ...baseDeps,
+      name: '   ',
+      currentLabel: 'Юра',
+      currentSupplierId: 's1',
+      createSupplier,
+      updateSupplier,
+      updateLineItem,
+    });
+
+    expect(result).toBe('committed');
+    expect(createSupplier).not.toHaveBeenCalled();
+    expect(updateLineItem).toHaveBeenCalledWith('li-1', { supplierId: null });
+  });
+
+  it('commits again after the prior commit finishes with a changed name', async () => {
+    const createSupplier = vi
+      .fn()
+      .mockResolvedValueOnce({
+        id: 's-a',
+        name: 'Альфа',
+        category: 'BANNERA',
+        isActive: true,
+      })
+      .mockResolvedValueOnce({
+        id: 's-b',
+        name: 'Бета',
+        category: 'BANNERA',
+        isActive: true,
+      });
+    const guard = createSupplierCommitInFlightGuard();
+
+    expect(
+      await commitSupplierNameGuarded(guard, {
+        ...baseDeps,
+        name: 'Альфа',
+        createSupplier,
+      }),
+    ).toBe('committed');
+    expect(
+      await commitSupplierNameGuarded(guard, {
+        ...baseDeps,
+        name: 'Бета',
+        currentLabel: 'Альфа',
+        createSupplier,
+      }),
+    ).toBe('committed');
+
+    expect(createSupplier).toHaveBeenCalledTimes(2);
+  });
+
+  it('skips unchanged names without holding the in-flight lock', async () => {
+    const createSupplier = vi.fn().mockResolvedValue({
+      id: 's-b',
+      name: 'Бета',
+      category: 'BANNERA',
+      isActive: true,
+    });
+    const guard = createSupplierCommitInFlightGuard();
+
+    expect(
+      await commitSupplierNameGuarded(guard, {
+        ...baseDeps,
+        name: '  юра  ',
+        currentLabel: 'Юра',
+        currentSupplierId: 's1',
+        createSupplier,
+      }),
+    ).toBe('skipped-unchanged');
+    expect(createSupplier).not.toHaveBeenCalled();
+    expect(
+      await commitSupplierNameGuarded(guard, {
+        ...baseDeps,
+        name: 'Бета',
+        createSupplier,
+      }),
+    ).toBe('committed');
+    expect(createSupplier).toHaveBeenCalledTimes(1);
   });
 });

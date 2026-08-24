@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { getTipDetailLabel } from 'src/constants/tip-detail';
 
@@ -7,7 +7,10 @@ import { fireBannerPodryadCatchupNotify } from '../api/banner-podryad-catchup';
 import { createSupplier, updateSupplier } from '../api/suppliers';
 import { useUpdateLineItem } from '../hooks/useLineItems';
 import { useSuppliers } from '../hooks/useSuppliers';
-import { commitSupplierName, shouldCommitSupplierName } from '../suppliers/commit';
+import {
+  commitSupplierNameGuarded,
+  createSupplierCommitInFlightGuard,
+} from '../suppliers/commit';
 import { filterSuppliersForPicker } from '../suppliers/picker';
 import { useTheme } from '../theme/ThemeContext';
 import { Input } from '../ui/Input';
@@ -50,6 +53,8 @@ export const SupplierCombobox = ({
   }, [selectedLabel]);
 
   const listId = `supplier-picker-${recordId}`;
+  const commitGuardRef = useRef(createSupplierCommitInFlightGuard());
+  const skipBlurAfterEnterRef = useRef(false);
   const busy = updateMutation.isPending;
 
   const invalidateAfterSelect = () =>
@@ -60,12 +65,8 @@ export const SupplierCombobox = ({
     ]);
 
   const commit = async (raw: string) => {
-    if (!shouldCommitSupplierName(raw, selectedLabel)) {
-      return;
-    }
-
     try {
-      await commitSupplierName({
+      const result = await commitSupplierNameGuarded(commitGuardRef.current, {
         name: raw,
         currentLabel: selectedLabel,
         tip,
@@ -76,11 +77,22 @@ export const SupplierCombobox = ({
         updateSupplier,
         updateLineItem: (id, data) => updateMutation.mutateAsync({ id, data }),
       });
+      if (result !== 'committed') {
+        return;
+      }
       fireBannerPodryadCatchupNotify(queryClient, recordId);
       await invalidateAfterSelect();
     } catch (error) {
       window.alert(error instanceof Error ? error.message : String(error));
     }
+  };
+
+  const handleBlur = () => {
+    if (skipBlurAfterEnterRef.current) {
+      skipBlurAfterEnterRef.current = false;
+      return;
+    }
+    void commit(draft);
   };
 
   const hideFromList = async (id: string) => {
@@ -101,11 +113,13 @@ export const SupplierCombobox = ({
         disabled={busy}
         placeholder={options.length === 0 ? 'введи имя' : undefined}
         onChange={(event) => setDraft(event.target.value)}
-        onBlur={() => void commit(draft)}
+        onBlur={handleBlur}
         onKeyDown={(event) => {
           if (event.key === 'Enter') {
             event.preventDefault();
+            skipBlurAfterEnterRef.current = true;
             void commit(draft);
+            event.currentTarget.blur();
           }
         }}
         style={{ minWidth: 0, flex: 1, padding: '4px 8px' }}
