@@ -1,12 +1,15 @@
+import { useQueryClient } from '@tanstack/react-query';
+
 import {
   LINE_ITEM_TYPES,
   LINE_ITEM_TYPES_FOR_PICKER,
   type LineItemType,
 } from 'src/constants/line-item-types';
 
+import { fireBannerPodryadCatchupNotify } from '../api/banner-podryad-catchup';
 import { useUpdateLineItem } from '../hooks/useLineItems';
 import { useObjectFields } from '../metadata/useObjectFields';
-import { nextSupplierOnTipChange } from '../suppliers/picker';
+import { nextSupplierOnTipChange, usesSupplierPicker } from '../suppliers/picker';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
 import { mergeAppOptionsWithCrmLabels } from '../taxonomy/merge-crm-labels';
@@ -29,6 +32,7 @@ export const TypeSelect = ({
   supplierCategory,
 }: TypeSelectProps) => {
   const theme = useTheme();
+  const queryClient = useQueryClient();
   const updateMutation = useUpdateLineItem();
   const { data: fields } = useObjectFields('dealLineItem');
   const selectedValue = value ?? '';
@@ -57,6 +61,9 @@ export const TypeSelect = ({
           }),
         },
       });
+      if (usesSupplierPicker(normalizedNext)) {
+        fireBannerPodryadCatchupNotify(queryClient, recordId);
+      }
     } catch (error) {
       window.alert(
         `Не удалось обновить категорию.${error instanceof Error ? ` ${error.message}` : ''}`,

@@ -6,6 +6,7 @@ import {
   fetchLineItemListStatus,
   fetchLineItemsListStatusBatch,
   isCrmparserConfigured,
+  notifyBannerPodryadCatchup,
   resetListStatusBatcherForTests,
   syncManualLineItem,
   writeBackLineItemAmount,
@@ -307,6 +308,38 @@ describe('crmparser proxy client', () => {
 
     await expect(writeBackLineItemAmount('li-42', 100)).rejects.toThrow(
       'Ne-nashe line items cannot be amount-locked',
+    );
+  });
+
+  it('notifyBannerPodryadCatchup posts catch-up event via logic function', async () => {
+    globalThis.process = {
+      env: {
+        TWENTY_FUNCTIONS_URL: 'https://twenty.test/functions',
+        TWENTY_APP_ACCESS_TOKEN: 'app-token',
+      },
+    } as NodeJS.Process;
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true, queued: true }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const payload = {
+      lineItemId: 'li-9',
+      opportunityId: 'opp-9',
+      loadDate: '2026-08-25',
+    };
+    await expect(notifyBannerPodryadCatchup(payload)).resolves.toEqual({
+      ok: true,
+      queued: true,
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://twenty.test/functions/crmparser/telegram/banner-podryad-catchup',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }),
     );
   });
 });

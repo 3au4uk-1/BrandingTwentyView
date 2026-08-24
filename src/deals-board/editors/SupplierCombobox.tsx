@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { getTipDetailLabel } from 'src/constants/tip-detail';
 
+import { fireBannerPodryadCatchupNotify } from '../api/banner-podryad-catchup';
 import { createSupplier, updateSupplier } from '../api/suppliers';
 import { useUpdateLineItem } from '../hooks/useLineItems';
 import { useSuppliers } from '../hooks/useSuppliers';
@@ -75,6 +76,7 @@ export const SupplierCombobox = ({
         updateSupplier,
         updateLineItem: (id, data) => updateMutation.mutateAsync({ id, data }),
       });
+      fireBannerPodryadCatchupNotify(queryClient, recordId);
       await invalidateAfterSelect();
     } catch (error) {
       window.alert(error instanceof Error ? error.message : String(error));
