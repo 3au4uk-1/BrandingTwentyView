@@ -75,13 +75,21 @@ type LineItemsSnapshot = {
   data: LineItemRow[] | undefined;
 };
 
-const applyOptimisticPatch = (
+export const applyOptimisticPatch = (
   item: LineItemRow,
   data: Record<string, unknown>,
-): LineItemRow => ({
-  ...item,
-  ...data,
-});
+): LineItemRow => {
+  const next: LineItemRow = { ...item, ...data };
+  if (Object.prototype.hasOwnProperty.call(data, 'supplierId')) {
+    if (data.supplierId == null) {
+      next.supplierId = null;
+      next.supplier = null;
+    } else if (typeof data.supplierId === 'string') {
+      next.supplierId = data.supplierId;
+    }
+  }
+  return next;
+};
 
 export const useUpdateLineItem = () => {
   const queryClient = useQueryClient();

@@ -7,8 +7,9 @@ export type SupplierRow = {
   isActive: boolean;
 };
 
-export const usesSupplierPicker = (tip: string | null | undefined): boolean =>
-  tip === 'BANNERA' || tip === 'PODRYAD';
+export const usesSupplierPicker = (
+  tip: string | null | undefined,
+): tip is 'BANNERA' | 'PODRYAD' => tip === 'BANNERA' || tip === 'PODRYAD';
 
 export const filterSuppliersForPicker = (
   suppliers: SupplierRow[],

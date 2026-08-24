@@ -6,6 +6,7 @@ import {
 
 import { useUpdateLineItem } from '../hooks/useLineItems';
 import { useObjectFields } from '../metadata/useObjectFields';
+import { nextSupplierOnTipChange } from '../suppliers/picker';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
 import { mergeAppOptionsWithCrmLabels } from '../taxonomy/merge-crm-labels';
@@ -16,9 +17,17 @@ type TypeSelectProps = {
   recordId: string;
   value?: LineItemType | null;
   tipDetail?: string | null;
+  supplierId?: string | null;
+  supplierCategory?: string | null;
 };
 
-export const TypeSelect = ({ recordId, value, tipDetail }: TypeSelectProps) => {
+export const TypeSelect = ({
+  recordId,
+  value,
+  tipDetail,
+  supplierId,
+  supplierCategory,
+}: TypeSelectProps) => {
   const theme = useTheme();
   const updateMutation = useUpdateLineItem();
   const { data: fields } = useObjectFields('dealLineItem');
@@ -41,6 +50,11 @@ export const TypeSelect = ({ recordId, value, tipDetail }: TypeSelectProps) => {
         data: {
           tip: normalizedNext,
           tipDetail: nextDetail,
+          supplierId: nextSupplierOnTipChange({
+            nextTip: normalizedNext,
+            currentSupplierId: supplierId ?? null,
+            currentSupplierCategory: supplierCategory ?? null,
+          }),
         },
       });
     } catch (error) {
