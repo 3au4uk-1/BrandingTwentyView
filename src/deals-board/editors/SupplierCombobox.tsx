@@ -6,7 +6,7 @@ import { getTipDetailLabel } from 'src/constants/tip-detail';
 import { createSupplier, updateSupplier } from '../api/suppliers';
 import { useUpdateLineItem } from '../hooks/useLineItems';
 import { useSuppliers } from '../hooks/useSuppliers';
-import { commitSupplierName } from '../suppliers/commit';
+import { commitSupplierName, shouldCommitSupplierName } from '../suppliers/commit';
 import { filterSuppliersForPicker } from '../suppliers/picker';
 import { useTheme } from '../theme/ThemeContext';
 import { Input } from '../ui/Input';
@@ -59,9 +59,14 @@ export const SupplierCombobox = ({
     ]);
 
   const commit = async (raw: string) => {
+    if (!shouldCommitSupplierName(raw, selectedLabel)) {
+      return;
+    }
+
     try {
       await commitSupplierName({
         name: raw,
+        currentLabel: selectedLabel,
         tip,
         recordId,
         currentSupplierId: supplierId,

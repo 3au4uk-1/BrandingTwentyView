@@ -25,6 +25,7 @@ describe('commitSupplierName', () => {
 
     await commitSupplierName({
       name: '   ',
+      currentLabel: 'Юра',
       tip: 'BANNERA',
       recordId: 'li-1',
       currentSupplierId: 's1',
@@ -46,6 +47,7 @@ describe('commitSupplierName', () => {
 
     await commitSupplierName({
       name: '',
+      currentLabel: '',
       tip: 'BANNERA',
       recordId: 'li-1',
       currentSupplierId: null,
@@ -66,6 +68,7 @@ describe('commitSupplierName', () => {
 
     await commitSupplierName({
       name: 'саша марда',
+      currentLabel: '',
       tip: 'BANNERA',
       recordId: 'li-1',
       currentSupplierId: null,
@@ -92,6 +95,7 @@ describe('commitSupplierName', () => {
 
     await commitSupplierName({
       name: '  Новый  ',
+      currentLabel: '',
       tip: 'BANNERA',
       recordId: 'li-1',
       currentSupplierId: null,
@@ -103,5 +107,70 @@ describe('commitSupplierName', () => {
 
     expect(createSupplier).toHaveBeenCalledWith({ name: 'Новый', category: 'BANNERA' });
     expect(updateLineItem).toHaveBeenCalledWith('li-1', { supplierId: 's-new' });
+  });
+
+  it('skips commit when normalized draft equals current label', async () => {
+    const createSupplier = vi.fn();
+    const updateSupplier = vi.fn();
+    const updateLineItem = vi.fn();
+
+    await commitSupplierName({
+      name: '  юра  ',
+      currentLabel: 'Юра',
+      tip: 'BANNERA',
+      recordId: 'li-1',
+      currentSupplierId: 's1',
+      suppliers: [yura],
+      createSupplier,
+      updateSupplier,
+      updateLineItem,
+    });
+
+    expect(createSupplier).not.toHaveBeenCalled();
+    expect(updateSupplier).not.toHaveBeenCalled();
+    expect(updateLineItem).not.toHaveBeenCalled();
+  });
+
+  it('skips commit when tipDetail label is unchanged', async () => {
+    const createSupplier = vi.fn();
+    const updateSupplier = vi.fn();
+    const updateLineItem = vi.fn();
+
+    await commitSupplierName({
+      name: 'Печать',
+      currentLabel: 'Печать',
+      tip: 'BANNERA',
+      recordId: 'li-1',
+      currentSupplierId: null,
+      suppliers: [yura],
+      createSupplier,
+      updateSupplier,
+      updateLineItem,
+    });
+
+    expect(createSupplier).not.toHaveBeenCalled();
+    expect(updateLineItem).not.toHaveBeenCalled();
+  });
+
+  it('still clears when user empties a populated field', async () => {
+    const createSupplier = vi.fn();
+    const updateSupplier = vi.fn();
+    const updateLineItem = vi.fn().mockResolvedValue(undefined);
+
+    await commitSupplierName({
+      name: '',
+      currentLabel: 'Юра',
+      tip: 'BANNERA',
+      recordId: 'li-1',
+      currentSupplierId: 's1',
+      suppliers: [yura],
+      createSupplier,
+      updateSupplier,
+      updateLineItem,
+    });
+
+    expect(createSupplier).not.toHaveBeenCalled();
+    expect(updateSupplier).not.toHaveBeenCalled();
+    expect(updateLineItem).toHaveBeenCalledWith('li-1', { supplierId: null });
   });
 });

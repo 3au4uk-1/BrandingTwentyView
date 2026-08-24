@@ -1,9 +1,10 @@
 import { findSupplierByNameAndCategory } from '../api/suppliers';
-import { normalizeSupplierName } from './supplier-name';
+import { normalizeSupplierName, supplierNamesEqual } from './supplier-name';
 import type { SupplierRow } from './picker';
 
 type CommitSupplierDeps = {
   name: string;
+  currentLabel: string | null;
   tip: string;
   recordId: string;
   currentSupplierId: string | null;
@@ -13,8 +14,14 @@ type CommitSupplierDeps = {
   updateLineItem: (id: string, data: { supplierId: string | null }) => Promise<unknown>;
 };
 
+export const shouldCommitSupplierName = (
+  name: string,
+  currentLabel: string | null,
+): boolean => !supplierNamesEqual(name, currentLabel ?? '');
+
 export const commitSupplierName = async ({
   name,
+  currentLabel,
   tip,
   recordId,
   currentSupplierId,
@@ -23,6 +30,10 @@ export const commitSupplierName = async ({
   updateSupplier,
   updateLineItem,
 }: CommitSupplierDeps): Promise<void> => {
+  if (!shouldCommitSupplierName(name, currentLabel)) {
+    return;
+  }
+
   const normalized = normalizeSupplierName(name);
   if (!normalized) {
     if (currentSupplierId) {
