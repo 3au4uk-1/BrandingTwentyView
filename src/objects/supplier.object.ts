@@ -4,6 +4,7 @@ import {
   SUPPLIER_COMMENT_FIELD_UNIVERSAL_IDENTIFIER,
   SUPPLIER_CONTACT_PERSON_FIELD_UNIVERSAL_IDENTIFIER,
   SUPPLIER_DESCRIPTION_FIELD_UNIVERSAL_IDENTIFIER,
+  SUPPLIER_NAME_FIELD_UNIVERSAL_IDENTIFIER,
   SUPPLIER_DISK_FOLDER_URL_FIELD_UNIVERSAL_IDENTIFIER,
   SUPPLIER_EMAIL_FIELD_UNIVERSAL_IDENTIFIER,
   SUPPLIER_IS_ACTIVE_FIELD_UNIVERSAL_IDENTIFIER,
@@ -20,6 +21,13 @@ export default defineObject({
   icon: 'IconTruck',
   description: 'База поставщиков',
   fields: [
+    {
+      universalIdentifier: SUPPLIER_NAME_FIELD_UNIVERSAL_IDENTIFIER,
+      name: 'name',
+      type: FieldType.TEXT,
+      label: 'Имя',
+      icon: 'IconAbc',
+    },
     {
       universalIdentifier: SUPPLIER_DESCRIPTION_FIELD_UNIVERSAL_IDENTIFIER,
       name: 'description',
