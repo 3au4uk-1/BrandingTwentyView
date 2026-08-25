@@ -10,6 +10,7 @@ import {
   commitSupplierNameGuarded,
   createSupplierCommitInFlightGuard,
 } from '../suppliers/commit';
+import { createPickerClickGate, scheduleDismissCommit } from '../suppliers/picker-click';
 import {
   filterSuppliersForPicker,
   supplierDropdownRows,
@@ -88,6 +89,7 @@ export const SupplierCombobox = ({
   const listId = `${LIST_ID_PREFIX}${recordId}`;
   const wrapRef = useRef<HTMLDivElement>(null);
   const pickingRef = useRef(false);
+  const clickGateRef = useRef(createPickerClickGate());
   const commitGuardRef = useRef(createSupplierCommitInFlightGuard());
   const busy = updateMutation.isPending;
 
@@ -188,6 +190,7 @@ export const SupplierCombobox = ({
     }
     if (event.key === 'Enter') {
       event.preventDefault();
+      clickGateRef.current.noteOptionChosen();
       const chosen = rows[highlight] ?? rows[0];
       closeAndCommit(rowCommitName(chosen, draft));
     }
@@ -238,9 +241,18 @@ export const SupplierCombobox = ({
             role="option"
             aria-selected={selected}
             onMouseEnter={() => setHighlight(index)}
+            onPointerDown={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              pickingRef.current = true;
+              clickGateRef.current.noteOptionChosen();
+              closeAndCommit(rowCommitName(row, draft));
+            }}
             onMouseDown={(event) => {
               event.preventDefault();
+              event.stopPropagation();
               pickingRef.current = true;
+              clickGateRef.current.noteOptionChosen();
               closeAndCommit(rowCommitName(row, draft));
             }}
             style={{
@@ -280,7 +292,10 @@ export const SupplierCombobox = ({
           onPointerDown={(event) => {
             event.preventDefault();
             event.stopPropagation();
-            closeAndCommit(draft);
+            pickingRef.current = true;
+            scheduleDismissCommit(clickGateRef.current, () => {
+              closeAndCommit(draft);
+            });
           }}
           style={{
             position: 'absolute',
@@ -344,10 +359,14 @@ export const SupplierCombobox = ({
         placeholder="кто едет?"
         onChange={(event) => {
           setDraft(event.target.value);
+          clickGateRef.current = createPickerClickGate();
           setOpen(true);
           setHighlight(0);
         }}
-        onFocus={() => setOpen(true)}
+        onFocus={() => {
+          clickGateRef.current = createPickerClickGate();
+          setOpen(true);
+        }}
         onBlur={() => {
           if (pickingRef.current) {
             pickingRef.current = false;

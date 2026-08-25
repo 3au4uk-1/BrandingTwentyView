@@ -1,9 +1,10 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   commitSupplierName,
   commitSupplierNameGuarded,
   createSupplierCommitInFlightGuard,
+  resetSupplierCreateMemoForTests,
 } from './commit';
 import type { SupplierRow } from './picker';
 
@@ -20,6 +21,10 @@ const hidden: SupplierRow = {
   category: 'BANNERA',
   isActive: false,
 };
+
+beforeEach(() => {
+  resetSupplierCreateMemoForTests();
+});
 
 describe('commitSupplierName', () => {
   it('clears the relation on empty name without creating', async () => {
@@ -328,5 +333,81 @@ describe('commitSupplierNameGuarded', () => {
       }),
     ).toBe('committed');
     expect(createSupplier).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('commitSupplierName create coalescing', () => {
+  it('does not create again when suppliers cache is still stale after a successful create', async () => {
+    const created: SupplierRow = {
+      id: 's-new',
+      name: 'Новый',
+      category: 'BANNERA',
+      isActive: true,
+    };
+    const createSupplier = vi.fn().mockResolvedValue(created);
+    const updateLineItem = vi.fn().mockResolvedValue(undefined);
+
+    await commitSupplierName({
+      name: 'Новый',
+      currentLabel: '',
+      tip: 'BANNERA',
+      recordId: 'li-1',
+      currentSupplierId: null,
+      suppliers: [yura],
+      createSupplier,
+      updateSupplier: vi.fn(),
+      updateLineItem,
+    });
+    await commitSupplierName({
+      name: 'Новый',
+      currentLabel: '',
+      tip: 'BANNERA',
+      recordId: 'li-1',
+      currentSupplierId: null,
+      suppliers: [yura],
+      createSupplier,
+      updateSupplier: vi.fn(),
+      updateLineItem,
+    });
+
+    expect(createSupplier).toHaveBeenCalledTimes(1);
+    expect(updateLineItem).toHaveBeenCalledTimes(2);
+    expect(updateLineItem).toHaveBeenNthCalledWith(2, 'li-1', { supplierId: 's-new' });
+  });
+
+  it('shares one createSupplier when two commits race on the same name', async () => {
+    let resolveCreate!: (row: SupplierRow) => void;
+    const createSupplier = vi.fn(
+      () =>
+        new Promise<SupplierRow>((resolve) => {
+          resolveCreate = resolve;
+        }),
+    );
+    const updateLineItem = vi.fn().mockResolvedValue(undefined);
+    const deps = {
+      currentLabel: '',
+      tip: 'BANNERA',
+      recordId: 'li-1',
+      currentSupplierId: null as string | null,
+      suppliers: [yura],
+      createSupplier,
+      updateSupplier: vi.fn(),
+      updateLineItem,
+    };
+
+    const first = commitSupplierName({ ...deps, name: 'Новый' });
+    const second = commitSupplierName({ ...deps, name: 'Новый', recordId: 'li-2' });
+
+    resolveCreate({
+      id: 's-new',
+      name: 'Новый',
+      category: 'BANNERA',
+      isActive: true,
+    });
+    await Promise.all([first, second]);
+
+    expect(createSupplier).toHaveBeenCalledTimes(1);
+    expect(updateLineItem).toHaveBeenCalledWith('li-1', { supplierId: 's-new' });
+    expect(updateLineItem).toHaveBeenCalledWith('li-2', { supplierId: 's-new' });
   });
 });

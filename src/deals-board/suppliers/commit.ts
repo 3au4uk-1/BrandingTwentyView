@@ -2,6 +2,17 @@ import { findSupplierByNameAndCategory } from '../api/suppliers';
 import { isVacantSupplierName, normalizeSupplierName, supplierNamesEqual } from './supplier-name';
 import type { SupplierRow } from './picker';
 
+const createdByKey = new Map<string, SupplierRow>();
+const inflightByKey = new Map<string, Promise<SupplierRow>>();
+
+const supplierCreateKey = (category: string, name: string): string =>
+  `${category}::${normalizeSupplierName(name).toLocaleLowerCase('ru-RU')}`;
+
+export const resetSupplierCreateMemoForTests = (): void => {
+  createdByKey.clear();
+  inflightByKey.clear();
+};
+
 type CommitSupplierDeps = {
   name: string;
   currentLabel: string | null;
@@ -88,13 +99,27 @@ export const commitSupplierName = async ({
     return;
   }
 
-  let row = findSupplierByNameAndCategory(suppliers, normalized, tip);
+  const catalog = [...createdByKey.values(), ...suppliers];
+  let row = findSupplierByNameAndCategory(catalog, normalized, tip);
   if (row) {
+    createdByKey.set(supplierCreateKey(tip, normalized), row);
     if (!row.isActive) {
       await updateSupplier(row.id, { isActive: true });
     }
   } else {
-    row = await createSupplier({ name: normalized, category: tip });
+    const key = supplierCreateKey(tip, normalized);
+    let pending = inflightByKey.get(key);
+    if (!pending) {
+      pending = createSupplier({ name: normalized, category: tip }).then((created) => {
+        createdByKey.set(key, created);
+        return created;
+      });
+      inflightByKey.set(key, pending);
+      void pending.finally(() => {
+        inflightByKey.delete(key);
+      });
+    }
+    row = await pending;
   }
 
   await updateLineItem(recordId, { supplierId: row.id });
