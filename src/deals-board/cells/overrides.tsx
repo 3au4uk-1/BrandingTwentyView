@@ -27,6 +27,8 @@ import { StageSelect } from '../editors/StageSelect';
 import { TextCell } from '../editors/TextCell';
 import { TypeSelect } from '../editors/TypeSelect';
 import { TipDetailSelect } from '../editors/TipDetailSelect';
+import { SupplierCombobox } from '../editors/SupplierCombobox';
+import { usesSupplierPicker } from '../suppliers/picker';
 import { TimePickerModal } from '../editors/TimePickerModal';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
@@ -277,22 +279,60 @@ export const renderFieldOverride = (props: FieldOverrideProps): ReactNode | null
           tipDetail={
             typeof props.row?.tipDetail === 'string' ? props.row.tipDetail : null
           }
+          supplierId={
+            typeof props.row?.supplierId === 'string'
+              ? props.row.supplierId
+              : typeof (props.row?.supplier as { id?: string } | undefined)?.id ===
+                  'string'
+                ? (props.row.supplier as { id: string }).id
+                : null
+          }
+          supplierCategory={
+            typeof (props.row?.supplier as { category?: string } | undefined)
+              ?.category === 'string'
+              ? (props.row.supplier as { category: string }).category
+              : typeof props.row?.tip === 'string'
+                ? props.row.tip
+                : null
+          }
         />
       );
     case 'tipDetail':
       if (variant !== 'child') return null;
-
-      return (
-        <TipDetailSelect
-          recordId={recordId}
-          tip={
-            typeof props.row?.tip === 'string'
-              ? (props.row.tip as LineItemType)
-              : null
-          }
-          value={typeof value === 'string' ? value : null}
-        />
-      );
+      {
+        const tip =
+          typeof props.row?.tip === 'string' ? (props.row.tip as LineItemType) : null;
+        if (usesSupplierPicker(tip)) {
+          return (
+            <SupplierCombobox
+              recordId={recordId}
+              tip={tip}
+              supplierId={
+                typeof props.row?.supplierId === 'string'
+                  ? props.row.supplierId
+                  : typeof (props.row?.supplier as { id?: string } | undefined)?.id ===
+                      'string'
+                    ? (props.row.supplier as { id: string }).id
+                    : null
+              }
+              supplierName={
+                typeof (props.row?.supplier as { name?: string } | undefined)?.name ===
+                'string'
+                  ? (props.row.supplier as { name: string }).name
+                  : null
+              }
+              tipDetail={typeof value === 'string' ? value : null}
+            />
+          );
+        }
+        return (
+          <TipDetailSelect
+            recordId={recordId}
+            tip={tip}
+            value={typeof value === 'string' ? value : null}
+          />
+        );
+      }
     case 'stage':
       if (variant === 'parent') {
         return (

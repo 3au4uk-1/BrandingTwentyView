@@ -26,6 +26,7 @@ import {
   fetchLineItemsForOpportunityIdsWithClient,
   filterLineItemsByQueryFilters,
   isDefaultLineItemHiddenByFilters,
+  updateLineItem,
 } from './line-items';
 
 describe('buildCreateLineItemInput', () => {
@@ -301,6 +302,7 @@ describe('buildDealLineItemsQuery', () => {
   it('uses compact filter param and pagination cursor', () => {
     expect(buildDealLineItemsQuery(['id-1'], undefined, 'cursor-1')).toEqual({
       limit: 200,
+      depth: 1,
       filter: 'opportunityId[in]:["id-1"]',
       after: 'cursor-1',
     });
@@ -357,6 +359,7 @@ describe('fetchLineItemOpportunityIdsBySearch', () => {
     expect(get).toHaveBeenNthCalledWith(2, '/rest/dealLineItems', {
       query: {
         limit: 200,
+        depth: 1,
         filter: 'name[ilike]:"%1%"',
         after: stuckCursor,
       },
@@ -411,8 +414,80 @@ describe('fetchLineItemOpportunityIdsByFilters', () => {
     expect(get).toHaveBeenCalledWith('/rest/dealLineItems', {
       query: {
         limit: 200,
+        depth: 1,
         filter: 'stage[in]:["V_RABOTE"]',
       },
+    });
+  });
+});
+
+describe('nested supplier on line items', () => {
+  it('copies supplierId from nested supplier { id, name }', async () => {
+    const get = vi.fn().mockResolvedValue({
+      data: [
+        {
+          id: 'item-1',
+          name: 'Position',
+          opportunityId: 'deal-1',
+          supplier: { id: 'sup-1', name: 'Юра' },
+        },
+      ],
+    });
+
+    const items = await fetchLineItemsForOpportunityIdsWithClient(
+      { get } as never,
+      ['deal-1'],
+    );
+
+    expect(items[0]?.supplierId).toBe('sup-1');
+    expect(get).toHaveBeenCalledWith('/rest/dealLineItems', {
+      query: {
+        limit: 200,
+        depth: 1,
+        filter: 'opportunityId[in]:["deal-1"]',
+      },
+    });
+  });
+});
+
+describe('updateLineItem supplier relation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetDealLineItemsRestClientForTests();
+  });
+
+  it('PATCHes supplierId and drops cache-only nested supplier', async () => {
+    const patch = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(RestApiClient).mockImplementation(
+      () =>
+        ({
+          patch,
+        }) as unknown as RestApiClient,
+    );
+
+    await updateLineItem('li-1', {
+      supplierId: 'sup-2',
+      supplier: { id: 'sup-2', name: 'Саша Марда' },
+    });
+
+    expect(patch).toHaveBeenCalledWith('/rest/dealLineItems/li-1', {
+      supplierId: 'sup-2',
+    });
+  });
+
+  it('PATCHes supplierId null when clearing', async () => {
+    const patch = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(RestApiClient).mockImplementation(
+      () =>
+        ({
+          patch,
+        }) as unknown as RestApiClient,
+    );
+
+    await updateLineItem('li-1', { supplierId: null, supplier: null });
+
+    expect(patch).toHaveBeenCalledWith('/rest/dealLineItems/li-1', {
+      supplierId: null,
     });
   });
 });

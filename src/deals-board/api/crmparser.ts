@@ -264,3 +264,24 @@ export async function sendOkleykaTelegramEvent(
     { method: 'POST', body: JSON.stringify(body) },
   );
 }
+
+export type BannerPodryadCatchupBody = {
+  lineItemId: string;
+  opportunityId?: string;
+  loadDate?: string;
+};
+
+export type BannerPodryadCatchupResult = {
+  ok: boolean;
+  queued?: boolean;
+  error?: string;
+};
+
+export async function notifyBannerPodryadCatchup(
+  body: BannerPodryadCatchupBody,
+): Promise<BannerPodryadCatchupResult> {
+  return logicFunctionFetch<BannerPodryadCatchupResult>(
+    `/crmparser/telegram/banner-podryad-catchup`,
+    { method: 'POST', body: JSON.stringify(body) },
+  );
+}
