@@ -321,6 +321,7 @@ export const renderFieldOverride = (props: FieldOverrideProps): ReactNode | null
                   ? (props.row.supplier as { name: string }).name
                   : null
               }
+              tipDetail={typeof value === 'string' ? value : null}
             />
           );
         }

@@ -16,7 +16,7 @@ import {
   supplierDropdownRows,
   type SupplierDropdownRow,
 } from '../suppliers/picker';
-import { normalizeSupplierName } from '../suppliers/supplier-name';
+import { displaySupplierCellLabel, normalizeSupplierName } from '../suppliers/supplier-name';
 import { useTheme } from '../theme/ThemeContext';
 import { Input } from '../ui/Input';
 import { resolvePortalContainer, usePortalHost } from '../ui/PortalHostContext';
@@ -32,6 +32,7 @@ type SupplierComboboxProps = {
   tip: string;
   supplierId: string | null;
   supplierName: string | null;
+  tipDetail: string | null;
 };
 
 const showCrmError = (error: unknown): void => {
@@ -60,6 +61,7 @@ export const SupplierCombobox = ({
   tip,
   supplierId,
   supplierName,
+  tipDetail,
 }: SupplierComboboxProps) => {
   const theme = useTheme();
   const queryClient = useQueryClient();
@@ -71,7 +73,7 @@ export const SupplierCombobox = ({
     [suppliers, tip, supplierId],
   );
 
-  const selectedLabel = supplierName ?? '';
+  const selectedLabel = displaySupplierCellLabel(supplierName, tipDetail);
   const [draft, setDraft] = useState(selectedLabel);
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);

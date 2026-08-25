@@ -1,11 +1,15 @@
 /**
  * Idempotent seed of banner/contractor suppliers + backfill dealLineItem.supplierId
- * from tipDetail. Local Twenty only. Token from ~/.cursor/mcp.json (never commit secrets).
+ * from tipDetail. Token from ~/.cursor/mcp.json (never commit secrets).
+ *
+ * Default: local Twenty http://localhost:2020
+ * Staging/prod: TWENTY_API_URL=https://twenty-staging.dosugmayak.ru node scripts/migrate-tip-detail-to-suppliers.js
+ * Does not delete or rewrite tipDetail — only fills empty supplierId.
  */
 const fs = require('fs');
 const path = require('path');
 
-const LOCAL_BASE = 'http://localhost:2020';
+const LOCAL_BASE = process.env.TWENTY_API_URL || 'http://localhost:2020';
 const PAGE_LIMIT = 200;
 
 const TIP_DETAIL_TO_SUPPLIER = [
@@ -33,9 +37,14 @@ function stripBearer(raw) {
   return String(raw).replace(/^Bearer\s+/i, '').trim() || null;
 }
 
-/** Local token only: mcp twentylocal (seed-50-deals.js) or ~/.twenty localhost app token. Never prod. */
-function getLocalToken() {
+/** Local token by default. Staging/prod: same workspace API key as MCP `twenty` when TWENTY_API_URL is set. */
+function getApiToken() {
   const mcp = readJson(path.join(process.env.USERPROFILE, '.cursor', 'mcp.json'));
+  if (process.env.TWENTY_API_URL) {
+    const remote = stripBearer(mcp?.mcpServers?.twenty?.headers?.Authorization);
+    if (remote) return remote;
+  }
+
   const mcpLocal = stripBearer(mcp?.mcpServers?.twentylocal?.headers?.Authorization);
   if (mcpLocal) return mcpLocal;
 
@@ -45,8 +54,8 @@ function getLocalToken() {
 }
 
 const LOCAL = {
-  url: `${LOCAL_BASE}/rest`,
-  token: getLocalToken(),
+  url: `${LOCAL_BASE.replace(/\/$/, '')}/rest`,
+  token: getApiToken(),
 };
 
 function normalizeSupplierName(raw) {
@@ -183,7 +192,9 @@ async function main() {
     });
     const record =
       createdBody?.data?.supplier ??
+      createdBody?.data?.createSupplier ??
       createdBody?.supplier ??
+      createdBody?.createSupplier ??
       createdBody?.data ??
       createdBody;
     const mapped = mapSupplier(record);
@@ -220,7 +231,20 @@ async function main() {
       skipped += 1;
       continue;
     }
-    const supplierId = typeof item.tipDetail === 'string' ? byTipDetail.get(item.tipDetail) : undefined;
+    if (item.tipDetail === 'KTO_EDET') {
+      skipped += 1;
+      continue;
+    }
+    const supplierId =
+      typeof item.tipDetail === 'string'
+        ? byTipDetail.get(item.tipDetail) ??
+          findSupplierByNameAndCategory(
+            suppliers,
+            TIP_DETAIL_TO_SUPPLIER.find((row) => row.tipDetail === item.tipDetail)?.name ??
+              item.tipDetail,
+            typeof item.tip === 'string' ? item.tip : '',
+          )?.id
+        : undefined;
     if (!supplierId) {
       skipped += 1;
       continue;
