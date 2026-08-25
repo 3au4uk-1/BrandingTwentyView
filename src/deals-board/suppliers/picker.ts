@@ -1,4 +1,5 @@
 import type { LineItemType } from 'src/constants/line-item-types';
+import { normalizeSupplierName, supplierNamesEqual } from './supplier-name';
 
 export type SupplierRow = {
   id: string;
@@ -15,12 +16,26 @@ export const filterSuppliersForPicker = (
   suppliers: SupplierRow[],
   tip: string,
   selectedId: string | null,
-): SupplierRow[] =>
-  suppliers.filter(
+): SupplierRow[] => {
+  const filtered = suppliers.filter(
     (supplier) =>
       supplier.category === tip &&
       (supplier.isActive || supplier.id === selectedId),
   );
+  const byKey = new Map<string, SupplierRow>();
+  for (const supplier of filtered) {
+    const key = `${supplier.category ?? ''}::${normalizeSupplierName(supplier.name).toLocaleLowerCase('ru-RU')}`;
+    const current = byKey.get(key);
+    if (!current) {
+      byKey.set(key, supplier);
+      continue;
+    }
+    if (selectedId && supplier.id === selectedId) {
+      byKey.set(key, supplier);
+    }
+  }
+  return [...byKey.values()];
+};
 
 export type SupplierDropdownRow =
   | { kind: 'option'; supplier: SupplierRow }
@@ -36,7 +51,7 @@ export const supplierDropdownRows = (
     ? options.filter((supplier) => supplier.name.toLowerCase().includes(query))
     : options;
   const exact = Boolean(
-    query && options.some((supplier) => supplier.name.trim().toLowerCase() === query),
+    query && options.some((supplier) => supplierNamesEqual(supplier.name, trimmed)),
   );
   const rows: SupplierDropdownRow[] = filtered.map((supplier) => ({
     kind: 'option',

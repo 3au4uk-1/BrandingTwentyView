@@ -55,6 +55,20 @@ describe('supplierDropdownRows', () => {
   it('does not offer create when the draft matches a name', () => {
     expect(supplierDropdownRows('Юра', options)).toEqual([{ kind: 'option', supplier: yura }]);
   });
+
+  it('keeps one row when the same contractor was saved several times', () => {
+    const clones = [
+      { id: 'a1', name: 'AAAA', category: 'PODRYAD', isActive: true },
+      { id: 'a2', name: 'AAAA', category: 'PODRYAD', isActive: true },
+      { id: 'a3', name: 'aaaa', category: 'PODRYAD', isActive: true },
+    ];
+    const list = filterSuppliersForPicker(clones, 'PODRYAD', 'a2');
+    expect(list).toHaveLength(1);
+    expect(list[0]?.id).toBe('a2');
+    expect(supplierDropdownRows('AAAA', list)).toEqual([
+      { kind: 'option', supplier: list[0] },
+    ]);
+  });
 });
 
 describe('nextSupplierOnTipChange', () => {

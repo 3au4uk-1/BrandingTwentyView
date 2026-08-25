@@ -255,7 +255,6 @@ export const SupplierCombobox = ({
               event.stopPropagation();
               pickingRef.current = true;
               clickGateRef.current.noteOptionChosen();
-              closeAndCommit(rowCommitName(row, draft));
             }}
             style={{
               padding: `${spacing.xs} ${spacing.sm}`,

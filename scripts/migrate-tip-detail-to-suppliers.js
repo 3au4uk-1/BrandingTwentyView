@@ -205,6 +205,26 @@ async function main() {
     created += 1;
   }
 
+  const groups = new Map();
+  for (const supplier of suppliers) {
+    const key = `${supplier.category}::${normalizeSupplierName(supplier.name).toLocaleLowerCase('ru-RU')}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(supplier);
+  }
+  let collapsed = 0;
+  for (const group of groups.values()) {
+    if (group.length < 2) continue;
+    const keep =
+      group.find((row) => row.isActive) ??
+      group[0];
+    for (const dup of group) {
+      if (dup.id === keep.id || !dup.isActive) continue;
+      await rest('PATCH', `/suppliers/${dup.id}`, { body: { isActive: false } });
+      dup.isActive = false;
+      collapsed += 1;
+    }
+  }
+
   const byTipDetail = new Map();
   for (const row of TIP_DETAIL_TO_SUPPLIER) {
     const match = findSupplierByNameAndCategory(suppliers, row.name, row.category);
@@ -258,6 +278,7 @@ async function main() {
       {
         created,
         reused,
+        collapsed,
         patched,
         skipped,
         lineItems: lineItems.length,
