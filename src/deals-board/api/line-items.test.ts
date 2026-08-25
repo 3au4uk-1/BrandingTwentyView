@@ -26,6 +26,7 @@ import {
   fetchLineItemsForOpportunityIdsWithClient,
   filterLineItemsByQueryFilters,
   isDefaultLineItemHiddenByFilters,
+  updateLineItem,
 } from './line-items';
 
 describe('buildCreateLineItemInput', () => {
@@ -445,6 +446,48 @@ describe('nested supplier on line items', () => {
         depth: 1,
         filter: 'opportunityId[in]:["deal-1"]',
       },
+    });
+  });
+});
+
+describe('updateLineItem supplier relation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetDealLineItemsRestClientForTests();
+  });
+
+  it('PATCHes connect { id } and drops cache-only supplier.name plus supplierId', async () => {
+    const patch = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(RestApiClient).mockImplementation(
+      () =>
+        ({
+          patch,
+        }) as unknown as RestApiClient,
+    );
+
+    await updateLineItem('li-1', {
+      supplierId: 'sup-2',
+      supplier: { id: 'sup-2', name: 'Саша Марда' },
+    });
+
+    expect(patch).toHaveBeenCalledWith('/rest/dealLineItems/li-1', {
+      supplier: { id: 'sup-2' },
+    });
+  });
+
+  it('PATCHes supplier null when clearing', async () => {
+    const patch = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(RestApiClient).mockImplementation(
+      () =>
+        ({
+          patch,
+        }) as unknown as RestApiClient,
+    );
+
+    await updateLineItem('li-1', { supplierId: null, supplier: null });
+
+    expect(patch).toHaveBeenCalledWith('/rest/dealLineItems/li-1', {
+      supplier: null,
     });
   });
 });

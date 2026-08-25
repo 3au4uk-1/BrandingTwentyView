@@ -2,8 +2,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { getTipDetailLabel } from 'src/constants/tip-detail';
-
 import { fireBannerPodryadCatchupNotify } from '../api/banner-podryad-catchup';
 import { createSupplier, updateSupplier } from '../api/suppliers';
 import { useUpdateLineItem } from '../hooks/useLineItems';
@@ -17,31 +15,30 @@ import {
   supplierDropdownRows,
   type SupplierDropdownRow,
 } from '../suppliers/picker';
+import { normalizeSupplierName } from '../suppliers/supplier-name';
 import { useTheme } from '../theme/ThemeContext';
 import { Input } from '../ui/Input';
 import { resolvePortalContainer, usePortalHost } from '../ui/PortalHostContext';
 import {
-  measureElementInRoot,
+  readClientRect,
   resolveAnchoredOverlayPosition,
   type RectLike,
 } from '../utils/anchored-overlay';
+import { measureAnchorInBoard } from '../utils/board-client-origin';
 
 type SupplierComboboxProps = {
   recordId: string;
   tip: string;
   supplierId: string | null;
   supplierName: string | null;
-  tipDetail: string | null;
 };
 
 const LIST_ID_PREFIX = 'supplier-picker-list-';
 const LIST_MAX_HEIGHT = 220;
 
-const displayValue = (supplierName: string | null, tipDetail: string | null): string => {
-  if (supplierName) return supplierName;
-  if (tipDetail) return getTipDetailLabel(tipDetail);
-  return '';
-};
+/** Board-local (16,16) is the old overlay fallback — not the cell. */
+const isDegenerateAnchor = (box: RectLike | null): boolean =>
+  !box || box.width < 2 || (box.left < 40 && box.top < 40);
 
 const rowCommitName = (row: SupplierDropdownRow | undefined, draft: string): string => {
   if (row?.kind === 'option') return row.supplier.name;
@@ -54,7 +51,6 @@ export const SupplierCombobox = ({
   tip,
   supplierId,
   supplierName,
-  tipDetail,
 }: SupplierComboboxProps) => {
   const theme = useTheme();
   const queryClient = useQueryClient();
@@ -66,7 +62,7 @@ export const SupplierCombobox = ({
     [suppliers, tip, supplierId],
   );
 
-  const selectedLabel = displayValue(supplierName, tipDetail);
+  const selectedLabel = supplierName ?? '';
   const [draft, setDraft] = useState(selectedLabel);
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
@@ -105,7 +101,24 @@ export const SupplierCombobox = ({
         suppliers,
         createSupplier,
         updateSupplier,
-        updateLineItem: (id, data) => updateMutation.mutateAsync({ id, data }),
+        updateLineItem: (id, data) => {
+          const linkedId = data.supplierId;
+          const linkedName =
+            typeof linkedId === 'string'
+              ? (suppliers.find((row) => row.id === linkedId)?.name ??
+                normalizeSupplierName(raw))
+              : '';
+          return updateMutation.mutateAsync({
+            id,
+            data: {
+              supplierId: linkedId,
+              supplier:
+                typeof linkedId === 'string'
+                  ? { id: linkedId, name: linkedName }
+                  : null,
+            },
+          });
+        },
       });
       if (result !== 'committed') {
         return;
@@ -124,7 +137,7 @@ export const SupplierCombobox = ({
 
   const syncAnchor = () => {
     const root = portalHostRef?.current ?? null;
-    setAnchor(measureElementInRoot(wrapRef.current, root));
+    setAnchor(measureAnchorInBoard(wrapRef.current, root));
   };
 
   useLayoutEffect(() => {
@@ -176,105 +189,141 @@ export const SupplierCombobox = ({
   const rootWidth = root && 'clientWidth' in root ? Number(root.clientWidth) || 0 : 0;
   const rootHeight = root && 'clientHeight' in root ? Number(root.clientHeight) || 0 : 0;
   const overlayWidth = Math.max(anchor?.width ?? 180, 180);
-  const placed = anchor
-    ? resolveAnchoredOverlayPosition({
-        anchor,
-        overlayWidth,
-        overlayHeight: Math.min(LIST_MAX_HEIGHT, Math.max(rows.length, 1) * 32 + 8),
-        rootWidth: rootWidth || 1200,
-        rootHeight: rootHeight || 800,
-      })
-    : { top: 16, left: 16, transform: undefined as string | undefined };
+  const placed =
+    !isDegenerateAnchor(anchor) && anchor
+      ? resolveAnchoredOverlayPosition({
+          anchor,
+          overlayWidth,
+          overlayHeight: Math.min(LIST_MAX_HEIGHT, Math.max(rows.length, 1) * 32 + 8),
+          rootWidth: rootWidth || 1200,
+          rootHeight: rootHeight || 800,
+        })
+      : null;
 
   const portalTarget = resolvePortalContainer('root', portalHostRef);
+  const clientBox = readClientRect(wrapRef.current);
+  const clientLooksReal = Boolean(
+    clientBox && clientBox.width > 8 && (clientBox.left >= 40 || clientBox.top >= 80),
+  );
+  const useFixedFallback = open && !placed && clientLooksReal && Boolean(portalTarget);
+  const useInlineList = open && !placed && !useFixedFallback;
   const { colors, font, radius, spacing, zIndex } = theme;
 
-  const list = open ? (
-    <>
-      <div
-        aria-hidden="true"
-        onPointerDown={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          closeAndCommit(draft);
-        }}
+  const listItems =
+    rows.length === 0 ? (
+      <li
         style={{
-          position: 'absolute',
-          inset: 0,
-          zIndex: zIndex.dropdown,
+          padding: `${spacing.xs} ${spacing.sm}`,
+          color: colors.textMuted,
+          fontSize: font.sizeXs,
         }}
-      />
+      >
+        введи имя
+      </li>
+    ) : (
+      rows.map((row, index) => {
+        const selected = index === highlight;
+        const label = row.kind === 'option' ? row.supplier.name : `Добавить «${row.name}»`;
+        return (
+          <li
+            key={row.kind === 'option' ? row.supplier.id : `create-${row.name}`}
+            role="option"
+            aria-selected={selected}
+            onMouseEnter={() => setHighlight(index)}
+            onMouseDown={(event) => {
+              event.preventDefault();
+              pickingRef.current = true;
+              closeAndCommit(rowCommitName(row, draft));
+            }}
+            style={{
+              padding: `${spacing.xs} ${spacing.sm}`,
+              borderRadius: radius.sm,
+              cursor: 'pointer',
+              backgroundColor: selected ? colors.bgHover : 'transparent',
+              color: row.kind === 'create' ? colors.accent : colors.text,
+              fontSize: font.sizeSm,
+              fontWeight: row.kind === 'create' ? font.weightMedium : font.weightNormal,
+            }}
+          >
+            {label}
+          </li>
+        );
+      })
+    );
+
+  const listBoxStyle = {
+    margin: 0 as const,
+    padding: 4,
+    listStyle: 'none' as const,
+    boxSizing: 'border-box' as const,
+    backgroundColor: colors.bgElevated,
+    border: `1px solid ${colors.border}`,
+    borderRadius: radius.md,
+    boxShadow: colors.shadowLg,
+    maxHeight: LIST_MAX_HEIGHT,
+    overflowY: 'auto' as const,
+  };
+
+  const portaledList =
+    open && placed ? (
+      <>
+        <div
+          aria-hidden="true"
+          onPointerDown={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            closeAndCommit(draft);
+          }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: zIndex.dropdown,
+          }}
+        />
+        <ul
+          id={listId}
+          role="listbox"
+          style={{
+            ...listBoxStyle,
+            position: 'absolute',
+            top: placed.top,
+            left: placed.left,
+            transform: placed.transform,
+            zIndex: zIndex.dropdown + 1,
+            width: overlayWidth,
+          }}
+        >
+          {listItems}
+        </ul>
+      </>
+    ) : open && useFixedFallback && clientBox ? (
       <ul
         id={listId}
         role="listbox"
         style={{
-          position: 'absolute',
-          top: placed.top,
-          left: placed.left,
-          transform: placed.transform,
+          ...listBoxStyle,
+          position: 'fixed',
+          top: clientBox.bottom,
+          left: clientBox.left,
+          width: Math.max(clientBox.width, 180),
           zIndex: zIndex.dropdown + 1,
-          width: overlayWidth,
-          maxHeight: LIST_MAX_HEIGHT,
-          overflowY: 'auto',
-          margin: 0,
-          padding: 4,
-          listStyle: 'none',
-          boxSizing: 'border-box',
-          backgroundColor: colors.bgElevated,
-          border: `1px solid ${colors.border}`,
-          borderRadius: radius.md,
-          boxShadow: colors.shadowLg,
         }}
       >
-        {rows.length === 0 ? (
-          <li
-            style={{
-              padding: `${spacing.xs} ${spacing.sm}`,
-              color: colors.textMuted,
-              fontSize: font.sizeXs,
-            }}
-          >
-            введи имя
-          </li>
-        ) : (
-          rows.map((row, index) => {
-            const selected = index === highlight;
-            const label =
-              row.kind === 'option' ? row.supplier.name : `Добавить «${row.name}»`;
-            return (
-              <li
-                key={row.kind === 'option' ? row.supplier.id : `create-${row.name}`}
-                role="option"
-                aria-selected={selected}
-                onMouseEnter={() => setHighlight(index)}
-                onMouseDown={(event) => {
-                  event.preventDefault();
-                  pickingRef.current = true;
-                  closeAndCommit(rowCommitName(row, draft));
-                }}
-                style={{
-                  padding: `${spacing.xs} ${spacing.sm}`,
-                  borderRadius: radius.sm,
-                  cursor: 'pointer',
-                  backgroundColor: selected ? colors.bgHover : 'transparent',
-                  color: row.kind === 'create' ? colors.accent : colors.text,
-                  fontSize: font.sizeSm,
-                  fontWeight: row.kind === 'create' ? font.weightMedium : font.weightNormal,
-                }}
-              >
-                {label}
-              </li>
-            );
-          })
-        )}
+        {listItems}
       </ul>
-    </>
-  ) : null;
+    ) : null;
 
   return (
     <div
       ref={wrapRef}
-      style={{ display: 'flex', gap: 4, alignItems: 'center', minWidth: 0 }}
+      style={{
+        display: 'flex',
+        gap: 4,
+        alignItems: 'center',
+        minWidth: 0,
+        position: 'relative',
+        zIndex: open ? zIndex.dropdown + 1 : undefined,
+      }}
     >
       <Input
         theme={theme}
@@ -284,7 +333,7 @@ export const SupplierCombobox = ({
         aria-autocomplete="list"
         value={draft}
         disabled={busy}
-        placeholder={options.length === 0 ? 'введи имя' : undefined}
+        placeholder="кто едет?"
         onChange={(event) => {
           setDraft(event.target.value);
           setOpen(true);
@@ -322,7 +371,24 @@ export const SupplierCombobox = ({
           убрать из списка
         </button>
       ) : null}
-      {list && portalTarget ? createPortal(list, portalTarget) : list}
+      {useInlineList ? (
+        <ul
+          id={listId}
+          role="listbox"
+          style={{
+            ...listBoxStyle,
+            position: 'absolute',
+            left: 0,
+            top: '100%',
+            width: '100%',
+            minWidth: 160,
+            zIndex: zIndex.dropdown + 1,
+          }}
+        >
+          {listItems}
+        </ul>
+      ) : null}
+      {portaledList && portalTarget ? createPortal(portaledList, portalTarget) : null}
     </div>
   );
 };

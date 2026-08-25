@@ -135,14 +135,14 @@ describe('commitSupplierName', () => {
     expect(updateLineItem).not.toHaveBeenCalled();
   });
 
-  it('skips commit when tipDetail label is unchanged', async () => {
+  it('does not create a supplier named кто едет? when the stored label is empty', async () => {
     const createSupplier = vi.fn();
     const updateSupplier = vi.fn();
     const updateLineItem = vi.fn();
 
     await commitSupplierName({
-      name: 'Печать',
-      currentLabel: 'Печать',
+      name: 'кто едет?',
+      currentLabel: '',
       tip: 'BANNERA',
       recordId: 'li-1',
       currentSupplierId: null,
@@ -154,6 +154,27 @@ describe('commitSupplierName', () => {
 
     expect(createSupplier).not.toHaveBeenCalled();
     expect(updateLineItem).not.toHaveBeenCalled();
+  });
+
+  it('links a real name even when the cell still shows a tipDetail placeholder', async () => {
+    const createSupplier = vi.fn();
+    const updateSupplier = vi.fn();
+    const updateLineItem = vi.fn().mockResolvedValue(undefined);
+
+    await commitSupplierName({
+      name: 'Юра',
+      currentLabel: 'кто едет?',
+      tip: 'BANNERA',
+      recordId: 'li-1',
+      currentSupplierId: null,
+      suppliers: [yura],
+      createSupplier,
+      updateSupplier,
+      updateLineItem,
+    });
+
+    expect(createSupplier).not.toHaveBeenCalled();
+    expect(updateLineItem).toHaveBeenCalledWith('li-1', { supplierId: 's1' });
   });
 
   it('still clears when user empties a populated field', async () => {

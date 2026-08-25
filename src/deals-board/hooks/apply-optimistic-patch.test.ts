@@ -25,4 +25,13 @@ describe('applyOptimisticPatch supplierId', () => {
     expect(next.supplierId).toBe('sup-2');
     expect(next.supplier).toEqual({ id: 'sup-1', name: 'Юра' });
   });
+
+  it('applies nested supplier from the patch so the cell can show the new name', () => {
+    const next = applyOptimisticPatch(item({ supplier: null, supplierId: null }), {
+      supplierId: 'sup-2',
+      supplier: { id: 'sup-2', name: 'Саша Марда' },
+    });
+    expect(next.supplierId).toBe('sup-2');
+    expect(next.supplier).toEqual({ id: 'sup-2', name: 'Саша Марда' });
+  });
 });

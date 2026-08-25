@@ -30,6 +30,7 @@ import { resolveFieldValue } from '../utils/resolve-field-value';
 import { getStageRowStyles } from '../utils/stage-row-styles';
 import { useTypeSections } from '../hooks/useTypeSections';
 import { buildTypeSectionRows } from '../type-sections/group';
+import { usesSupplierPicker } from '../suppliers/picker';
 
 import type { ColumnConfig, ColumnGroupConfig, LineItemRow } from '../types';
 import { lineItemDragSession } from './line-item-drag-session';
@@ -611,6 +612,9 @@ export const LineItemsTable = ({
                   {ungrouped.map((entry) => {
                     const width = getColumnWidth(entry);
                     const isPrevyu = entry.field === 'prevyuOkleyki';
+                    const isSupplierPicker =
+                      entry.field === 'tipDetail' && usesSupplierPicker(item.tip);
+                    const allowOverflow = isPrevyu || isSupplierPicker;
 
                     return (
                       <td
@@ -625,12 +629,12 @@ export const LineItemsTable = ({
                           whiteSpace: 'nowrap',
                           // Prevyu hover/popover are CSS-anchored outside the thumb —
                           // overflow:hidden clips them into the cell box.
-                          overflow: isPrevyu ? 'visible' : 'hidden',
-                          textOverflow: isPrevyu ? undefined : 'ellipsis',
+                          overflow: allowOverflow ? 'visible' : 'hidden',
+                          textOverflow: allowOverflow ? undefined : 'ellipsis',
                           verticalAlign: 'middle',
                           boxSizing: 'border-box',
                           position: 'relative',
-                          zIndex: isPrevyu ? 1 : undefined,
+                          zIndex: allowOverflow ? 1 : undefined,
                         }}
                       >
                         <DynamicFieldCell

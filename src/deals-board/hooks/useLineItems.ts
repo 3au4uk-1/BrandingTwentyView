@@ -86,6 +86,15 @@ export const applyOptimisticPatch = (
       next.supplier = null;
     } else if (typeof data.supplierId === 'string') {
       next.supplierId = data.supplierId;
+      const nested = data.supplier;
+      if (
+        nested &&
+        typeof nested === 'object' &&
+        typeof (nested as { id?: unknown }).id === 'string' &&
+        typeof (nested as { name?: unknown }).name === 'string'
+      ) {
+        next.supplier = nested as { id: string; name: string };
+      }
     }
   }
   return next;

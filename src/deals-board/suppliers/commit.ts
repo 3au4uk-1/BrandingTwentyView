@@ -1,5 +1,5 @@
 import { findSupplierByNameAndCategory } from '../api/suppliers';
-import { normalizeSupplierName, supplierNamesEqual } from './supplier-name';
+import { isVacantSupplierName, normalizeSupplierName, supplierNamesEqual } from './supplier-name';
 import type { SupplierRow } from './picker';
 
 type CommitSupplierDeps = {
@@ -17,7 +17,11 @@ type CommitSupplierDeps = {
 export const shouldCommitSupplierName = (
   name: string,
   currentLabel: string | null,
-): boolean => !supplierNamesEqual(name, currentLabel ?? '');
+): boolean => {
+  const next = isVacantSupplierName(name) ? '' : name;
+  const prev = isVacantSupplierName(currentLabel ?? '') ? '' : (currentLabel ?? '');
+  return !supplierNamesEqual(next, prev);
+};
 
 export type SupplierCommitInFlightGuard = {
   tryAcquire: () => boolean;
@@ -76,7 +80,7 @@ export const commitSupplierName = async ({
     return;
   }
 
-  const normalized = normalizeSupplierName(name);
+  const normalized = isVacantSupplierName(name) ? '' : normalizeSupplierName(name);
   if (!normalized) {
     if (currentSupplierId) {
       await updateLineItem(recordId, { supplierId: null });

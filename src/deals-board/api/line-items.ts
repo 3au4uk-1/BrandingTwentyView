@@ -367,7 +367,16 @@ export const updateLineItem = async (
   data: Record<string, unknown>,
 ): Promise<void> => {
   const client = getRestClient();
-  await client.patch(`/rest/dealLineItems/${id}`, data);
+  const payload = { ...data };
+  // Nested `supplier` on the mutation is cache-only (id + name). REST connect is `{ id }`.
+  delete payload.supplier;
+  if (Object.prototype.hasOwnProperty.call(payload, 'supplierId')) {
+    const supplierId = payload.supplierId;
+    delete payload.supplierId;
+    payload.supplier =
+      typeof supplierId === 'string' && supplierId ? { id: supplierId } : null;
+  }
+  await client.patch(`/rest/dealLineItems/${id}`, payload);
 };
 
 export const fetchLineItemById = async (id: string): Promise<LineItemRow | null> => {
