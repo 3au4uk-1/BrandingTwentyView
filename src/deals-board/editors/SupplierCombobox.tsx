@@ -33,6 +33,14 @@ type SupplierComboboxProps = {
   supplierName: string | null;
 };
 
+const showCrmError = (error: unknown): void => {
+  const message = error instanceof Error ? error.message : String(error);
+  if (typeof window.alert === 'function') {
+    window.alert(message);
+    return;
+  }
+  console.error(message);
+};
 const LIST_ID_PREFIX = 'supplier-picker-list-';
 const LIST_MAX_HEIGHT = 220;
 
@@ -126,7 +134,7 @@ export const SupplierCombobox = ({
       fireBannerPodryadCatchupNotify(queryClient, recordId);
       await invalidateAfterSelect();
     } catch (error) {
-      window.alert(error instanceof Error ? error.message : String(error));
+      showCrmError(error);
     }
   };
 
@@ -150,7 +158,7 @@ export const SupplierCombobox = ({
       await updateSupplier(id, { isActive: false });
       await queryClient.invalidateQueries({ queryKey: ['suppliers'] });
     } catch (error) {
-      window.alert(error instanceof Error ? error.message : String(error));
+      showCrmError(error);
     }
   };
 

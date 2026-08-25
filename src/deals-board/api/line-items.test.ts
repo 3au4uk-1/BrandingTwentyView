@@ -456,7 +456,7 @@ describe('updateLineItem supplier relation', () => {
     resetDealLineItemsRestClientForTests();
   });
 
-  it('PATCHes connect { id } and drops cache-only supplier.name plus supplierId', async () => {
+  it('PATCHes supplierId and drops cache-only nested supplier', async () => {
     const patch = vi.fn().mockResolvedValue(undefined);
     vi.mocked(RestApiClient).mockImplementation(
       () =>
@@ -471,11 +471,11 @@ describe('updateLineItem supplier relation', () => {
     });
 
     expect(patch).toHaveBeenCalledWith('/rest/dealLineItems/li-1', {
-      supplier: { id: 'sup-2' },
+      supplierId: 'sup-2',
     });
   });
 
-  it('PATCHes supplier null when clearing', async () => {
+  it('PATCHes supplierId null when clearing', async () => {
     const patch = vi.fn().mockResolvedValue(undefined);
     vi.mocked(RestApiClient).mockImplementation(
       () =>
@@ -487,7 +487,7 @@ describe('updateLineItem supplier relation', () => {
     await updateLineItem('li-1', { supplierId: null, supplier: null });
 
     expect(patch).toHaveBeenCalledWith('/rest/dealLineItems/li-1', {
-      supplier: null,
+      supplierId: null,
     });
   });
 });

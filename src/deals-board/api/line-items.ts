@@ -368,14 +368,8 @@ export const updateLineItem = async (
 ): Promise<void> => {
   const client = getRestClient();
   const payload = { ...data };
-  // Nested `supplier` on the mutation is cache-only (id + name). REST connect is `{ id }`.
+  // Nested `supplier` is cache-only (id + name). REST join column is `supplierId`.
   delete payload.supplier;
-  if (Object.prototype.hasOwnProperty.call(payload, 'supplierId')) {
-    const supplierId = payload.supplierId;
-    delete payload.supplierId;
-    payload.supplier =
-      typeof supplierId === 'string' && supplierId ? { id: supplierId } : null;
-  }
   await client.patch(`/rest/dealLineItems/${id}`, payload);
 };
 
