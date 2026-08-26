@@ -14,6 +14,7 @@ import { createPickerClickGate, scheduleDismissCommit } from '../suppliers/picke
 import {
   filterSuppliersForPicker,
   supplierDropdownRows,
+  usesBannerPodryadCatchup,
   type SupplierDropdownRow,
 } from '../suppliers/picker';
 import { displaySupplierCellLabel, normalizeSupplierName } from '../suppliers/supplier-name';
@@ -135,7 +136,9 @@ export const SupplierCombobox = ({
       if (result !== 'committed') {
         return;
       }
-      fireBannerPodryadCatchupNotify(queryClient, recordId);
+      if (usesBannerPodryadCatchup(tip)) {
+        fireBannerPodryadCatchupNotify(queryClient, recordId);
+      }
       await invalidateAfterSelect();
     } catch (error) {
       showCrmError(error);

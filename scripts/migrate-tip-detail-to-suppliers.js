@@ -1,6 +1,7 @@
 /**
- * Idempotent seed of banner/contractor suppliers + backfill dealLineItem.supplierId
- * from tipDetail. Token from ~/.cursor/mcp.json (never commit secrets).
+ * Idempotent seed of suppliers for banner/contractor/film/production/restoration
+ * + backfill dealLineItem.supplierId from tipDetail.
+ * Token from ~/.cursor/mcp.json (never commit secrets).
  *
  * Default: local Twenty http://localhost:2020
  * Staging/prod: TWENTY_API_URL=https://twenty-staging.dosugmayak.ru node scripts/migrate-tip-detail-to-suppliers.js
@@ -22,6 +23,22 @@ const TIP_DETAIL_TO_SUPPLIER = [
   { tipDetail: 'LIZA_SUKNO', name: 'Лиза сукно', category: 'PODRYAD' },
   { tipDetail: 'KUVALDIN_KLISHE', name: 'Кувалдин клише', category: 'PODRYAD' },
   { tipDetail: 'SVOE', name: 'Своё', category: 'PODRYAD' },
+  { tipDetail: 'NASHI', name: 'Наши', category: 'PLENKA' },
+  { tipDetail: 'NE_NASHI', name: 'Не наши', category: 'PLENKA' },
+  { tipDetail: 'NASHI', name: 'Наши', category: 'RESTAVRACIYA' },
+  { tipDetail: 'NE_NASHI', name: 'Не наши', category: 'RESTAVRACIYA' },
+  { tipDetail: 'ROLL_UP', name: 'Ролл-ап', category: 'PROIZVODSTVO' },
+  { tipDetail: 'POP_UP', name: 'Поп-ап', category: 'PROIZVODSTVO' },
+  { tipDetail: 'PROMO_STOYKA', name: 'Промо-стойка', category: 'PROIZVODSTVO' },
+  { tipDetail: 'PROIZVODSTVO_DRUGOE', name: 'Другое', category: 'PROIZVODSTVO' },
+];
+
+const SUPPLIER_PICKER_TIPS = [
+  'BANNERA',
+  'PODRYAD',
+  'PLENKA',
+  'PROIZVODSTVO',
+  'RESTAVRACIYA',
 ];
 
 function readJson(filePath) {
@@ -231,12 +248,13 @@ async function main() {
     if (!match) {
       throw new Error(`Supplier missing after upsert: ${row.name} / ${row.category}`);
     }
-    byTipDetail.set(row.tipDetail, match.id);
+    byTipDetail.set(`${row.category}::${row.tipDetail}`, match.id);
   }
 
+  const tipFilter = `tip[in]:${JSON.stringify(SUPPLIER_PICKER_TIPS)}`;
   const lineItems = await fetchAllPages('/dealLineItems', 'dealLineItems', {
     depth: 1,
-    filter: 'tip[in]:["BANNERA","PODRYAD"]',
+    filter: tipFilter,
   });
 
   let patched = 0;
@@ -255,14 +273,17 @@ async function main() {
       skipped += 1;
       continue;
     }
+    const tip = typeof item.tip === 'string' ? item.tip : '';
+    const tipDetail = typeof item.tipDetail === 'string' ? item.tipDetail : '';
     const supplierId =
-      typeof item.tipDetail === 'string'
-        ? byTipDetail.get(item.tipDetail) ??
+      tipDetail
+        ? byTipDetail.get(`${tip}::${tipDetail}`) ??
           findSupplierByNameAndCategory(
             suppliers,
-            TIP_DETAIL_TO_SUPPLIER.find((row) => row.tipDetail === item.tipDetail)?.name ??
-              item.tipDetail,
-            typeof item.tip === 'string' ? item.tip : '',
+            TIP_DETAIL_TO_SUPPLIER.find(
+              (row) => row.tipDetail === tipDetail && row.category === tip,
+            )?.name ?? tipDetail,
+            tip,
           )?.id
         : undefined;
     if (!supplierId) {

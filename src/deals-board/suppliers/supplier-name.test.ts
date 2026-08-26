@@ -42,6 +42,9 @@ describe('displaySupplierCellLabel', () => {
   it('shows the historical tipDetail label when the relation is empty', () => {
     expect(displaySupplierCellLabel(null, 'YURA')).toBe('Юра');
     expect(displaySupplierCellLabel('', 'GLAV_PRINT')).toBe('Глав принт');
+    expect(displaySupplierCellLabel(null, 'NASHI')).toBe('Наши');
+    expect(displaySupplierCellLabel(null, 'ROLL_UP')).toBe('Ролл-ап');
+    expect(displaySupplierCellLabel(null, 'PROIZVODSTVO_DRUGOE')).toBe('Другое');
   });
 
   it('does not treat кто едет? as a filled order', () => {

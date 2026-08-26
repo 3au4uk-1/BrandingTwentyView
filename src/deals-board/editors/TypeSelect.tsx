@@ -9,7 +9,10 @@ import {
 import { fireBannerPodryadCatchupNotify } from '../api/banner-podryad-catchup';
 import { useUpdateLineItem } from '../hooks/useLineItems';
 import { useObjectFields } from '../metadata/useObjectFields';
-import { nextSupplierOnTipChange, usesSupplierPicker } from '../suppliers/picker';
+import {
+  nextSupplierOnTipChange,
+  usesBannerPodryadCatchup,
+} from '../suppliers/picker';
 import { useTheme } from '../theme/ThemeContext';
 import { EMPTY_VALUE } from '../theme/tokens';
 import { mergeAppOptionsWithCrmLabels } from '../taxonomy/merge-crm-labels';
@@ -61,7 +64,7 @@ export const TypeSelect = ({
           }),
         },
       });
-      if (usesSupplierPicker(normalizedNext)) {
+      if (usesBannerPodryadCatchup(normalizedNext)) {
         fireBannerPodryadCatchupNotify(queryClient, recordId);
       }
     } catch (error) {

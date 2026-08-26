@@ -8,7 +8,24 @@ export type SupplierRow = {
   isActive: boolean;
 };
 
+export type SupplierPickerTip =
+  | 'BANNERA'
+  | 'PODRYAD'
+  | 'PLENKA'
+  | 'PROIZVODSTVO'
+  | 'RESTAVRACIYA';
+
 export const usesSupplierPicker = (
+  tip: string | null | undefined,
+): tip is SupplierPickerTip =>
+  tip === 'BANNERA' ||
+  tip === 'PODRYAD' ||
+  tip === 'PLENKA' ||
+  tip === 'PROIZVODSTVO' ||
+  tip === 'RESTAVRACIYA';
+
+/** Telegram catch-up stays banner/contractor only. */
+export const usesBannerPodryadCatchup = (
   tip: string | null | undefined,
 ): tip is 'BANNERA' | 'PODRYAD' => tip === 'BANNERA' || tip === 'PODRYAD';
 
