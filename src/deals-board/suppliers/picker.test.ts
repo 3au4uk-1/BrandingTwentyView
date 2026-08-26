@@ -3,6 +3,7 @@ import {
   filterSuppliersForPicker,
   nextSupplierOnTipChange,
   supplierDropdownRows,
+  usesBannerPodryadCatchup,
   usesSupplierPicker,
 } from './picker';
 
@@ -21,10 +22,23 @@ const print = {
 };
 
 describe('usesSupplierPicker', () => {
-  it('is true only for banner and contractor', () => {
+  it('is true for banner, contractor, film, production, and restoration', () => {
     expect(usesSupplierPicker('BANNERA')).toBe(true);
     expect(usesSupplierPicker('PODRYAD')).toBe(true);
-    expect(usesSupplierPicker('PLENKA')).toBe(false);
+    expect(usesSupplierPicker('PLENKA')).toBe(true);
+    expect(usesSupplierPicker('PROIZVODSTVO')).toBe(true);
+    expect(usesSupplierPicker('RESTAVRACIYA')).toBe(true);
+    expect(usesSupplierPicker('NE_NASHE')).toBe(false);
+  });
+});
+
+describe('usesBannerPodryadCatchup', () => {
+  it('stays limited to banner and contractor telegram catchup', () => {
+    expect(usesBannerPodryadCatchup('BANNERA')).toBe(true);
+    expect(usesBannerPodryadCatchup('PODRYAD')).toBe(true);
+    expect(usesBannerPodryadCatchup('PLENKA')).toBe(false);
+    expect(usesBannerPodryadCatchup('PROIZVODSTVO')).toBe(false);
+    expect(usesBannerPodryadCatchup('RESTAVRACIYA')).toBe(false);
   });
 });
 
@@ -75,11 +89,20 @@ describe('nextSupplierOnTipChange', () => {
   it('clears when leaving picker tips', () => {
     expect(
       nextSupplierOnTipChange({
-        nextTip: 'PLENKA',
+        nextTip: 'NE_NASHE',
         currentSupplierId: 's1',
         currentSupplierCategory: 'BANNERA',
       }),
     ).toBeNull();
+  });
+  it('keeps film supplier when staying on film', () => {
+    expect(
+      nextSupplierOnTipChange({
+        nextTip: 'PLENKA',
+        currentSupplierId: 's4',
+        currentSupplierCategory: 'PLENKA',
+      }),
+    ).toBe('s4');
   });
   it('clears when banner↔contractor category mismatches', () => {
     expect(
