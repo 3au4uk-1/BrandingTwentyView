@@ -33,14 +33,6 @@ const TIP_DETAIL_TO_SUPPLIER = [
   { tipDetail: 'PROIZVODSTVO_DRUGOE', name: 'Другое', category: 'PROIZVODSTVO' },
 ];
 
-const SUPPLIER_PICKER_TIPS = [
-  'BANNERA',
-  'PODRYAD',
-  'PLENKA',
-  'PROIZVODSTVO',
-  'RESTAVRACIYA',
-];
-
 function readJson(filePath) {
   try {
     return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -151,39 +143,76 @@ async function rest(method, pathname, { query, body } = {}) {
       url.searchParams.set(key, String(value));
     }
   }
-  const res = await fetch(url, {
-    method,
-    headers: {
-      Authorization: `Bearer ${LOCAL.token}`,
-      'Content-Type': 'application/json',
-    },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
-  const text = await res.text();
-  let json = null;
-  if (text) {
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    let res;
+    let text;
     try {
-      json = JSON.parse(text);
-    } catch {
-      throw new Error(`Non-JSON ${res.status} ${method} ${url.pathname}: ${text.slice(0, 400)}`);
+      res = await fetch(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${LOCAL.token}`,
+          'Content-Type': 'application/json',
+        },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+      text = await res.text();
+    } catch (error) {
+      await new Promise((resolve) => setTimeout(resolve, 2000 * (attempt + 1)));
+      if (attempt === 7) throw error;
+      continue;
     }
+    let json = null;
+    if (text) {
+      try {
+        json = JSON.parse(text);
+      } catch {
+        if (res.status === 502 || res.status === 503) {
+          await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
+          continue;
+        }
+        throw new Error(`Non-JSON ${res.status} ${method} ${url.pathname}: ${text.slice(0, 400)}`);
+      }
+    }
+    if (res.status === 429) {
+      await new Promise((resolve) => setTimeout(resolve, 65000));
+      continue;
+    }
+    if (res.status === 502 || res.status === 503) {
+      await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
+      continue;
+    }
+    if (!res.ok) {
+      throw new Error(`${res.status} ${method} ${url.pathname}: ${text.slice(0, 600)}`);
+    }
+    return json;
   }
-  if (!res.ok) {
-    throw new Error(`${res.status} ${method} ${url.pathname}: ${text.slice(0, 600)}`);
-  }
-  return json;
+  throw new Error(`Exhausted retries ${method} ${url.pathname}`);
 }
 
 async function fetchAllPages(pathname, collectionKey, extraQuery) {
   const all = [];
   let after;
-  do {
+  for (;;) {
     const body = await rest('GET', pathname, {
       query: { limit: PAGE_LIMIT, ...extraQuery, ...(after ? { after } : {}) },
     });
-    all.push(...unwrapList(body, collectionKey));
-    after = resolveNextCursor(after, extractPageInfo(body));
-  } while (after);
+    const page = unwrapList(body, collectionKey);
+    if (page.length === 0) break;
+    all.push(...page);
+    const pageInfo = extractPageInfo(body);
+    const next = resolveNextCursor(after, pageInfo);
+    if (next) {
+      after = next;
+      continue;
+    }
+    // Some Twenty REST responses omit hasNextPage while more rows remain.
+    if (page.length >= PAGE_LIMIT && pageInfo.endCursor && String(pageInfo.endCursor) !== after) {
+      after = String(pageInfo.endCursor);
+      continue;
+    }
+    break;
+  }
   return all;
 }
 
@@ -251,47 +280,48 @@ async function main() {
     byTipDetail.set(`${row.category}::${row.tipDetail}`, match.id);
   }
 
-  const tipFilter = `tip[in]:${JSON.stringify(SUPPLIER_PICKER_TIPS)}`;
-  const lineItems = await fetchAllPages('/dealLineItems', 'dealLineItems', {
-    depth: 1,
-    filter: tipFilter,
-  });
-
+  // Cursor pagination over tip filters can loop; drain NULL supplierId pages instead.
   let patched = 0;
   let skipped = 0;
+  let scanned = 0;
 
-  for (const item of lineItems) {
-    if (!item || typeof item.id !== 'string') {
-      skipped += 1;
-      continue;
-    }
-    if (resolveSupplierId(item)) {
-      skipped += 1;
-      continue;
-    }
-    if (item.tipDetail === 'KTO_EDET') {
-      skipped += 1;
-      continue;
-    }
-    const tip = typeof item.tip === 'string' ? item.tip : '';
-    const tipDetail = typeof item.tipDetail === 'string' ? item.tipDetail : '';
-    const supplierId =
-      tipDetail
-        ? byTipDetail.get(`${tip}::${tipDetail}`) ??
-          findSupplierByNameAndCategory(
-            suppliers,
-            TIP_DETAIL_TO_SUPPLIER.find(
-              (row) => row.tipDetail === tipDetail && row.category === tip,
-            )?.name ?? tipDetail,
-            tip,
-          )?.id
-        : undefined;
+  for (const row of TIP_DETAIL_TO_SUPPLIER) {
+    const supplierId = byTipDetail.get(`${row.category}::${row.tipDetail}`);
     if (!supplierId) {
-      skipped += 1;
-      continue;
+      throw new Error(`Missing supplier map for ${row.category}::${row.tipDetail}`);
     }
-    await rest('PATCH', `/dealLineItems/${item.id}`, { body: { supplierId } });
-    patched += 1;
+    for (;;) {
+      const body = await rest('GET', '/dealLineItems', {
+        query: {
+          limit: 50,
+          depth: 0,
+          filter: `and(tip[eq]:"${row.category}",tipDetail[eq]:"${row.tipDetail}",supplierId[is]:NULL)`,
+        },
+      });
+      const page = unwrapList(body, 'dealLineItems');
+      if (page.length === 0) break;
+      scanned += page.length;
+      let progressed = 0;
+      for (const item of page) {
+        if (!item || typeof item.id !== 'string') {
+          skipped += 1;
+          continue;
+        }
+        if (resolveSupplierId(item)) {
+          skipped += 1;
+          continue;
+        }
+        await rest('PATCH', `/dealLineItems/${item.id}`, { body: { supplierId } });
+        patched += 1;
+        progressed += 1;
+        await new Promise((resolve) => setTimeout(resolve, 650));
+      }
+      if (progressed === 0) {
+        // Avoid infinite loops if API keeps returning unpatchable rows.
+        skipped += page.length;
+        break;
+      }
+    }
   }
 
   console.log(
@@ -302,7 +332,7 @@ async function main() {
         collapsed,
         patched,
         skipped,
-        lineItems: lineItems.length,
+        scanned,
         suppliers: suppliers.length,
       },
       null,
