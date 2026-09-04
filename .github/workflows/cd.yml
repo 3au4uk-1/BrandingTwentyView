@@ -112,9 +112,14 @@ jobs:
           set +e
           for i in 1 2 3 4 5; do
             echo "Install attempt $i"
-            yarn twenty app:install --remote target
+            out="$(yarn twenty app:install --remote target 2>&1)"
             code=$?
+            printf '%s\n' "$out"
             if [ "$code" -eq 0 ]; then
+              exit 0
+            fi
+            if printf '%s' "$out" | grep -q 'is already installed in this workspace'; then
+              echo "This version is already installed; treat as success."
               exit 0
             fi
             sleep $((i * 25))
