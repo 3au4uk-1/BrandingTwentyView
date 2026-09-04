@@ -36,8 +36,8 @@ jobs:
           echo "Deploying to ${{ env.TWENTY_DEPLOY_URL }} (ref=${{ github.ref_name }})"
 
       # Twenty rejects deploy unless package.json version is strictly higher than the
-      # currently installed app. Prereleases like 0.5.3-staging.N are LOWER than 0.5.3
-      # (semver), so we always rewrite to major.minor.<run_number> for this job only.
+      # currently installed/published app. Include GITHUB_RUN_ATTEMPT so a rerun of
+      # the same workflow can publish after a successful upload + failed install.
       - name: Auto-bump version for deploy
         run: |
           node -e "
@@ -48,24 +48,76 @@ jobs:
           const major = parts[0] ?? 0;
           const minor = parts[1] ?? 0;
           const run = parseInt(process.env.GITHUB_RUN_NUMBER, 10);
+          const attempt = parseInt(process.env.GITHUB_RUN_ATTEMPT, 10) || 1;
           if (!Number.isFinite(run) || run < 1) {
             throw new Error('GITHUB_RUN_NUMBER missing or invalid: ' + process.env.GITHUB_RUN_NUMBER);
           }
-          pkg.version = major + '.' + minor + '.' + run;
+          pkg.version = major + '.' + minor + '.' + (run * 10 + attempt);
           fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
-          console.log('version ->', pkg.version, '(from', base + ')');
+          console.log('version ->', pkg.version, '(from', base + ', run', run, 'attempt', attempt + ')');
           "
 
-      - name: Deploy
-        uses: twentyhq/twenty/.github/actions/deploy-twenty-app@main
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          api-url: ${{ env.TWENTY_DEPLOY_URL }}
-          api-key: ${{ secrets.TWENTY_DEPLOY_API_KEY }}
+          node-version-file: .nvmrc
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Configure Twenty remote
+        run: |
+          mkdir -p ~/.twenty
+          node -e "
+          const fs = require('fs'), path = require('path'), os = require('os');
+          fs.writeFileSync(path.join(os.homedir(), '.twenty', 'config.json'), JSON.stringify({
+            version: 1,
+            remotes: { target: { apiUrl: process.env.API_URL, apiKey: process.env.API_KEY, accessToken: process.env.API_KEY } }
+          }, null, 2));
+          "
+        env:
+          API_URL: ${{ env.TWENTY_DEPLOY_URL }}
+          API_KEY: ${{ secrets.TWENTY_DEPLOY_API_KEY }}
+
+      - name: Deploy
+        run: |
+          set +e
+          for i in 1 2 3 4 5; do
+            echo "Publish attempt $i"
+            out="$(yarn twenty app:publish --private --remote target 2>&1)"
+            code=$?
+            printf '%s\n' "$out"
+            if [ "$code" -eq 0 ]; then
+              exit 0
+            fi
+            if printf '%s' "$out" | grep -q 'version must be higher than the currently deployed version'; then
+              echo "This version is already on the server; continue to install."
+              exit 0
+            fi
+            sleep $((i * 20))
+          done
+          echo "Publish failed after 5 attempts"
+          exit 1
 
       # Must succeed: soft-fail previously masked UUID ownership collisions and left
       # new fields (poryadok, tipDetail, …) never synced on staging.
+      # Install also flakes on cross-app supplier↔dealLineItem relation validation.
       - name: Install
-        uses: twentyhq/twenty/.github/actions/install-twenty-app@main
-        with:
-          api-url: ${{ env.TWENTY_DEPLOY_URL }}
-          api-key: ${{ secrets.TWENTY_DEPLOY_API_KEY }}
+        run: |
+          set +e
+          for i in 1 2 3 4 5; do
+            echo "Install attempt $i"
+            yarn twenty app:install --remote target
+            code=$?
+            if [ "$code" -eq 0 ]; then
+              exit 0
+            fi
+            sleep $((i * 25))
+          done
+          echo "Install failed after 5 attempts"
+          exit 1
