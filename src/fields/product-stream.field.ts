@@ -7,7 +7,7 @@ export default defineField({
   universalIdentifier: DEAL_LINE_ITEM_PRODUCT_STREAM_FIELD_UNIVERSAL_IDENTIFIER,
   objectUniversalIdentifier: DEAL_LINE_ITEM_OBJECT_UNIVERSAL_IDENTIFIER,
   name: 'productStream',
-  type: FieldType.SELECT,
+  type: FieldType.MULTI_SELECT,
   label: 'Поток',
   icon: 'IconCategory',
   options: [
