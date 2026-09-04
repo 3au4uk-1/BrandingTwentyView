@@ -20,21 +20,29 @@ export const BOARD_KIND = {
 
 export type BoardKind = (typeof BOARD_KIND)[keyof typeof BOARD_KIND];
 
-export function normalizeProductStream(raw: unknown): ProductStream {
-  if (raw === PRODUCT_STREAM.DECOR || raw === PRODUCT_STREAM.MK) {
-    return raw;
-  }
-  return PRODUCT_STREAM.BRANDING;
+const STREAM_ORDER: ProductStream[] = [
+  PRODUCT_STREAM.MK,
+  PRODUCT_STREAM.DECOR,
+  PRODUCT_STREAM.BRANDING,
+];
+
+export function normalizeProductStreams(raw: unknown): ProductStream[] {
+  const values = Array.isArray(raw) ? raw : raw == null || raw === '' ? [] : [raw];
+  const allowed = new Set<string>(STREAM_ORDER);
+  const present = new Set(
+    values.filter((value): value is ProductStream => allowed.has(String(value))),
+  );
+  return STREAM_ORDER.filter((stream) => present.has(stream));
 }
 
 export function lineItemMatchesBoardStream(
-  stream: ProductStream,
+  streams: readonly ProductStream[],
   boardStream: BoardStream,
 ): boolean {
   if (boardStream === BOARD_STREAM.BRANDING) {
-    return stream === PRODUCT_STREAM.BRANDING;
+    return streams.includes(PRODUCT_STREAM.BRANDING);
   }
-  return stream === PRODUCT_STREAM.DECOR || stream === PRODUCT_STREAM.MK;
+  return streams.includes(PRODUCT_STREAM.DECOR) || streams.includes(PRODUCT_STREAM.MK);
 }
 
 export function boardStreamToBoardKind(boardStream: BoardStream): BoardKind {
@@ -55,6 +63,6 @@ export function filterLineItemsByBoardStream<T extends { productStream?: unknown
   boardStream: BoardStream,
 ): T[] {
   return items.filter((item) =>
-    lineItemMatchesBoardStream(normalizeProductStream(item.productStream), boardStream),
+    lineItemMatchesBoardStream(normalizeProductStreams(item.productStream), boardStream),
   );
 }

@@ -98,7 +98,7 @@ export type LineItemRow = {
   okleykaTelegramSentAt?: string | null;
   okleykaTelegramSentBy?: string | null;
   okleykaTelegramChatId?: string | null;
-  productStream?: ProductStream | null;
+  productStream?: ProductStream | ProductStream[] | null;
   stoimostPechati?: { amountMicros: number; currencyCode: string };
   stoimostFrezy?: { amountMicros: number; currencyCode: string };
   stoimostOkleyki?: { amountMicros: number; currencyCode: string } | null;
