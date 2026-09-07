@@ -1,42 +1,54 @@
-# Task 9 Report: Mobile filters + sync path
+# Task 9 Report: Chip on the deals board
 
 ## Status
-Complete.
+**Complete**
 
-## Summary
-Mobile deals board now edits filters directly via `FilterState` / FilterAST (same session CoW pipeline as desktop). Removed `QuickFiltersBar` from `MobileFiltersSheet`; clause edits use `useFilterClauseEditor` with `beginSessionClauses` and never set `sessionClauses: []` on reset (reset clears session to `{}`). `DealsBoard` passes `filterBarValue` + `handleFilterBarChange` to mobile instead of the legacy quick-filter bridge. Added mobile «+ Позиция» via `useCreateLineItem` so manual sync toast path is reachable on mobile. Confirmed `ManualSyncErrorToastProvider` already wraps the mobile tree (Task 2).
+## Commits
+- `271fd90` — `feat(deals-board): banner crew chip beside deal date`
 
-## Files
-| Action | Path |
-|--------|------|
-| Create | `src/deals-board/filter-model/use-filter-clause-editor.ts` |
-| Modify | `src/deals-board/mobile/MobileFiltersSheet.tsx` |
-| Modify | `src/deals-board/mobile/MobileDealsBoard.tsx` |
-| Modify | `src/deals-board/mobile/MobileLineItemList.tsx` |
-| Modify | `src/deals-board/mobile/types.ts` |
-| Modify | `src/deals-board/DealsBoard.tsx` |
+## Changes
 
-## Session contract
-- Mobile sheet mutates `FilterState.sessionClauses` via `beginSessionClauses(viewClauses)` on first clause edit.
-- Reset → `handleFilterReset` → `setFilterSession({})` (not `[]`).
-- Search in toolbar updates `FilterState.search` on the same `filterBarValue` object.
+### Created
+- `src/deals-board/banner-crew/BannerCrewChip.tsx` — clickable chip; `useBannerCrewSlots` + `buildBannerCrewChipModel` (`lineItems`, this-opportunity `slots`, `allSlotsForConflicts` = full query list); inner `Chip` with `useTheme`; opens `BannerCrewModal` via local `useState`. Renders nothing when `model === null`. Button: `type="button"`, no border/background/padding, `cursor: pointer`, `flexShrink: 1`, `stopPropagation` on click and pointer down.
 
-## Tests
-```
-node node_modules/vitest/dist/cli.js run --config vitest.unit.config.ts
-→ 61 files, 348 tests passed
-```
+### Modified
+- `src/deals-board/cells/overrides.tsx` — `case 'loadDate'` now renders `LoadDateCell` (flex row: `gap: theme.spacing.sm`, `alignItems: 'center'`, `minWidth: 0`) with `DatePickerModal` + `BannerCrewChip`. `loadDate` from `props.value`; name from `row.name`.
+- `src/deals-board/mobile/MobileDealCard.tsx` — `BannerCrewChip` after the `showDate` span; `dealLineItems`, `dealName`, `row.loadDate`.
+
+### Untouched (confirmed in commit `271fd90`)
+- `case 'tipDetail'` / `SupplierCombobox` — not present in the overrides diff (no added or removed lines).
 
 ## Lint
-```
-npx oxlint -c .oxlintrc.json src/deals-board/mobile/ src/deals-board/filter-model/use-filter-clause-editor.ts src/deals-board/DealsBoard.tsx
-→ 0 errors (1 pre-existing warning: unused opportunityLinkFieldNames in DealsBoard)
-```
+| Command | Result |
+|---|---|
+| `yarn lint` | 17 warnings, 0 errors — all pre-existing, **none in the three task files** |
+| `yarn oxlint -c .oxlintrc.json` on the three files | 0 warnings, 0 errors |
 
-## Commit
-`feat: mobile simplified filters on FilterAST + shared sync toast`
+No unit test file in this task; plan check is lint.
 
 ## Concerns
-1. Manual smoke: mobile filter sheet touch targets + company search scroll on small screens.
-2. `QuickFiltersBar` + bridge helpers remain for legacy/tests; desktop FilterBar still has parallel clause logic (hook not yet shared with FilterBar).
-3. No mobile UI test for filter sheet or create-line-item button.
+1. **No component tests.** Chip visibility/color stay covered by `chip-model.test.ts`; click → modal is untested.
+2. **DatePicker `width: 100%`.** The date trigger still wants full cell width; the chip uses `flexShrink: 1` + `minWidth: 0` so it should ellipsize, but the date button may crowd a narrow column.
+3. **Chip still mounts when there is no `loadDate` on mobile** (sibling of `showDate`, not gated by it) so banner deals without a date can still open the modal.
+
+## Review fix: chip visibility vs board-filtered line items
+
+Chip visibility no longer depends on the board-filtered `lineItems` prop.
+
+`BannerCrewChip` reads `queryClient.getQueriesData({ queryKey: ['lineItems'] })`, flattens arrays, and keeps items with `opportunityId === opportunityId` via `lineItemsForOpportunity(cacheLists, opportunityId, fallback)`. Empty cache falls back to the prop. Slots still come from this opportunity via `useBannerCrewSlots`; conflicts still use the full slot list.
+
+`tipDetail` / `SupplierCombobox` unchanged (no edits in `overrides.tsx` or `SupplierCombobox.tsx`).
+
+### Tests
+```
+yarn test:unit src/deals-board/banner-crew/line-items-for-opportunity.test.ts
+✓ src/deals-board/banner-crew/line-items-for-opportunity.test.ts (3 tests) 3ms
+Test Files  1 passed (1)
+Tests  3 passed (3)
+```
+
+### Lint
+```
+yarn oxlint -c .oxlintrc.json src/deals-board/banner-crew/BannerCrewChip.tsx src/deals-board/banner-crew/line-items-for-opportunity.ts src/deals-board/banner-crew/line-items-for-opportunity.test.ts
+Found 0 warnings and 0 errors.
+```

@@ -1,16 +1,23 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState, type MouseEvent } from 'react';
 
 import { Chip } from '../Chip';
 import { useTheme } from '../theme/ThemeContext';
 import { BannerCrewModal } from './BannerCrewModal';
 import { buildBannerCrewChipModel } from './chip-model';
+import { lineItemsForOpportunity } from './line-items-for-opportunity';
 import { useBannerCrewSlots } from './useBannerCrewSlots';
+
+type BannerCrewChipLineItem = {
+  opportunityId?: string | null;
+  tip?: string | null;
+};
 
 type BannerCrewChipProps = {
   opportunityId: string;
   opportunityName: string;
   loadDate?: string | null;
-  lineItems: Array<{ tip?: string | null }>;
+  lineItems: BannerCrewChipLineItem[];
 };
 
 export const BannerCrewChip = ({
@@ -20,6 +27,7 @@ export const BannerCrewChip = ({
   lineItems,
 }: BannerCrewChipProps) => {
   const theme = useTheme();
+  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const { data: allSlots = [] } = useBannerCrewSlots();
 
@@ -28,8 +36,15 @@ export const BannerCrewChip = ({
     [allSlots, opportunityId],
   );
 
+  const dealLineItems = useMemo(() => {
+    const cacheLists = queryClient
+      .getQueriesData<BannerCrewChipLineItem[]>({ queryKey: ['lineItems'] })
+      .map(([, items]) => items);
+    return lineItemsForOpportunity(cacheLists, opportunityId, lineItems);
+  }, [lineItems, opportunityId, queryClient]);
+
   const model = buildBannerCrewChipModel({
-    lineItems,
+    lineItems: dealLineItems,
     slots,
     allSlotsForConflicts: allSlots,
   });
