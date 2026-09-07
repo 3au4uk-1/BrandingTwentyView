@@ -200,14 +200,27 @@ export const buildPrevyuUploadHtml = ({
       var thumb = document.createElement('div');
       thumb.className = 'thumb';
       var label = file.label || file.fileId || '';
-      if (/^https?:\\/\\//i.test(label)) {
+      var src = '';
+      if (file.url && /^https?:\\/\\//i.test(String(file.url))) {
+        src = String(file.url);
+      } else if (
+        /^https?:\\/\\//i.test(label) &&
+        String(label).indexOf('/file/files-field/') === -1
+      ) {
+        src = label;
+      }
+      if (src) {
         var img = document.createElement('img');
-        img.src = label;
+        img.src = src;
         img.alt = '';
         thumb.appendChild(img);
       }
       var text = document.createElement('span');
-      text.textContent = (label || file.fileId) + (index === 0 ? ' · первое' : '');
+      var caption = label;
+      if (/^https?:\\/\\//i.test(caption) || String(caption).indexOf('/file/files-field/') !== -1) {
+        caption = file.fileId || '';
+      }
+      text.textContent = caption + (index === 0 ? ' · первое' : '');
       row.appendChild(thumb);
       row.appendChild(text);
       listEl.appendChild(row);

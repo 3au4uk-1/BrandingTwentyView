@@ -4,6 +4,10 @@ import {
   DEFAULT_MANUAL_LINE_ITEM_NAME,
   LINE_ITEM_ORIGIN,
 } from 'src/constants/line-item-origin';
+import {
+  parsePrevyuFileRefsForDisplay,
+  sanitizePrevyuFileRefs,
+} from 'src/logic-functions/shared/prevyu-upload-service';
 
 import type { LineItemRow } from '../types';
 import { extractRestPageInfo, normalizeRestListResponse, resolveNextRestCursor } from './rest-list';
@@ -193,6 +197,9 @@ const normalizeLineItemRow = (raw: unknown): LineItemRow | null => {
     name: item.name,
     opportunityId,
     ...(nestedSupplierId !== undefined ? { supplierId: nestedSupplierId } : {}),
+    ...(Object.prototype.hasOwnProperty.call(item, 'prevyuOkleyki')
+      ? { prevyuOkleyki: parsePrevyuFileRefsForDisplay(item.prevyuOkleyki) }
+      : {}),
   };
 };
 
@@ -370,6 +377,9 @@ export const updateLineItem = async (
   const payload = { ...data };
   // Nested `supplier` is cache-only (id + name). REST join column is `supplierId`.
   delete payload.supplier;
+  if (Object.prototype.hasOwnProperty.call(payload, 'prevyuOkleyki')) {
+    payload.prevyuOkleyki = sanitizePrevyuFileRefs(payload.prevyuOkleyki);
+  }
   await client.patch(`/rest/dealLineItems/${id}`, payload);
 };
 

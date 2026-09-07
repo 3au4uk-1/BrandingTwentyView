@@ -11,6 +11,7 @@ import {
 import {
   buildNextPrevyuFiles,
   decodePrevyuUploadBytes,
+  parsePrevyuFileRefsForDisplay,
   parsePrevyuUploadBody,
   PREVYU_UPLOAD_MAX_FILES,
   sanitizePrevyuFileRefs,
@@ -36,6 +37,16 @@ const parseBody = (raw: unknown): unknown => {
 };
 
 const readCurrentFiles = async (lineItemId: string) => {
+  const record = await readLineItemRecord(lineItemId);
+  return sanitizePrevyuFileRefs(record.prevyuOkleyki);
+};
+
+const readDisplayFiles = async (lineItemId: string) => {
+  const record = await readLineItemRecord(lineItemId);
+  return parsePrevyuFileRefsForDisplay(record.prevyuOkleyki);
+};
+
+const readLineItemRecord = async (lineItemId: string) => {
   const client = new RestApiClient();
   const row = await client.get<Record<string, unknown>>(
     `/rest/dealLineItems/${encodeURIComponent(lineItemId)}`,
@@ -44,8 +55,7 @@ const readCurrentFiles = async (lineItemId: string) => {
     (row?.data as Record<string, unknown> | undefined)?.dealLineItem ??
     row?.dealLineItem ??
     row;
-  const record = (data && typeof data === 'object' ? data : {}) as Record<string, unknown>;
-  return sanitizePrevyuFileRefs(record.prevyuOkleyki);
+  return (data && typeof data === 'object' ? data : {}) as Record<string, unknown>;
 };
 
 const handler = async (event: RoutePayload) => {
@@ -82,18 +92,15 @@ const handler = async (event: RoutePayload) => {
       return jsonResponse(500, { error: 'Upload did not return file id' });
     }
 
-    const next = buildNextPrevyuFiles(
-      current,
-      { id: uploaded.id, url: typeof uploaded.url === 'string' ? uploaded.url : undefined },
-      decoded.filename,
-    );
+    const next = buildNextPrevyuFiles(current, { id: uploaded.id }, decoded.filename);
 
     const rest = new RestApiClient();
     await rest.patch(`/rest/dealLineItems/${encodeURIComponent(lineItemId)}`, {
       prevyuOkleyki: next,
     });
 
-    return jsonResponse(200, { ok: true, files: next });
+    const files = await readDisplayFiles(lineItemId);
+    return jsonResponse(200, { ok: true, files });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Upload failed';
     const friendly =

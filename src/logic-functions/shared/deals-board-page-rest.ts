@@ -1,5 +1,6 @@
 import { RestApiClient } from 'twenty-client-sdk/rest';
 
+import { parsePrevyuFileRefsForDisplay } from './prevyu-upload-service';
 import type { LineItemRowLike } from './deals-board-page-types';
 
 const PAGE_LIMIT = 200;
@@ -93,6 +94,9 @@ const normalizeLineItemRow = (raw: unknown): LineItemRowLike | null => {
     id: item.id,
     opportunityId,
     ...(nestedSupplierId !== undefined ? { supplierId: nestedSupplierId } : {}),
+    ...(Object.prototype.hasOwnProperty.call(item, 'prevyuOkleyki')
+      ? { prevyuOkleyki: parsePrevyuFileRefsForDisplay(item.prevyuOkleyki) }
+      : {}),
   } as LineItemRowLike;
 };
 

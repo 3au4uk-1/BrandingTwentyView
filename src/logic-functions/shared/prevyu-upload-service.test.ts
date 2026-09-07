@@ -4,9 +4,12 @@ import {
   buildNextPrevyuFiles,
   decodePrevyuUploadBytes,
   isAllowedPrevyuContentType,
+  isTwentyFilesFieldUrl,
+  parsePrevyuFileRefsForDisplay,
   parsePrevyuUploadBody,
   sanitizePrevyuFileRef,
   sanitizePrevyuFileRefs,
+  toPersistablePrevyuLabel,
 } from './prevyu-upload-service';
 
 describe('parsePrevyuUploadBody', () => {
@@ -58,13 +61,73 @@ describe('sanitizePrevyuFileRefs', () => {
   it('defaults missing label to fileId', () => {
     expect(sanitizePrevyuFileRef({ fileId: 'f1' })).toEqual({ fileId: 'f1', label: 'f1' });
   });
+
+  it('rewrites signed Twenty file URLs in label to a persistable name', () => {
+    expect(
+      sanitizePrevyuFileRef({
+        fileId: '085cb038-b76f-4abb-bbcc-07679b299827',
+        label:
+          'https://twenty.dosugmayak.ru/file/files-field/085cb038-b76f-4abb-bbcc-07679b299827?token=expired',
+        extension: '.png',
+      }),
+    ).toEqual({
+      fileId: '085cb038-b76f-4abb-bbcc-07679b299827',
+      label: '085cb038-b76f-4abb-bbcc-07679b299827.png',
+    });
+  });
+});
+
+describe('toPersistablePrevyuLabel / isTwentyFilesFieldUrl', () => {
+  it('detects Twenty signed files-field URLs', () => {
+    expect(
+      isTwentyFilesFieldUrl(
+        'https://twenty.dosugmayak.ru/file/files-field/085cb038-b76f-4abb-bbcc-07679b299827?token=abc',
+      ),
+    ).toBe(true);
+    expect(isTwentyFilesFieldUrl('shot.png')).toBe(false);
+    expect(isTwentyFilesFieldUrl('https://disk.example/a.jpg')).toBe(false);
+  });
+
+  it('keeps ordinary filenames and rewrites signed URLs', () => {
+    expect(
+      toPersistablePrevyuLabel({ fileId: 'f1', label: 'shot.png' }),
+    ).toBe('shot.png');
+    expect(
+      toPersistablePrevyuLabel({
+        fileId: 'f1',
+        label: 'https://twenty.example/file/files-field/f1?token=x',
+        extension: '.jpg',
+      }),
+    ).toBe('f1.jpg');
+  });
+});
+
+describe('parsePrevyuFileRefsForDisplay', () => {
+  it('keeps the fresh GET url and persistable label', () => {
+    expect(
+      parsePrevyuFileRefsForDisplay([
+        {
+          fileId: 'f1',
+          label: 'https://twenty.example/file/files-field/f1?token=old',
+          extension: '.png',
+          url: 'https://twenty.example/file/files-field/f1?token=fresh',
+        },
+      ]),
+    ).toEqual([
+      {
+        fileId: 'f1',
+        label: 'f1.png',
+        url: 'https://twenty.example/file/files-field/f1?token=fresh',
+      },
+    ]);
+  });
 });
 
 describe('buildNextPrevyuFiles', () => {
-  it('appends uploaded file ref with url label', () => {
+  it('appends uploaded file ref with filename label, not signed url', () => {
     expect(
       buildNextPrevyuFiles([], { id: 'f1', url: 'https://cdn/x.png' }, 'shot.png'),
-    ).toEqual([{ fileId: 'f1', label: 'https://cdn/x.png' }]);
+    ).toEqual([{ fileId: 'f1', label: 'shot.png' }]);
   });
 
   it('sanitizes existing GET-shaped refs before append', () => {
@@ -83,7 +146,7 @@ describe('buildNextPrevyuFiles', () => {
       ),
     ).toEqual([
       { fileId: 'f1', label: 'a.png' },
-      { fileId: 'f2', label: 'https://cdn/b.png' },
+      { fileId: 'f2', label: 'b.png' },
     ]);
   });
 });

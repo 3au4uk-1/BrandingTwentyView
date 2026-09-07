@@ -30,7 +30,7 @@ describe('mergePrevyuFiles / removePrevyuFile', () => {
     ]);
   });
 
-  it('strips GET-only fields (extension/url) before PATCH shape', () => {
+  it('keeps GET url for display and drops extension', () => {
     expect(
       mergePrevyuFileList(
         [
@@ -44,7 +44,7 @@ describe('mergePrevyuFiles / removePrevyuFile', () => {
         [{ fileId: 'b', label: 'b.png' }],
       ),
     ).toEqual([
-      { fileId: 'a', label: 'a.png' },
+      { fileId: 'a', label: 'a.png', url: 'https://cdn/a' },
       { fileId: 'b', label: 'b.png' },
     ]);
   });
@@ -92,6 +92,31 @@ describe('resolvePrevyuFileUrls', () => {
     ).toEqual(['https://disk.example/a.jpg', expect.stringContaining('y')]);
   });
 
+  it('prefers the fresh GET url over a stale signed URL stored in label', () => {
+    expect(
+      resolvePrevyuFileUrls([
+        {
+          fileId: 'f1',
+          label:
+            'https://twenty.dosugmayak.ru/file/files-field/f1?token=expired',
+          url: 'https://twenty.dosugmayak.ru/file/files-field/f1?token=fresh',
+        },
+      ]),
+    ).toEqual(['https://twenty.dosugmayak.ru/file/files-field/f1?token=fresh']);
+  });
+
+  it('does not use expired Twenty files-field URLs from label', () => {
+    const urls = resolvePrevyuFileUrls([
+      {
+        fileId: 'f1',
+        label:
+          'https://twenty.dosugmayak.ru/file/files-field/f1?token=expired',
+      },
+    ]);
+    expect(urls[0]).not.toContain('token=expired');
+    expect(urls[0]).toContain('f1');
+  });
+
   it('returns empty for missing files', () => {
     expect(resolvePrevyuFileUrls(null)).toEqual([]);
     expect(resolvePrevyuFileUrls([])).toEqual([]);
@@ -126,10 +151,10 @@ describe('image file helpers', () => {
     expect(new Uint8Array(buffer)).toEqual(new Uint8Array([9, 8, 7]));
   });
 
-  it('stores upload url as label when present', () => {
+  it('stores filename as label and keeps upload url for display', () => {
     expect(
       toPrevyuFileRef({ fileId: 'id-1', url: 'https://cdn/x.png' }, 'fallback.png'),
-    ).toEqual({ fileId: 'id-1', label: 'https://cdn/x.png' });
+    ).toEqual({ fileId: 'id-1', label: 'fallback.png', url: 'https://cdn/x.png' });
   });
 });
 
