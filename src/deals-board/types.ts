@@ -79,7 +79,7 @@ export type OpportunityRow = {
   [key: string]: unknown;
 };
 
-export type LineItemFileRef = { fileId: string; label?: string };
+export type LineItemFileRef = { fileId: string; label?: string; url?: string };
 
 export type LineItemRow = {
   id: string;

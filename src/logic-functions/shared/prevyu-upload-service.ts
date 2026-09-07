@@ -4,23 +4,54 @@ export type PrevyuUploadPostBody = {
   dataBase64: string;
 };
 
-export type PrevyuFileRefLike = { fileId: string; label?: string };
+export type PrevyuFileRefLike = { fileId: string; label?: string; url?: string };
 
 export const PREVYU_UPLOAD_MAX_FILES = 6;
+
+const TWENTY_FILES_FIELD_URL = /\/file\/files-field\//i;
+
+export const isTwentyFilesFieldUrl = (value: string): boolean =>
+  TWENTY_FILES_FIELD_URL.test(value.trim());
+
+const normalizeExtension = (extension: string | undefined): string => {
+  const trimmed = extension?.trim() ?? '';
+  if (!trimmed) return '';
+  return trimmed.startsWith('.') ? trimmed : `.${trimmed}`;
+};
+
+export const toPersistablePrevyuLabel = (file: {
+  fileId: string;
+  label?: string;
+  extension?: string;
+}): string => {
+  const label = file.label?.trim() ?? '';
+  if (label && !/^https?:\/\//i.test(label) && !isTwentyFilesFieldUrl(label)) {
+    return label;
+  }
+  return `${file.fileId}${normalizeExtension(file.extension)}`;
+};
 
 /**
  * Twenty FILES PATCH input is strict `{ fileId, label }` only.
  * GET/list responses also include `extension` / `url` — re-sending those → 400.
+ * Signed download URLs must never be persisted as `label` — they expire (~24h).
  */
 export const sanitizePrevyuFileRef = (file: unknown): PrevyuFileRefLike | null => {
   if (!file || typeof file !== 'object') return null;
   const record = file as Record<string, unknown>;
   if (typeof record.fileId !== 'string' || !record.fileId.trim()) return null;
-  const label =
-    typeof record.label === 'string' && record.label.trim()
-      ? record.label.trim()
-      : record.fileId;
-  return { fileId: record.fileId, label };
+  const rawLabel =
+    typeof record.label === 'string' && record.label.trim() ? record.label.trim() : '';
+  const extension =
+    typeof record.extension === 'string' ? record.extension : undefined;
+  return {
+    fileId: record.fileId,
+    label: toPersistablePrevyuLabel({
+      fileId: record.fileId,
+      label: rawLabel,
+      extension,
+    }),
+  };
 };
 
 export const sanitizePrevyuFileRefs = (
@@ -29,6 +60,22 @@ export const sanitizePrevyuFileRefs = (
   if (!Array.isArray(raw)) return [];
   return raw
     .map(sanitizePrevyuFileRef)
+    .filter((file): file is PrevyuFileRefLike => file !== null);
+};
+
+export const parsePrevyuFileRefForDisplay = (file: unknown): PrevyuFileRefLike | null => {
+  const sanitized = sanitizePrevyuFileRef(file);
+  if (!sanitized) return null;
+  const record = file as Record<string, unknown>;
+  const url =
+    typeof record.url === 'string' && record.url.trim() ? record.url.trim() : undefined;
+  return url ? { ...sanitized, url } : sanitized;
+};
+
+export const parsePrevyuFileRefsForDisplay = (raw: unknown): PrevyuFileRefLike[] => {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map(parsePrevyuFileRefForDisplay)
     .filter((file): file is PrevyuFileRefLike => file !== null);
 };
 
@@ -89,7 +136,7 @@ export const buildNextPrevyuFiles = (
   }
   next.push({
     fileId: uploaded.id,
-    label: uploaded.url || filename,
+    label: filename,
   });
   return next.slice(0, PREVYU_UPLOAD_MAX_FILES);
 };

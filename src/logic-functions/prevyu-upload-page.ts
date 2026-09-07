@@ -5,7 +5,7 @@ import { RestApiClient } from 'twenty-client-sdk/rest';
 import { PREVYU_UPLOAD_PAGE_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER } from 'src/constants/universal-identifiers';
 
 import { buildPrevyuUploadHtml } from './shared/prevyu-upload-html';
-import { sanitizePrevyuFileRefs } from './shared/prevyu-upload-service';
+import { parsePrevyuFileRefsForDisplay } from './shared/prevyu-upload-service';
 
 const readLineItem = async (lineItemId: string) => {
   const client = new RestApiClient();
@@ -29,11 +29,11 @@ const handler = async (event: RoutePayload) => {
   }
 
   let lineItemName = '';
-  let files = [] as ReturnType<typeof sanitizePrevyuFileRefs>;
+  let files = [] as ReturnType<typeof parsePrevyuFileRefsForDisplay>;
   try {
     const record = await readLineItem(lineItemId);
     lineItemName = typeof record.name === 'string' ? record.name : '';
-    files = sanitizePrevyuFileRefs(record.prevyuOkleyki);
+    files = parsePrevyuFileRefsForDisplay(record.prevyuOkleyki);
   } catch {
     // still render; upload may fail if id invalid
   }

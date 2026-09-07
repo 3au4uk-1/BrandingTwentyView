@@ -490,4 +490,29 @@ describe('updateLineItem supplier relation', () => {
       supplierId: null,
     });
   });
+
+  it('strips GET-only FILES fields before PATCHing prevyuOkleyki', async () => {
+    const patch = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(RestApiClient).mockImplementation(
+      () =>
+        ({
+          patch,
+        }) as unknown as RestApiClient,
+    );
+
+    await updateLineItem('li-1', {
+      prevyuOkleyki: [
+        {
+          fileId: 'f1',
+          label: 'https://twenty.example/file/files-field/f1?token=old',
+          extension: '.png',
+          url: 'https://twenty.example/file/files-field/f1?token=fresh',
+        },
+      ],
+    });
+
+    expect(patch).toHaveBeenCalledWith('/rest/dealLineItems/li-1', {
+      prevyuOkleyki: [{ fileId: 'f1', label: 'f1.png' }],
+    });
+  });
 });

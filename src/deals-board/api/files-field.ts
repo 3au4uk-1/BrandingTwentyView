@@ -1,4 +1,7 @@
-import { sanitizePrevyuFileRefs } from 'src/logic-functions/shared/prevyu-upload-service';
+import {
+  isTwentyFilesFieldUrl,
+  parsePrevyuFileRefsForDisplay,
+} from 'src/logic-functions/shared/prevyu-upload-service';
 
 import type { LineItemFileRef } from '../types';
 import { getTwentyFunctionsBaseUrl } from '../utils/twenty-functions-base-url';
@@ -17,35 +20,41 @@ export const mergePrevyuFiles = (
   current: LineItemFileRef[] | null | undefined,
   next: LineItemFileRef,
 ): LineItemFileRef[] =>
-  sanitizePrevyuFileRefs([...(current ?? []), next]).slice(0, PREVYU_UPLOAD_MAX_FILES);
+  parsePrevyuFileRefsForDisplay([...(current ?? []), next]).slice(0, PREVYU_UPLOAD_MAX_FILES);
 
 export const mergePrevyuFileList = (
   current: LineItemFileRef[] | null | undefined,
   next: LineItemFileRef[],
 ): LineItemFileRef[] =>
-  sanitizePrevyuFileRefs([...(current ?? []), ...next]).slice(0, PREVYU_UPLOAD_MAX_FILES);
+  parsePrevyuFileRefsForDisplay([...(current ?? []), ...next]).slice(
+    0,
+    PREVYU_UPLOAD_MAX_FILES,
+  );
 
 export const removePrevyuFile = (
   current: LineItemFileRef[] | null | undefined,
   fileId: string,
 ): LineItemFileRef[] =>
-  sanitizePrevyuFileRefs(current).filter((file) => file.fileId !== fileId);
+  parsePrevyuFileRefsForDisplay(current).filter((file) => file.fileId !== fileId);
 
 export const movePrevyuFileToFront = (
   current: LineItemFileRef[] | null | undefined,
   fileId: string,
 ): LineItemFileRef[] => {
-  const files = sanitizePrevyuFileRefs(current);
+  const files = parsePrevyuFileRefsForDisplay(current);
   const index = files.findIndex((file) => file.fileId === fileId);
   if (index <= 0) return files;
   const [picked] = files.splice(index, 1);
   return [picked, ...files];
 };
 
+const isHttpUrl = (value: string): boolean => /^https?:\/\//i.test(value);
+
 /**
  * Resolve copy/preview URLs for FILES refs.
- * - Prefer `label` when it is an absolute http(s) URL (upload response url stored as label)
- * - Else build a workspace file download hint from fileId
+ * Prefer the fresh GET `url` (Twenty re-signs it on each read).
+ * Never use a Twenty `/file/files-field/…?token=` value stored in `label` —
+ * those tokens expire (~24h) and are why thumbs became «нет превью».
  */
 export const resolvePrevyuFileUrls = (
   files: LineItemFileRef[] | null | undefined,
@@ -61,8 +70,12 @@ export const resolvePrevyuFileUrls = (
 
   return files
     .map((file) => {
+      const freshUrl = file.url?.trim() ?? '';
+      if (isHttpUrl(freshUrl)) return freshUrl;
+
       const label = file.label?.trim() ?? '';
-      if (/^https?:\/\//i.test(label)) return label;
+      if (isHttpUrl(label) && !isTwentyFilesFieldUrl(label)) return label;
+
       if (!file.fileId) return '';
       if (!origin) return file.fileId;
       return `${origin}/files/${file.fileId}`;
@@ -255,7 +268,7 @@ export const uploadPrevyuFilesViaLogicFunction = async (
     throw new Error('Prevyu upload did not return files');
   }
 
-  return sanitizePrevyuFileRefs(body.files);
+  return parsePrevyuFileRefsForDisplay(body.files);
 };
 
 export const toPrevyuFileRef = (
@@ -263,5 +276,6 @@ export const toPrevyuFileRef = (
   fallbackLabel: string,
 ): LineItemFileRef => ({
   fileId: uploaded.fileId,
-  label: uploaded.url || fallbackLabel,
+  label: fallbackLabel,
+  ...(uploaded.url ? { url: uploaded.url } : {}),
 });
