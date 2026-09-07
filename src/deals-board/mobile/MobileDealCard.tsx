@@ -1,5 +1,6 @@
 import type { MouseEvent } from 'react';
 
+import { BannerCrewChip } from '../banner-crew/BannerCrewChip';
 import { DynamicFieldCell } from '../cells/DynamicFieldCell';
 import { DealSummaryChips } from '../DealsTable/DealSummaryChips';
 import type { LineItemQueryFilters } from '../api/line-items';
@@ -236,6 +237,12 @@ export const MobileDealCard = ({
               {compactDate}
             </span>
           ) : null}
+          <BannerCrewChip
+            opportunityId={row.id}
+            opportunityName={dealName}
+            loadDate={typeof row.loadDate === 'string' ? row.loadDate : null}
+            lineItems={dealLineItems}
+          />
           {showStageChip ? (
             <Chip
               text={getOpportunityStageLabel(stageValue)}
