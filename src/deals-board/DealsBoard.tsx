@@ -93,6 +93,11 @@ import {
   shouldEnableAggregateColdLoad,
 } from './utils/aggregate-cold-load-gate';
 import { mergeAccumulatedRecords } from './utils/merge-accumulated-records';
+import {
+  flattenChipLineItemsForDeals,
+  groupLineItemsByOpportunityId,
+  uniqueOpportunityIds,
+} from './banner-crew/chip-line-items';
 import { applyPrintGroupSeed } from './utils/column-groups';
 import { asArray } from './utils/parse-json-field';
 import { filterLineItemsForSearch, resolveSearchTerms } from './utils/search';
@@ -518,9 +523,16 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     streamFilteredRecords,
   ]);
 
+  // Current page ∪ accumulated mobile rows (same source as mobileRecords).
+  // Do not wait for the later `mobileRecords` declaration — that would move
+  // this useLineItems after other hooks.
   const chipVisibilityOppIds = useMemo(
-    () => filteredBoardData.deals.map((deal) => deal.id),
-    [filteredBoardData.deals],
+    () =>
+      uniqueOpportunityIds(
+        filteredBoardData.deals.map((deal) => deal.id),
+        accumulatedRecords.map((deal) => deal.id),
+      ),
+    [accumulatedRecords, filteredBoardData.deals],
   );
 
   // Chip visibility needs every tip on displayed deals. Do not reuse the
@@ -533,28 +545,27 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     !activeColdLoadLoading && chipVisibilityOppIds.length > 0,
   );
   const unfilteredChipLineItems = asArray<LineItemRow>(unfilteredChipLineItemsQuery.data);
-  const unfilteredLineItemsByOppId = useMemo(() => {
-    const grouped: Record<string, LineItemRow[]> = {};
-    for (const item of filterLineItemsByBoardStream(unfilteredChipLineItems, boardStream)) {
-      (grouped[item.opportunityId] ??= []).push(item);
-    }
-    return grouped;
-  }, [boardStream, unfilteredChipLineItems]);
+  const unfilteredLineItemsByOppId = useMemo(
+    () =>
+      groupLineItemsByOpportunityId(
+        filterLineItemsByBoardStream(unfilteredChipLineItems, boardStream),
+      ),
+    [boardStream, unfilteredChipLineItems],
+  );
 
-  const allDealLineItemsForChip = useMemo(() => {
-    const lists: LineItemRow[] = [];
-    for (const deal of filteredBoardData.deals) {
-      const unfiltered = unfilteredLineItemsByOppId[deal.id];
-      lists.push(
-        ...(unfiltered ?? filteredBoardData.lineItemsByOppId[deal.id] ?? []),
-      );
-    }
-    return lists;
-  }, [
-    filteredBoardData.deals,
-    filteredBoardData.lineItemsByOppId,
-    unfilteredLineItemsByOppId,
-  ]);
+  const allDealLineItemsForChip = useMemo(
+    () =>
+      flattenChipLineItemsForDeals(
+        chipVisibilityOppIds,
+        unfilteredLineItemsByOppId,
+        filteredBoardData.lineItemsByOppId,
+      ),
+    [
+      chipVisibilityOppIds,
+      filteredBoardData.lineItemsByOppId,
+      unfilteredLineItemsByOppId,
+    ],
+  );
 
   const recordsById = useMemo(
     () => new Map(filteredBoardData.deals.map((record) => [record.id, record])),

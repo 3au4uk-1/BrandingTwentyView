@@ -101,3 +101,34 @@ Found 2 warnings and 0 errors — both pre-existing unused vars in DealsBoard.ts
 yarn oxlint -c .oxlintrc.json src/deals-board/DealsBoard.tsx
 Found 2 warnings and 0 errors — pre-existing unused vars (`layout`, `opportunityLinkFieldNames`). None in the new chip query path.
 ```
+
+## Remaining Important: mobile accumulated deals in chip line items
+
+After load-more, mobile cards use `mobileRecords` (`accumulatedRecords`) while the unfiltered chip `useLineItems` and `allDealLineItemsForChip` only iterated `filteredBoardData.deals` (current page). Because `allDealLineItems` is always passed, a previous-page row got `[]` instead of filtered children. A mixed PLENKA+BANNERA deal could hide the chip.
+
+### Fix
+- Unfiltered chip query ids = unique union of current-page `filteredBoardData.deals` and `accumulatedRecords` (same source as `mobileRecords`; not the later `mobileRecords` binding, so hook order stays valid).
+- Flatten `allDealLineItemsForChip` over that union, unfiltered map first, then `filteredBoardData.lineItemsByOppId`.
+- Table `useLineItems` unchanged. Desktop still groups by opportunity id, so extra accumulated items are unused on the current page.
+- `tipDetail` / `SupplierCombobox` unchanged.
+
+### Files
+- `src/deals-board/banner-crew/chip-line-items.ts` (new)
+- `src/deals-board/banner-crew/chip-line-items.test.ts` (new)
+- `src/deals-board/DealsBoard.tsx`
+
+### Tests
+```
+yarn test:unit src/deals-board/banner-crew/chip-line-items.test.ts src/deals-board/banner-crew/line-items-for-opportunity.test.ts src/deals-board/banner-crew/chip-model.test.ts
+✓ src/deals-board/banner-crew/chip-line-items.test.ts (6 tests)
+✓ src/deals-board/banner-crew/line-items-for-opportunity.test.ts (4 tests)
+✓ src/deals-board/banner-crew/chip-model.test.ts (3 tests)
+Test Files  3 passed (3)
+Tests  13 passed (13)
+```
+
+### Lint
+```
+yarn oxlint -c .oxlintrc.json src/deals-board/DealsBoard.tsx src/deals-board/banner-crew/chip-line-items.ts src/deals-board/banner-crew/chip-line-items.test.ts
+Found 2 warnings and 0 errors — pre-existing unused vars in DealsBoard.tsx (`layout`, `opportunityLinkFieldNames`). None in the chip union path.
+```
