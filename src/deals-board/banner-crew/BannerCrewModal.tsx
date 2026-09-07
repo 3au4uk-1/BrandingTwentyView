@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   BANNER_CREW_LOCATION_LABEL,
@@ -97,6 +97,12 @@ const isBlockDirty = (draft: BlockDraft, slot: BannerCrewSlot | undefined): bool
   return !sameInstant(startsAt, slot.startsAt) || !sameInstant(endsAt, slot.endsAt);
 };
 
+export const beginBusy = (ref: { current: boolean }): boolean => {
+  if (ref.current) return false;
+  ref.current = true;
+  return true;
+};
+
 export const BannerCrewModal = ({
   opportunityId,
   opportunityName,
@@ -111,6 +117,7 @@ export const BannerCrewModal = ({
   const suppliersQuery = useSuppliers();
   const [drafts, setDrafts] = useState<Record<string, BlockDraft>>({});
   const [isBusy, setIsBusy] = useState(false);
+  const busyRef = useRef(false);
 
   useEffect(() => {
     if (isOpen) return;
@@ -177,6 +184,9 @@ export const BannerCrewModal = ({
     return Array.from(new Set(names));
   };
 
+  const readCachedSlots = (): BannerCrewSlot[] =>
+    queryClient.getQueryData<BannerCrewSlot[]>(bannerCrewSlotsQueryKey) ?? slots;
+
   const runWrite = async (write: () => Promise<void>, closeAfter: boolean) => {
     setIsBusy(true);
     try {
@@ -189,16 +199,19 @@ export const BannerCrewModal = ({
       );
       await queryClient.invalidateQueries({ queryKey: bannerCrewSlotsQueryKey });
     } finally {
+      busyRef.current = false;
       setIsBusy(false);
     }
   };
 
   const togglePerson = (person: SupplierRow, next: boolean) => {
+    if (!beginBusy(busyRef)) return;
+
     if (next) {
       void runWrite(
         () =>
           ensureSlot({
-            slots,
+            slots: readCachedSlots(),
             opportunityId,
             supplierId: person.id,
             supplierName: person.name,
@@ -223,7 +236,7 @@ export const BannerCrewModal = ({
     void runWrite(
       () =>
         removePersonFromOrder({
-          slots,
+          slots: readCachedSlots(),
           opportunityId,
           supplierId: person.id,
           remove: deleteBannerCrewSlot,
@@ -233,6 +246,8 @@ export const BannerCrewModal = ({
   };
 
   const handleSave = () => {
+    if (!beginBusy(busyRef)) return;
+
     const writes: Array<() => Promise<void>> = [];
 
     for (const person of people) {
@@ -245,6 +260,7 @@ export const BannerCrewModal = ({
 
         const error = blockError(draft);
         if (error) {
+          busyRef.current = false;
           window.alert(
             `Проверьте время: ${person.name} · ${BANNER_CREW_LOCATION_LABEL[location]} — ${error}`,
           );
@@ -256,24 +272,32 @@ export const BannerCrewModal = ({
         if (startsAt === null && endsAt === null) {
           if (!slot) continue;
           if (location === 'BASE') {
-            writes.push(() =>
-              removeLocationSlot({
-                slots,
+            writes.push(async () => {
+              await removeLocationSlot({
+                slots: readCachedSlots(),
                 opportunityId,
                 supplierId: person.id,
                 location,
                 remove: deleteBannerCrewSlot,
-              }),
-            );
+              });
+              await queryClient.invalidateQueries({ queryKey: bannerCrewSlotsQueryKey });
+            });
           } else {
             writes.push(() => updateBannerCrewSlot(slot.id, { startsAt: null, endsAt: null }));
           }
           continue;
         }
 
-        writes.push(() =>
-          ensureSlot({
-            slots,
+        writes.push(async () => {
+          const currentSlots = readCachedSlots();
+          const existed = findSlotForTriple(
+            currentSlots,
+            opportunityId,
+            person.id,
+            location,
+          );
+          await ensureSlot({
+            slots: currentSlots,
             opportunityId,
             supplierId: person.id,
             supplierName: person.name,
@@ -282,8 +306,11 @@ export const BannerCrewModal = ({
             endsAt,
             create: createBannerCrewSlot,
             update: updateBannerCrewSlot,
-          }),
-        );
+          });
+          if (!existed) {
+            await queryClient.invalidateQueries({ queryKey: bannerCrewSlotsQueryKey });
+          }
+        });
       }
     }
 
