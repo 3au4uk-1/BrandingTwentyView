@@ -9,6 +9,7 @@ import type { LineItemType } from 'src/constants/line-item-types';
 import type { LineItemStage } from 'src/constants/stages';
 
 import { BannerCrewChip } from '../banner-crew/BannerCrewChip';
+import { loadDatePickerSlotStyle } from '../banner-crew/chip-layout';
 import { Chip } from '../Chip';
 import { LineItemListMenu } from '../LineItemListMenu';
 import { useLineItemListStatus } from '../hooks/useLineItemListStatus';
@@ -275,18 +276,22 @@ const LoadDateCell = ({ recordId, value, lineItems, allDealLineItems, row }: Fie
     <div
       style={{
         display: 'flex',
+        flexWrap: 'wrap',
         gap: theme.spacing.sm,
         alignItems: 'center',
         minWidth: 0,
+        overflow: 'visible',
       }}
     >
-      <DatePickerModal
-        objectName="opportunity"
-        recordId={recordId}
-        fieldName="loadDate"
-        value={loadDate}
-        emphasized
-      />
+      <div style={loadDatePickerSlotStyle}>
+        <DatePickerModal
+          objectName="opportunity"
+          recordId={recordId}
+          fieldName="loadDate"
+          value={loadDate}
+          emphasized
+        />
+      </div>
       <BannerCrewChip
         opportunityId={recordId}
         opportunityName={opportunityName}

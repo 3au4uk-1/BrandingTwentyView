@@ -66,9 +66,10 @@ type ChipProps = {
   text: string;
   color?: ChipColor;
   theme?: ThemeTokens;
+  truncate?: boolean;
 };
 
-export const Chip = ({ text, color = 'gray', theme }: ChipProps) => {
+export const Chip = ({ text, color = 'gray', theme, truncate = true }: ChipProps) => {
   const scheme = theme?.colorScheme ?? 'light';
   const palette = getChipPalette(color, scheme);
 
@@ -77,7 +78,7 @@ export const Chip = ({ text, color = 'gray', theme }: ChipProps) => {
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        maxWidth: '100%',
+        maxWidth: truncate ? '100%' : undefined,
         padding: '2px 8px',
         borderRadius: theme?.radius.pill ?? '999px',
         fontSize: theme?.font.sizeXs ?? '11px',
@@ -86,8 +87,8 @@ export const Chip = ({ text, color = 'gray', theme }: ChipProps) => {
         letterSpacing: '-0.01em',
         lineHeight: 1.35,
         whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
+        overflow: truncate ? 'hidden' : 'visible',
+        textOverflow: truncate ? 'ellipsis' : undefined,
         backgroundColor: palette.bg,
         color: palette.text,
       }}

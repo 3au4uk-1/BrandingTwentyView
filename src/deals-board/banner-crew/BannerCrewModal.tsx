@@ -27,6 +27,7 @@ import {
 import { isoToMskParts, mskPartsToIso, validateLocationTimes } from './msk-datetime';
 import { findConflicts } from './occupancy';
 import type { BannerCrewSlot } from './types';
+import { BANNER_CREW_MODAL_PORTAL_TARGET } from './chip-layout';
 import { findSlotForTriple } from './upsert';
 import { bannerCrewSlotsQueryKey, useBannerCrewSlots } from './useBannerCrewSlots';
 
@@ -469,7 +470,7 @@ export const BannerCrewModal = ({
       title={opportunityName}
       description={`Монтаж баннера · дата сделки ${formatDealDate(dealDate)}`}
       onClose={onClose}
-      portalTarget="body"
+      portalTarget={BANNER_CREW_MODAL_PORTAL_TARGET}
       footer={
         <div
           style={{

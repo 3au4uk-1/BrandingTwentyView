@@ -1,5 +1,6 @@
 import { memo } from 'react';
 
+import { parentCellOverflow } from '../banner-crew/chip-layout';
 import { DynamicFieldCell } from '../cells/DynamicFieldCell';
 import type { LineItemQueryFilters } from '../api/line-items';
 import type { FieldDescriptor } from '../metadata/types';
@@ -170,11 +171,13 @@ export const DealRow = memo(function DealRow({
               padding: column.field === PARENT_EXPAND_COLUMN_FIELD ? '10px 4px' : '10px 14px',
               fontSize: font.sizeSm,
               whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
+              overflow: parentCellOverflow(column.field),
+              textOverflow: column.field === 'loadDate' ? undefined : 'ellipsis',
               color: colors.textSecondary,
               boxSizing: 'border-box',
               verticalAlign: 'middle',
+              position: column.field === 'loadDate' ? 'relative' : undefined,
+              zIndex: column.field === 'loadDate' ? 2 : undefined,
               ...getPinnedCellStyle(column),
             }}
           >

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import { BANNER_CREW_LOCATION_LABEL } from 'src/constants/banner-crew';
 
@@ -7,6 +7,7 @@ import { useSuppliers } from '../hooks/useSuppliers';
 import type { SupplierRow } from '../suppliers/picker';
 import { ThemeProvider, useTheme } from '../theme/ThemeContext';
 import { Button } from '../ui/Button';
+import { PortalHostProvider } from '../ui/PortalHostContext';
 import { BannerCrewModal } from './BannerCrewModal';
 import { ganttBarRect } from './gantt-layout';
 import { getMskWeekRange, shiftMskWeek, type MskWeekRange } from './msk-datetime';
@@ -110,6 +111,7 @@ const BannerCrewGanttPageInner = () => {
   const { colors, font, spacing, radius } = theme;
   const [week, setWeek] = useState(() => getMskWeekRange(new Date()));
   const [openDeal, setOpenDeal] = useState<OpenDeal | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const slotsQuery = useBannerCrewSlots();
   const suppliersQuery = useSuppliers();
 
@@ -128,9 +130,12 @@ const BannerCrewGanttPageInner = () => {
   const weekLabel = formatWeekLabel(week.days);
 
   return (
+    <PortalHostProvider hostRef={rootRef}>
     <div
+      ref={rootRef}
       data-banner-crew-gantt
       style={{
+        position: 'relative',
         height: '100%',
         minHeight: 0,
         display: 'flex',
@@ -374,6 +379,7 @@ const BannerCrewGanttPageInner = () => {
         />
       ) : null}
     </div>
+    </PortalHostProvider>
   );
 };
 

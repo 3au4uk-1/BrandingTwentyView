@@ -4,6 +4,7 @@ import { useMemo, useState, type MouseEvent } from 'react';
 import { Chip } from '../Chip';
 import { useTheme } from '../theme/ThemeContext';
 import { BannerCrewModal } from './BannerCrewModal';
+import { bannerCrewChipTriggerStyle } from './chip-layout';
 import { buildBannerCrewChipModel } from './chip-model';
 import { lineItemsForOpportunity } from './line-items-for-opportunity';
 import { useBannerCrewSlots } from './useBannerCrewSlots';
@@ -61,20 +62,13 @@ export const BannerCrewChip = ({
     <>
       <button
         type="button"
+        title={model.text}
         onClick={openModal}
+        onMouseDown={(event) => event.stopPropagation()}
         onPointerDown={(event) => event.stopPropagation()}
-        style={{
-          border: 'none',
-          background: 'transparent',
-          padding: 0,
-          cursor: 'pointer',
-          flexShrink: 1,
-          minWidth: 0,
-          maxWidth: '100%',
-          display: 'inline-flex',
-        }}
+        style={bannerCrewChipTriggerStyle}
       >
-        <Chip text={model.text} color={model.color} theme={theme} />
+        <Chip text={model.text} color={model.color} theme={theme} truncate={false} />
       </button>
       <BannerCrewModal
         opportunityId={opportunityId}
