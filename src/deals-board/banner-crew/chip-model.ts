@@ -1,4 +1,3 @@
-import { BANNER_CREW_LOCATION_LABEL } from 'src/constants/banner-crew';
 import { findConflicts, isOccupyingSlot } from './occupancy';
 import type { BannerCrewSlot } from './types';
 
@@ -42,42 +41,12 @@ const uniqueSupplierNames = (slots: BannerCrewSlot[]): string[] => {
   return names;
 };
 
-const BASE_CHIP_WORD =
-  BANNER_CREW_LOCATION_LABEL.BASE === 'на базе' ? 'база' : BANNER_CREW_LOCATION_LABEL.BASE;
-
-const formatOccupyingPart = (slot: BannerCrewSlot): string | null => {
-  const range = formatSlotTimeRange(slot);
-  if (!range) return null;
-  if (slot.location === 'BASE') return `${BASE_CHIP_WORD} ${range}`;
-  return range;
-};
-
-const formatOccupyingChipText = (occupying: BannerCrewSlot[]): string => {
-  const groups = new Map<string, { site?: BannerCrewSlot; base?: BannerCrewSlot }>();
-  const order: string[] = [];
-  for (const slot of occupying) {
-    const name = slot.supplierName ?? '';
-    let group = groups.get(name);
-    if (!group) {
-      group = {};
-      groups.set(name, group);
-      order.push(name);
-    }
-    if (slot.location === 'SITE') group.site = slot;
-    else group.base = slot;
-  }
-
-  return order
-    .map((name) => {
-      const group = groups.get(name)!;
-      const chunks = [name];
-      const sitePart = group.site ? formatOccupyingPart(group.site) : null;
-      const basePart = group.base ? formatOccupyingPart(group.base) : null;
-      if (sitePart) chunks.push(sitePart);
-      if (basePart) chunks.push(basePart);
-      return chunks.join(' ');
-    })
-    .join(' · ');
+export const formatOccupyingChipText = (occupying: BannerCrewSlot[]): string => {
+  const site = occupying.filter((slot) => slot.location === 'SITE');
+  const names = uniqueSupplierNames(site);
+  const range = site[0] ? formatSlotTimeRange(site[0]) : null;
+  if (range) return [range, ...names].join(' · ');
+  return names.join(' · ');
 };
 
 export const buildBannerCrewChipModel = (args: {
@@ -87,13 +56,14 @@ export const buildBannerCrewChipModel = (args: {
 }): BannerCrewChipModel | null => {
   if (!dealHasBannerLineItem(args.lineItems)) return null;
 
-  if (args.slots.length === 0) {
+  const siteSlots = args.slots.filter((slot) => slot.location === 'SITE');
+  if (siteSlots.length === 0) {
     return { visible: true, text: 'Баннерщики', color: 'gray' };
   }
 
-  const occupying = args.slots.filter(isOccupyingSlot);
+  const occupying = siteSlots.filter(isOccupyingSlot);
   if (occupying.length === 0) {
-    const names = uniqueSupplierNames(args.slots);
+    const names = uniqueSupplierNames(siteSlots);
     return {
       visible: true,
       text: `${names.join(' · ')} · без времени`,
@@ -101,7 +71,10 @@ export const buildBannerCrewChipModel = (args: {
     };
   }
 
-  const conflicts = findConflicts(args.allSlotsForConflicts);
+  const conflictSlots = args.allSlotsForConflicts.filter(
+    (slot) => slot.location === 'SITE' && isOccupyingSlot(slot),
+  );
+  const conflicts = findConflicts(conflictSlots);
   const hasConflict = occupying.some((slot) => conflicts.has(slot.id));
   return {
     visible: true,

@@ -116,7 +116,10 @@ const BannerCrewGanttPageInner = () => {
   const suppliersQuery = useSuppliers();
 
   const slots = slotsQuery.data ?? [];
-  const occupying = useMemo(() => slots.filter(isOccupyingSlot), [slots]);
+  const occupying = useMemo(
+    () => slots.filter((slot) => slot.location === 'SITE' && isOccupyingSlot(slot)),
+    [slots],
+  );
   const conflictIds = useMemo(() => {
     const map = findConflicts(occupying);
     return new Set(map.keys());

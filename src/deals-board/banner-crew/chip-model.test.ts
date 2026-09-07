@@ -45,6 +45,16 @@ describe('buildBannerCrewChipModel', () => {
     });
     expect(ok?.color).toBe('green');
     expect(ok?.text).toContain('Юра');
+    expect(ok?.text).toMatch(/10:00–13:00/);
+
+    const baseOnly: BannerCrewSlot = { ...yuraSite, location: 'BASE' };
+    expect(
+      buildBannerCrewChipModel({
+        lineItems: [{ tip: 'BANNERA' }],
+        slots: [baseOnly],
+        allSlotsForConflicts: [baseOnly],
+      })?.text,
+    ).toBe('Баннерщики');
 
     const other: BannerCrewSlot = {
       ...yuraSite,
