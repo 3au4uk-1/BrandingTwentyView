@@ -6,6 +6,7 @@ export const WATCHED_QUERY_KEYS = {
   okleykaSalaryEntry: ['okleyka-salary-entries', 'okleyka-salary', 'okleyka-salary-history'],
   company: ['companyNames'],
   restorationTemplate: ['restorationTemplatesCatalog'],
+  bannerCrewSlot: ['banner-crew-slots'],
 } as const satisfies Record<string, readonly string[]>;
 
 export type WatchedObjectName = keyof typeof WATCHED_QUERY_KEYS;
