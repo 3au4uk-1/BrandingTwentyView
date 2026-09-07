@@ -83,3 +83,21 @@ Mixed PLENKA+BANNERA with type filter: unfiltered fallback keeps BANNERA; `apply
 yarn oxlint -c .oxlintrc.json (13 task files)
 Found 2 warnings and 0 errors — both pre-existing unused vars in DealsBoard.tsx (layout, opportunityLinkFieldNames). None in the new/edited chip path.
 ```
+
+## Remaining Important: unfiltered `useLineItems` for chip (not filtered query)
+
+`streamFilteredLineItems` was still filled from `useLineItems(..., lineItemQueryFilters)`. A PLENKA-only filter never loads BANNERA, so the chip hid on mixed deals even after passing that list as `allDealLineItems`.
+
+### Fix
+- Table `useLineItems` unchanged (`lineItemQueryFilters` still drives `tableLineItems` / children).
+- Second `useLineItems` in `DealsBoard.tsx`: ids = `filteredBoardData.deals`, filters = `undefined`, enabled when those ids are non-empty and cold load is not blocking. Also enabled on the aggregate path (page hydrate writes the **filtered** query key, not `undefined`).
+- Group that result by `opportunityId` (board-stream filtered). Per displayed deal, pass unfiltered children into `allDealLineItems`; if the deal is missing from that map, fall back to `filteredBoardData.lineItemsByOppId` (current filtered children).
+- Desktop `DealsTable` and mobile `MobileDealsBoard` both get `allDealLineItemsForChip`. Table `lineItems` stay filtered.
+
+`tipDetail` / `SupplierCombobox` unchanged.
+
+### Lint
+```
+yarn oxlint -c .oxlintrc.json src/deals-board/DealsBoard.tsx
+Found 2 warnings and 0 errors — pre-existing unused vars (`layout`, `opportunityLinkFieldNames`). None in the new chip query path.
+```

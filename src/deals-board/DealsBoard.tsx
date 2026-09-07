@@ -518,6 +518,44 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     streamFilteredRecords,
   ]);
 
+  const chipVisibilityOppIds = useMemo(
+    () => filteredBoardData.deals.map((deal) => deal.id),
+    [filteredBoardData.deals],
+  );
+
+  // Chip visibility needs every tip on displayed deals. Do not reuse the
+  // table's type/stage filters — a PLENKA-only query never returns BANNERA.
+  // Enabled on the aggregate path too: page hydrate writes the filtered key,
+  // not `filters: undefined`.
+  const unfilteredChipLineItemsQuery = useLineItems(
+    chipVisibilityOppIds,
+    undefined,
+    !activeColdLoadLoading && chipVisibilityOppIds.length > 0,
+  );
+  const unfilteredChipLineItems = asArray<LineItemRow>(unfilteredChipLineItemsQuery.data);
+  const unfilteredLineItemsByOppId = useMemo(() => {
+    const grouped: Record<string, LineItemRow[]> = {};
+    for (const item of filterLineItemsByBoardStream(unfilteredChipLineItems, boardStream)) {
+      (grouped[item.opportunityId] ??= []).push(item);
+    }
+    return grouped;
+  }, [boardStream, unfilteredChipLineItems]);
+
+  const allDealLineItemsForChip = useMemo(() => {
+    const lists: LineItemRow[] = [];
+    for (const deal of filteredBoardData.deals) {
+      const unfiltered = unfilteredLineItemsByOppId[deal.id];
+      lists.push(
+        ...(unfiltered ?? filteredBoardData.lineItemsByOppId[deal.id] ?? []),
+      );
+    }
+    return lists;
+  }, [
+    filteredBoardData.deals,
+    filteredBoardData.lineItemsByOppId,
+    unfilteredLineItemsByOppId,
+  ]);
+
   const recordsById = useMemo(
     () => new Map(filteredBoardData.deals.map((record) => [record.id, record])),
     [filteredBoardData.deals],
@@ -815,11 +853,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
           opportunityLinkFields={opportunityLinkFields}
           records={mobileRecords}
           lineItems={displayLineItems}
-          allDealLineItems={
-            streamFilteredMobileLineItems.length > 0
-              ? streamFilteredMobileLineItems
-              : streamFilteredLineItems
-          }
+          allDealLineItems={allDealLineItemsForChip}
           boardStream={boardStream}
           lineItemFilters={lineItemQueryFilters}
           totalCount={visibleTotalCount}
@@ -974,7 +1008,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
               opportunityLinkFields={opportunityLinkFields}
               records={visibleRecords}
               lineItems={tableLineItems}
-              allDealLineItems={streamFilteredLineItems}
+              allDealLineItems={allDealLineItemsForChip}
               lineItemFilters={lineItemQueryFilters}
               hasLineItemFilters={hasLineItemFilters}
               showAllPositionOppIds={showAllPositionOppIds}
