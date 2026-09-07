@@ -52,3 +52,34 @@ Tests  3 passed (3)
 yarn oxlint -c .oxlintrc.json src/deals-board/banner-crew/BannerCrewChip.tsx src/deals-board/banner-crew/line-items-for-opportunity.ts src/deals-board/banner-crew/line-items-for-opportunity.test.ts
 Found 0 warnings and 0 errors.
 ```
+
+## Remaining Important: unfiltered `allDealLineItems`, not react-query cache
+
+Chip visibility now uses the DealsBoard map **before** `filterDealsAndLineItems`, not board-filtered children and not `['lineItems']` cache as the primary source.
+
+`DealRow.lineItems` was **not** already unfiltered: it comes from `tableLineItems` / `filteredBoardData.lineItemsByOppId` (type/stage filter strips BANNERA on a mixed deal).
+
+### Data path
+- `DealsBoard` passes `allDealLineItems={streamFilteredLineItems}` (flatten of `lineItemsByOppId`, the map next to `filteredBoardData`) into `DealsTable`.
+- Mobile: unfiltered `streamFilteredMobileLineItems` (else desktop `streamFilteredLineItems`) into `MobileDealsBoard` → `MobileDealCard`.
+- `DealsTable` groups that list and passes per-row `allDealLineItems` through `DealsDataTable` → `DealRow` → `DynamicFieldCell` / `overrides` `loadDate`.
+- `LoadDateCell` and `MobileDealCard` pass `allDealLineItems` into `BannerCrewChip` as `lineItems`.
+- `lineItemsForOpportunity` unions cache rows for this `opportunityId` with that unfiltered fallback (fallback first; dedupe by `id`). It never drops fallback just because some cache list is non-empty.
+
+`tipDetail` / `SupplierCombobox` unchanged.
+
+### Tests
+```
+yarn test:unit src/deals-board/banner-crew/line-items-for-opportunity.test.ts
+✓ src/deals-board/banner-crew/line-items-for-opportunity.test.ts (4 tests) 6ms
+Test Files  1 passed (1)
+Tests  4 passed (4)
+```
+
+Mixed PLENKA+BANNERA with type filter: unfiltered fallback keeps BANNERA; `apply-line-item-filters.test.ts` asserts `lineItemsByOppId.d1` still has BANNERA while filtered children are PLENKA-only.
+
+### Lint
+```
+yarn oxlint -c .oxlintrc.json (13 task files)
+Found 2 warnings and 0 errors — both pre-existing unused vars in DealsBoard.tsx (layout, opportunityLinkFieldNames). None in the new/edited chip path.
+```

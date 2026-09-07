@@ -2,24 +2,25 @@ import { describe, expect, it } from 'vitest';
 import { lineItemsForOpportunity } from './line-items-for-opportunity';
 
 describe('lineItemsForOpportunity', () => {
-  const fallback = [{ opportunityId: 'opp-a', tip: 'PODRYAD' }];
+  const fallback = [{ id: 'podryad', opportunityId: 'opp-a', tip: 'PODRYAD' }];
 
   it('flattens cache lists and keeps this opportunity', () => {
     expect(
       lineItemsForOpportunity(
         [
           [
-            { opportunityId: 'opp-a', tip: 'BANNERA' },
-            { opportunityId: 'opp-b', tip: 'PLENKA' },
+            { id: 'banner', opportunityId: 'opp-a', tip: 'BANNERA' },
+            { id: 'film-b', opportunityId: 'opp-b', tip: 'PLENKA' },
           ],
-          [{ opportunityId: 'opp-a', tip: 'PLENKA' }],
+          [{ id: 'film-a', opportunityId: 'opp-a', tip: 'PLENKA' }],
         ],
         'opp-a',
         fallback,
       ),
     ).toEqual([
-      { opportunityId: 'opp-a', tip: 'BANNERA' },
-      { opportunityId: 'opp-a', tip: 'PLENKA' },
+      { id: 'podryad', opportunityId: 'opp-a', tip: 'PODRYAD' },
+      { id: 'banner', opportunityId: 'opp-a', tip: 'BANNERA' },
+      { id: 'film-a', opportunityId: 'opp-a', tip: 'PLENKA' },
     ]);
   });
 
@@ -28,13 +29,26 @@ describe('lineItemsForOpportunity', () => {
     expect(lineItemsForOpportunity([undefined, []], 'opp-a', fallback)).toBe(fallback);
   });
 
-  it('does not fall back when cache has other opportunities only', () => {
+  it('keeps fallback when cache has other opportunities only', () => {
     expect(
       lineItemsForOpportunity(
-        [[{ opportunityId: 'opp-b', tip: 'BANNERA' }]],
+        [[{ id: 'other', opportunityId: 'opp-b', tip: 'BANNERA' }]],
         'opp-a',
         fallback,
       ),
-    ).toEqual([]);
+    ).toBe(fallback);
+  });
+
+  it('unions unfiltered fallback with filtered cache so BANNERA stays visible', () => {
+    const allDealLineItems = [
+      { id: 'film', opportunityId: 'opp-a', tip: 'PLENKA' },
+      { id: 'banner', opportunityId: 'opp-a', tip: 'BANNERA' },
+    ];
+    const filteredCache = [[{ id: 'film', opportunityId: 'opp-a', tip: 'PLENKA' }]];
+
+    const result = lineItemsForOpportunity(filteredCache, 'opp-a', allDealLineItems);
+
+    expect(result.map((item) => item.tip).sort()).toEqual(['BANNERA', 'PLENKA']);
+    expect(result.filter((item) => item.id === 'film')).toHaveLength(1);
   });
 });

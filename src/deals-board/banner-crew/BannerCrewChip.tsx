@@ -9,6 +9,7 @@ import { lineItemsForOpportunity } from './line-items-for-opportunity';
 import { useBannerCrewSlots } from './useBannerCrewSlots';
 
 type BannerCrewChipLineItem = {
+  id?: string;
   opportunityId?: string | null;
   tip?: string | null;
 };

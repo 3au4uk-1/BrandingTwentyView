@@ -47,6 +47,7 @@ type DealsTableProps = {
   opportunityLinkFields: FieldDescriptor[];
   records: OpportunityRow[];
   lineItems: LineItemRow[];
+  allDealLineItems?: LineItemRow[];
   lineItemFilters?: LineItemQueryFilters;
   hasLineItemFilters?: boolean;
   showAllPositionOppIds?: Set<string>;
@@ -79,6 +80,7 @@ export const DealsTable = ({
   opportunityLinkFields,
   records,
   lineItems,
+  allDealLineItems,
   lineItemFilters,
   hasLineItemFilters = false,
   showAllPositionOppIds,
@@ -239,6 +241,16 @@ export const DealsTable = ({
     return grouped;
   }, [lineItems]);
 
+  const allDealLineItemsByOpportunity = useMemo(() => {
+    const source = allDealLineItems ?? lineItems;
+    const grouped = new Map<string, typeof source>();
+    for (const item of source) {
+      const current = grouped.get(item.opportunityId) ?? [];
+      grouped.set(item.opportunityId, [...current, item]);
+    }
+    return grouped;
+  }, [allDealLineItems, lineItems]);
+
   const opportunityStageById = useMemo(
     () =>
       new Map(
@@ -324,6 +336,7 @@ export const DealsTable = ({
         childDescriptorByField={childDescriptorByField}
         opportunityLinkFields={opportunityLinkFields}
         lineItemsByOpportunity={lineItemsByOpportunity}
+        allDealLineItemsByOpportunity={allDealLineItemsByOpportunity}
         companyNameMap={companyNameMap}
         lineItemFilters={lineItemFilters}
         hasLineItemFilters={hasLineItemFilters}

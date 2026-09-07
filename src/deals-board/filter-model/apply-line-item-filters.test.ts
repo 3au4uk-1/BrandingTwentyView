@@ -92,6 +92,25 @@ describe('filterDealsAndLineItems', () => {
     expect(result.lineItemsByOppId.d1.map((i) => i.id)).toEqual(['a']);
   });
 
+  it('keeps BANNERA in unfiltered allDealLineItems when type filter hides it from children', () => {
+    const lineItemsByOppId = {
+      d1: [
+        { id: 'plenka', opportunityId: 'd1', tip: 'PLENKA', name: 'Plenka' },
+        { id: 'banner', opportunityId: 'd1', tip: 'BANNERA', name: 'Banner' },
+      ],
+    };
+    const result = filterDealsAndLineItems({
+      deals: [{ id: 'd1', name: 'Mixed deal' }],
+      lineItemsByOppId,
+      clauses: [{ id: '1', level: 'lineItem', field: 'tip', operator: 'in', value: ['PLENKA'] }],
+      showAllPositionOppIds: new Set(),
+    });
+    const allDealLineItems = lineItemsByOppId.d1 ?? [];
+
+    expect(result.lineItemsByOppId.d1.map((i) => i.tip)).toEqual(['PLENKA']);
+    expect(allDealLineItems.some((item) => item.tip === 'BANNERA')).toBe(true);
+  });
+
   it('returns matchedLineItemIds for matching positions', () => {
     const result = filterDealsAndLineItems({
       deals: [{ id: 'd1', name: 'Deal 1' }],

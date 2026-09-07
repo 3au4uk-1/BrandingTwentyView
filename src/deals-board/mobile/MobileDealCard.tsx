@@ -35,6 +35,7 @@ import {
 type MobileDealCardProps = {
   row: OpportunityRow;
   lineItems: LineItemRow[];
+  allDealLineItems?: LineItemRow[];
   parentColumns: ColumnConfig[];
   childColumns: ColumnConfig[];
   childGroups: ColumnGroupConfig[];
@@ -55,6 +56,7 @@ const renderParentField = (
     'parentDescriptorByField' | 'opportunityLinkFields' | 'onToggleExpand'
   >,
   dealLineItems: LineItemRow[],
+  allDealLineItems: LineItemRow[],
   isExpanded: boolean,
 ) => (
   <DynamicFieldCell
@@ -65,6 +67,7 @@ const renderParentField = (
     value={resolveFieldValue(row, column.field)}
     variant="parent"
     lineItems={dealLineItems}
+    allDealLineItems={allDealLineItems}
     isExpanded={isExpanded}
     companyName={row.companyName}
     row={row}
@@ -78,6 +81,7 @@ const renderParentField = (
 export const MobileDealCard = ({
   row,
   lineItems,
+  allDealLineItems,
   parentColumns,
   childColumns,
   childGroups,
@@ -99,6 +103,9 @@ export const MobileDealCard = ({
     'parent',
   );
   const dealLineItems = lineItems.filter((item) => item.opportunityId === row.id);
+  const unfilteredDealLineItems = (allDealLineItems ?? lineItems).filter(
+    (item) => item.opportunityId === row.id,
+  );
   const dealName = typeof row.name === 'string' && row.name.trim() ? row.name : 'Без названия';
   const stageValue = typeof row.stage === 'string' ? row.stage : null;
   const compactDate = formatCompactDealDate(row.loadDate);
@@ -241,7 +248,7 @@ export const MobileDealCard = ({
             opportunityId={row.id}
             opportunityName={dealName}
             loadDate={typeof row.loadDate === 'string' ? row.loadDate : null}
-            lineItems={dealLineItems}
+            lineItems={unfilteredDealLineItems}
           />
           {showStageChip ? (
             <Chip
@@ -275,12 +282,12 @@ export const MobileDealCard = ({
                 .filter((column) => column.field !== 'summary')
                 .map((column) => (
                   <MobileFieldStack key={column.field} label={column.label}>
-                    {renderParentField(row, column, fieldProps, dealLineItems, isExpanded)}
+                    {renderParentField(row, column, fieldProps, dealLineItems, unfilteredDealLineItems, isExpanded)}
                   </MobileFieldStack>
                 ))}
               {detail.map((column) => (
                 <MobileFieldStack key={column.field} label={column.label}>
-                  {renderParentField(row, column, fieldProps, dealLineItems, isExpanded)}
+                  {renderParentField(row, column, fieldProps, dealLineItems, unfilteredDealLineItems, isExpanded)}
                 </MobileFieldStack>
               ))}
             </div>

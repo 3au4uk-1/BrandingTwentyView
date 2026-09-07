@@ -49,6 +49,7 @@ export type FieldOverrideProps = {
   value: unknown;
   variant?: 'parent' | 'child';
   lineItems?: LineItemRow[];
+  allDealLineItems?: LineItemRow[];
   isExpanded?: boolean;
   companyName?: string;
   row?: Record<string, unknown>;
@@ -264,7 +265,7 @@ const OplataChipCell = ({ value }: FieldOverrideProps) => {
   return <Chip text={oplataText || EMPTY_VALUE} color={value ? 'green' : 'gray'} theme={theme} />;
 };
 
-const LoadDateCell = ({ recordId, value, lineItems, row }: FieldOverrideProps) => {
+const LoadDateCell = ({ recordId, value, lineItems, allDealLineItems, row }: FieldOverrideProps) => {
   const theme = useTheme();
   const loadDate = typeof value === 'string' ? value : null;
   const opportunityName =
@@ -290,7 +291,7 @@ const LoadDateCell = ({ recordId, value, lineItems, row }: FieldOverrideProps) =
         opportunityId={recordId}
         opportunityName={opportunityName}
         loadDate={loadDate}
-        lineItems={lineItems ?? []}
+        lineItems={allDealLineItems ?? lineItems ?? []}
       />
     </div>
   );

@@ -815,6 +815,11 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
           opportunityLinkFields={opportunityLinkFields}
           records={mobileRecords}
           lineItems={displayLineItems}
+          allDealLineItems={
+            streamFilteredMobileLineItems.length > 0
+              ? streamFilteredMobileLineItems
+              : streamFilteredLineItems
+          }
           boardStream={boardStream}
           lineItemFilters={lineItemQueryFilters}
           totalCount={visibleTotalCount}
@@ -969,6 +974,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
               opportunityLinkFields={opportunityLinkFields}
               records={visibleRecords}
               lineItems={tableLineItems}
+              allDealLineItems={streamFilteredLineItems}
               lineItemFilters={lineItemQueryFilters}
               hasLineItemFilters={hasLineItemFilters}
               showAllPositionOppIds={showAllPositionOppIds}

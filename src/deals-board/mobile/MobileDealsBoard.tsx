@@ -25,6 +25,7 @@ export const MobileDealsBoard = (props: MobileDealsBoardProps) => {
     opportunityLinkFields,
     records,
     lineItems,
+    allDealLineItems,
     boardStream,
     lineItemFilters,
     totalCount,
@@ -147,6 +148,7 @@ export const MobileDealsBoard = (props: MobileDealsBoardProps) => {
               key={row.id}
               row={row}
               lineItems={lineItems}
+              allDealLineItems={allDealLineItems}
               parentColumns={parentColumns}
               childColumns={childColumns}
               childGroups={childGroups}

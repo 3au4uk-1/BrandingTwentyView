@@ -28,6 +28,7 @@ type DealRowProps = {
   parentDescriptorByField: Map<string, FieldDescriptor>;
   childDescriptorByField: Map<string, FieldDescriptor>;
   lineItems: LineItemRow[];
+  allDealLineItems?: LineItemRow[];
   isExpanded: boolean;
   onToggleExpand: (id: string) => void;
   opportunityLinkFields: FieldDescriptor[];
@@ -96,6 +97,7 @@ export const DealRow = memo(function DealRow({
   parentDescriptorByField,
   childDescriptorByField,
   lineItems,
+  allDealLineItems,
   isExpanded,
   onToggleExpand,
   opportunityLinkFields,
@@ -191,6 +193,7 @@ export const DealRow = memo(function DealRow({
                 value={resolveFieldValue(row, column.field)}
                 variant="parent"
                 lineItems={lineItems}
+                allDealLineItems={allDealLineItems}
                 isExpanded={isExpanded}
                 companyName={companyName}
                 row={row}
