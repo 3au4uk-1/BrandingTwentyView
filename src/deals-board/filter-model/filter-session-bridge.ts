@@ -34,7 +34,7 @@ export const filterSessionToQuickFilters = (
     datePreset: rawPreset === 'future' ? null : (rawPreset as QuickFiltersValue['datePreset']),
     dateFrom: resolveSessionOverride(filterSession.dateFrom, viewFilters.dateFrom),
     dateTo: resolveSessionOverride(filterSession.dateTo, viewFilters.dateTo),
-    stages: boardFilters.stages ?? [],
+    stages: boardFilters.lineItemStages ?? [],
     types: boardFilters.types ?? [],
     companyIds: boardFilters.companyIds ?? [],
     oplata: (boardFilters.oplata ?? 'all') as QuickFiltersValue['oplata'],
