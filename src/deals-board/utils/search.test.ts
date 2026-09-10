@@ -100,6 +100,18 @@ describe('buildOpportunityFilter', () => {
       and: [{ id: { in: [] } }],
     });
   });
+
+  it('adds opportunity stage in-filter', () => {
+    expect(
+      buildOpportunityFilter({ opportunityStages: ['V_RABOTE', 'DUBL'] }),
+    ).toEqual({
+      and: [{ stage: { in: ['V_RABOTE', 'DUBL'] } }],
+    });
+  });
+
+  it('does not treat lineItemStages as opportunity.stage', () => {
+    expect(buildOpportunityFilter({ lineItemStages: ['OKLEYKA'] })).toBeUndefined();
+  });
 });
 
 describe('opportunityMatchesSearch', () => {
