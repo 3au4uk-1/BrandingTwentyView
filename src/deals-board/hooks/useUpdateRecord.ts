@@ -1,10 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { runAfterLineItemUpdate } from '../automations/run-after-line-item-update';
+import { writeBackLineItemQuantity } from '../api/crmparser';
 import { patchOpportunity } from '../api/opportunities';
 import { updateLineItem } from '../api/line-items';
 import type { BoardObjectName } from '../metadata/types';
 import type { LineItemRow, OpportunityRow } from '../types';
+import {
+  findLineItemOpportunityId,
+  patchOpportunityInCache,
+} from '../utils/opportunity-cache';
 import { syncManualLineItemAfterUpdate } from './useManualLineItemParserSync';
 
 type OpportunitiesPage = {
@@ -104,6 +109,31 @@ export const useUpdateRecord = (objectName: BoardObjectName) => {
     onSettled: async (_data, error, variables, context) => {
       if (objectName === 'dealLineItem' && !error) {
         await syncManualLineItemAfterUpdate(queryClient, variables.id, variables.data);
+        if ('kolichestvo' in variables.data) {
+          const qty = variables.data.kolichestvo;
+          if (typeof qty === 'number' && Number.isFinite(qty) && qty > 0) {
+            try {
+              const result = await writeBackLineItemQuantity(variables.id, qty);
+              if (typeof result.opportunityAmountRub === 'number') {
+                const opportunityId = findLineItemOpportunityId(queryClient, variables.id);
+                if (opportunityId) {
+                  patchOpportunityInCache(queryClient, opportunityId, {
+                    amount: {
+                      amountMicros: Math.round(result.opportunityAmountRub * 1_000_000),
+                      currencyCode: 'RUB',
+                    },
+                  });
+                }
+              }
+            } catch (writeBackError) {
+              window.alert(
+                writeBackError instanceof Error
+                  ? writeBackError.message
+                  : 'Не удалось записать количество в парсер. Значение в Twenty сохранено.',
+              );
+            }
+          }
+        }
         await runAfterLineItemUpdate(queryClient, {
           id: variables.id,
           patch: variables.data,
