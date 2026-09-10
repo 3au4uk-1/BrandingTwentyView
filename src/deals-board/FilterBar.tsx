@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { LINE_ITEM_TYPES } from 'src/constants/line-item-types';
-import { LINE_ITEM_STAGES } from 'src/constants/stages';
+import { LINE_ITEM_STAGES, OPPORTUNITY_STAGES } from 'src/constants/stages';
 import type { DealBoardDatePreset } from 'src/deals-board/types';
 
 import { fetchCompanyNames } from './api/companies';
@@ -30,9 +30,16 @@ type BuilderField = {
 
 const BUILDER_FIELDS: BuilderField[] = [
   {
-    level: 'lineItem',
+    level: 'deal',
     field: 'stage',
     label: 'Стадия',
+    kind: 'multi-select',
+    options: OPPORTUNITY_STAGES,
+  },
+  {
+    level: 'lineItem',
+    field: 'stage',
+    label: 'Стадия позиции',
     kind: 'multi-select',
     options: LINE_ITEM_STAGES,
   },

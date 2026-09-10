@@ -56,10 +56,16 @@ export const MobileFiltersSheet = ({
     selectedCompanyIds,
   } = useFilterClauseEditor(value, viewClauses, onChange, { companySearchEnabled: isOpen });
 
-  const stageField = FILTER_BUILDER_FIELDS.find((field) => field.field === 'stage')!;
+  const dealStageField = FILTER_BUILDER_FIELDS.find(
+    (field) => field.level === 'deal' && field.field === 'stage',
+  )!;
+  const lineItemStageField = FILTER_BUILDER_FIELDS.find(
+    (field) => field.level === 'lineItem' && field.field === 'stage',
+  )!;
   const tipField = FILTER_BUILDER_FIELDS.find((field) => field.field === 'tip')!;
   const oplataField = FILTER_BUILDER_FIELDS.find((field) => field.field === 'oplata')!;
-  const selectedStages = getSelectedValues(stageField);
+  const selectedDealStages = getSelectedValues(dealStageField);
+  const selectedLineItemStages = getSelectedValues(lineItemStageField);
   const selectedTypes = getSelectedValues(tipField);
   const oplataValue = getOplataValue();
 
@@ -172,16 +178,35 @@ export const MobileFiltersSheet = ({
         </section>
 
         <section>
-          <div style={sectionTitleStyle}>{stageField.label}</div>
+          <div style={sectionTitleStyle}>{dealStageField.label}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {stageField.options?.map((option) => {
-              const checked = selectedStages.includes(option.value);
+            {dealStageField.options?.map((option) => {
+              const checked = selectedDealStages.includes(option.value);
               return (
                 <label key={option.value} style={checkboxLabelStyle(checked)}>
                   <input
                     type="checkbox"
                     checked={checked}
-                    onChange={() => toggleMultiValue(stageField, option.value)}
+                    onChange={() => toggleMultiValue(dealStageField, option.value)}
+                  />
+                  <span>{option.label}</span>
+                </label>
+              );
+            })}
+          </div>
+        </section>
+
+        <section>
+          <div style={sectionTitleStyle}>{lineItemStageField.label}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {lineItemStageField.options?.map((option) => {
+              const checked = selectedLineItemStages.includes(option.value);
+              return (
+                <label key={option.value} style={checkboxLabelStyle(checked)}>
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleMultiValue(lineItemStageField, option.value)}
                   />
                   <span>{option.label}</span>
                 </label>

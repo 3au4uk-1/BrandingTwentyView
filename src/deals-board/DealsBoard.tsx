@@ -393,10 +393,10 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
 
   const lineItemQueryFilters = useMemo(
     () =>
-      mergedFilters.stages?.length || mergedFilters.types?.length
-        ? { stages: mergedFilters.stages, types: mergedFilters.types }
+      mergedFilters.lineItemStages?.length || mergedFilters.types?.length
+        ? { stages: mergedFilters.lineItemStages, types: mergedFilters.types }
         : undefined,
-    [mergedFilters.stages, mergedFilters.types],
+    [mergedFilters.lineItemStages, mergedFilters.types],
   );
 
   const fetchAll = resolveOpportunitiesFetchAll({
