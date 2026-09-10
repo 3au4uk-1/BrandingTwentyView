@@ -1,5 +1,5 @@
 import { getLineItemTypeLabel } from 'src/constants/line-item-types';
-import { getStageLabel } from 'src/constants/stages';
+import { getOpportunityStageLabel, getStageLabel } from 'src/constants/stages';
 
 import type { FilterClause } from './types';
 
@@ -33,7 +33,9 @@ export const formatFilterClauseLabel = (
   const fieldLabel = FIELD_LABELS[clause.field] ?? clause.field;
 
   if (clause.field === 'stage') {
-    return `${fieldLabel}: ${formatValueList(clause.value, getStageLabel)}`;
+    const stageFieldLabel = clause.level === 'lineItem' ? 'Стадия позиции' : 'Стадия';
+    const labelForValue = clause.level === 'deal' ? getOpportunityStageLabel : getStageLabel;
+    return `${stageFieldLabel}: ${formatValueList(clause.value, labelForValue)}`;
   }
 
   if (clause.field === 'tip') {

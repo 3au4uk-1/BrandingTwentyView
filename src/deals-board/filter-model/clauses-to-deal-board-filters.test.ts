@@ -4,12 +4,28 @@ import type { FilterClause } from './types';
 import { clausesToDealBoardFilters } from './clauses-to-deal-board-filters';
 
 describe('clausesToDealBoardFilters', () => {
-  it('maps lineItem stage in-clause to stages', () => {
+  it('maps lineItem stage in-clause to lineItemStages', () => {
     const clauses: FilterClause[] = [
       { id: '1', level: 'lineItem', field: 'stage', operator: 'in', value: ['NOVYY', 'GOTOVO'] },
     ];
     expect(clausesToDealBoardFilters(clauses)).toEqual({
-      stages: ['NOVYY', 'GOTOVO'],
+      opportunityStages: undefined,
+      lineItemStages: ['NOVYY', 'GOTOVO'],
+      stages: undefined,
+      types: undefined,
+      companyIds: undefined,
+      oplata: 'all',
+    });
+  });
+
+  it('maps deal stage in-clause to opportunityStages', () => {
+    const clauses: FilterClause[] = [
+      { id: '1', level: 'deal', field: 'stage', operator: 'in', value: ['V_RABOTE', 'OTCHET_STAS'] },
+    ];
+    expect(clausesToDealBoardFilters(clauses)).toEqual({
+      opportunityStages: ['V_RABOTE', 'OTCHET_STAS'],
+      lineItemStages: undefined,
+      stages: undefined,
       types: undefined,
       companyIds: undefined,
       oplata: 'all',
@@ -21,6 +37,8 @@ describe('clausesToDealBoardFilters', () => {
       { id: '1', level: 'lineItem', field: 'tip', operator: 'in', value: ['BANNERA', 'PLENKA'] },
     ];
     expect(clausesToDealBoardFilters(clauses)).toEqual({
+      opportunityStages: undefined,
+      lineItemStages: undefined,
       stages: undefined,
       types: ['BANNERA', 'PLENKA'],
       companyIds: undefined,
@@ -33,6 +51,8 @@ describe('clausesToDealBoardFilters', () => {
       { id: '1', level: 'deal', field: 'companyId', operator: 'in', value: ['c1', 'c2'] },
     ];
     expect(clausesToDealBoardFilters(clauses)).toEqual({
+      opportunityStages: undefined,
+      lineItemStages: undefined,
       stages: undefined,
       types: undefined,
       companyIds: ['c1', 'c2'],
@@ -45,6 +65,8 @@ describe('clausesToDealBoardFilters', () => {
       { id: '1', level: 'deal', field: 'oplata', operator: 'eq', value: 'filled' },
     ];
     expect(clausesToDealBoardFilters(clauses)).toEqual({
+      opportunityStages: undefined,
+      lineItemStages: undefined,
       stages: undefined,
       types: undefined,
       companyIds: undefined,
@@ -57,6 +79,8 @@ describe('clausesToDealBoardFilters', () => {
       { id: '1', level: 'deal', field: 'oplata', operator: 'isEmpty', value: undefined },
     ];
     expect(clausesToDealBoardFilters(clauses)).toEqual({
+      opportunityStages: undefined,
+      lineItemStages: undefined,
       stages: undefined,
       types: undefined,
       companyIds: undefined,
@@ -66,6 +90,8 @@ describe('clausesToDealBoardFilters', () => {
 
   it('defaults oplata to all when no oplata clause', () => {
     expect(clausesToDealBoardFilters([])).toEqual({
+      opportunityStages: undefined,
+      lineItemStages: undefined,
       stages: undefined,
       types: undefined,
       companyIds: undefined,
@@ -84,7 +110,9 @@ describe('clausesToDealBoardFilters', () => {
       dateFrom: '2026-07-01',
       dateTo: '2026-07-07',
       search: 'search',
-      stages: ['NOVYY'],
+      opportunityStages: undefined,
+      lineItemStages: ['NOVYY'],
+      stages: undefined,
       types: undefined,
       companyIds: undefined,
       oplata: 'all',

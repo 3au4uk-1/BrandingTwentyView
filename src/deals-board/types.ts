@@ -1,7 +1,7 @@
 import type { LineItemType } from 'src/constants/line-item-types';
 import type { BoardKind } from 'src/constants/product-stream';
 import type { ProductStream } from 'src/constants/product-stream';
-import type { LineItemStage } from 'src/constants/stages';
+import type { LineItemStage, OpportunityStage } from 'src/constants/stages';
 import type { ViewVisibility } from 'src/constants/view-visibility';
 
 import type { FilterClause } from './filter-model/types';
@@ -34,6 +34,9 @@ export type DealBoardFilters = {
   datePreset?: DealBoardDatePreset | null;
   dateFrom?: string;
   dateTo?: string;
+  opportunityStages?: OpportunityStage[];
+  lineItemStages?: LineItemStage[];
+  /** @deprecated Prefer lineItemStages. Only migrateLegacyFilters reads this. */
   stages?: LineItemStage[];
   types?: LineItemType[];
   oplata?: string;
