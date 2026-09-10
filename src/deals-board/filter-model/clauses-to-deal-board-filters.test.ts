@@ -32,6 +32,16 @@ describe('clausesToDealBoardFilters', () => {
     });
   });
 
+  it('keeps deal and line-item stages independent', () => {
+    const clauses: FilterClause[] = [
+      { id: '1', level: 'deal', field: 'stage', operator: 'in', value: ['NOVYY'] },
+      { id: '2', level: 'lineItem', field: 'stage', operator: 'in', value: ['OKLEYKA'] },
+    ];
+    const result = clausesToDealBoardFilters(clauses);
+    expect(result.opportunityStages).toEqual(['NOVYY']);
+    expect(result.lineItemStages).toEqual(['OKLEYKA']);
+  });
+
   it('maps lineItem tip in-clause to types', () => {
     const clauses: FilterClause[] = [
       { id: '1', level: 'lineItem', field: 'tip', operator: 'in', value: ['BANNERA', 'PLENKA'] },
