@@ -81,6 +81,11 @@ export const buildOpportunityFilter = (
     and.push({ companyId: { in: companyIds } });
   }
 
+  const opportunityStages = filters.opportunityStages?.filter(Boolean) ?? [];
+  if (opportunityStages.length > 0) {
+    and.push({ stage: { in: opportunityStages } });
+  }
+
   if (lineItemMatchedOpportunityIds !== undefined && terms.length === 0) {
     and.push({ id: { in: lineItemMatchedOpportunityIds.filter(Boolean) } });
   }

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 
 import { LINE_ITEM_TYPES } from 'src/constants/line-item-types';
-import { LINE_ITEM_STAGES } from 'src/constants/stages';
+import { LINE_ITEM_STAGES, OPPORTUNITY_STAGES } from 'src/constants/stages';
 
 import { fetchCompanyNames } from '../api/companies';
 import { useCompanies } from '../hooks/useCompanies';
@@ -20,9 +20,16 @@ export type FilterBuilderField = {
 
 export const FILTER_BUILDER_FIELDS: FilterBuilderField[] = [
   {
-    level: 'lineItem',
+    level: 'deal',
     field: 'stage',
     label: 'Стадия',
+    kind: 'multi-select',
+    options: OPPORTUNITY_STAGES,
+  },
+  {
+    level: 'lineItem',
+    field: 'stage',
+    label: 'Стадия позиции',
     kind: 'multi-select',
     options: LINE_ITEM_STAGES,
   },

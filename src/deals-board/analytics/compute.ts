@@ -32,6 +32,18 @@ export const currencyToRub = (value: CurrencyAmount | null | undefined): number 
   return micros / 1_000_000;
 };
 
+export const lineItemQty = (item: { kolichestvo?: number }): number =>
+  typeof item.kolichestvo === 'number' && item.kolichestvo > 0 ? item.kolichestvo : 1;
+
+export const lineItemSaleRub = (item: {
+  stage?: string | null;
+  kolichestvo?: number;
+  amount?: CurrencyAmount;
+}): number => {
+  if (item.stage === 'OTMENA') return 0;
+  return currencyToRub(item.amount) * lineItemQty(item);
+};
+
 export const formatRub = (value: number): string =>
   new Intl.NumberFormat('ru-RU', {
     style: 'currency',
@@ -80,7 +92,7 @@ export const computeMonthlyFinance = (
   );
 
   const turnoverRub = positions.reduce(
-    (sum, item) => sum + currencyToRub(item.amount),
+    (sum, item) => sum + lineItemSaleRub(item),
     0,
   );
 

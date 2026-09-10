@@ -236,6 +236,16 @@ export async function writeBackLineItemAmount(
   );
 }
 
+export async function writeBackLineItemQuantity(
+  lineItemId: string,
+  kolichestvo: number,
+): Promise<{ success: true; kolichestvo: number; opportunityAmountRub: number }> {
+  return logicFunctionFetch(
+    `/crmparser/line-items/${encodeURIComponent(lineItemId)}/quantity`,
+    { method: 'POST', body: JSON.stringify({ kolichestvo }) },
+  );
+}
+
 export type OkleykaTelegramSendBody = {
   event: 'okleyka.send';
   force?: boolean;

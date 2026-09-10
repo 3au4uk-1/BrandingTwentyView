@@ -125,8 +125,8 @@ export const fetchOpportunities = async (params: {
   const effectiveSort = getEffectiveOpportunitySort(params.sort);
   const searchTerms = resolveSearchTerms(params.filters);
   const lineItemSearchFilters =
-    params.filters.stages?.length || params.filters.types?.length
-      ? { stages: params.filters.stages, types: params.filters.types }
+    params.filters.lineItemStages?.length || params.filters.types?.length
+      ? { stages: params.filters.lineItemStages, types: params.filters.types }
       : undefined;
   const lineItemMatchedOpportunityIds = searchTerms.length
     ? await fetchLineItemOpportunityIdsBySearch(searchTerms, lineItemSearchFilters)

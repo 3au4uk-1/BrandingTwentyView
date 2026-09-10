@@ -1,12 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { LINE_ITEM_TYPES } from 'src/constants/line-item-types';
-import { LINE_ITEM_STAGES } from 'src/constants/stages';
 import type { DealBoardDatePreset } from 'src/deals-board/types';
 
 import { fetchCompanyNames } from './api/companies';
 import { formatFilterClauseLabel } from './filter-model/format-clause-label';
+import {
+  FILTER_BUILDER_FIELDS,
+  type FilterBuilderField,
+} from './filter-model/use-filter-clause-editor';
 import { beginSessionClauses, commitSessionClauses } from './filter-model/session';
 import type { FilterClause, FilterState } from './filter-model/types';
 import { useCompanies } from './hooks/useCompanies';
@@ -19,47 +21,6 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 
 type FilterDatePreset = Exclude<DealBoardDatePreset, 'future'> | null;
-
-type BuilderField = {
-  level: FilterClause['level'];
-  field: string;
-  label: string;
-  kind: 'multi-select' | 'company' | 'oplata';
-  options?: ReadonlyArray<{ value: string; label: string }>;
-};
-
-const BUILDER_FIELDS: BuilderField[] = [
-  {
-    level: 'lineItem',
-    field: 'stage',
-    label: 'Стадия',
-    kind: 'multi-select',
-    options: LINE_ITEM_STAGES,
-  },
-  {
-    level: 'lineItem',
-    field: 'tip',
-    label: 'Категория',
-    kind: 'multi-select',
-    options: LINE_ITEM_TYPES,
-  },
-  {
-    level: 'deal',
-    field: 'companyId',
-    label: 'Компания',
-    kind: 'company',
-  },
-  {
-    level: 'deal',
-    field: 'oplata',
-    label: 'Оплата',
-    kind: 'oplata',
-    options: [
-      { value: 'filled', label: 'Заполнена' },
-      { value: 'empty', label: 'Пустая' },
-    ],
-  },
-];
 
 const presetLabel: Record<Exclude<FilterDatePreset, null>, string> = {
   today: 'Сегодня',
@@ -95,7 +56,7 @@ export const FilterBar = ({
   const theme = useTheme();
   const { colors, radius, font, spacing, zIndex } = theme;
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
-  const [activeBuilderField, setActiveBuilderField] = useState<BuilderField | null>(null);
+  const [activeBuilderField, setActiveBuilderField] = useState<FilterBuilderField | null>(null);
   const [companySearch, setCompanySearch] = useState('');
   const [debouncedCompanySearch, setDebouncedCompanySearch] = useState('');
   const builderRef = useRef<HTMLDivElement | null>(null);
@@ -181,7 +142,7 @@ export const FilterBar = ({
   };
 
   const toggleMultiValue = (
-    field: BuilderField,
+    field: FilterBuilderField,
     optionValue: string,
   ): void => {
     const existing = effectiveClauses.find(
@@ -212,7 +173,7 @@ export const FilterBar = ({
 
   const toggleCompany = (companyId: string): void => {
     toggleMultiValue(
-      BUILDER_FIELDS.find((field) => field.field === 'companyId')!,
+      FILTER_BUILDER_FIELDS.find((field) => field.field === 'companyId')!,
       companyId,
     );
   };
@@ -249,7 +210,7 @@ export const FilterBar = ({
     transition: 'background-color 0.12s ease, color 0.12s ease',
   });
 
-  const openBuilderField = (field: BuilderField) => {
+  const openBuilderField = (field: FilterBuilderField) => {
     setActiveBuilderField(field);
     setIsBuilderOpen(true);
     if (field.kind !== 'company') {
@@ -261,7 +222,7 @@ export const FilterBar = ({
     if (!activeBuilderField) {
       return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.xs }}>
-          {BUILDER_FIELDS.map((field) => (
+          {FILTER_BUILDER_FIELDS.map((field) => (
             <button
               key={`${field.level}:${field.field}`}
               type="button"

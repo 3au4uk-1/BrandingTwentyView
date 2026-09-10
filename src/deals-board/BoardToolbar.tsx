@@ -7,7 +7,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
 
-import { currencyToRub, formatRub, type CurrencyAmount } from './analytics/compute';
+import { formatRub, lineItemSaleRub } from './analytics/compute';
 import { FilterBar } from './FilterBar';
 import { ExpandModeToggle } from './ExpandModeToggle';
 import { TypeSectionsToggle } from './TypeSectionsToggle';
@@ -90,10 +90,7 @@ export const BoardToolbar = ({
 
   const prefixCounts = useMemo(() => countDealsByPrefix(deals), [deals]);
   const turnoverRub = useMemo(
-    () =>
-      lineItems
-        .filter((item) => item.stage !== 'OTMENA')
-        .reduce((sum, item) => sum + currencyToRub(item.amount as CurrencyAmount | undefined), 0),
+    () => lineItems.reduce((sum, item) => sum + lineItemSaleRub(item), 0),
     [lineItems],
   );
 

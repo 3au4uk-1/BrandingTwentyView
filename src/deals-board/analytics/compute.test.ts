@@ -4,6 +4,7 @@ import {
   computeMonthlyFinance,
   currencyToRub,
   getMonthKey,
+  lineItemSaleRub,
   shiftMonthKey,
 } from './compute';
 
@@ -11,6 +12,23 @@ describe('analytics compute', () => {
   it('converts micros to rubles', () => {
     expect(currencyToRub({ amountMicros: 1_500_000_000 })).toBe(1500);
     expect(currencyToRub(null)).toBe(0);
+  });
+
+  it('lineItemSaleRub multiplies unit by qty and skips OTMENA', () => {
+    expect(
+      lineItemSaleRub({
+        stage: 'NOVYY',
+        kolichestvo: 2,
+        amount: { amountMicros: 6_000_000_000, currencyCode: 'RUB' },
+      }),
+    ).toBe(12000);
+    expect(
+      lineItemSaleRub({
+        stage: 'OTMENA',
+        kolichestvo: 9,
+        amount: { amountMicros: 6_000_000_000, currencyCode: 'RUB' },
+      }),
+    ).toBe(0);
   });
 
   it('shifts month keys', () => {

@@ -10,6 +10,7 @@ import {
   resetListStatusBatcherForTests,
   syncManualLineItem,
   writeBackLineItemAmount,
+  writeBackLineItemQuantity,
 } from './crmparser';
 
 describe('crmparser proxy client', () => {
@@ -308,6 +309,35 @@ describe('crmparser proxy client', () => {
 
     await expect(writeBackLineItemAmount('li-42', 100)).rejects.toThrow(
       'Ne-nashe line items cannot be amount-locked',
+    );
+  });
+
+  it('writeBackLineItemQuantity posts kolichestvo to logic function', async () => {
+    globalThis.process = {
+      env: {
+        TWENTY_FUNCTIONS_URL: 'https://twenty.test/functions',
+        TWENTY_APP_ACCESS_TOKEN: 'app-token',
+      },
+    } as NodeJS.Process;
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        kolichestvo: 2,
+        opportunityAmountRub: 12000,
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await writeBackLineItemQuantity('li-42', 2);
+    expect(result.opportunityAmountRub).toBe(12000);
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://twenty.test/functions/crmparser/line-items/li-42/quantity',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ kolichestvo: 2 }),
+      }),
     );
   });
 
