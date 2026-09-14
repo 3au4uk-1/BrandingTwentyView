@@ -7,6 +7,7 @@ import { LINE_ITEM_STAGES, OPPORTUNITY_STAGES } from 'src/constants/stages';
 import { fetchCompanyNames } from '../api/companies';
 import { useCompanies } from '../hooks/useCompanies';
 import { createId } from '../utils/create-id';
+import { applyAmountMinToClauses } from './amount-min';
 import { beginSessionClauses, commitSessionClauses } from './session';
 import type { FilterClause, FilterState } from './types';
 
@@ -14,7 +15,7 @@ export type FilterBuilderField = {
   level: FilterClause['level'];
   field: string;
   label: string;
-  kind: 'multi-select' | 'company' | 'oplata';
+  kind: 'multi-select' | 'company' | 'oplata' | 'amount';
   options?: ReadonlyArray<{ value: string; label: string }>;
 };
 
@@ -55,6 +56,12 @@ export const FILTER_BUILDER_FIELDS: FilterBuilderField[] = [
       { value: 'filled', label: 'Заполнена' },
       { value: 'empty', label: 'Пустая' },
     ],
+  },
+  {
+    level: 'deal',
+    field: 'amount',
+    label: 'Сумма',
+    kind: 'amount',
   },
 ];
 
@@ -205,6 +212,17 @@ export const useFilterClauseEditor = (
     });
   };
 
+  const setAmountMin = (raw: string): void => {
+    withSessionClauses((clauses) => applyAmountMinToClauses(clauses, raw));
+  };
+
+  const getAmountMinDraft = (): string => {
+    const existing = effectiveClauses.find(
+      (clause) => clause.level === 'deal' && clause.field === 'amount',
+    );
+    return typeof existing?.value === 'number' ? String(existing.value) : '';
+  };
+
   const getSelectedValues = (field: FilterBuilderField): string[] => {
     const existing = effectiveClauses.find(
       (clause) => clause.level === field.level && clause.field === field.field,
@@ -235,8 +253,10 @@ export const useFilterClauseEditor = (
     toggleMultiValue,
     toggleCompany,
     setOplata,
+    setAmountMin,
     removeClause,
     getSelectedValues,
     getOplataValue,
+    getAmountMinDraft,
   };
 };

@@ -26,4 +26,16 @@ describe('formatFilterClauseLabel', () => {
       }),
     ).toBe('Стадия позиции: В печати');
   });
+
+  it('labels deal amount gte as Сумма: от', () => {
+    expect(
+      formatFilterClauseLabel({
+        id: '1',
+        level: 'deal',
+        field: 'amount',
+        operator: 'gte',
+        value: 100000,
+      }),
+    ).toBe('Сумма: от 100 000');
+  });
 });
