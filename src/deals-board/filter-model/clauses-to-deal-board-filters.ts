@@ -35,6 +35,15 @@ const resolveOplata = (clauses: FilterClause[]): DealBoardFilters['oplata'] => {
   return 'all';
 };
 
+const resolveAmountMinRub = (clauses: FilterClause[]): number | undefined => {
+  const clause = clauses.find(
+    (item) => item.level === 'deal' && item.field === 'amount' && item.operator === 'gte',
+  );
+  return typeof clause?.value === 'number' && Number.isFinite(clause.value) && clause.value >= 0
+    ? clause.value
+    : undefined;
+};
+
 export const clausesToDealBoardFilters = (
   clauses: FilterClause[],
   datePreset?: DealBoardDatePreset | null,
@@ -42,16 +51,20 @@ export const clausesToDealBoardFilters = (
   dateTo?: string,
   search?: string,
   searchTerms?: string[],
-): DealBoardFilters => ({
-  datePreset: datePreset ?? undefined,
-  dateFrom,
-  dateTo,
-  search: normalizeSearchTerm(search) || undefined,
-  searchTerms: searchTerms?.length ? searchTerms : undefined,
-  stages: undefined,
-  opportunityStages: collectInValues(clauses, 'deal', 'stage') as DealBoardFilters['opportunityStages'],
-  lineItemStages: collectInValues(clauses, 'lineItem', 'stage') as DealBoardFilters['lineItemStages'],
-  types: collectInValues(clauses, 'lineItem', 'tip'),
-  companyIds: collectInValues(clauses, 'deal', 'companyId'),
-  oplata: resolveOplata(clauses),
-});
+): DealBoardFilters => {
+  const amountMinRub = resolveAmountMinRub(clauses);
+  return {
+    datePreset: datePreset ?? undefined,
+    dateFrom,
+    dateTo,
+    search: normalizeSearchTerm(search) || undefined,
+    searchTerms: searchTerms?.length ? searchTerms : undefined,
+    stages: undefined,
+    opportunityStages: collectInValues(clauses, 'deal', 'stage') as DealBoardFilters['opportunityStages'],
+    lineItemStages: collectInValues(clauses, 'lineItem', 'stage') as DealBoardFilters['lineItemStages'],
+    types: collectInValues(clauses, 'lineItem', 'tip'),
+    companyIds: collectInValues(clauses, 'deal', 'companyId'),
+    oplata: resolveOplata(clauses),
+    ...(amountMinRub !== undefined ? { amountMinRub } : {}),
+  };
+};

@@ -45,6 +45,8 @@ export type DealBoardFilters = {
   searchTerms?: string[];
   showAll?: boolean;
   companyIds?: string[];
+  /** Inclusive ruble floor for opportunity.amount. */
+  amountMinRub?: number;
   clauses?: FilterClause[];
 };
 

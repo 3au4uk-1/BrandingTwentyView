@@ -109,6 +109,12 @@ describe('buildOpportunityFilter', () => {
     });
   });
 
+  it('adds amountMicros gte from amountMinRub', () => {
+    expect(buildOpportunityFilter({ amountMinRub: 100000 })).toEqual({
+      and: [{ amount: { amountMicros: { gte: 100_000_000_000 } } }],
+    });
+  });
+
   it('does not treat lineItemStages as opportunity.stage', () => {
     expect(buildOpportunityFilter({ lineItemStages: ['OKLEYKA'] })).toBeUndefined();
   });

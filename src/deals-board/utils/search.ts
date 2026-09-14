@@ -1,5 +1,6 @@
 import type { DealBoardFilters, LineItemRow, OpportunityRow } from '../types';
 
+import { rublesToAmountMicros } from '../filter-model/amount-min';
 import { buildOpportunityDateFilter } from './date-filters';
 
 export const normalizeSearchTerm = (search?: string): string => search?.trim() ?? '';
@@ -84,6 +85,16 @@ export const buildOpportunityFilter = (
   const opportunityStages = filters.opportunityStages?.filter(Boolean) ?? [];
   if (opportunityStages.length > 0) {
     and.push({ stage: { in: opportunityStages } });
+  }
+
+  if (
+    typeof filters.amountMinRub === 'number' &&
+    Number.isFinite(filters.amountMinRub) &&
+    filters.amountMinRub >= 0
+  ) {
+    and.push({
+      amount: { amountMicros: { gte: rublesToAmountMicros(filters.amountMinRub) } },
+    });
   }
 
   if (lineItemMatchedOpportunityIds !== undefined && terms.length === 0) {
