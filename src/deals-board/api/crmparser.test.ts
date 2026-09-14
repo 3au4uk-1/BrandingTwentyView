@@ -5,6 +5,7 @@ import {
   archiveManualLineItem,
   fetchLineItemListStatus,
   fetchLineItemsListStatusBatch,
+  fetchOkleykaJob,
   isCrmparserConfigured,
   notifyBannerPodryadCatchup,
   resetListStatusBatcherForTests,
@@ -371,5 +372,42 @@ describe('crmparser proxy client', () => {
         body: JSON.stringify(payload),
       }),
     );
+  });
+
+  it('fetchOkleykaJob GETs job status from logic function', async () => {
+    globalThis.process = {
+      env: {
+        TWENTY_FUNCTIONS_URL: 'https://twenty.test/functions',
+        TWENTY_APP_ACCESS_TOKEN: 'app-token',
+      },
+    } as NodeJS.Process;
+
+    const payload = {
+      job: {
+        id: 7,
+        status: 'pending',
+        error: null,
+        updatedAt: '2026-09-14T12:00:00.000Z',
+      },
+      alreadySent: false,
+      lastSentAt: null,
+    };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => payload,
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(fetchOkleykaJob('li-42')).resolves.toEqual(payload);
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://twenty.test/functions/crmparser/telegram/okleyka-job/li-42',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer app-token',
+        }),
+      }),
+    );
+    expect(fetchMock.mock.calls[0][1]?.method).not.toBe('POST');
+    expect(fetchMock.mock.calls[0][1]?.body).toBeUndefined();
   });
 });

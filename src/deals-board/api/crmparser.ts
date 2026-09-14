@@ -264,7 +264,27 @@ export type OkleykaTelegramSendResult = {
   loggedAt?: string;
   warning?: string;
   error?: string;
+  queued?: boolean;
+  jobId?: number | string;
+  status?: string;
 };
+
+export type OkleykaJobStatus = {
+  job: {
+    id: number | string;
+    status: string;
+    error: string | null;
+    updatedAt: string;
+  } | null;
+  alreadySent: boolean;
+  lastSentAt: string | null;
+};
+
+export async function fetchOkleykaJob(lineItemId: string): Promise<OkleykaJobStatus> {
+  return logicFunctionFetch(
+    `/crmparser/telegram/okleyka-job/${encodeURIComponent(lineItemId)}`,
+  );
+}
 
 export async function sendOkleykaTelegramEvent(
   body: OkleykaTelegramSendBody,

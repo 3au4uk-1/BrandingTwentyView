@@ -15,6 +15,9 @@ export type OkleykaSendResult = {
   lastSentAt?: string;
   warning?: string;
   error?: string;
+  queued?: boolean;
+  jobId?: number | string;
+  status?: string;
 };
 
 export async function sendOkleykaPayload(
@@ -44,6 +47,15 @@ export async function sendOkleykaPayload(
         ok: false,
         error: result.error ?? 'Не удалось отправить',
         warning: result.warning,
+      };
+    }
+
+    if (result.queued) {
+      return {
+        ok: true,
+        queued: true,
+        jobId: result.jobId,
+        status: result.status,
       };
     }
 
