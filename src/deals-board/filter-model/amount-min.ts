@@ -14,7 +14,7 @@ export const rublesToAmountMicros = (rubles: number): number =>
   Math.round(rubles * 1_000_000);
 
 export const formatAmountMinRub = (rubles: number): string =>
-  rubles.toLocaleString('ru-RU', { maximumFractionDigits: 2 }).replace(/\u00a0/g, ' ');
+  rubles.toLocaleString('ru-RU', { maximumFractionDigits: 2 }).replace(/\p{Zs}/gu, ' ');
 
 export const applyAmountMinToClauses = (
   clauses: FilterClause[],

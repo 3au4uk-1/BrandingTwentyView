@@ -6,6 +6,7 @@ import {
   FILTER_BUILDER_FIELDS,
   useFilterClauseEditor,
 } from '../filter-model/use-filter-clause-editor';
+import { parseAmountMinRub } from '../filter-model/amount-min';
 import type { FilterClause, FilterState } from '../filter-model/types';
 import { useTheme } from '../theme/ThemeContext';
 import { getPresetRange } from '../utils/date-filters';
@@ -78,6 +79,12 @@ export const MobileFiltersSheet = ({
   useEffect(() => {
     setAmountDraft(amountValue);
   }, [amountValue]);
+
+  const commitAmountDraft = () => {
+    const parsed = parseAmountMinRub(amountDraft);
+    setAmountMin(amountDraft);
+    setAmountDraft(parsed === undefined ? '' : String(parsed));
+  };
 
   const sectionTitleStyle = {
     fontSize: font.sizeXs,
@@ -291,11 +298,11 @@ export const MobileFiltersSheet = ({
             placeholder="от, ₽"
             value={amountDraft}
             onChange={(event) => setAmountDraft(event.target.value)}
-            onBlur={() => setAmountMin(amountDraft)}
+            onBlur={commitAmountDraft}
             onKeyDown={(event) => {
               if (event.key === 'Enter') {
                 event.preventDefault();
-                setAmountMin(amountDraft);
+                commitAmountDraft();
               }
             }}
             style={{ width: '100%', minHeight: 44 }}

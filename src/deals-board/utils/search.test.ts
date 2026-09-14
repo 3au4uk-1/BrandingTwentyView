@@ -115,6 +115,16 @@ describe('buildOpportunityFilter', () => {
     });
   });
 
+  it('ignores a negative amountMinRub', () => {
+    expect(buildOpportunityFilter({ amountMinRub: -1 })).toBeUndefined();
+  });
+
+  it('adds a zero amountMinRub clause', () => {
+    expect(buildOpportunityFilter({ amountMinRub: 0 })).toEqual({
+      and: [{ amount: { amountMicros: { gte: 0 } } }],
+    });
+  });
+
   it('does not treat lineItemStages as opportunity.stage', () => {
     expect(buildOpportunityFilter({ lineItemStages: ['OKLEYKA'] })).toBeUndefined();
   });

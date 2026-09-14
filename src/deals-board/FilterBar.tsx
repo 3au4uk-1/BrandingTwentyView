@@ -62,11 +62,6 @@ export const FilterBar = ({
   const [amountDraft, setAmountDraft] = useState('');
   const [debouncedCompanySearch, setDebouncedCompanySearch] = useState('');
   const builderRef = useRef<HTMLDivElement | null>(null);
-  const dismissBuilder = useCallback(() => {
-    setIsBuilderOpen(false);
-    setActiveBuilderField(null);
-  }, []);
-  const dismissLayer = useOutsideDismiss(isBuilderOpen, builderRef, dismissBuilder);
 
   const effectiveClauses =
     value.sessionClauses === undefined ? viewClauses : value.sessionClauses;
@@ -121,14 +116,17 @@ export const FilterBar = ({
     return [...byId.values()].sort((left, right) => left.name.localeCompare(right.name, 'ru'));
   }, [companiesQuery.data, selectedCompanyIds, selectedCompanyNamesQuery.data]);
 
-  const withSessionClauses = (mutator: (clauses: FilterClause[]) => FilterClause[]): void => {
-    const base =
-      value.sessionClauses === undefined ? beginSessionClauses(viewClauses) : value.sessionClauses;
-    onChange({
-      ...value,
-      sessionClauses: commitSessionClauses(mutator([...base])),
-    });
-  };
+  const withSessionClauses = useCallback(
+    (mutator: (clauses: FilterClause[]) => FilterClause[]): void => {
+      const base =
+        value.sessionClauses === undefined ? beginSessionClauses(viewClauses) : value.sessionClauses;
+      onChange({
+        ...value,
+        sessionClauses: commitSessionClauses(mutator([...base])),
+      });
+    },
+    [onChange, value, viewClauses],
+  );
 
   const upsertClause = (nextClause: FilterClause): void => {
     withSessionClauses((clauses) => {
@@ -226,9 +224,25 @@ export const FilterBar = ({
     }
   };
 
-  const commitAmountDraft = () => {
-    withSessionClauses((clauses) => applyAmountMinToClauses(clauses, amountDraft));
-  };
+  const commitAmountDraft = useCallback(() => {
+    withSessionClauses((clauses) => {
+      const next = applyAmountMinToClauses(clauses, amountDraft);
+      const resolved = next.find(
+        (clause) => clause.level === 'deal' && clause.field === 'amount',
+      );
+      setAmountDraft(typeof resolved?.value === 'number' ? String(resolved.value) : '');
+      return next;
+    });
+  }, [amountDraft, withSessionClauses]);
+
+  const dismissBuilder = useCallback(() => {
+    if (activeBuilderField?.kind === 'amount') {
+      commitAmountDraft();
+    }
+    setIsBuilderOpen(false);
+    setActiveBuilderField(null);
+  }, [activeBuilderField, amountDraft, commitAmountDraft]);
+  const dismissLayer = useOutsideDismiss(isBuilderOpen, builderRef, dismissBuilder);
 
   const renderBuilderPanel = () => {
     if (!activeBuilderField) {
@@ -570,10 +584,11 @@ export const FilterBar = ({
           type="button"
           data-segment-btn
           onClick={() => {
-            setIsBuilderOpen((prev) => !prev);
             if (isBuilderOpen) {
-              setActiveBuilderField(null);
+              dismissBuilder();
+              return;
             }
+            setIsBuilderOpen(true);
           }}
           style={{
             ...segmentStyle(false),
