@@ -1,6 +1,6 @@
 import type { DealBoardDatePreset } from '../types';
 
-export type FilterOperator = 'eq' | 'in' | 'contains' | 'between' | 'isEmpty';
+export type FilterOperator = 'eq' | 'in' | 'contains' | 'between' | 'isEmpty' | 'gte';
 
 export type FilterClause = {
   id: string;
