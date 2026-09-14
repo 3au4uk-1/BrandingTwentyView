@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 import type { DealBoardDatePreset } from '../types';
 
 import {
@@ -47,8 +49,10 @@ export const MobileFiltersSheet = ({
     toggleMultiValue,
     toggleCompany,
     setOplata,
+    setAmountMin,
     getSelectedValues,
     getOplataValue,
+    getAmountMinDraft,
     companySearch,
     setCompanySearch,
     companyOptions,
@@ -68,6 +72,12 @@ export const MobileFiltersSheet = ({
   const selectedLineItemStages = getSelectedValues(lineItemStageField);
   const selectedTypes = getSelectedValues(tipField);
   const oplataValue = getOplataValue();
+  const amountValue = getAmountMinDraft();
+  const [amountDraft, setAmountDraft] = useState(amountValue);
+
+  useEffect(() => {
+    setAmountDraft(amountValue);
+  }, [amountValue]);
 
   const sectionTitleStyle = {
     fontSize: font.sizeXs,
@@ -271,6 +281,25 @@ export const MobileFiltersSheet = ({
               })
             )}
           </div>
+        </section>
+
+        <section>
+          <div style={sectionTitleStyle}>Сумма</div>
+          <Input
+            theme={theme}
+            inputMode="decimal"
+            placeholder="от, ₽"
+            value={amountDraft}
+            onChange={(event) => setAmountDraft(event.target.value)}
+            onBlur={() => setAmountMin(amountDraft)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                setAmountMin(amountDraft);
+              }
+            }}
+            style={{ width: '100%', minHeight: 44 }}
+          />
         </section>
 
         <section>

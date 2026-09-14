@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DealBoardDatePreset } from 'src/deals-board/types';
 
 import { fetchCompanyNames } from './api/companies';
+import { applyAmountMinToClauses } from './filter-model/amount-min';
 import { formatFilterClauseLabel } from './filter-model/format-clause-label';
 import {
   FILTER_BUILDER_FIELDS,
@@ -58,6 +59,7 @@ export const FilterBar = ({
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [activeBuilderField, setActiveBuilderField] = useState<FilterBuilderField | null>(null);
   const [companySearch, setCompanySearch] = useState('');
+  const [amountDraft, setAmountDraft] = useState('');
   const [debouncedCompanySearch, setDebouncedCompanySearch] = useState('');
   const builderRef = useRef<HTMLDivElement | null>(null);
   const dismissBuilder = useCallback(() => {
@@ -216,6 +218,16 @@ export const FilterBar = ({
     if (field.kind !== 'company') {
       setCompanySearch('');
     }
+    if (field.kind === 'amount') {
+      const existing = effectiveClauses.find(
+        (clause) => clause.level === 'deal' && clause.field === 'amount',
+      );
+      setAmountDraft(typeof existing?.value === 'number' ? String(existing.value) : '');
+    }
+  };
+
+  const commitAmountDraft = () => {
+    withSessionClauses((clauses) => applyAmountMinToClauses(clauses, amountDraft));
   };
 
   const renderBuilderPanel = () => {
@@ -366,6 +378,43 @@ export const FilterBar = ({
               </label>
             );
           })}
+        </div>
+      );
+    }
+
+    if (activeBuilderField.kind === 'amount') {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm, minWidth: '220px' }}>
+          <button
+            type="button"
+            onClick={() => setActiveBuilderField(null)}
+            style={{
+              alignSelf: 'flex-start',
+              border: 'none',
+              background: 'transparent',
+              color: colors.textMuted,
+              fontSize: font.sizeXs,
+              cursor: 'pointer',
+              padding: 0,
+            }}
+          >
+            ← Назад
+          </button>
+          <Input
+            theme={theme}
+            inputMode="decimal"
+            placeholder="от, ₽"
+            value={amountDraft}
+            onChange={(event) => setAmountDraft(event.target.value)}
+            onBlur={commitAmountDraft}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                commitAmountDraft();
+              }
+            }}
+            style={{ padding: '5px 8px', fontSize: font.sizeSm }}
+          />
         </div>
       );
     }
