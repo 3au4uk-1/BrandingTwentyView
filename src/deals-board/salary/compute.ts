@@ -8,6 +8,8 @@ export const isOkleykaSalaryLineItem = (item: LineItemRow): boolean =>
   item.tipDetail === 'NASHI' &&
   (item.stage === 'OKLEYKA' || item.stage === 'GOTOVO');
 
+export type OkleykaViewMode = 'okleyka' | 'full';
+
 export type OkleykaPositionRow = {
   lineItemId: string;
   opportunityId: string;
@@ -15,6 +17,11 @@ export type OkleykaPositionRow = {
   qty: number;
   unitPriceRub: number;
   saleRub: number;
+  tip: string | null;
+  stage: string | null;
+  tipDetail: string | null;
+  isQualifying: boolean;
+  isCancelled: boolean;
 };
 
 export type OkleykaDealGroup = {
@@ -23,12 +30,16 @@ export type OkleykaDealGroup = {
   bitrixUrl: string;
   positions: OkleykaPositionRow[];
   saleRub: number;
+  qualifyingSaleRub: number;
   printCostRub: number;
   frezaCostRub: number;
+  logisticsCostRub: number;
+  beznalCostRub: number;
   okleykaCostRub: number | null;
   costRub: number;
   profitRub: number;
   marginPct: number | null;
+  okleykaSharePct: number | null;
   eventDate: string;
 };
 
@@ -39,13 +50,36 @@ const currencyToRubOrNull = (value: unknown): number | null => {
   return micros / 1_000_000;
 };
 
+const toPositionRow = (item: LineItemRow): OkleykaPositionRow => {
+  const unitPriceRub = currencyToRub(item.amount as CurrencyAmount | undefined);
+  const qty = typeof item.kolichestvo === 'number' && item.kolichestvo > 0 ? item.kolichestvo : 1;
+  const isQualifying = isOkleykaSalaryLineItem(item);
+  const isCancelled = item.stage === 'OTMENA';
+  return {
+    lineItemId: item.id,
+    opportunityId: item.opportunityId,
+    positionName: item.name || '—',
+    qty,
+    unitPriceRub,
+    saleRub: unitPriceRub * qty,
+    tip: item.tip ?? null,
+    stage: item.stage ?? null,
+    tipDetail: item.tipDetail ?? null,
+    isQualifying,
+    isCancelled,
+  };
+};
+
 const dealEconomics = (
   saleRub: number,
   printCostRub: number,
   frezaCostRub: number,
+  logisticsCostRub: number,
+  beznalCostRub: number,
   okleykaCostRub: number | null,
 ) => {
-  const costRub = printCostRub + frezaCostRub + (okleykaCostRub ?? 0);
+  const costRub =
+    printCostRub + frezaCostRub + logisticsCostRub + beznalCostRub + (okleykaCostRub ?? 0);
   const profitRub = saleRub - costRub;
   return {
     costRub,
@@ -57,32 +91,34 @@ const dealEconomics = (
 export const buildOkleykaDealGroups = (
   lineItems: LineItemRow[],
   dealsById: Map<string, OpportunityRow>,
+  mode: OkleykaViewMode = 'okleyka',
 ): OkleykaDealGroup[] => {
   const positionsByDeal = new Map<string, OkleykaPositionRow[]>();
   for (const item of lineItems) {
-    if (!isOkleykaSalaryLineItem(item)) continue;
     if (!dealsById.has(item.opportunityId)) continue;
-    const unitPriceRub = currencyToRub(item.amount as CurrencyAmount | undefined);
-    const qty =
-      typeof item.kolichestvo === 'number' && item.kolichestvo > 0 ? item.kolichestvo : 1;
+    if (mode === 'okleyka' && !isOkleykaSalaryLineItem(item)) continue;
     const list = positionsByDeal.get(item.opportunityId) ?? [];
-    list.push({
-      lineItemId: item.id,
-      opportunityId: item.opportunityId,
-      positionName: item.name || '—',
-      qty,
-      unitPriceRub,
-      saleRub: unitPriceRub * qty,
-    });
+    list.push(toPositionRow(item));
     positionsByDeal.set(item.opportunityId, list);
   }
 
   const groups: OkleykaDealGroup[] = [];
   for (const [opportunityId, positions] of positionsByDeal) {
+    if (!positions.some((p) => p.isQualifying)) continue;
     const deal = dealsById.get(opportunityId)!;
-    const saleRub = positions.reduce((s, p) => s + p.saleRub, 0);
+    const qualifyingSaleRub = positions
+      .filter((p) => p.isQualifying)
+      .reduce((s, p) => s + p.saleRub, 0);
+    const saleRub =
+      mode === 'full'
+        ? positions.filter((p) => !p.isCancelled).reduce((s, p) => s + p.saleRub, 0)
+        : qualifyingSaleRub;
     const printCostRub = currencyToRub(deal.rashodPechat as CurrencyAmount | undefined);
     const frezaCostRub = currencyToRub(deal.rashodFrezerovka as CurrencyAmount | undefined);
+    const logisticsCostRub =
+      mode === 'full' ? currencyToRub(deal.rashodLogistika as CurrencyAmount | undefined) : 0;
+    const beznalCostRub =
+      mode === 'full' ? currencyToRub(deal.rashodBeznal as CurrencyAmount | undefined) : 0;
     const okleykaCostRub = currencyToRubOrNull(deal.rashodOkleyka);
     const effective = getOpportunityEffectiveDate(deal);
     const eventDate = effective
@@ -96,11 +132,22 @@ export const buildOkleykaDealGroups = (
         a.positionName.localeCompare(b.positionName, 'ru'),
       ),
       saleRub,
+      qualifyingSaleRub,
       printCostRub,
       frezaCostRub,
+      logisticsCostRub,
+      beznalCostRub,
       okleykaCostRub,
       eventDate,
-      ...dealEconomics(saleRub, printCostRub, frezaCostRub, okleykaCostRub),
+      okleykaSharePct: saleRub > 0 ? (qualifyingSaleRub / saleRub) * 100 : null,
+      ...dealEconomics(
+        saleRub,
+        printCostRub,
+        frezaCostRub,
+        logisticsCostRub,
+        beznalCostRub,
+        okleykaCostRub,
+      ),
     });
   }
   return groups.sort((a, b) => a.dealName.localeCompare(b.dealName, 'ru'));
@@ -112,7 +159,14 @@ export const applyDealOkleykaOverride = (
 ): OkleykaDealGroup => ({
   ...group,
   okleykaCostRub,
-  ...dealEconomics(group.saleRub, group.printCostRub, group.frezaCostRub, okleykaCostRub),
+  ...dealEconomics(
+    group.saleRub,
+    group.printCostRub,
+    group.frezaCostRub,
+    group.logisticsCostRub,
+    group.beznalCostRub,
+    okleykaCostRub,
+  ),
 });
 
 export type OkleykaDealTotals = {
@@ -121,6 +175,8 @@ export type OkleykaDealTotals = {
   sale: number;
   print: number;
   freza: number;
+  logistics: number;
+  beznal: number;
   okleyka: number;
   cost: number;
   profit: number;
@@ -131,8 +187,10 @@ export const sumOkleykaDealTotals = (groups: OkleykaDealGroup[]): OkleykaDealTot
   const sale = groups.reduce((s, g) => s + g.saleRub, 0);
   const print = groups.reduce((s, g) => s + g.printCostRub, 0);
   const freza = groups.reduce((s, g) => s + g.frezaCostRub, 0);
+  const logistics = groups.reduce((s, g) => s + g.logisticsCostRub, 0);
+  const beznal = groups.reduce((s, g) => s + g.beznalCostRub, 0);
   const okleyka = groups.reduce((s, g) => s + (g.okleykaCostRub ?? 0), 0);
-  const cost = print + freza + okleyka;
+  const cost = print + freza + logistics + beznal + okleyka;
   const profit = sale - cost;
   return {
     deals: groups.length,
@@ -140,11 +198,18 @@ export const sumOkleykaDealTotals = (groups: OkleykaDealGroup[]): OkleykaDealTot
     sale,
     print,
     freza,
+    logistics,
+    beznal,
     okleyka,
     cost,
     profit,
     marginPct: sale > 0 ? (profit / sale) * 100 : null,
   };
+};
+
+export const formatOkleykaShareCaption = (pct: number | null): string | null => {
+  if (pct === null || !Number.isFinite(pct)) return null;
+  return `оклейка ${Math.round(pct)}%`;
 };
 
 export type OkleykaSortKey =
@@ -195,7 +260,46 @@ export const sortOkleykaDealGroups = (
 
 export const dealGroupsToXlsxMatrix = (
   groups: OkleykaDealGroup[],
+  mode: OkleykaViewMode = 'okleyka',
 ): Array<Array<string | number>> => {
+  if (mode === 'full') {
+    const header = [
+      'Bitrix',
+      'Сделка',
+      'Дата',
+      'Позиций',
+      'Продажа',
+      'Оклейка %',
+      'Расход печать',
+      'Расход фреза',
+      'Расход логистика',
+      'Расход безнал',
+      'Расход оклейка',
+      'Расход итого',
+      'Прибыль',
+      'Маржа %',
+    ];
+    return [
+      header,
+      ...groups.map((g) => [
+        g.bitrixUrl,
+        g.dealName,
+        g.eventDate || '',
+        g.positions.length,
+        Math.round(g.saleRub),
+        g.okleykaSharePct === null ? '' : Math.round(g.okleykaSharePct),
+        Math.round(g.printCostRub),
+        Math.round(g.frezaCostRub),
+        Math.round(g.logisticsCostRub),
+        Math.round(g.beznalCostRub),
+        g.okleykaCostRub === null ? '' : Math.round(g.okleykaCostRub),
+        Math.round(g.costRub),
+        Math.round(g.profitRub),
+        g.marginPct === null ? '' : Number(g.marginPct.toFixed(1)),
+      ]),
+    ];
+  }
+
   const header = [
     'Bitrix',
     'Сделка',
