@@ -106,6 +106,59 @@ describe('fetchOkleykaSalaryFullPageData', () => {
     expect(dealsById.has('opp-1')).toBe(true);
     expect(dealsById.has('opp-skip')).toBe(false);
   });
+
+  it('stops REST pagination when endCursor does not advance', async () => {
+    let calls = 0;
+    const get = vi.fn().mockImplementation(async () => {
+      calls += 1;
+      if (calls > 8) throw new Error('infinite pagination');
+      return {
+        data: {
+          dealLineItems: [{ id: 'li-1', name: 'Pos', opportunityId: 'opp-1' }],
+        },
+        pageInfo: { hasNextPage: true, endCursor: 'stuck-cursor' },
+      };
+    });
+    vi.mocked(RestApiClient).mockImplementation(
+      () => ({ get }) as unknown as RestApiClient,
+    );
+    vi.mocked(fetchOpportunities).mockResolvedValue({
+      records: [{ id: 'opp-1', name: 'Deal', loadDate: '2026-07-10' }],
+      totalCount: 1,
+    });
+    vi.mocked(buildOkleykaDealGroups).mockReturnValue([]);
+
+    await fetchOkleykaSalaryFullPageData('2026-07-01', '2026-07-31', ['opp-1']);
+
+    expect(get).toHaveBeenCalledTimes(2);
+    expect(get.mock.calls[1]?.[1]?.query?.after).toBe('stuck-cursor');
+  });
+
+  it('chunks full-mode opportunity ids by 20 so REST pages fit under limit', async () => {
+    const opportunityIds = Array.from({ length: 21 }, (_, index) => `opp-${index + 1}`);
+    const get = vi.fn().mockResolvedValue({ data: [] });
+    vi.mocked(RestApiClient).mockImplementation(
+      () => ({ get }) as unknown as RestApiClient,
+    );
+    vi.mocked(fetchOpportunities).mockResolvedValue({
+      records: opportunityIds.map((id) => ({
+        id,
+        name: id,
+        loadDate: '2026-07-15',
+      })),
+      totalCount: 21,
+    });
+    vi.mocked(buildOkleykaDealGroups).mockReturnValue([]);
+
+    await fetchOkleykaSalaryFullPageData('2026-07-01', '2026-07-31', opportunityIds);
+
+    expect(get).toHaveBeenCalledTimes(2);
+    const filters = get.mock.calls.map((call) => call[1]?.query?.filter as string);
+    expect(filters[0]).toContain('opp-1');
+    expect(filters[0]).toContain('opp-20');
+    expect(filters[0]).not.toContain('opp-21');
+    expect(filters[1]).toContain('opp-21');
+  });
 });
 
 describe('fetchOkleykaSalaryPageData', () => {

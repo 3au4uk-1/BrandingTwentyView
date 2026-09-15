@@ -1,17 +1,18 @@
 import { RestApiClient } from 'twenty-client-sdk/rest';
 
 import { fetchOpportunities, patchOpportunity } from '../api/opportunities';
-import { extractRestPageInfo, normalizeRestListResponse } from '../api/rest-list';
+import { extractRestPageInfo, normalizeRestListResponse, resolveNextRestCursor } from '../api/rest-list';
 import type { DealBoardFilters, LineItemRow, OpportunityRow } from '../types';
 import { opportunityMatchesDateFilter } from '../utils/resolve-opportunity-date';
 import { buildOkleykaDealGroups, type OkleykaDealGroup } from './compute';
 
 const PAGE_LIMIT = 200;
 const ID_CHUNK = 50;
+const FULL_ID_CHUNK = 20;
 
-const chunkIds = (ids: string[]): string[][] => {
+const chunkIds = (ids: string[], size = ID_CHUNK): string[][] => {
   const out: string[][] = [];
-  for (let i = 0; i < ids.length; i += ID_CHUNK) out.push(ids.slice(i, i + ID_CHUNK));
+  for (let i = 0; i < ids.length; i += size) out.push(ids.slice(i, i + size));
   return out;
 };
 
@@ -43,13 +44,14 @@ const normalizeLineItem = (raw: unknown): LineItemRow | null => {
 const fetchLineItemsForOpportunityIds = async (
   opportunityIds: string[],
   buildFilter: (ids: string[]) => string,
+  idChunkSize = ID_CHUNK,
 ): Promise<LineItemRow[]> => {
   if (opportunityIds.length === 0) return [];
 
   const client = new RestApiClient();
   const all: LineItemRow[] = [];
 
-  for (const chunk of chunkIds(opportunityIds)) {
+  for (const chunk of chunkIds(opportunityIds, idChunkSize)) {
     const filter = buildFilter(chunk);
     let after: string | undefined;
 
@@ -66,8 +68,7 @@ const fetchLineItemsForOpportunityIds = async (
         .filter((row): row is LineItemRow => row !== null);
       all.push(...page);
       const pageInfo = extractRestPageInfo(response);
-      after =
-        pageInfo.hasNextPage && pageInfo.endCursor ? String(pageInfo.endCursor) : undefined;
+      after = resolveNextRestCursor(after, pageInfo);
     } while (after);
   }
 
@@ -160,6 +161,7 @@ export const fetchOkleykaSalaryFullPageData = async (
   const lineItems = await fetchLineItemsForOpportunityIds(
     opportunityIds,
     buildOkleykaAllLineItemsFilter,
+    FULL_ID_CHUNK,
   );
   const matched = lineItems.filter((item) => dealsById.has(item.opportunityId));
   return buildOkleykaDealGroups(matched, dealsById, 'full');
