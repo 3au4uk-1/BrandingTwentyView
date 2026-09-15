@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Fragment, useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Chip, getChipPalette, type ChipColor } from '../Chip';
 import {
   useLineItemListStatus,
@@ -183,6 +183,9 @@ const OkleykaSalaryPageInner = () => {
   const [overrides, setOverrides] = useState<Record<string, number | null>>({});
   const [viewMode, setViewMode] = useState<OkleykaViewMode>('okleyka');
   const [fullError, setFullError] = useState<string | null>(null);
+  const viewModeRef = useRef(viewMode);
+  viewModeRef.current = viewMode;
+  const fullModeGenerationRef = useRef(0);
 
   const { year, monthIndex } = yearMonthFromMode(dateMode);
   const monthKey = monthKeyOf(year, monthIndex);
@@ -223,9 +226,12 @@ const OkleykaSalaryPageInner = () => {
   });
 
   const requestFullMode = useCallback(async () => {
+    const generation = ++fullModeGenerationRef.current;
     setFullError(null);
     if (compactOpportunityIds.length === 0) {
-      setViewMode('full');
+      if (generation === fullModeGenerationRef.current) {
+        setViewMode('full');
+      }
       return;
     }
     try {
@@ -234,9 +240,17 @@ const OkleykaSalaryPageInner = () => {
         queryFn: () =>
           fetchOkleykaSalaryFullPageData(dateFrom!, dateTo!, compactOpportunityIds),
       });
+      if (generation !== fullModeGenerationRef.current) {
+        return;
+      }
       setViewMode('full');
     } catch {
-      setViewMode('okleyka');
+      if (generation !== fullModeGenerationRef.current) {
+        return;
+      }
+      if (viewModeRef.current !== 'full') {
+        setViewMode('okleyka');
+      }
       setFullError('Не удалось загрузить все позиции');
     }
   }, [
@@ -980,6 +994,7 @@ const OkleykaSalaryPageInner = () => {
             size="sm"
             variant={viewMode === 'okleyka' ? 'primary' : 'ghost'}
             onClick={() => {
+              fullModeGenerationRef.current += 1;
               setFullError(null);
               setViewMode('okleyka');
             }}
