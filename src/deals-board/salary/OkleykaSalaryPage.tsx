@@ -110,9 +110,10 @@ const PositionNameCell = ({
   const theme = useTheme();
   const { colors } = theme;
   const { data } = useLineItemListStatus(lineItemId);
+  const highlightQualifying = showMeta && isQualifying;
   const nameColor = isCancelled
     ? colors.textMuted
-    : isQualifying
+    : highlightQualifying
       ? getChipPalette('blue', theme.colorScheme).text
       : colors.textSecondary;
   return (
@@ -124,7 +125,7 @@ const PositionNameCell = ({
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
           color: nameColor,
-          fontWeight: isQualifying ? theme.font.weightSemibold : undefined,
+          fontWeight: highlightQualifying ? theme.font.weightSemibold : undefined,
           minWidth: 0,
           flex: 1,
         }}
@@ -431,7 +432,32 @@ const OkleykaSalaryPageInner = () => {
     void queryClient.invalidateQueries({ queryKey: ['okleyka-salary'] });
     void queryClient.invalidateQueries({ queryKey: ['okleyka-salary-full'] });
     void queryClient.invalidateQueries({ queryKey: ['okleyka-shares'] });
-  }, [queryClient]);
+    if (viewMode === 'full' && dateFrom && dateTo) {
+      void queryClient
+        .fetchQuery({
+          queryKey: [
+            'okleyka-salary-full',
+            refreshKey,
+            dateFrom,
+            dateTo,
+            compactOpportunityIdsKey,
+          ],
+          queryFn: () =>
+            fetchOkleykaSalaryFullPageData(dateFrom, dateTo, compactOpportunityIds),
+        })
+        .catch(() => {
+          setFullError('Не удалось загрузить все позиции');
+        });
+    }
+  }, [
+    queryClient,
+    viewMode,
+    dateFrom,
+    dateTo,
+    refreshKey,
+    compactOpportunityIdsKey,
+    compactOpportunityIds,
+  ]);
 
   const handleOptimistic = useCallback((id: string, next: number | null) => {
     setOverrides((prev) => ({ ...prev, [id]: next }));
