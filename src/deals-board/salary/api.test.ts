@@ -18,7 +18,9 @@ import { RestApiClient } from 'twenty-client-sdk/rest';
 import { fetchOpportunities, patchOpportunity } from '../api/opportunities';
 import { buildOkleykaDealGroups } from './compute';
 import {
+  buildOkleykaAllLineItemsFilter,
   buildOkleykaSalaryLineItemsFilter,
+  fetchOkleykaSalaryFullPageData,
   fetchOkleykaSalaryPageData,
   patchOkleykaDealCost,
 } from './api';
@@ -32,6 +34,77 @@ describe('buildOkleykaSalaryLineItemsFilter', () => {
     expect(filter).toContain('tipDetail[eq]:"NASHI"');
     expect(filter).toContain('OKLEYKA');
     expect(filter).toContain('GOTOVO');
+  });
+});
+
+describe('buildOkleykaAllLineItemsFilter', () => {
+  it('filters only by opportunity ids', () => {
+    const filter = buildOkleykaAllLineItemsFilter(['opp-1', 'opp-2']);
+    expect(filter).toContain('opportunityId[in]:["opp-1","opp-2"]');
+    expect(filter).not.toContain('PLENKA');
+    expect(filter).not.toContain('NASHI');
+    expect(filter).not.toContain('OKLEYKA');
+  });
+});
+
+describe('fetchOkleykaSalaryFullPageData', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns [] without REST when opportunityIds is empty', async () => {
+    const get = vi.fn();
+    vi.mocked(RestApiClient).mockImplementation(
+      () => ({ get }) as unknown as RestApiClient,
+    );
+    await expect(
+      fetchOkleykaSalaryFullPageData('2026-07-01', '2026-07-31', []),
+    ).resolves.toEqual([]);
+    expect(fetchOpportunities).not.toHaveBeenCalled();
+    expect(get).not.toHaveBeenCalled();
+  });
+
+  it('loads unfiltered line items and extra rashod, then builds full groups', async () => {
+    const get = vi.fn().mockResolvedValue({ data: [] });
+    vi.mocked(RestApiClient).mockImplementation(
+      () => ({ get }) as unknown as RestApiClient,
+    );
+    vi.mocked(fetchOpportunities).mockResolvedValue({
+      records: [
+        { id: 'opp-1', name: 'Deal', loadDate: '2026-07-10' },
+        { id: 'opp-skip', name: 'Other', loadDate: '2026-07-10' },
+      ],
+      totalCount: 2,
+    });
+    vi.mocked(buildOkleykaDealGroups).mockReturnValue([]);
+
+    await fetchOkleykaSalaryFullPageData('2026-07-01', '2026-07-31', ['opp-1']);
+
+    expect(fetchOpportunities).toHaveBeenCalledWith(
+      expect.objectContaining({
+        restFieldNames: expect.arrayContaining([
+          'rashodLogistika',
+          'rashodBeznal',
+          'rashodPechat',
+          'rashodFrezerovka',
+          'rashodOkleyka',
+        ]),
+      }),
+    );
+    const restNames = vi.mocked(fetchOpportunities).mock.calls[0]?.[0]?.restFieldNames as string[];
+    expect(restNames).not.toContain('rashodVyezdnayaKomanda');
+    expect(restNames).not.toContain('rashodItogo');
+    expect(get.mock.calls[0]?.[1]?.query?.filter).toBe(
+      buildOkleykaAllLineItemsFilter(['opp-1']),
+    );
+    expect(buildOkleykaDealGroups).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.any(Map),
+      'full',
+    );
+    const dealsById = vi.mocked(buildOkleykaDealGroups).mock.calls[0]?.[1] as Map<string, { id: string }>;
+    expect(dealsById.has('opp-1')).toBe(true);
+    expect(dealsById.has('opp-skip')).toBe(false);
   });
 });
 

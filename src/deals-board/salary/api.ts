@@ -18,6 +18,9 @@ const chunkIds = (ids: string[]): string[][] => {
 export const buildOkleykaSalaryLineItemsFilter = (opportunityIds: string[]): string =>
   `and(opportunityId[in]:${JSON.stringify(opportunityIds)},tip[eq]:"PLENKA",tipDetail[eq]:"NASHI",stage[in]:["OKLEYKA","GOTOVO"])`;
 
+export const buildOkleykaAllLineItemsFilter = (opportunityIds: string[]): string =>
+  `opportunityId[in]:${JSON.stringify(opportunityIds)}`;
+
 const normalizeLineItem = (raw: unknown): LineItemRow | null => {
   if (!raw || typeof raw !== 'object') return null;
   const item = raw as Record<string, unknown>;
@@ -37,8 +40,9 @@ const normalizeLineItem = (raw: unknown): LineItemRow | null => {
   };
 };
 
-const fetchOkleykaLineItemsForOpportunityIds = async (
+const fetchLineItemsForOpportunityIds = async (
   opportunityIds: string[],
+  buildFilter: (ids: string[]) => string,
 ): Promise<LineItemRow[]> => {
   if (opportunityIds.length === 0) return [];
 
@@ -46,7 +50,7 @@ const fetchOkleykaLineItemsForOpportunityIds = async (
   const all: LineItemRow[] = [];
 
   for (const chunk of chunkIds(opportunityIds)) {
-    const filter = buildOkleykaSalaryLineItemsFilter(chunk);
+    const filter = buildFilter(chunk);
     let after: string | undefined;
 
     do {
@@ -100,7 +104,10 @@ export const fetchOkleykaSalaryPageData = async (
   const opportunityIds = records
     .map((record) => (typeof record.id === 'string' ? record.id : ''))
     .filter(Boolean);
-  const lineItems = await fetchOkleykaLineItemsForOpportunityIds(opportunityIds);
+  const lineItems = await fetchLineItemsForOpportunityIds(
+    opportunityIds,
+    buildOkleykaSalaryLineItemsFilter,
+  );
 
   const dealsById = new Map<string, OpportunityRow>();
   for (const deal of records) {
@@ -111,6 +118,51 @@ export const fetchOkleykaSalaryPageData = async (
 
   const matchedLineItems = lineItems.filter((item) => dealsById.has(item.opportunityId));
   return buildOkleykaDealGroups(matchedLineItems, dealsById);
+};
+
+export const fetchOkleykaSalaryFullPageData = async (
+  dateFrom: string,
+  dateTo: string,
+  opportunityIds: string[],
+): Promise<OkleykaDealGroup[]> => {
+  if (opportunityIds.length === 0) return [];
+
+  const filters: DealBoardFilters = { datePreset: 'custom', dateFrom, dateTo };
+
+  const { records } = await fetchOpportunities({
+    limit: PAGE_LIMIT,
+    offset: 0,
+    sort: [],
+    filters,
+    visibleCrmFieldNames: ['loadDate'],
+    restFieldNames: [
+      'name',
+      'bitrixLink',
+      'loadDate',
+      'closeDate',
+      'rashodPechat',
+      'rashodFrezerovka',
+      'rashodOkleyka',
+      'rashodLogistika',
+      'rashodBeznal',
+    ],
+    includeCompanyRelation: false,
+    fetchAll: true,
+  });
+
+  const allowed = new Set(opportunityIds);
+  const dealsById = new Map<string, OpportunityRow>();
+  for (const deal of records) {
+    if (!allowed.has(deal.id)) continue;
+    if (opportunityMatchesDateFilter(deal, filters)) dealsById.set(deal.id, deal);
+  }
+
+  const lineItems = await fetchLineItemsForOpportunityIds(
+    opportunityIds,
+    buildOkleykaAllLineItemsFilter,
+  );
+  const matched = lineItems.filter((item) => dealsById.has(item.opportunityId));
+  return buildOkleykaDealGroups(matched, dealsById, 'full');
 };
 
 export const patchOkleykaDealCost = async (
