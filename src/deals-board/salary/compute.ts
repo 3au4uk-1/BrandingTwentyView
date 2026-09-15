@@ -1,3 +1,4 @@
+import { BOARD_STREAM, filterLineItemsByBoardStream } from 'src/constants/product-stream';
 import { currencyToRub, formatRub, type CurrencyAmount } from '../analytics/compute';
 import type { LineItemRow, OpportunityRow } from '../types';
 import { toLocalInputDate } from '../utils/date-filters';
@@ -93,8 +94,12 @@ export const buildOkleykaDealGroups = (
   dealsById: Map<string, OpportunityRow>,
   mode: OkleykaViewMode = 'okleyka',
 ): OkleykaDealGroup[] => {
+  const scopedItems =
+    mode === 'full'
+      ? filterLineItemsByBoardStream(lineItems, BOARD_STREAM.BRANDING)
+      : lineItems;
   const positionsByDeal = new Map<string, OkleykaPositionRow[]>();
-  for (const item of lineItems) {
+  for (const item of scopedItems) {
     if (!dealsById.has(item.opportunityId)) continue;
     if (mode === 'okleyka' && !isOkleykaSalaryLineItem(item)) continue;
     const list = positionsByDeal.get(item.opportunityId) ?? [];

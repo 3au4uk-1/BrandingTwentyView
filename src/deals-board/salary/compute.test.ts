@@ -55,6 +55,7 @@ const item = (over: Partial<LineItemRow>): LineItemRow =>
     stage: 'OKLEYKA',
     kolichestvo: 2,
     amount: { amountMicros: 50_000_000, currencyCode: 'RUB' },
+    productStream: 'BRANDING',
     ...over,
   }) as LineItemRow;
 
@@ -197,6 +198,67 @@ describe('okleyka salary compute', () => {
       new Map([['d1', deal('d1', { loadDate: '2026-07-20T12:00:00.000Z' })]]),
     );
     expect(groups[0]?.eventDate).toMatch(/^2026-07-20/);
+  });
+
+  it('full mode keeps branding positions like Realization, including stream intersection', () => {
+    const groups = buildOkleykaDealGroups(
+      [
+        item({ id: 'wrap', productStream: 'BRANDING' }),
+        item({
+          id: 'banner',
+          name: 'Баннер',
+          tip: 'BANNERA',
+          tipDetail: 'YURA',
+          stage: 'GOTOVO',
+          productStream: 'BRANDING',
+          kolichestvo: 1,
+          amount: { amountMicros: 40_000_000, currencyCode: 'RUB' },
+        }),
+        item({
+          id: 'both',
+          name: 'И фотобудка и оклейка',
+          tip: 'BANNERA',
+          stage: 'GOTOVO',
+          productStream: ['DECOR', 'BRANDING'],
+          kolichestvo: 1,
+          amount: { amountMicros: 15_000_000, currencyCode: 'RUB' },
+        }),
+        item({
+          id: 'decor',
+          name: 'Декор',
+          tip: 'BANNERA',
+          stage: 'GOTOVO',
+          productStream: 'DECOR',
+          kolichestvo: 1,
+          amount: { amountMicros: 80_000_000, currencyCode: 'RUB' },
+        }),
+        item({
+          id: 'mk',
+          name: 'МК',
+          tip: 'PODRYAD',
+          stage: 'GOTOVO',
+          productStream: ['MK'],
+          kolichestvo: 1,
+          amount: { amountMicros: 70_000_000, currencyCode: 'RUB' },
+        }),
+        item({
+          id: 'untagged',
+          name: 'Без потока',
+          tip: 'BANNERA',
+          stage: 'GOTOVO',
+          productStream: null,
+          kolichestvo: 1,
+          amount: { amountMicros: 60_000_000, currencyCode: 'RUB' },
+        }),
+      ],
+      new Map([['d1', deal('d1')]]),
+      'full',
+    );
+    const g = groups[0]!;
+    expect(new Set(g.positions.map((p) => p.lineItemId))).toEqual(
+      new Set(['wrap', 'banner', 'both']),
+    );
+    expect(g.saleRub).toBe(100 + 40 + 15);
   });
 
   it('full mode keeps only deals that have a qualifying position', () => {
