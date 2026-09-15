@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Fragment, useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { Chip } from '../Chip';
+import { Chip, getChipPalette, type ChipColor } from '../Chip';
 import {
   useLineItemListStatus,
   usePrefetchLineItemListStatuses,
@@ -16,18 +16,21 @@ import {
   revokePendingDownload,
   type PendingDownloadLink,
 } from '../utils/download-blob';
-import { fetchOkleykaSalaryPageData, patchOkleykaDealCost } from './api';
+import { getLineItemTypeColor, getLineItemTypeLabel } from 'src/constants/line-item-types';
+import { getStageColor, getStageLabel } from 'src/constants/stages';
+import { fetchOkleykaSalaryFullPageData, fetchOkleykaSalaryPageData, patchOkleykaDealCost } from './api';
 import {
 
   applyDealOkleykaOverride,
   formatMarginPct,
   formatOkleykaEventDate,
+  formatOkleykaShareCaption,
   formatSalaryRub,
   marginPctTone,
   sortOkleykaDealGroups,
   sumOkleykaDealTotals,
-  type OkleykaDealGroup,
   type OkleykaSortKey,
+  type OkleykaViewMode,
 } from './compute';
 import { buildCopySrcDoc, COPY_DONE_MESSAGE_TYPE } from '../utils/copy-text';
 import {
@@ -90,14 +93,28 @@ const formatOptionalCost = (value: number): string =>
 const PositionNameCell = ({
   lineItemId,
   positionName,
+  showMeta = false,
+  tip,
+  stage,
+  isQualifying = false,
+  isCancelled = false,
 }: {
   lineItemId: string;
   positionName: string;
+  showMeta?: boolean;
+  tip?: string | null;
+  stage?: string | null;
+  isQualifying?: boolean;
+  isCancelled?: boolean;
 }) => {
   const theme = useTheme();
   const { colors } = theme;
   const { data } = useLineItemListStatus(lineItemId);
-
+  const nameColor = isCancelled
+    ? colors.textMuted
+    : isQualifying
+      ? getChipPalette('blue', theme.colorScheme).text
+      : colors.textSecondary;
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
       <span
@@ -106,13 +123,20 @@ const PositionNameCell = ({
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
-          color: colors.textSecondary,
+          color: nameColor,
+          fontWeight: isQualifying ? theme.font.weightSemibold : undefined,
           minWidth: 0,
           flex: 1,
         }}
       >
         {positionName}
       </span>
+      {showMeta && tip ? (
+        <Chip text={getLineItemTypeLabel(tip)} color={getLineItemTypeColor(tip) as ChipColor} theme={theme} />
+      ) : null}
+      {showMeta && stage ? (
+        <Chip text={getStageLabel(stage)} color={getStageColor(stage) as ChipColor} theme={theme} />
+      ) : null}
       {data?.restorationMatch ? (
         <Chip text="реставрация · 0 ₽" color="yellow" theme={theme} />
       ) : null}
@@ -156,6 +180,8 @@ const OkleykaSalaryPageInner = () => {
   const [distributeError, setDistributeError] = useState<string | null>(null);
   const [splitError, setSplitError] = useState<string | null>(null);
   const [overrides, setOverrides] = useState<Record<string, number | null>>({});
+  const [viewMode, setViewMode] = useState<OkleykaViewMode>('okleyka');
+  const [fullError, setFullError] = useState<string | null>(null);
 
   const { year, monthIndex } = yearMonthFromMode(dateMode);
   const monthKey = monthKeyOf(year, monthIndex);
@@ -183,7 +209,52 @@ const OkleykaSalaryPageInner = () => {
     queryFn: () => fetchOkleykaSalaryPageData(dateFrom!, dateTo!),
   });
 
-  const baseGroups = query.data ?? [];
+  const compactOpportunityIds = useMemo(
+    () => (query.data ?? []).map((g) => g.opportunityId),
+    [query.data],
+  );
+  const compactOpportunityIdsKey = compactOpportunityIds.join(',');
+
+  const fullQuery = useQuery({
+    queryKey: ['okleyka-salary-full', refreshKey, dateFrom, dateTo, compactOpportunityIdsKey],
+    queryFn: () => fetchOkleykaSalaryFullPageData(dateFrom!, dateTo!, compactOpportunityIds),
+    enabled: false,
+  });
+
+  const requestFullMode = useCallback(async () => {
+    setFullError(null);
+    if (compactOpportunityIds.length === 0) {
+      setViewMode('full');
+      return;
+    }
+    try {
+      await queryClient.fetchQuery({
+        queryKey: ['okleyka-salary-full', refreshKey, dateFrom, dateTo, compactOpportunityIdsKey],
+        queryFn: () =>
+          fetchOkleykaSalaryFullPageData(dateFrom!, dateTo!, compactOpportunityIds),
+      });
+      setViewMode('full');
+    } catch {
+      setViewMode('okleyka');
+      setFullError('Не удалось загрузить все позиции');
+    }
+  }, [
+    compactOpportunityIds,
+    compactOpportunityIdsKey,
+    dateFrom,
+    dateTo,
+    queryClient,
+    refreshKey,
+  ]);
+
+  useEffect(() => {
+    if (viewMode !== 'full') return;
+    if (!dateFrom || !dateTo) return;
+    if (fullQuery.data) return;
+    void requestFullMode();
+  }, [viewMode, dateFrom, dateTo, compactOpportunityIdsKey, refreshKey, fullQuery.data, requestFullMode]);
+
+  const baseGroups = viewMode === 'full' ? (fullQuery.data ?? []) : (query.data ?? []);
 
   const displayGroups = useMemo(
     () =>
@@ -354,10 +425,11 @@ const OkleykaSalaryPageInner = () => {
       .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
   }, [dateMode, monthEntries]);
 
-  const tableColSpan = 11 + visiblePersonEntries.length;
+  const tableColSpan = (viewMode === 'full' ? 13 : 11) + visiblePersonEntries.length;
 
   const handlePersisted = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ['okleyka-salary'] });
+    void queryClient.invalidateQueries({ queryKey: ['okleyka-salary-full'] });
     void queryClient.invalidateQueries({ queryKey: ['okleyka-shares'] });
   }, [queryClient]);
 
@@ -381,6 +453,7 @@ const OkleykaSalaryPageInner = () => {
 
   const invalidateSharesAndSalary = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: ['okleyka-salary'] });
+    void queryClient.invalidateQueries({ queryKey: ['okleyka-salary-full'] });
     void queryClient.invalidateQueries({ queryKey: ['okleyka-shares'] });
   }, [queryClient]);
 
@@ -598,7 +671,7 @@ const OkleykaSalaryPageInner = () => {
     setPendingDownload(null);
     setDownloadSrcDoc(null);
     try {
-      const { blob, filename } = await fetchOkleykaSalaryExcelBlob(displayGroups);
+      const { blob, filename } = await fetchOkleykaSalaryExcelBlob(displayGroups, viewMode);
 
       const dataUrl = await buildDataUrl(blob);
       setDownloadSrcDoc(buildDownloadSrcDoc(dataUrl, filename));
@@ -876,6 +949,26 @@ const OkleykaSalaryPageInner = () => {
           >
             2-я половина
           </Button>
+          <Button
+            theme={theme}
+            size="sm"
+            variant={viewMode === 'okleyka' ? 'primary' : 'ghost'}
+            onClick={() => {
+              setFullError(null);
+              setViewMode('okleyka');
+            }}
+          >
+            Оклейка
+          </Button>
+          <Button
+            theme={theme}
+            size="sm"
+            variant={viewMode === 'full' ? 'primary' : 'ghost'}
+            disabled={fullQuery.isFetching}
+            onClick={() => void requestFullMode()}
+          >
+            {fullQuery.isFetching ? 'Вся сделка…' : 'Вся сделка'}
+          </Button>
           <label
             style={{
               display: 'flex',
@@ -910,6 +1003,9 @@ const OkleykaSalaryPageInner = () => {
       </header>
       {exportError ? (
         <div style={{ color: colors.danger, fontSize: font.sizeSm }}>{exportError}</div>
+      ) : null}
+      {fullError ? (
+        <div style={{ color: colors.danger, fontSize: font.sizeSm }}>{fullError}</div>
       ) : null}
       <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: spacing.md }}>
         <div
@@ -949,6 +1045,18 @@ const OkleykaSalaryPageInner = () => {
             <span>
               Фреза <strong style={{ color: colors.text }}>{formatSalaryRub(totals.freza)}</strong>
             </span>
+            {viewMode === 'full' ? (
+              <>
+                <span>
+                  Логистика{' '}
+                  <strong style={{ color: colors.text }}>{formatSalaryRub(totals.logistics)}</strong>
+                </span>
+                <span>
+                  Безнал{' '}
+                  <strong style={{ color: colors.text }}>{formatSalaryRub(totals.beznal)}</strong>
+                </span>
+              </>
+            ) : null}
             <span>
               Оклейка{' '}
               <strong style={{ color: colors.text }}>{formatSalaryRub(totals.okleyka)}</strong>
@@ -993,6 +1101,12 @@ const OkleykaSalaryPageInner = () => {
                   <th style={thStyle}>Сделка</th>
                   <th style={thStyle}>Позиции</th>
                   {SORTABLE_BEFORE_COST.map(({ key, label }) => renderSortableHeader(key, label))}
+                  {viewMode === 'full' ? (
+                    <>
+                      <th style={thStyle}>Логистика</th>
+                      <th style={thStyle}>Безнал</th>
+                    </>
+                  ) : null}
                   {visiblePersonEntries.map((entry) => (
                     <th
                       key={entry.id}
@@ -1008,7 +1122,7 @@ const OkleykaSalaryPageInner = () => {
                 </tr>
               </thead>
               <tbody>
-                {groups.length === 0 && !query.isLoading ? (
+                {groups.length === 0 && !query.isLoading && !fullQuery.isFetching ? (
                   <tr>
                     <td colSpan={tableColSpan} style={{ padding: spacing.lg, color: colors.textMuted }}>
                       Нет подходящих позиций
@@ -1142,7 +1256,12 @@ const OkleykaSalaryPageInner = () => {
                             fontWeight: font.weightMedium,
                           }}
                         >
-                          {formatSalaryRub(group.saleRub)}
+                          <div>{formatSalaryRub(group.saleRub)}</div>
+                          {viewMode === 'full' && formatOkleykaShareCaption(group.okleykaSharePct) ? (
+                            <div style={{ color: colors.textMuted, fontSize: font.sizeXs }}>
+                              {formatOkleykaShareCaption(group.okleykaSharePct)}
+                            </div>
+                          ) : null}
                         </td>
                         <td style={{ padding: cellPad, ...moneyCellStyle }}>
                           {formatOptionalCost(group.printCostRub)}
@@ -1150,6 +1269,16 @@ const OkleykaSalaryPageInner = () => {
                         <td style={{ padding: cellPad, ...moneyCellStyle }}>
                           {formatOptionalCost(group.frezaCostRub)}
                         </td>
+                        {viewMode === 'full' ? (
+                          <>
+                            <td style={{ padding: cellPad, ...moneyCellStyle }}>
+                              {formatOptionalCost(group.logisticsCostRub)}
+                            </td>
+                            <td style={{ padding: cellPad, ...moneyCellStyle }}>
+                              {formatOptionalCost(group.beznalCostRub)}
+                            </td>
+                          </>
+                        ) : null}
                         {visiblePersonEntries.map((entry) => (
                           <td key={entry.id} style={{ padding: cellPad, ...moneyCellStyle }}>
                             <PersonShareCell
@@ -1199,7 +1328,10 @@ const OkleykaSalaryPageInner = () => {
                         ? group.positions.map((position) => (
                             <tr
                               key={position.lineItemId}
-                              style={{ borderBottom: `1px solid ${colors.borderSubtle}` }}
+                              style={{
+                                borderBottom: `1px solid ${colors.borderSubtle}`,
+                                color: position.isCancelled ? colors.textMuted : undefined,
+                              }}
                             >
                               <td style={{ padding: cellPad }} />
                               <td style={{ padding: cellPad }} />
@@ -1208,6 +1340,11 @@ const OkleykaSalaryPageInner = () => {
                                 <PositionNameCell
                                   lineItemId={position.lineItemId}
                                   positionName={position.positionName}
+                                  showMeta={viewMode === 'full'}
+                                  tip={position.tip}
+                                  stage={position.stage}
+                                  isQualifying={position.isQualifying}
+                                  isCancelled={position.isCancelled}
                                 />
                                 <span
                                   style={{
@@ -1221,10 +1358,16 @@ const OkleykaSalaryPageInner = () => {
                                 </span>
                               </td>
                               <td style={{ padding: cellPad, ...moneyCellStyle }}>
-                                {formatSalaryRub(position.saleRub)}
+                                {position.isCancelled ? '—' : formatSalaryRub(position.saleRub)}
                               </td>
                               <td style={{ padding: cellPad }} />
                               <td style={{ padding: cellPad }} />
+                              {viewMode === 'full' ? (
+                                <>
+                                  <td />
+                                  <td />
+                                </>
+                              ) : null}
                               {visiblePersonEntries.map((entry) => (
                                 <td key={entry.id} style={{ padding: cellPad }} />
                               ))}
