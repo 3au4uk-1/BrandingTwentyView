@@ -282,7 +282,10 @@ const OkleykaSalaryPageInner = () => {
   );
 
   const lineItemIds = useMemo(
-    () => displayGroups.flatMap((g) => g.positions.map((p) => p.lineItemId)),
+    () =>
+      displayGroups.flatMap((g) =>
+        g.positions.filter((p) => p.isQualifying).map((p) => p.lineItemId),
+      ),
     [displayGroups],
   );
   const listStatusQuery = usePrefetchLineItemListStatuses(
@@ -446,32 +449,7 @@ const OkleykaSalaryPageInner = () => {
     void queryClient.invalidateQueries({ queryKey: ['okleyka-salary'] });
     void queryClient.invalidateQueries({ queryKey: ['okleyka-salary-full'] });
     void queryClient.invalidateQueries({ queryKey: ['okleyka-shares'] });
-    if (viewMode === 'full' && dateFrom && dateTo) {
-      void queryClient
-        .fetchQuery({
-          queryKey: [
-            'okleyka-salary-full',
-            refreshKey,
-            dateFrom,
-            dateTo,
-            compactOpportunityIdsKey,
-          ],
-          queryFn: () =>
-            fetchOkleykaSalaryFullPageData(dateFrom, dateTo, compactOpportunityIds),
-        })
-        .catch(() => {
-          setFullError('Не удалось загрузить все позиции');
-        });
-    }
-  }, [
-    queryClient,
-    viewMode,
-    dateFrom,
-    dateTo,
-    refreshKey,
-    compactOpportunityIdsKey,
-    compactOpportunityIds,
-  ]);
+  }, [queryClient]);
 
   const handleOptimistic = useCallback((id: string, next: number | null) => {
     setOverrides((prev) => ({ ...prev, [id]: next }));
