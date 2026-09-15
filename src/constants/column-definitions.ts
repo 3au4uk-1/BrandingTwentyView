@@ -4,11 +4,12 @@ import { PRINT_FIELD_GROUP_ID } from './print-field-group';
 /** Fallback column layouts when the metadata API is unavailable. */
 export const DEFAULT_PARENT_COLUMNS: ColumnConfig[] = [
   { field: 'name', label: 'Сделка', order: 0, visible: true, width: 300 },
-  { field: 'stage', label: 'Стадия', order: 1, visible: true, width: 148 },
-  { field: 'loadDate', label: 'Дата', order: 2, visible: true, width: 220 },
-  { field: 'companyName', label: 'Компания', order: 3, visible: true, width: 160 },
-  { field: 'summary', label: 'Сводка позиций', order: 4, visible: true, width: 200 },
-  { field: 'links', label: 'Ссылки', order: 5, visible: false, width: 80 },
+  { field: 'vzyal', label: 'Взял', order: 1, visible: true, width: 110 },
+  { field: 'stage', label: 'Стадия', order: 2, visible: true, width: 148 },
+  { field: 'loadDate', label: 'Дата', order: 3, visible: true, width: 220 },
+  { field: 'companyName', label: 'Компания', order: 4, visible: true, width: 160 },
+  { field: 'summary', label: 'Сводка позиций', order: 5, visible: true, width: 200 },
+  { field: 'links', label: 'Ссылки', order: 6, visible: false, width: 80 },
 ];
 
 export const DEFAULT_CHILD_GROUPS: ColumnGroupConfig[] = [

@@ -94,4 +94,35 @@ describe('mergeColumns', () => {
       'tipDetail',
     ]);
   });
+
+  it('inserts missing vzyal after name as visible', () => {
+    const merged = mergeColumns(saved, [
+      ...crmFields,
+      { field: 'vzyal', label: 'Взял', source: 'crm', fieldType: 'SELECT', isEditable: true },
+      { field: 'stage', label: 'Stage', source: 'crm', fieldType: 'SELECT', isEditable: true },
+    ]);
+    const name = merged.find((column) => column.field === 'name');
+    const vzyal = merged.find((column) => column.field === 'vzyal');
+    const stage = merged.find((column) => column.field === 'stage');
+    expect(vzyal).toMatchObject({ visible: true, width: 110, label: 'Взял' });
+    expect(vzyal!.order).toBeGreaterThan(name!.order);
+    expect(vzyal!.order).toBeLessThan(stage!.order);
+  });
+
+  it('keeps saved hidden vzyal hidden', () => {
+    const merged = mergeColumns(
+      [
+        ...saved,
+        { field: 'vzyal', label: 'Взял', order: 1.5, visible: false, width: 110 },
+      ],
+      [
+        ...crmFields,
+        { field: 'vzyal', label: 'Взял', source: 'crm', fieldType: 'SELECT', isEditable: true },
+      ],
+    );
+    expect(merged.find((column) => column.field === 'vzyal')).toMatchObject({
+      visible: false,
+      width: 110,
+    });
+  });
 });
