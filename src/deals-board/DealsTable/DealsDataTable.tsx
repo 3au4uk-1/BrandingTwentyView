@@ -77,6 +77,7 @@ export type DealsDataTableProps = {
   onSortChange: (next: DealBoardSort[]) => void;
   attentionOpportunityIds?: Set<string> | null;
   boardStream?: BoardStream;
+  onUnlinkSmeta?: (smetaId: string) => void;
 };
 
 const PINNED_LEFT_COLUMN_IDS = ['__expand', 'name'] as const;
@@ -121,6 +122,7 @@ export const DealsDataTable = ({
   onSortChange,
   attentionOpportunityIds = null,
   boardStream,
+  onUnlinkSmeta,
 }: DealsDataTableProps) => {
   const theme = useTheme();
   const { colors, font, spacing, zIndex } = theme;
@@ -326,6 +328,7 @@ export const DealsDataTable = ({
                   onToggleShowAllPositions={onToggleShowAllPositions}
                   attentionHighlighted={attentionOpportunityIds?.has(row.id) ?? false}
                   boardStream={boardStream}
+                  onUnlinkSmeta={onUnlinkSmeta}
                 />
               </Fragment>
             );

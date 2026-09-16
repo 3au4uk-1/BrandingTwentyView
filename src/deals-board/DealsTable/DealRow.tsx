@@ -49,6 +49,7 @@ type DealRowProps = {
   ) => void;
   attentionHighlighted?: boolean;
   boardStream?: BoardStream;
+  onUnlinkSmeta?: (smetaId: string) => void;
 };
 
 const ExpandToggleButton = ({
@@ -176,6 +177,7 @@ const ExpandedLineItems = ({
   onToggleShowAllPositions,
   onChildColumnResizeStart,
   boardStream,
+  onUnlinkSmeta,
 }: {
   row: OpportunityRow;
   lineItems: LineItemRow[];
@@ -188,6 +190,7 @@ const ExpandedLineItems = ({
   onToggleShowAllPositions?: (opportunityId: string) => void;
   onChildColumnResizeStart: DealRowProps['onChildColumnResizeStart'];
   boardStream?: BoardStream;
+  onUnlinkSmeta?: (smetaId: string) => void;
 }): ReactNode => {
   const theme = useTheme();
   const { colors, font, spacing } = theme;
@@ -220,7 +223,27 @@ const ExpandedLineItems = ({
               >
                 {smeta.name}
               </div>
-              <SmetaHeaderLinks smeta={smeta} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, flexShrink: 0 }}>
+                <SmetaHeaderLinks smeta={smeta} />
+                {onUnlinkSmeta ? (
+                  <button
+                    type="button"
+                    onClick={() => onUnlinkSmeta(smeta.id)}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      color: colors.textMuted,
+                      fontSize: font.sizeXs,
+                      fontFamily: font.family,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      padding: 0,
+                    }}
+                  >
+                    Убрать из группы
+                  </button>
+                ) : null}
+              </div>
             </div>
             <LineItemsTable
               opportunityId={smeta.id}
@@ -284,6 +307,7 @@ export const DealRow = memo(function DealRow({
   onChildColumnResizeStart,
   attentionHighlighted = false,
   boardStream,
+  onUnlinkSmeta,
 }: DealRowProps) {
   const theme = useTheme();
   const { colors, font, zIndex, colorScheme } = theme;
@@ -406,6 +430,7 @@ export const DealRow = memo(function DealRow({
               onToggleShowAllPositions={onToggleShowAllPositions}
               onChildColumnResizeStart={onChildColumnResizeStart}
               boardStream={boardStream}
+              onUnlinkSmeta={onUnlinkSmeta}
             />
           </td>
         </tr>
