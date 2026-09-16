@@ -4,7 +4,7 @@
 **DONE_WITH_CONCERNS**
 
 ## Commits
-- (pending) `feat: nest grouped smetas under parent deals-board rows`
+- `5f7ae59` — `feat: nest grouped smetas under parent deals-board rows`
 
 ## Changes
 
