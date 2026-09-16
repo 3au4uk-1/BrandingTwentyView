@@ -68,6 +68,7 @@ type DealsTableProps = {
   errorMessage?: string;
   attentionOpportunityIds?: Set<string> | null;
   boardStream?: BoardStream;
+  onUnlinkSmeta?: (smetaId: string) => void;
 };
 
 export const DealsTable = ({
@@ -101,6 +102,7 @@ export const DealsTable = ({
   errorMessage,
   attentionOpportunityIds = null,
   boardStream,
+  onUnlinkSmeta,
 }: DealsTableProps) => {
   const theme = useTheme();
   const { colors, font, spacing } = theme;
@@ -349,6 +351,7 @@ export const DealsTable = ({
         sort={effectiveSort}
         onSortChange={onSortChange}
         boardStream={boardStream}
+        onUnlinkSmeta={onUnlinkSmeta}
       />
 
       <div

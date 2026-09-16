@@ -10,8 +10,12 @@ import type {
 
 import type { LineItemQueryFilters } from './line-items';
 import { fetchLineItemsByOpportunityIds } from './line-items';
-import { fetchOpportunities } from './opportunities';
-import type { DealBoardFilters, DealBoardSort } from '../types';
+import {
+  fetchChildOpportunitiesByParentIds,
+  fetchOpportunities,
+} from './opportunities';
+import type { DealBoardFilters, DealBoardSort, LineItemRow, OpportunityRow } from '../types';
+import { attachChildSmetasToParents } from '../utils/group-smetas';
 import { getTwentyFunctionsBaseUrl } from '../utils/twenty-functions-base-url';
 
 export type { DealsBoardPageRequest, DealsBoardPageResponse } from 'src/logic-functions/shared/deals-board-page-types';
@@ -127,9 +131,26 @@ export const fetchLegacyDealsBoardPage = async (
     .map((record) => (typeof record.id === 'string' ? record.id : ''))
     .filter(Boolean);
 
-  const lineItems = await fetchLineItemsByOpportunityIds(opportunityIds, params.lineItemFilters);
+  const childRecords = await fetchChildOpportunitiesByParentIds(opportunityIds);
+  const childIds = childRecords
+    .map((record) => (typeof record.id === 'string' ? record.id : ''))
+    .filter(Boolean);
 
-  return assembleDealsBoardPageFromLegacy({ records, totalCount }, lineItems);
+  const lineItems = (await fetchLineItemsByOpportunityIds(
+    [...opportunityIds, ...childIds],
+    params.lineItemFilters,
+  )) as LineItemRow[];
+
+  const opportunitiesWithChildren = attachChildSmetasToParents(
+    records as OpportunityRow[],
+    childRecords,
+    lineItems,
+  );
+
+  return assembleDealsBoardPageFromLegacy(
+    { records: opportunitiesWithChildren, totalCount },
+    lineItems,
+  );
 };
 
 export const fetchDealsBoardPage = async (

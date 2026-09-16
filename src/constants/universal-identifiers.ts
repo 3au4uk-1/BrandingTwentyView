@@ -238,6 +238,15 @@ export const DEALS_BOARD_PAGE_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER =
 export const DEALS_BOARD_EVENTS_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER =
   '7c1e0f4a-9b52-4d3e-8a76-2f5c1b9d4e08';
 
+export const DEAL_GROUPS_SUGGEST_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER =
+  'c41e9a70-2b58-4d6f-9c13-7a8e5d0246b1';
+export const DEAL_GROUPS_WRITE_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER =
+  'a92f0c18-6e47-4b5d-8c01-3d7a9e5b2416';
+export const DEAL_GROUPS_PATCH_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER =
+  'd0b4e73c-1a59-4f82-9e26-8c5d1a7b3094';
+export const DEAL_GROUPS_UNLINK_LOGIC_FUNCTION_UNIVERSAL_IDENTIFIER =
+  '5e8c1d47-9b20-4a63-b7f5-2c4e0d9a1863';
+
 export const SUPPLIER_OBJECT_UNIVERSAL_IDENTIFIER =
   '40f438aa-254c-4ab5-ba5d-6fa1b5eb76bc';
 /** Server-provisioned default `name` field (do not regenerate). */
@@ -397,3 +406,10 @@ export const BANNER_CREW_SLOTS_INDEX_STARTS_VIEW_FIELD =
   '1e9f84c6-7878-4fbc-9360-17a35b222383';
 export const BANNER_CREW_SLOTS_INDEX_ENDS_VIEW_FIELD =
   'f6017dc0-af5e-4e9a-abba-1adfa51ae9ef';
+
+/** Self-relation: child smeta → parent opportunity (join column parentOpportunityId). */
+export const OPPORTUNITY_PARENT_FIELD_UNIVERSAL_IDENTIFIER =
+  '6a1c8e24-3f57-4b91-8d2e-c0f4a9b73518';
+/** Inverse ONE_TO_MANY on parent opportunity listing child smetas. */
+export const OPPORTUNITY_CHILD_SMETAS_FIELD_UNIVERSAL_IDENTIFIER =
+  '9d2b7f61-e048-4c3a-a7e5-1b8c6d4f9023';

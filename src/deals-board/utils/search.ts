@@ -64,11 +64,30 @@ export const buildOpportunitySearchClause = (
   return { or: [nameFilter, { id: { in: matchingIds } }] };
 };
 
+export const mapChildMatchesToParentIds = (
+  children: Array<{ parentOpportunityId?: string | null }>,
+): string[] => {
+  const parentIds: string[] = [];
+  const seen = new Set<string>();
+  for (const child of children) {
+    const parentId = child.parentOpportunityId?.trim();
+    if (!parentId || seen.has(parentId)) continue;
+    seen.add(parentId);
+    parentIds.push(parentId);
+  }
+  return parentIds;
+};
+
 export const buildOpportunityFilter = (
   filters: DealBoardFilters,
   lineItemMatchedOpportunityIds?: string[],
 ): { and: Record<string, unknown>[] } | undefined => {
   const and: Record<string, unknown>[] = [];
+
+  if (!filters.includeGroupedChildren) {
+    and.push({ parentOpportunityId: { is: 'NULL' } });
+  }
+
   const dateFilter = buildOpportunityDateFilter(filters);
   if (dateFilter) and.push(dateFilter);
 

@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -26,7 +26,13 @@ import {
 import { resolveOpportunityRestFieldNames } from 'src/constants/opportunity-rest-fields';
 
 import { AnalyticsPanel } from './analytics/AnalyticsPanel';
+import {
+  fetchDealGroupSuggestions,
+  unlinkDealGroupMemberByOpportunity,
+  type DealGroupSuggestions,
+} from './api/crmparser';
 import { BoardToolbar } from './BoardToolbar';
+import { LinkDealsModal } from './LinkDealsModal';
 import { useShouldUseMobileLayout } from './hooks/useShouldUseMobileLayout';
 import { useHostHeightLock } from './hooks/useHostHeightLock';
 import { DESKTOP_BOARD_HEIGHT_CSS } from './utils/desktop-layout';
@@ -115,6 +121,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
   const boardKind = boardStreamToBoardKind(boardStream);
   const theme = useTheme();
   const { colors, font, spacing, layout } = theme;
+  const queryClient = useQueryClient();
   const rootRef = useRef<HTMLDivElement | null>(null);
   const mobileLayoutActive = useShouldUseMobileLayout(rootRef);
   const lockedHostHeight = useHostHeightLock(rootRef, !mobileLayoutActive);
@@ -134,6 +141,11 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
   const [showAllPositionOppIds, setShowAllPositionOppIds] = useState<Set<string>>(() => new Set());
   const [boardPane, setBoardPane] = useState<'deals' | 'analytics'>('deals');
   const [attentionTip, setAttentionTip] = useState<LineItemType | null>(null);
+  const [linkModal, setLinkModal] = useState<{
+    seedOpportunityId: string;
+    suggestions: DealGroupSuggestions;
+  } | null>(null);
+  const [linkModalError, setLinkModalError] = useState<string | null>(null);
   const views = asArray<DealBoardViewRecord>(viewsQuery.data);
   const hasPrintGroupMigrationAttemptedRef = useRef(false);
 
@@ -673,6 +685,41 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     });
   }, []);
 
+  const invalidateDealsBoardPage = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ['deals-board-page'] });
+  }, [queryClient]);
+
+  const handleOpenLinkDeals = useCallback(async () => {
+    setLinkModalError(null);
+    const seedOpportunityId = filteredBoardData.deals[0]?.id ?? '';
+    try {
+      const suggestions = await fetchDealGroupSuggestions();
+      setLinkModal({ seedOpportunityId, suggestions });
+    } catch (error) {
+      setLinkModalError(error instanceof Error ? error.message : String(error));
+      setLinkModal({
+        seedOpportunityId,
+        suggestions: { hard: [], soft: [] },
+      });
+    }
+  }, [filteredBoardData.deals]);
+
+  const handleUnlinkSmeta = useCallback(
+    async (smetaId: string) => {
+      const ok = window.confirm('Убрать смету из группы?');
+      if (!ok) return;
+      try {
+        await unlinkDealGroupMemberByOpportunity(smetaId);
+        invalidateDealsBoardPage();
+      } catch (error) {
+        window.alert(
+          `Не удалось убрать из группы.${error instanceof Error ? ` ${error.message}` : ''}`,
+        );
+      }
+    },
+    [invalidateDealsBoardPage],
+  );
+
   useEffect(() => {
     if (effectiveShowAll) {
       setAccumulatedRecords(visibleRecords);
@@ -926,6 +973,9 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
             }
             activeFilterCount={activeFilterCount}
             canResetFilters={canResetFilters}
+            onLinkDeals={() => {
+              void handleOpenLinkDeals();
+            }}
           />
 
           {metadataFieldsWarning ? (
@@ -1026,6 +1076,9 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
               onToggleShowAllPositions={handleToggleShowAllPositions}
               attentionOpportunityIds={attentionHighlightOppIds}
               boardStream={boardStream}
+              onUnlinkSmeta={(smetaId) => {
+                void handleUnlinkSmeta(smetaId);
+              }}
               totalCount={visibleTotalCount}
               page={page}
               totalPages={totalPages}
@@ -1066,6 +1119,38 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
         onClose={() => setEditViewDraft(undefined)}
         onSaved={(view) => setActiveViewId(view.id)}
       />
+
+      {linkModal ? (
+        <LinkDealsModal
+          seedOpportunityId={linkModal.seedOpportunityId}
+          suggestions={linkModal.suggestions}
+          opportunities={filteredBoardData.deals}
+          onClose={() => {
+            setLinkModal(null);
+            setLinkModalError(null);
+          }}
+          onSaved={invalidateDealsBoardPage}
+        />
+      ) : null}
+
+      {linkModalError ? (
+        <div
+          style={{
+            position: 'fixed',
+            right: spacing.md,
+            bottom: spacing.md,
+            zIndex: 2000,
+            padding: spacing.sm,
+            borderRadius: 8,
+            backgroundColor: colors.warningMuted,
+            color: colors.warning,
+            fontSize: font.sizeSm,
+            maxWidth: 360,
+          }}
+        >
+          Подсказки не загрузились: {linkModalError}
+        </div>
+      ) : null}
     </div>
       </OkleykaMessageDialogProvider>
       </ManualSyncErrorToastProvider>

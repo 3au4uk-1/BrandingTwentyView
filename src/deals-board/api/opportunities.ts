@@ -1,7 +1,13 @@
 import { OPPORTUNITY_DATE_FILTER_FIELD } from 'src/constants/date-filter-field';
 
 import { buildOpportunityNodeSelection } from '../metadata/build-opportunity-selection';
-import { buildOpportunityFilter, resolveSearchTerms } from '../utils/search';
+import {
+  buildOpportunityFilter,
+  buildOpportunitySearchClause,
+  mapChildMatchesToParentIds,
+  normalizeSearchTerm,
+  resolveSearchTerms,
+} from '../utils/search';
 import { opportunityMatchesDateFilter } from '../utils/resolve-opportunity-date';
 import { fetchLineItemOpportunityIdsBySearch } from './line-items';
 import {
@@ -14,6 +20,7 @@ import { getApiClient } from './client';
 import { enrichOpportunityRowsWithRestFields } from './opportunity-link-fields-rest';
 
 const FETCH_ALL_PAGE_SIZE = 200;
+const CHILD_SEARCH_PAGE_SIZE = 200;
 
 /** Default CRM fields when callers omit dynamic selection (matches prior fixed query). */
 const DEFAULT_VISIBLE_CRM_FIELD_NAMES = ['loadDate', 'stage', 'stageZakreplen', 'amount'];
@@ -29,6 +36,93 @@ const OPPORTUNITY_FIELDS = {
   stage: true,
   loadDate: true,
 } as const;
+
+const CHILD_SMETA_NODE_SELECTION = {
+  id: true,
+  name: true,
+  parentOpportunityId: true,
+  tonyLink: {
+    primaryLinkUrl: true,
+    primaryLinkLabel: true,
+    secondaryLinks: true,
+  },
+  bitrixLink: {
+    primaryLinkUrl: true,
+    primaryLinkLabel: true,
+    secondaryLinks: true,
+  },
+} as const;
+
+const mergeMatchedOpportunityIds = (
+  ...lists: Array<string[] | undefined>
+): string[] | undefined => {
+  if (lists.every((list) => list === undefined)) return undefined;
+  const seen = new Set<string>();
+  const merged: string[] = [];
+  for (const list of lists) {
+    for (const id of list ?? []) {
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      merged.push(id);
+    }
+  }
+  return merged;
+};
+
+export const fetchChildMatchedParentIdsBySearch = async (
+  search: string | string[],
+): Promise<string[]> => {
+  const terms = (Array.isArray(search) ? search : [search])
+    .map((term) => normalizeSearchTerm(term))
+    .filter(Boolean);
+  if (!terms.length) return [];
+
+  const nameFilter = buildOpportunitySearchClause(terms);
+  if (!Object.keys(nameFilter).length) return [];
+
+  const client = getApiClient();
+  const result = await client.query({
+    opportunities: {
+      __args: {
+        first: CHILD_SEARCH_PAGE_SIZE,
+        filter: { and: [nameFilter] },
+      },
+      edges: {
+        node: {
+          id: true,
+          parentOpportunityId: true,
+        },
+      },
+    },
+  });
+
+  const edges = asArray<{
+    node: { id?: string; parentOpportunityId?: string | null };
+  }>(result.opportunities?.edges);
+
+  return mapChildMatchesToParentIds(edges.map((edge) => edge.node));
+};
+
+export const fetchChildOpportunitiesByParentIds = async (
+  parentIds: string[],
+): Promise<OpportunityRow[]> => {
+  const ids = parentIds.filter(Boolean);
+  if (!ids.length) return [];
+
+  const client = getApiClient();
+  const result = await client.query({
+    opportunities: {
+      __args: {
+        first: Math.max(ids.length * 10, 50),
+        filter: { and: [{ parentOpportunityId: { in: ids } }] },
+      },
+      edges: { node: CHILD_SMETA_NODE_SELECTION },
+    },
+  });
+
+  const edges = asArray<{ node: OpportunityRow }>(result.opportunities?.edges);
+  return edges.map((edge) => edge.node);
+};
 
 const fetchOpportunityPageRecords = async (params: {
   limit: number;
@@ -131,6 +225,13 @@ export const fetchOpportunities = async (params: {
   const lineItemMatchedOpportunityIds = searchTerms.length
     ? await fetchLineItemOpportunityIdsBySearch(searchTerms, lineItemSearchFilters)
     : undefined;
+  const childMatchedParentIds = searchTerms.length
+    ? await fetchChildMatchedParentIdsBySearch(searchTerms)
+    : undefined;
+  const matchedOpportunityIds = mergeMatchedOpportunityIds(
+    lineItemMatchedOpportunityIds,
+    childMatchedParentIds,
+  );
 
   if (!params.fetchAll) {
     return fetchOpportunityPage({
@@ -138,7 +239,7 @@ export const fetchOpportunities = async (params: {
       offset: params.offset,
       sort: params.sort,
       filters: params.filters,
-      lineItemMatchedOpportunityIds,
+      lineItemMatchedOpportunityIds: matchedOpportunityIds,
       visibleCrmFieldNames,
       restFieldNames,
       includeCompanyRelation,
@@ -156,7 +257,7 @@ export const fetchOpportunities = async (params: {
       offset,
       sort: params.sort,
       filters: params.filters,
-      lineItemMatchedOpportunityIds,
+      lineItemMatchedOpportunityIds: matchedOpportunityIds,
       visibleCrmFieldNames,
       restFieldNames,
       includeCompanyRelation,
