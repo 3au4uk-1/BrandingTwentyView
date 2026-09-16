@@ -37,21 +37,14 @@ const OPPORTUNITY_FIELDS = {
   loadDate: true,
 } as const;
 
+/** Core GraphQL has no workspace link fields — enrich tony/bitrix via REST after query. */
 const CHILD_SMETA_NODE_SELECTION = {
   id: true,
   name: true,
   parentOpportunityId: true,
-  tonyLink: {
-    primaryLinkUrl: true,
-    primaryLinkLabel: true,
-    secondaryLinks: true,
-  },
-  bitrixLink: {
-    primaryLinkUrl: true,
-    primaryLinkLabel: true,
-    secondaryLinks: true,
-  },
 } as const;
+
+const CHILD_SMETA_REST_LINK_FIELDS = ['tonyLink', 'bitrixLink'] as const;
 
 const mergeMatchedOpportunityIds = (
   ...lists: Array<string[] | undefined>
@@ -121,7 +114,8 @@ export const fetchChildOpportunitiesByParentIds = async (
   });
 
   const edges = asArray<{ node: OpportunityRow }>(result.opportunities?.edges);
-  return edges.map((edge) => edge.node);
+  const records = edges.map((edge) => edge.node);
+  return enrichOpportunityRowsWithRestFields(records, CHILD_SMETA_REST_LINK_FIELDS);
 };
 
 const fetchOpportunityPageRecords = async (params: {
