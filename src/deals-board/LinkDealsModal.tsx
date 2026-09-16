@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import {
   confirmDealGroup as confirmDealGroupRequest,
+  fetchDealGroupSuggestions as fetchDealGroupSuggestionsRequest,
   type ConfirmDealGroupBody,
   type DealGroupSuggestions,
 } from './api/crmparser';
@@ -11,14 +12,18 @@ import { Button } from './ui/Button';
 import { Input, Select } from './ui/Input';
 import { Modal } from './ui/Modal';
 
+const EMPTY_SUGGESTIONS: DealGroupSuggestions = { hard: [], soft: [] };
+
 export type LinkDealsModalProps = {
+  isOpen: boolean;
   seedOpportunityId: string;
-  suggestions: DealGroupSuggestions;
   opportunities: OpportunityRow[];
   onClose: () => void;
   onSaved?: () => void;
   /** Injectable for tests / Storybook. */
   confirmDealGroup?: (body: ConfirmDealGroupBody) => Promise<unknown>;
+  fetchSuggestions?: () => Promise<DealGroupSuggestions>;
+  initialSuggestions?: DealGroupSuggestions;
   needsManualCanonical?: boolean;
 };
 
@@ -84,12 +89,14 @@ const bitrixOptionsForOpp = (opp?: OpportunityRow): Array<{ id: string; label: s
 };
 
 export const LinkDealsModal = ({
+  isOpen,
   seedOpportunityId,
-  suggestions,
   opportunities,
   onClose,
   onSaved,
   confirmDealGroup = confirmDealGroupRequest,
+  fetchSuggestions = fetchDealGroupSuggestionsRequest,
+  initialSuggestions,
   needsManualCanonical = false,
 }: LinkDealsModalProps) => {
   const theme = useTheme();
@@ -121,13 +128,67 @@ export const LinkDealsModal = ({
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [manualCanonicalRequired, setManualCanonicalRequired] = useState(needsManualCanonical);
+  const [suggestions, setSuggestions] = useState<DealGroupSuggestions>(
+    initialSuggestions ?? EMPTY_SUGGESTIONS,
+  );
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [suggestionsError, setSuggestionsError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!nameEdited) {
-      const canonical = oppById.get(canonicalTwentyOppId);
-      setName(canonical?.name ?? seedOpp?.name ?? '');
+    if (!isOpen) return;
+
+    const seed = opportunities.find((opp) => opp.id === seedOpportunityId);
+    setSelectedIds(seedOpportunityId ? [seedOpportunityId] : []);
+    setName(seed?.name ?? '');
+    setNameEdited(false);
+    setCanonicalTwentyOppId(seedOpportunityId);
+    setCanonicalBitrixId(bitrixOptionsForOpp(seed)[0]?.id ?? '');
+    setCanonicalSelectedManually(false);
+    setSearch('');
+    setError(null);
+    setIsSaving(false);
+    setManualCanonicalRequired(needsManualCanonical);
+    setSuggestions(initialSuggestions ?? EMPTY_SUGGESTIONS);
+    setSuggestionsError(null);
+
+    if (initialSuggestions) {
+      setSuggestionsLoading(false);
+      return;
     }
-  }, [canonicalTwentyOppId, nameEdited, oppById, seedOpp?.name]);
+
+    let cancelled = false;
+    setSuggestionsLoading(true);
+    void fetchSuggestions()
+      .then((payload) => {
+        if (cancelled) return;
+        setSuggestions(payload);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setSuggestions(EMPTY_SUGGESTIONS);
+        setSuggestionsError(err instanceof Error ? err.message : String(err));
+      })
+      .finally(() => {
+        if (!cancelled) setSuggestionsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    fetchSuggestions,
+    initialSuggestions,
+    isOpen,
+    needsManualCanonical,
+    opportunities,
+    seedOpportunityId,
+  ]);
+
+  useEffect(() => {
+    if (!isOpen || nameEdited) return;
+    const canonical = oppById.get(canonicalTwentyOppId);
+    setName(canonical?.name ?? seedOpp?.name ?? '');
+  }, [canonicalTwentyOppId, isOpen, nameEdited, oppById, seedOpp?.name]);
 
   const searchHits = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -258,10 +319,11 @@ export const LinkDealsModal = ({
   return (
     <Modal
       theme={theme}
-      isOpen
+      isOpen={isOpen}
       title="Связать сделки"
       description="Соберите сметы в одну работу. Запись группы идёт через парсер — без тихого merge."
       onClose={onClose}
+      portalTarget="root"
       footer={
         <div
           style={{
@@ -288,7 +350,15 @@ export const LinkDealsModal = ({
         </div>
       }
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md, maxHeight: 420, overflow: 'auto' }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: spacing.md,
+          maxHeight: 420,
+          overflow: 'auto',
+        }}
+      >
         <div>
           <div style={{ fontSize: font.sizeXs, color: colors.textMuted, marginBottom: spacing.xs }}>
             Выбрано
@@ -316,6 +386,17 @@ export const LinkDealsModal = ({
             ))}
           </div>
         </div>
+
+        {suggestionsLoading ? (
+          <div style={{ fontSize: font.sizeSm, color: colors.textMuted }}>
+            Загрузка подсказок…
+          </div>
+        ) : null}
+        {suggestionsError ? (
+          <div style={{ fontSize: font.sizeSm, color: colors.warning }}>
+            Подсказки не загрузились: {suggestionsError}
+          </div>
+        ) : null}
 
         {renderCandidateSection('hard', 'Жёсткие совпадения', suggestions.hard)}
         {renderCandidateSection('soft', 'Мягкие совпадения', suggestions.soft)}
