@@ -5,6 +5,7 @@ import {
 import {
   buildOpportunityNodeSelection,
   CHILD_SMETA_NODE_SELECTION,
+  CHILD_SMETA_REST_LINK_FIELDS,
 } from './deals-board-page-opportunity-selection';
 import type {
   DealsBoardPageRequest,
@@ -132,11 +133,13 @@ export const runDealsBoardPagePipeline = async (
             filter: { and: [{ parentOpportunityId: { in: opportunityIds } }] },
             nodeSelection: CHILD_SMETA_NODE_SELECTION,
           })
-          .then((childResult) =>
-            asArray<{ node: Record<string, unknown> }>(childResult.opportunities?.edges).map(
-              (edge) => normalizeOpportunityNode(edge.node),
-            ),
-          )
+          .then(async (childResult) => {
+            const childRows = asArray<{ node: Record<string, unknown> }>(
+              childResult.opportunities?.edges,
+            ).map((edge) => normalizeOpportunityNode(edge.node));
+            if (!childRows.length) return childRows;
+            return deps.enrichWithRest(childRows, [...CHILD_SMETA_REST_LINK_FIELDS]);
+          })
       : Promise.resolve([] as Array<Record<string, unknown>>);
 
   const [enrichedParents, childRows] = await Promise.all([enrichPromise, childrenPromise]);
