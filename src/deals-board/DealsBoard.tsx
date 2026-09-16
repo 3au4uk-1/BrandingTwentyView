@@ -27,9 +27,7 @@ import { resolveOpportunityRestFieldNames } from 'src/constants/opportunity-rest
 
 import { AnalyticsPanel } from './analytics/AnalyticsPanel';
 import {
-  fetchDealGroupSuggestions,
   unlinkDealGroupMemberByOpportunity,
-  type DealGroupSuggestions,
 } from './api/crmparser';
 import { BoardToolbar } from './BoardToolbar';
 import { LinkDealsModal } from './LinkDealsModal';
@@ -141,11 +139,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
   const [showAllPositionOppIds, setShowAllPositionOppIds] = useState<Set<string>>(() => new Set());
   const [boardPane, setBoardPane] = useState<'deals' | 'analytics'>('deals');
   const [attentionTip, setAttentionTip] = useState<LineItemType | null>(null);
-  const [linkModal, setLinkModal] = useState<{
-    seedOpportunityId: string;
-    suggestions: DealGroupSuggestions;
-  } | null>(null);
-  const [linkModalError, setLinkModalError] = useState<string | null>(null);
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const views = asArray<DealBoardViewRecord>(viewsQuery.data);
   const hasPrintGroupMigrationAttemptedRef = useRef(false);
 
@@ -689,21 +683,6 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     void queryClient.invalidateQueries({ queryKey: ['deals-board-page'] });
   }, [queryClient]);
 
-  const handleOpenLinkDeals = useCallback(async () => {
-    setLinkModalError(null);
-    const seedOpportunityId = filteredBoardData.deals[0]?.id ?? '';
-    try {
-      const suggestions = await fetchDealGroupSuggestions();
-      setLinkModal({ seedOpportunityId, suggestions });
-    } catch (error) {
-      setLinkModalError(error instanceof Error ? error.message : String(error));
-      setLinkModal({
-        seedOpportunityId,
-        suggestions: { hard: [], soft: [] },
-      });
-    }
-  }, [filteredBoardData.deals]);
-
   const handleUnlinkSmeta = useCallback(
     async (smetaId: string) => {
       const ok = window.confirm('Убрать смету из группы?');
@@ -973,9 +952,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
             }
             activeFilterCount={activeFilterCount}
             canResetFilters={canResetFilters}
-            onLinkDeals={() => {
-              void handleOpenLinkDeals();
-            }}
+            onLinkDeals={() => setIsLinkModalOpen(true)}
           />
 
           {metadataFieldsWarning ? (
@@ -1120,37 +1097,13 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
         onSaved={(view) => setActiveViewId(view.id)}
       />
 
-      {linkModal ? (
-        <LinkDealsModal
-          seedOpportunityId={linkModal.seedOpportunityId}
-          suggestions={linkModal.suggestions}
-          opportunities={filteredBoardData.deals}
-          onClose={() => {
-            setLinkModal(null);
-            setLinkModalError(null);
-          }}
-          onSaved={invalidateDealsBoardPage}
-        />
-      ) : null}
-
-      {linkModalError ? (
-        <div
-          style={{
-            position: 'fixed',
-            right: spacing.md,
-            bottom: spacing.md,
-            zIndex: 2000,
-            padding: spacing.sm,
-            borderRadius: 8,
-            backgroundColor: colors.warningMuted,
-            color: colors.warning,
-            fontSize: font.sizeSm,
-            maxWidth: 360,
-          }}
-        >
-          Подсказки не загрузились: {linkModalError}
-        </div>
-      ) : null}
+      <LinkDealsModal
+        isOpen={isLinkModalOpen}
+        seedOpportunityId={filteredBoardData.deals[0]?.id ?? ''}
+        opportunities={filteredBoardData.deals}
+        onClose={() => setIsLinkModalOpen(false)}
+        onSaved={invalidateDealsBoardPage}
+      />
     </div>
       </OkleykaMessageDialogProvider>
       </ManualSyncErrorToastProvider>

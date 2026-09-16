@@ -23,6 +23,8 @@ vi.mock('./theme/ThemeContext', () => ({
       shadowLg: 'none',
       danger: '#c0392b',
       dangerMuted: '#fdecea',
+      warning: '#ff9f0a',
+      warningMuted: 'rgba(255,159,10,0.12)',
     },
     font: {
       family: 'system-ui',
@@ -72,17 +74,32 @@ const suggestions: DealGroupSuggestions = {
 };
 
 describe('LinkDealsModal', () => {
-  it('renders hard candidates above soft candidates', () => {
+  it('renders nothing when closed', () => {
     const markup = renderToStaticMarkup(
       createElement(LinkDealsModal, {
+        isOpen: false,
         seedOpportunityId: 'opp-seed',
-        suggestions,
+        initialSuggestions: suggestions,
+        opportunities,
+        onClose: () => undefined,
+      }),
+    );
+    expect(markup).toBe('');
+  });
+
+  it('opens immediately and portals with hard candidates above soft', () => {
+    const markup = renderToStaticMarkup(
+      createElement(LinkDealsModal, {
+        isOpen: true,
+        seedOpportunityId: 'opp-seed',
+        initialSuggestions: suggestions,
         opportunities,
         onClose: () => undefined,
         onSaved: () => undefined,
       }),
     );
 
+    expect(markup).toContain('Связать сделки');
     const hardIdx = markup.indexOf('data-candidate-tier="hard"');
     const softIdx = markup.indexOf('data-candidate-tier="soft"');
     expect(hardIdx).toBeGreaterThan(-1);
@@ -100,8 +117,9 @@ describe('LinkDealsModal', () => {
 
     const markup = renderToStaticMarkup(
       createElement(LinkDealsModal, {
+        isOpen: true,
         seedOpportunityId: 'opp-seed',
-        suggestions,
+        initialSuggestions: suggestions,
         opportunities,
         confirmDealGroup,
         onClose: () => undefined,
@@ -109,7 +127,6 @@ describe('LinkDealsModal', () => {
       }),
     );
 
-    // Static markup cannot click; assert the confirm helper builds the expected body.
     const { buildConfirmDealGroupBody } = await import('./LinkDealsModal');
     const body = buildConfirmDealGroupBody({
       selectedOppIds: ['opp-seed', 'opp-hard-a', 'opp-hard-b'],
