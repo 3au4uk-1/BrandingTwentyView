@@ -2,7 +2,10 @@ import {
   groupLineItemsByOpportunityId,
   resolveFieldTypesByName,
 } from './deals-board-page-core';
-import { buildOpportunityNodeSelection } from './deals-board-page-opportunity-selection';
+import {
+  buildOpportunityNodeSelection,
+  CHILD_SMETA_NODE_SELECTION,
+} from './deals-board-page-opportunity-selection';
 import type {
   DealsBoardPageRequest,
   DealsBoardPageResponse,
@@ -22,6 +25,40 @@ const normalizeOpportunityNode = (
   companyName: node.company?.name,
   loadDate: node.loadDate ?? node.closeDate,
 });
+
+const attachChildSmetas = (
+  parents: Array<Record<string, unknown>>,
+  children: Array<Record<string, unknown>>,
+  lineItems: LineItemRowLike[],
+): Array<Record<string, unknown>> => {
+  const itemsByOpportunityId = new Map<string, LineItemRowLike[]>();
+  for (const item of lineItems) {
+    const bucket = itemsByOpportunityId.get(item.opportunityId);
+    if (bucket) bucket.push(item);
+    else itemsByOpportunityId.set(item.opportunityId, [item]);
+  }
+
+  const childrenByParentId = new Map<string, Array<Record<string, unknown>>>();
+  for (const child of children) {
+    const parentId =
+      typeof child.parentOpportunityId === 'string' ? child.parentOpportunityId : '';
+    if (!parentId) continue;
+    const bucket = childrenByParentId.get(parentId);
+    const withItems = {
+      ...child,
+      lineItems: itemsByOpportunityId.get(String(child.id)) ?? [],
+    };
+    if (bucket) bucket.push(withItems);
+    else childrenByParentId.set(parentId, [withItems]);
+  }
+
+  return parents.map((parent) => {
+    const parentId = typeof parent.id === 'string' ? parent.id : '';
+    const childSmetas = childrenByParentId.get(parentId);
+    if (!childSmetas?.length) return parent;
+    return { ...parent, childSmetas };
+  });
+};
 
 export type DealsBoardPagePipelineQueryArgs = {
   first: number;
@@ -85,13 +122,38 @@ export const runDealsBoardPagePipeline = async (
       })
     : Promise.resolve(rows);
 
-  const lineItemsStart = Date.now();
-  const lineItemsPromise = deps.fetchLineItems(opportunityIds).then((lineItems) => {
-    lineItemsMs = Date.now() - lineItemsStart;
-    return lineItems;
-  });
+  const childrenPromise =
+    opportunityIds.length > 0
+      ? deps
+          .queryOpportunities({
+            first: Math.max(opportunityIds.length * 10, 50),
+            offset: 0,
+            orderBy: [{ name: 'AscNullsFirst' }],
+            filter: { and: [{ parentOpportunityId: { in: opportunityIds } }] },
+            nodeSelection: CHILD_SMETA_NODE_SELECTION,
+          })
+          .then((childResult) =>
+            asArray<{ node: Record<string, unknown> }>(childResult.opportunities?.edges).map(
+              (edge) => normalizeOpportunityNode(edge.node),
+            ),
+          )
+      : Promise.resolve([] as Array<Record<string, unknown>>);
 
-  const [opportunities, lineItems] = await Promise.all([enrichPromise, lineItemsPromise]);
+  const [enrichedParents, childRows] = await Promise.all([enrichPromise, childrenPromise]);
+
+  const childIds = childRows
+    .map((record) => (typeof record.id === 'string' ? record.id : ''))
+    .filter(Boolean);
+
+  const lineItemsStart = Date.now();
+  const lineItems = await deps
+    .fetchLineItems([...opportunityIds, ...childIds])
+    .then((items) => {
+      lineItemsMs = Date.now() - lineItemsStart;
+      return items;
+    });
+
+  const opportunities = attachChildSmetas(enrichedParents, childRows, lineItems);
 
   const response: DealsBoardPageResponse = {
     opportunities,

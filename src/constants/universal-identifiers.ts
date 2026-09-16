@@ -397,3 +397,10 @@ export const BANNER_CREW_SLOTS_INDEX_STARTS_VIEW_FIELD =
   '1e9f84c6-7878-4fbc-9360-17a35b222383';
 export const BANNER_CREW_SLOTS_INDEX_ENDS_VIEW_FIELD =
   'f6017dc0-af5e-4e9a-abba-1adfa51ae9ef';
+
+/** Self-relation: child smeta → parent opportunity (join column parentOpportunityId). */
+export const OPPORTUNITY_PARENT_FIELD_UNIVERSAL_IDENTIFIER =
+  '6a1c8e24-3f57-4b91-8d2e-c0f4a9b73518';
+/** Inverse ONE_TO_MANY on parent opportunity listing child smetas. */
+export const OPPORTUNITY_CHILD_SMETAS_FIELD_UNIVERSAL_IDENTIFIER =
+  '9d2b7f61-e048-4c3a-a7e5-1b8c6d4f9023';

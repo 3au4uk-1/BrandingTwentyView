@@ -1,7 +1,11 @@
 const LINK_FIELD_NAMES = new Set(['tonyLink', 'bitrixLink', 'ssylkaNaMakety']);
 
 const CURRENCY_SELECTION = { amountMicros: true, currencyCode: true };
-const LINKS_SELECTION = { primaryLinkUrl: true, primaryLinkLabel: true };
+const LINKS_SELECTION = {
+  primaryLinkUrl: true,
+  primaryLinkLabel: true,
+  secondaryLinks: true,
+};
 const RELATION_SELECTION = { id: true, name: true };
 const RICH_TEXT_SELECTION = { markdown: true };
 

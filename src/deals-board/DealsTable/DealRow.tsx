@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, type CSSProperties, type ReactNode } from 'react';
 
 import { parentCellOverflow } from '../banner-crew/chip-layout';
 import { DynamicFieldCell } from '../cells/DynamicFieldCell';
@@ -7,15 +7,18 @@ import type { FieldDescriptor } from '../metadata/types';
 import { useTheme } from '../theme/ThemeContext';
 import { ChevronRightIcon } from '../ui/Icons';
 import type {
+  ChildSmetaRow,
   ColumnConfig,
   ColumnGroupConfig,
   LineItemRow,
+  OpportunityLinkValue,
   OpportunityRow,
 } from '../types';
 import { getColumnWidth } from '../utils/columns';
 import { resolveFieldValue } from '../utils/resolve-field-value';
 import { getStageRowStyles } from '../utils/stage-row-styles';
 import type { BoardStream } from 'src/constants/product-stream';
+import { getOpportunityLinkButtonLabel } from 'src/constants/opportunity-links';
 import { PARENT_EXPAND_COLUMN } from './build-parent-columns';
 import { PARENT_EXPAND_COLUMN_FIELD } from './parent-table-sort';
 import { LineItemsTable } from './LineItemsTable';
@@ -89,6 +92,178 @@ const ExpandToggleButton = ({
   );
 };
 
+const collectLinkChips = (
+  field: string,
+  label: string,
+  value: OpportunityLinkValue | undefined,
+): Array<{ key: string; url: string; shortLabel: string; title: string }> => {
+  const button = getOpportunityLinkButtonLabel(field, label);
+  const chips: Array<{ key: string; url: string; shortLabel: string; title: string }> = [];
+  const primary = value?.primaryLinkUrl?.trim();
+  if (primary) {
+    chips.push({
+      key: `${field}-primary`,
+      url: primary,
+      shortLabel: button.shortLabel,
+      title: value?.primaryLinkLabel?.trim() || button.title,
+    });
+  }
+  const secondary = value?.secondaryLinks ?? [];
+  secondary.forEach((link, index) => {
+    const url = link.url?.trim();
+    if (!url) return;
+    chips.push({
+      key: `${field}-secondary-${index}`,
+      url,
+      shortLabel: button.shortLabel,
+      title: link.label?.trim() || `${button.title} ${index + 2}`,
+    });
+  });
+  return chips;
+};
+
+const SmetaHeaderLinks = ({ smeta }: { smeta: ChildSmetaRow }) => {
+  const theme = useTheme();
+  const { colors, font, spacing, radius } = theme;
+  const chips = [
+    ...collectLinkChips('tonyLink', 'Tony', smeta.tonyLink),
+    ...collectLinkChips('bitrixLink', 'Bitrix', smeta.bitrixLink),
+  ];
+
+  if (!chips.length) return null;
+
+  return (
+    <div style={{ display: 'inline-flex', gap: spacing.xs, flexWrap: 'wrap' }}>
+      {chips.map((chip) => (
+        <a
+          key={chip.key}
+          href={chip.url}
+          target="_blank"
+          rel="noreferrer"
+          title={chip.title}
+          data-link-chip
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '26px',
+            height: '26px',
+            borderRadius: radius.sm,
+            border: `1px solid ${colors.border}`,
+            backgroundColor: colors.bgTertiary,
+            color: colors.textSecondary,
+            textDecoration: 'none',
+            fontSize: font.sizeXs,
+            fontWeight: font.weightSemibold,
+          }}
+        >
+          {chip.shortLabel}
+        </a>
+      ))}
+    </div>
+  );
+};
+
+const ExpandedLineItems = ({
+  row,
+  lineItems,
+  childColumns,
+  childGroups,
+  childDescriptorByField,
+  filters,
+  hasLineItemFilters,
+  showAllPositions,
+  onToggleShowAllPositions,
+  onChildColumnResizeStart,
+  boardStream,
+}: {
+  row: OpportunityRow;
+  lineItems: LineItemRow[];
+  childColumns: ColumnConfig[];
+  childGroups: ColumnGroupConfig[];
+  childDescriptorByField: Map<string, FieldDescriptor>;
+  filters?: LineItemQueryFilters;
+  hasLineItemFilters: boolean;
+  showAllPositions: boolean;
+  onToggleShowAllPositions?: (opportunityId: string) => void;
+  onChildColumnResizeStart: DealRowProps['onChildColumnResizeStart'];
+  boardStream?: BoardStream;
+}): ReactNode => {
+  const theme = useTheme();
+  const { colors, font, spacing } = theme;
+  const childSmetas = row.childSmetas;
+
+  if (childSmetas?.length) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>
+        {childSmetas.map((smeta) => (
+          <div key={smeta.id} data-smeta-id={smeta.id}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: spacing.sm,
+                padding: `${spacing.sm} ${spacing.md}`,
+                borderBottom: `1px solid ${colors.borderSubtle}`,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: font.sizeSm,
+                  fontWeight: font.weightSemibold,
+                  color: colors.text,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {smeta.name}
+              </div>
+              <SmetaHeaderLinks smeta={smeta} />
+            </div>
+            <LineItemsTable
+              opportunityId={smeta.id}
+              items={smeta.lineItems}
+              columns={childColumns}
+              groups={childGroups}
+              descriptorByField={childDescriptorByField}
+              filters={filters}
+              hasLineItemFilters={hasLineItemFilters}
+              showAllPositions={showAllPositions}
+              onToggleShowAllPositions={
+                onToggleShowAllPositions
+                  ? () => onToggleShowAllPositions(smeta.id)
+                  : undefined
+              }
+              onColumnResizeStart={onChildColumnResizeStart}
+              boardStream={boardStream}
+            />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <LineItemsTable
+      opportunityId={row.id}
+      items={lineItems}
+      columns={childColumns}
+      groups={childGroups}
+      descriptorByField={childDescriptorByField}
+      filters={filters}
+      hasLineItemFilters={hasLineItemFilters}
+      showAllPositions={showAllPositions}
+      onToggleShowAllPositions={
+        onToggleShowAllPositions ? () => onToggleShowAllPositions(row.id) : undefined
+      }
+      onColumnResizeStart={onChildColumnResizeStart}
+      boardStream={boardStream}
+    />
+  );
+};
+
 export const DealRow = memo(function DealRow({
   row,
   companyName,
@@ -126,10 +301,10 @@ export const DealRow = memo(function DealRow({
   const expandColumnWidth = getColumnWidth(PARENT_EXPAND_COLUMN);
   const hasExpandColumn = columns.some((column) => column.field === PARENT_EXPAND_COLUMN_FIELD);
 
-  const getPinnedCellStyle = (column: ColumnConfig) => {
+  const getPinnedCellStyle = (column: ColumnConfig): CSSProperties => {
     if (column.field === PARENT_EXPAND_COLUMN_FIELD) {
       return {
-        position: 'sticky' as const,
+        position: 'sticky',
         left: 0,
         zIndex: zIndex.sticky,
         backgroundColor: rowBg,
@@ -139,7 +314,7 @@ export const DealRow = memo(function DealRow({
 
     if (column.field === 'name') {
       return {
-        position: 'sticky' as const,
+        position: 'sticky',
         left: hasExpandColumn ? expandColumnWidth : 0,
         zIndex: zIndex.sticky,
         backgroundColor: rowBg,
@@ -219,21 +394,17 @@ export const DealRow = memo(function DealRow({
               boxShadow: `inset 4px 0 0 ${stageStyles.accentColor}`,
             }}
           >
-            <LineItemsTable
-              opportunityId={row.id}
-              items={lineItems}
-              columns={childColumns}
-              groups={childGroups}
-              descriptorByField={childDescriptorByField}
+            <ExpandedLineItems
+              row={row}
+              lineItems={lineItems}
+              childColumns={childColumns}
+              childGroups={childGroups}
+              childDescriptorByField={childDescriptorByField}
               filters={filters}
               hasLineItemFilters={hasLineItemFilters}
               showAllPositions={showAllPositions}
-              onToggleShowAllPositions={
-                onToggleShowAllPositions
-                  ? () => onToggleShowAllPositions(row.id)
-                  : undefined
-              }
-              onColumnResizeStart={onChildColumnResizeStart}
+              onToggleShowAllPositions={onToggleShowAllPositions}
+              onChildColumnResizeStart={onChildColumnResizeStart}
               boardStream={boardStream}
             />
           </td>

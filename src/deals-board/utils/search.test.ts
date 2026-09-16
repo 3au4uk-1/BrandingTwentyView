@@ -8,9 +8,12 @@ import {
   buildOpportunitySearchClause,
   filterLineItemsForSearch,
   lineItemMatchesSearch,
+  mapChildMatchesToParentIds,
   opportunityMatchesSearch,
   resolveSearchTerms,
 } from './search';
+
+const PARENT_NULL = { parentOpportunityId: { is: 'NULL' } };
 
 describe('buildOpportunitySearchClause', () => {
   it('matches opportunity name only when no line item ids', () => {
@@ -57,11 +60,18 @@ describe('addSearchTerm', () => {
 });
 
 describe('buildOpportunityFilter', () => {
+  it('empty filter still hides grouped children', () => {
+    expect(buildOpportunityFilter({})).toEqual({
+      and: [PARENT_NULL],
+    });
+  });
+
   it('keeps date filter and search together', () => {
     expect(
       buildOpportunityFilter({ datePreset: 'future', search: 'test' }, ['opp-1']),
     ).toEqual({
       and: [
+        PARENT_NULL,
         {
           or: [{ loadDate: expect.any(Object) }, { closeDate: expect.any(Object) }],
         },
@@ -74,19 +84,23 @@ describe('buildOpportunityFilter', () => {
 
   it('adds company filter when company ids are selected', () => {
     expect(buildOpportunityFilter({ companyIds: ['company-1', 'company-2'] })).toEqual({
-      and: [{ companyId: { in: ['company-1', 'company-2'] } }],
+      and: [PARENT_NULL, { companyId: { in: ['company-1', 'company-2'] } }],
     });
   });
 
   it('ORs multi keyword searchTerms', () => {
     expect(buildOpportunityFilter({ searchTerms: ['a', 'b'] })).toEqual({
-      and: [{ or: [{ name: { ilike: '%a%' } }, { name: { ilike: '%b%' } }] }],
+      and: [
+        PARENT_NULL,
+        { or: [{ name: { ilike: '%a%' } }, { name: { ilike: '%b%' } }] },
+      ],
     });
   });
 
   it('restricts to line-item matched ids when there is no search', () => {
     expect(buildOpportunityFilter({ datePreset: 'future' }, ['opp-1', 'opp-2'])).toEqual({
       and: [
+        PARENT_NULL,
         {
           or: [{ loadDate: expect.any(Object) }, { closeDate: expect.any(Object) }],
         },
@@ -97,7 +111,7 @@ describe('buildOpportunityFilter', () => {
 
   it('allows empty id list to force no matches without search', () => {
     expect(buildOpportunityFilter({}, [])).toEqual({
-      and: [{ id: { in: [] } }],
+      and: [PARENT_NULL, { id: { in: [] } }],
     });
   });
 
@@ -105,28 +119,63 @@ describe('buildOpportunityFilter', () => {
     expect(
       buildOpportunityFilter({ opportunityStages: ['V_RABOTE', 'DUBL'] }),
     ).toEqual({
-      and: [{ stage: { in: ['V_RABOTE', 'DUBL'] } }],
+      and: [PARENT_NULL, { stage: { in: ['V_RABOTE', 'DUBL'] } }],
     });
   });
 
   it('adds amountMicros gte from amountMinRub', () => {
     expect(buildOpportunityFilter({ amountMinRub: 100000 })).toEqual({
-      and: [{ amount: { amountMicros: { gte: 100_000_000_000 } } }],
+      and: [PARENT_NULL, { amount: { amountMicros: { gte: 100_000_000_000 } } }],
     });
   });
 
-  it('ignores a negative amountMinRub', () => {
-    expect(buildOpportunityFilter({ amountMinRub: -1 })).toBeUndefined();
+  it('ignores a negative amountMinRub but still hides children', () => {
+    expect(buildOpportunityFilter({ amountMinRub: -1 })).toEqual({
+      and: [PARENT_NULL],
+    });
   });
 
   it('adds a zero amountMinRub clause', () => {
     expect(buildOpportunityFilter({ amountMinRub: 0 })).toEqual({
-      and: [{ amount: { amountMicros: { gte: 0 } } }],
+      and: [PARENT_NULL, { amount: { amountMicros: { gte: 0 } } }],
     });
   });
 
   it('does not treat lineItemStages as opportunity.stage', () => {
-    expect(buildOpportunityFilter({ lineItemStages: ['OKLEYKA'] })).toBeUndefined();
+    expect(buildOpportunityFilter({ lineItemStages: ['OKLEYKA'] })).toEqual({
+      and: [PARENT_NULL],
+    });
+  });
+
+  it('skips parentOpportunityId NULL when includeGroupedChildren is true', () => {
+    expect(
+      buildOpportunityFilter({
+        includeGroupedChildren: true,
+        companyIds: ['c1'],
+      }),
+    ).toEqual({
+      and: [{ companyId: { in: ['c1'] } }],
+    });
+  });
+});
+
+describe('mapChildMatchesToParentIds', () => {
+  it('returns unique parent ids from child matches', () => {
+    expect(
+      mapChildMatchesToParentIds([
+        { parentOpportunityId: 'parent-1' },
+        { parentOpportunityId: 'parent-2' },
+        { parentOpportunityId: 'parent-1' },
+        { parentOpportunityId: null },
+        {},
+      ]),
+    ).toEqual(['parent-1', 'parent-2']);
+  });
+
+  it('returns empty when no children have a parent', () => {
+    expect(mapChildMatchesToParentIds([{ name: 'solo' }, { parentOpportunityId: '' }])).toEqual(
+      [],
+    );
   });
 });
 
