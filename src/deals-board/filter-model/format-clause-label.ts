@@ -1,6 +1,7 @@
 import { getLineItemTypeLabel } from 'src/constants/line-item-types';
 import { getOpportunityStageLabel, getStageLabel } from 'src/constants/stages';
 
+import { formatAmountMinRub } from './amount-min';
 import type { FilterClause } from './types';
 
 const OPLATA_LABELS: Record<string, string> = {
@@ -13,6 +14,7 @@ const FIELD_LABELS: Record<string, string> = {
   tip: 'Категория',
   companyId: 'Компания',
   oplata: 'Оплата',
+  amount: 'Сумма',
 };
 
 const formatValueList = (
@@ -57,6 +59,10 @@ export const formatFilterClauseLabel = (
     if (typeof clause.value === 'string') {
       return `${fieldLabel}: ${OPLATA_LABELS[clause.value] ?? clause.value}`;
     }
+  }
+
+  if (clause.field === 'amount' && clause.operator === 'gte' && typeof clause.value === 'number') {
+    return `${fieldLabel}: от ${formatAmountMinRub(clause.value)}`;
   }
 
   return fieldLabel;

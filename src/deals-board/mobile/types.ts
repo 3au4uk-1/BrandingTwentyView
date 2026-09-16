@@ -21,6 +21,7 @@ export type MobileDealsBoardProps = {
   opportunityLinkFields: FieldDescriptor[];
   records: OpportunityRow[];
   lineItems: LineItemRow[];
+  allDealLineItems?: LineItemRow[];
   boardStream?: BoardStream;
   lineItemFilters?: LineItemQueryFilters;
   totalCount: number;

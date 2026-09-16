@@ -59,4 +59,27 @@ describe('sendOkleykaPayload', () => {
     expect(result.ok).toBe(false);
     expect(result.error).toMatch(/не настроен/);
   });
+
+  it('maps queued send without implying sent', async () => {
+    vi.spyOn(crmparser, 'sendOkleykaTelegramEvent').mockResolvedValue({
+      ok: true,
+      queued: true,
+      jobId: 11,
+      status: 'pending',
+    });
+    const result = await sendOkleykaPayload({
+      text: 't',
+      fileUrls: ['https://x'],
+      lineItemId: 'li',
+      opportunityId: 'opp',
+    });
+    expect(result).toEqual({
+      ok: true,
+      queued: true,
+      jobId: 11,
+      status: 'pending',
+    });
+    expect(result).not.toHaveProperty('messageIds');
+    expect(result).not.toHaveProperty('loggedAt');
+  });
 });

@@ -16,6 +16,7 @@ describe('query key registry', () => {
       'okleykaSalaryEntry',
       'company',
       'restorationTemplate',
+      'bannerCrewSlot',
     ]);
   });
 
@@ -30,6 +31,7 @@ describe('query key registry', () => {
     ]);
     expect(WATCHED_QUERY_KEYS.company).toEqual(['companyNames']);
     expect(WATCHED_QUERY_KEYS.restorationTemplate).toEqual(['restorationTemplatesCatalog']);
+    expect(WATCHED_QUERY_KEYS.bannerCrewSlot).toEqual(['banner-crew-slots']);
   });
 
   it('exposes a deduplicated flat list for full resyncs', () => {
@@ -43,6 +45,7 @@ describe('query key registry', () => {
       'okleyka-salary-history',
       'companyNames',
       'restorationTemplatesCatalog',
+      'banner-crew-slots',
     ]);
   });
 

@@ -8,6 +8,8 @@ import { BOARD_STREAM } from 'src/constants/product-stream';
 import type { LineItemType } from 'src/constants/line-item-types';
 import type { LineItemStage } from 'src/constants/stages';
 
+import { BannerCrewChip } from '../banner-crew/BannerCrewChip';
+import { loadDatePickerSlotStyle } from '../banner-crew/chip-layout';
 import { Chip } from '../Chip';
 import { LineItemListMenu } from '../LineItemListMenu';
 import { useLineItemListStatus } from '../hooks/useLineItemListStatus';
@@ -48,6 +50,7 @@ export type FieldOverrideProps = {
   value: unknown;
   variant?: 'parent' | 'child';
   lineItems?: LineItemRow[];
+  allDealLineItems?: LineItemRow[];
   isExpanded?: boolean;
   companyName?: string;
   row?: Record<string, unknown>;
@@ -263,6 +266,42 @@ const OplataChipCell = ({ value }: FieldOverrideProps) => {
   return <Chip text={oplataText || EMPTY_VALUE} color={value ? 'green' : 'gray'} theme={theme} />;
 };
 
+const LoadDateCell = ({ recordId, value, lineItems, allDealLineItems, row }: FieldOverrideProps) => {
+  const theme = useTheme();
+  const loadDate = typeof value === 'string' ? value : null;
+  const opportunityName =
+    typeof row?.name === 'string' && row.name.trim() ? row.name : 'Без названия';
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: theme.spacing.sm,
+        alignItems: 'center',
+        minWidth: 0,
+        overflow: 'visible',
+      }}
+    >
+      <div style={loadDatePickerSlotStyle}>
+        <DatePickerModal
+          objectName="opportunity"
+          recordId={recordId}
+          fieldName="loadDate"
+          value={loadDate}
+          emphasized
+        />
+      </div>
+      <BannerCrewChip
+        opportunityId={recordId}
+        opportunityName={opportunityName}
+        loadDate={loadDate}
+        lineItems={allDealLineItems ?? lineItems ?? []}
+      />
+    </div>
+  );
+};
+
 export const renderFieldOverride = (props: FieldOverrideProps): ReactNode | null => {
   const { field, recordId, value, variant, lineItems, isExpanded, companyName } = props;
 
@@ -414,15 +453,7 @@ export const renderFieldOverride = (props: FieldOverrideProps): ReactNode | null
     case 'loadDate':
       if (variant !== 'parent') return null;
 
-      return (
-        <DatePickerModal
-          objectName="opportunity"
-          recordId={recordId}
-          fieldName="loadDate"
-          value={typeof value === 'string' ? value : null}
-          emphasized
-        />
-      );
+      return <LoadDateCell {...props} />;
     case 'summary':
       return isExpanded ? EMPTY_VALUE : <DealSummaryChips items={lineItems ?? []} />;
     case 'companyName':

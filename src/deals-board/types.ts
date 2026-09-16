@@ -45,7 +45,11 @@ export type DealBoardFilters = {
   searchTerms?: string[];
   showAll?: boolean;
   companyIds?: string[];
+  /** Inclusive ruble floor for opportunity.amount. */
+  amountMinRub?: number;
   clauses?: FilterClause[];
+  /** Internal: allow fetching child smetas (board list still hides them by default). */
+  includeGroupedChildren?: boolean;
 };
 
 export type DealBoardSort = { field: string; direction: 'AscNullsFirst' | 'DescNullsLast' };
@@ -63,6 +67,12 @@ export type DealBoardViewRecord = {
   isDefault: boolean;
 };
 
+export type OpportunityLinkValue = {
+  primaryLinkUrl?: string;
+  primaryLinkLabel?: string;
+  secondaryLinks?: Array<{ url?: string; label?: string }>;
+};
+
 export type OpportunityRow = {
   id: string;
   name: string;
@@ -71,15 +81,23 @@ export type OpportunityRow = {
   companyId?: string;
   companyName?: string;
   amount?: { amountMicros: number; currencyCode: string };
-  tonyLink?: { primaryLinkUrl?: string };
-  bitrixLink?: { primaryLinkUrl?: string };
+  tonyLink?: OpportunityLinkValue;
+  bitrixLink?: OpportunityLinkValue;
+  parentOpportunityId?: string | null;
+  childSmetas?: ChildSmetaRow[];
   oplata?: string | null;
   stage?: string | null;
   stageZakreplen?: boolean | null;
   rashodPechat?: { amountMicros: number; currencyCode: string } | null;
   rashodFrezerovka?: { amountMicros: number; currencyCode: string } | null;
+  rashodLogistika?: { amountMicros: number; currencyCode: string } | null;
+  rashodBeznal?: { amountMicros: number; currencyCode: string } | null;
   rashodOkleyka?: { amountMicros: number; currencyCode: string } | null;
   [key: string]: unknown;
+};
+
+export type ChildSmetaRow = OpportunityRow & {
+  lineItems: LineItemRow[];
 };
 
 export type LineItemFileRef = { fileId: string; label?: string; url?: string };

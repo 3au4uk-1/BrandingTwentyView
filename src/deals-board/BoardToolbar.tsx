@@ -57,6 +57,7 @@ type BoardToolbarProps = {
   activeFilterCount?: number;
   /** Show «Сбросить» only when session differs from the active view. */
   canResetFilters?: boolean;
+  onLinkDeals?: () => void;
 };
 
 export const BoardToolbar = ({
@@ -84,6 +85,7 @@ export const BoardToolbar = ({
   onChildColumnsSave,
   activeFilterCount: _activeFilterCount = 0,
   canResetFilters = false,
+  onLinkDeals,
 }: BoardToolbarProps) => {
   const theme = useTheme();
   const { colors, font, spacing, radius } = theme;
@@ -354,6 +356,11 @@ export const BoardToolbar = ({
         </button>
         <ExpandModeToggle />
         <TypeSectionsToggle />
+        {onLinkDeals ? (
+          <Button theme={theme} variant="secondary" size="sm" onClick={onLinkDeals}>
+            Связать сделки
+          </Button>
+        ) : null}
         <ToolbarSettingsCluster
           disabled={settingsDisabled}
           onEditView={onEditView}

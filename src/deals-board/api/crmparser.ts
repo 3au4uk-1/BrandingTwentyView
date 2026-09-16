@@ -264,7 +264,27 @@ export type OkleykaTelegramSendResult = {
   loggedAt?: string;
   warning?: string;
   error?: string;
+  queued?: boolean;
+  jobId?: number | string;
+  status?: string;
 };
+
+export type OkleykaJobStatus = {
+  job: {
+    id: number | string;
+    status: string;
+    error: string | null;
+    updatedAt: string;
+  } | null;
+  alreadySent: boolean;
+  lastSentAt: string | null;
+};
+
+export async function fetchOkleykaJob(lineItemId: string): Promise<OkleykaJobStatus> {
+  return logicFunctionFetch(
+    `/crmparser/telegram/okleyka-job/${encodeURIComponent(lineItemId)}`,
+  );
+}
 
 export async function sendOkleykaTelegramEvent(
   body: OkleykaTelegramSendBody,
@@ -293,5 +313,88 @@ export async function notifyBannerPodryadCatchup(
   return logicFunctionFetch<BannerPodryadCatchupResult>(
     `/crmparser/telegram/banner-podryad-catchup`,
     { method: 'POST', body: JSON.stringify(body) },
+  );
+}
+
+export type DealGroupCandidate = {
+  dealIds: number[];
+  twentyOppIds?: string[];
+  reason: string;
+  conflict?: boolean;
+};
+
+export type DealGroupSuggestions = {
+  hard: DealGroupCandidate[];
+  soft: DealGroupCandidate[];
+};
+
+export type ConfirmDealGroupBody = {
+  twentyOppIds: string[];
+  name?: string;
+  nameLocked?: boolean;
+  canonicalTwentyOppId?: string;
+  canonicalBitrixId?: string;
+  canonicalLocked?: boolean;
+};
+
+export type ConfirmDealGroupResult = {
+  group: { id: number; [key: string]: unknown };
+  parentTwentyId?: string | null;
+};
+
+export type UnlinkDealGroupResult = {
+  dissolved: boolean;
+  parentTwentyId?: string | null;
+};
+
+export async function fetchDealGroupSuggestions(): Promise<DealGroupSuggestions> {
+  return logicFunctionFetch<DealGroupSuggestions>('/crmparser/deal-groups/suggestions');
+}
+
+export async function confirmDealGroup(
+  body: ConfirmDealGroupBody,
+): Promise<ConfirmDealGroupResult> {
+  return logicFunctionFetch<ConfirmDealGroupResult>('/crmparser/deal-groups', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+export async function patchDealGroup(
+  groupId: number | string,
+  body: Omit<ConfirmDealGroupBody, 'twentyOppIds'> & { twentyOppIds?: string[] },
+): Promise<ConfirmDealGroupResult> {
+  return logicFunctionFetch<ConfirmDealGroupResult>(
+    `/crmparser/deal-groups/${encodeURIComponent(String(groupId))}`,
+    { method: 'PATCH', body: JSON.stringify(body) },
+  );
+}
+
+export async function unlinkDealGroupMember(
+  groupId: number | string,
+  twentyOppId: string,
+): Promise<UnlinkDealGroupResult> {
+  return logicFunctionFetch<UnlinkDealGroupResult>(
+    `/crmparser/deal-groups/${encodeURIComponent(String(groupId))}/unlink`,
+    { method: 'POST', body: JSON.stringify({ twentyOppId }) },
+  );
+}
+
+/** Resolve group by child/parent opportunity id, then unlink that member. */
+export async function unlinkDealGroupMemberByOpportunity(
+  twentyOppId: string,
+): Promise<UnlinkDealGroupResult> {
+  return logicFunctionFetch<UnlinkDealGroupResult>(
+    `/crmparser/deal-groups/by-opp/unlink`,
+    { method: 'POST', body: JSON.stringify({ twentyOppId }) },
+  );
+}
+
+export async function dissolveDealGroup(
+  groupId: number | string,
+): Promise<UnlinkDealGroupResult> {
+  return logicFunctionFetch<UnlinkDealGroupResult>(
+    `/crmparser/deal-groups/${encodeURIComponent(String(groupId))}/unlink`,
+    { method: 'POST', body: JSON.stringify({ dissolve: true }) },
   );
 }

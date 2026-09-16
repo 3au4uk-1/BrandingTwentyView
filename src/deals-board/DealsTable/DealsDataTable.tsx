@@ -64,6 +64,7 @@ export type DealsDataTableProps = {
   childDescriptorByField: Map<string, FieldDescriptor>;
   opportunityLinkFields: FieldDescriptor[];
   lineItemsByOpportunity: Map<string, LineItemRow[]>;
+  allDealLineItemsByOpportunity?: Map<string, LineItemRow[]>;
   companyNameMap: Map<string, string>;
   lineItemFilters?: LineItemQueryFilters;
   hasLineItemFilters?: boolean;
@@ -76,6 +77,7 @@ export type DealsDataTableProps = {
   onSortChange: (next: DealBoardSort[]) => void;
   attentionOpportunityIds?: Set<string> | null;
   boardStream?: BoardStream;
+  onUnlinkSmeta?: (smetaId: string) => void;
 };
 
 const PINNED_LEFT_COLUMN_IDS = ['__expand', 'name'] as const;
@@ -107,6 +109,7 @@ export const DealsDataTable = ({
   childDescriptorByField,
   opportunityLinkFields,
   lineItemsByOpportunity,
+  allDealLineItemsByOpportunity,
   companyNameMap,
   lineItemFilters,
   hasLineItemFilters = false,
@@ -119,6 +122,7 @@ export const DealsDataTable = ({
   onSortChange,
   attentionOpportunityIds = null,
   boardStream,
+  onUnlinkSmeta,
 }: DealsDataTableProps) => {
   const theme = useTheme();
   const { colors, font, spacing, zIndex } = theme;
@@ -312,6 +316,9 @@ export const DealsDataTable = ({
                   childDescriptorByField={childDescriptorByField}
                   onChildColumnResizeStart={beginChildResize}
                   lineItems={lineItemsByOpportunity.get(row.id) ?? EMPTY_LINE_ITEMS}
+                  allDealLineItems={
+                    allDealLineItemsByOpportunity?.get(row.id) ?? EMPTY_LINE_ITEMS
+                  }
                   isExpanded={isExpanded(row.id)}
                   onToggleExpand={toggleExpand}
                   opportunityLinkFields={opportunityLinkFields}
@@ -321,6 +328,7 @@ export const DealsDataTable = ({
                   onToggleShowAllPositions={onToggleShowAllPositions}
                   attentionHighlighted={attentionOpportunityIds?.has(row.id) ?? false}
                   boardStream={boardStream}
+                  onUnlinkSmeta={onUnlinkSmeta}
                 />
               </Fragment>
             );

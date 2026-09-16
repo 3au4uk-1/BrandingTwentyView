@@ -1,9 +1,12 @@
+import { useEffect, useState } from 'react';
+
 import type { DealBoardDatePreset } from '../types';
 
 import {
   FILTER_BUILDER_FIELDS,
   useFilterClauseEditor,
 } from '../filter-model/use-filter-clause-editor';
+import { parseAmountMinRub } from '../filter-model/amount-min';
 import type { FilterClause, FilterState } from '../filter-model/types';
 import { useTheme } from '../theme/ThemeContext';
 import { getPresetRange } from '../utils/date-filters';
@@ -47,8 +50,10 @@ export const MobileFiltersSheet = ({
     toggleMultiValue,
     toggleCompany,
     setOplata,
+    setAmountMin,
     getSelectedValues,
     getOplataValue,
+    getAmountMinDraft,
     companySearch,
     setCompanySearch,
     companyOptions,
@@ -68,6 +73,18 @@ export const MobileFiltersSheet = ({
   const selectedLineItemStages = getSelectedValues(lineItemStageField);
   const selectedTypes = getSelectedValues(tipField);
   const oplataValue = getOplataValue();
+  const amountValue = getAmountMinDraft();
+  const [amountDraft, setAmountDraft] = useState(amountValue);
+
+  useEffect(() => {
+    setAmountDraft(amountValue);
+  }, [amountValue]);
+
+  const commitAmountDraft = () => {
+    const parsed = parseAmountMinRub(amountDraft);
+    setAmountMin(amountDraft);
+    setAmountDraft(parsed === undefined ? '' : String(parsed));
+  };
 
   const sectionTitleStyle = {
     fontSize: font.sizeXs,
@@ -271,6 +288,25 @@ export const MobileFiltersSheet = ({
               })
             )}
           </div>
+        </section>
+
+        <section>
+          <div style={sectionTitleStyle}>Сумма</div>
+          <Input
+            theme={theme}
+            inputMode="decimal"
+            placeholder="от, ₽"
+            value={amountDraft}
+            onChange={(event) => setAmountDraft(event.target.value)}
+            onBlur={commitAmountDraft}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                commitAmountDraft();
+              }
+            }}
+            style={{ width: '100%', minHeight: 44 }}
+          />
         </section>
 
         <section>

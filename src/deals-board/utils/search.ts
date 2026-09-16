@@ -1,5 +1,6 @@
 import type { DealBoardFilters, LineItemRow, OpportunityRow } from '../types';
 
+import { rublesToAmountMicros } from '../filter-model/amount-min';
 import { buildOpportunityDateFilter } from './date-filters';
 
 export const normalizeSearchTerm = (search?: string): string => search?.trim() ?? '';
@@ -63,11 +64,30 @@ export const buildOpportunitySearchClause = (
   return { or: [nameFilter, { id: { in: matchingIds } }] };
 };
 
+export const mapChildMatchesToParentIds = (
+  children: Array<{ parentOpportunityId?: string | null }>,
+): string[] => {
+  const parentIds: string[] = [];
+  const seen = new Set<string>();
+  for (const child of children) {
+    const parentId = child.parentOpportunityId?.trim();
+    if (!parentId || seen.has(parentId)) continue;
+    seen.add(parentId);
+    parentIds.push(parentId);
+  }
+  return parentIds;
+};
+
 export const buildOpportunityFilter = (
   filters: DealBoardFilters,
   lineItemMatchedOpportunityIds?: string[],
 ): { and: Record<string, unknown>[] } | undefined => {
   const and: Record<string, unknown>[] = [];
+
+  if (!filters.includeGroupedChildren) {
+    and.push({ parentOpportunityId: { is: 'NULL' } });
+  }
+
   const dateFilter = buildOpportunityDateFilter(filters);
   if (dateFilter) and.push(dateFilter);
 
@@ -84,6 +104,16 @@ export const buildOpportunityFilter = (
   const opportunityStages = filters.opportunityStages?.filter(Boolean) ?? [];
   if (opportunityStages.length > 0) {
     and.push({ stage: { in: opportunityStages } });
+  }
+
+  if (
+    typeof filters.amountMinRub === 'number' &&
+    Number.isFinite(filters.amountMinRub) &&
+    filters.amountMinRub >= 0
+  ) {
+    and.push({
+      amount: { amountMicros: { gte: rublesToAmountMicros(filters.amountMinRub) } },
+    });
   }
 
   if (lineItemMatchedOpportunityIds !== undefined && terms.length === 0) {

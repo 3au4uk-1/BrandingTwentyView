@@ -1,14 +1,18 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+﻿import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   addLineItemToList,
   archiveManualLineItem,
+  confirmDealGroup,
+  fetchDealGroupSuggestions,
   fetchLineItemListStatus,
   fetchLineItemsListStatusBatch,
+  fetchOkleykaJob,
   isCrmparserConfigured,
   notifyBannerPodryadCatchup,
   resetListStatusBatcherForTests,
   syncManualLineItem,
+  unlinkDealGroupMember,
   writeBackLineItemAmount,
   writeBackLineItemQuantity,
 } from './crmparser';
@@ -369,6 +373,135 @@ describe('crmparser proxy client', () => {
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify(payload),
+      }),
+    );
+  });
+
+  it('fetchOkleykaJob GETs job status from logic function', async () => {
+    globalThis.process = {
+      env: {
+        TWENTY_FUNCTIONS_URL: 'https://twenty.test/functions',
+        TWENTY_APP_ACCESS_TOKEN: 'app-token',
+      },
+    } as NodeJS.Process;
+
+    const payload = {
+      job: {
+        id: 7,
+        status: 'pending',
+        error: null,
+        updatedAt: '2026-09-14T12:00:00.000Z',
+      },
+      alreadySent: false,
+      lastSentAt: null,
+    };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => payload,
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(fetchOkleykaJob('li-42')).resolves.toEqual(payload);
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://twenty.test/functions/crmparser/telegram/okleyka-job/li-42',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer app-token',
+        }),
+      }),
+    );
+    expect(fetchMock.mock.calls[0][1]?.method).not.toBe('POST');
+    expect(fetchMock.mock.calls[0][1]?.body).toBeUndefined();
+  });
+
+  it('fetchDealGroupSuggestions GETs /functions/crmparser/deal-groups/suggestions', async () => {
+    globalThis.process = {
+      env: {
+        TWENTY_FUNCTIONS_URL: 'https://twenty.test/functions',
+        TWENTY_APP_ACCESS_TOKEN: 'app-token',
+      },
+    } as NodeJS.Process;
+
+    const payload = {
+      hard: [{ dealIds: [1, 2], twentyOppIds: ['opp-1', 'opp-2'], reason: 'shared_booking' }],
+      soft: [{ dealIds: [3, 4], twentyOppIds: ['opp-3', 'opp-4'], reason: 'soft_marker' }],
+    };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => payload,
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(fetchDealGroupSuggestions()).resolves.toEqual(payload);
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://twenty.test/functions/crmparser/deal-groups/suggestions',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer app-token',
+        }),
+      }),
+    );
+    expect(fetchMock.mock.calls[0][1]?.method).not.toBe('POST');
+  });
+
+  it('confirmDealGroup POSTs to /functions/crmparser/deal-groups', async () => {
+    globalThis.process = {
+      env: {
+        TWENTY_FUNCTIONS_URL: 'https://twenty.test/functions',
+        TWENTY_APP_ACCESS_TOKEN: 'app-token',
+      },
+    } as NodeJS.Process;
+
+    const body = {
+      twentyOppIds: ['opp-1', 'opp-2'],
+      name: 'А7',
+      nameLocked: true,
+      canonicalTwentyOppId: 'opp-1',
+      canonicalBitrixId: '2049067',
+      canonicalLocked: true,
+    };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ group: { id: 42 }, parentTwentyId: 'parent-1' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(confirmDealGroup(body)).resolves.toEqual({
+      group: { id: 42 },
+      parentTwentyId: 'parent-1',
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://twenty.test/functions/crmparser/deal-groups',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+    );
+  });
+
+  it('unlinkDealGroupMember POSTs to /functions/crmparser/deal-groups/:id/unlink', async () => {
+    globalThis.process = {
+      env: {
+        TWENTY_FUNCTIONS_URL: 'https://twenty.test/functions',
+        TWENTY_APP_ACCESS_TOKEN: 'app-token',
+      },
+    } as NodeJS.Process;
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ dissolved: false, parentTwentyId: 'parent-1' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(unlinkDealGroupMember(42, 'opp-2')).resolves.toEqual({
+      dissolved: false,
+      parentTwentyId: 'parent-1',
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://twenty.test/functions/crmparser/deal-groups/42/unlink',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ twentyOppId: 'opp-2' }),
       }),
     );
   });

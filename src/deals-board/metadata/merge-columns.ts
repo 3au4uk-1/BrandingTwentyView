@@ -14,6 +14,7 @@ const LABEL_OVERRIDES: Record<string, string> = {
   plenka: 'Плёнка',
   ssylkaNaMakety: 'Макеты',
   prevyuOkleyki: 'Превью',
+  vzyal: 'Взял',
 };
 
 const descriptorMap = (descriptors: FieldDescriptor[]) =>
@@ -68,22 +69,29 @@ export const mergeColumns = (
     const isStage = descriptor.field === 'stage';
     const isTipDetail = descriptor.field === 'tipDetail';
     const isPrevyu = descriptor.field === 'prevyuOkleyki';
+    const isVzyal = descriptor.field === 'vzyal';
     const nameOrder = merged.find((column) => column.field === 'name')?.order;
-    const stageInsertOrder =
-      typeof nameOrder === 'number' ? nameOrder + 0.5 : nextOrder++;
+
+    let order = nextOrder++;
+    if (typeof nameOrder === 'number') {
+      if (isVzyal) order = nameOrder + 0.25;
+      else if (isStage) order = nameOrder + 0.5;
+    }
 
     merged.push({
       field: descriptor.field,
       label: resolveLabel(descriptor.field, descriptor.label),
-      order: isStage ? stageInsertOrder : nextOrder++,
-      visible: isStage || isTipDetail || isPrevyu,
-      width: isStage
-        ? 148
-        : isTipDetail
-          ? 140
-          : isPrevyu
-            ? 100
-            : defaultWidthForFieldType(descriptor.fieldType, descriptor.field),
+      order,
+      visible: isStage || isTipDetail || isPrevyu || isVzyal,
+      width: isVzyal
+        ? 110
+        : isStage
+          ? 148
+          : isTipDetail
+            ? 140
+            : isPrevyu
+              ? 100
+              : defaultWidthForFieldType(descriptor.fieldType, descriptor.field),
     });
   }
 

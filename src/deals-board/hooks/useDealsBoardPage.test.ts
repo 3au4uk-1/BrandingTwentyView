@@ -30,6 +30,10 @@ vi.mock('../api/crmparser', () => ({
   isCrmparserConfigured: vi.fn(() => false),
 }));
 
+vi.mock('../api/opportunities', () => ({
+  fetchChildMatchedParentIdsBySearch: vi.fn(async () => []),
+}));
+
 describe('flattenLineItemsFromPage', () => {
   it('flattens grouped line items', () => {
     expect(

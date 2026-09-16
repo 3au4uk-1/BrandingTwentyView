@@ -38,6 +38,20 @@ describe('isOpportunityRestOnlyField', () => {
   it('treats link fields as REST-only', () => {
     expect(isOpportunityRestOnlyField('tonyLink', availableFields)).toBe(true);
   });
+
+  it('treats vzyal as REST-only when present in metadata', () => {
+    expect(
+      isOpportunityRestOnlyField('vzyal', [
+        {
+          field: 'vzyal',
+          label: 'Взял',
+          source: 'crm',
+          fieldType: 'SELECT',
+          isEditable: true,
+        },
+      ]),
+    ).toBe(true);
+  });
 });
 
 describe('resolveOpportunityRestFieldNames', () => {

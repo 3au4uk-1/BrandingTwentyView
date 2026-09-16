@@ -70,6 +70,26 @@ describe('clausesToDealBoardFilters', () => {
     });
   });
 
+  it('maps deal amount gte clause to amountMinRub', () => {
+    const clauses: FilterClause[] = [
+      { id: '1', level: 'deal', field: 'amount', operator: 'gte', value: 100000 },
+    ];
+    expect(clausesToDealBoardFilters(clauses).amountMinRub).toBe(100000);
+  });
+
+  it('ignores negative or non-numeric amount clauses', () => {
+    expect(
+      clausesToDealBoardFilters([
+        { id: '1', level: 'deal', field: 'amount', operator: 'gte', value: -1 },
+      ]).amountMinRub,
+    ).toBeUndefined();
+    expect(
+      clausesToDealBoardFilters([
+        { id: '1', level: 'deal', field: 'amount', operator: 'gte', value: '100000' },
+      ]).amountMinRub,
+    ).toBeUndefined();
+  });
+
   it('maps deal oplata eq filled to oplata filled', () => {
     const clauses: FilterClause[] = [
       { id: '1', level: 'deal', field: 'oplata', operator: 'eq', value: 'filled' },

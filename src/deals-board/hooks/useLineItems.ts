@@ -13,6 +13,11 @@ import {
   defaultManualLineItemBaseline,
   setManualLineItemBaseline,
 } from '../utils/manual-line-item-baselines';
+import {
+  buildCreatedManualLineItem,
+  insertCreatedLineItemInCache,
+  invalidateDealsBoardLineItemQueries,
+} from './insert-created-line-item';
 import { syncManualLineItemAfterUpdate, syncNewManualLineItemToParser } from './useManualLineItemParserSync';
 import { syncDealStage } from '../utils/sync-deal-stage';
 
@@ -60,10 +65,23 @@ export const useCreateLineItem = () => {
         defaultManualLineItemBaseline(),
       );
 
+      const siblings: LineItemRow[] = [];
+      for (const [, items] of queryClient.getQueriesData<LineItemRow[]>({
+        queryKey: ['lineItems'],
+      })) {
+        for (const item of items ?? []) {
+          if (item.opportunityId === opportunityId) siblings.push(item);
+        }
+      }
+      insertCreatedLineItemInCache(
+        queryClient,
+        buildCreatedManualLineItem(lineItemId, opportunityId, nextPoryadok(siblings)),
+      );
+
       void syncNewManualLineItemToParser(queryClient, lineItemId, opportunityId);
 
       void Promise.allSettled([
-        queryClient.invalidateQueries({ queryKey: ['lineItems'] }),
+        invalidateDealsBoardLineItemQueries(queryClient),
         syncDealStage(queryClient, opportunityId),
       ]);
     },

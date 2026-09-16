@@ -10,6 +10,7 @@ import {
   fetchLineItemOpportunityIdsByFilters,
   fetchLineItemOpportunityIdsBySearch,
 } from '../api/line-items';
+import { fetchChildMatchedParentIdsBySearch } from '../api/opportunities';
 import type { DealBoardFilters, DealBoardSort, LineItemRow, OpportunityRow } from '../types';
 import { buildOpportunityFilter, resolveSearchTerms } from '../utils/search';
 import {
@@ -110,10 +111,17 @@ export const fetchDealsBoardPageQueryData = async (
   let lineItemMatchedOpportunityIds: string[] | undefined;
 
   if (searchTerms.length) {
-    lineItemMatchedOpportunityIds = await fetchLineItemOpportunityIdsBySearch(
-      searchTerms,
-      lineItemFilters,
-    );
+    const [lineItemIds, childParentIds] = await Promise.all([
+      fetchLineItemOpportunityIdsBySearch(searchTerms, lineItemFilters),
+      fetchChildMatchedParentIdsBySearch(searchTerms),
+    ]);
+    const seen = new Set<string>();
+    lineItemMatchedOpportunityIds = [];
+    for (const id of [...lineItemIds, ...childParentIds]) {
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      lineItemMatchedOpportunityIds.push(id);
+    }
   } else if (hasLineItemAttributeFilters) {
     lineItemMatchedOpportunityIds = await fetchLineItemOpportunityIdsByFilters(lineItemFilters);
   }

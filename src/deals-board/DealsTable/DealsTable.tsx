@@ -47,6 +47,7 @@ type DealsTableProps = {
   opportunityLinkFields: FieldDescriptor[];
   records: OpportunityRow[];
   lineItems: LineItemRow[];
+  allDealLineItems?: LineItemRow[];
   lineItemFilters?: LineItemQueryFilters;
   hasLineItemFilters?: boolean;
   showAllPositionOppIds?: Set<string>;
@@ -67,6 +68,7 @@ type DealsTableProps = {
   errorMessage?: string;
   attentionOpportunityIds?: Set<string> | null;
   boardStream?: BoardStream;
+  onUnlinkSmeta?: (smetaId: string) => void;
 };
 
 export const DealsTable = ({
@@ -79,6 +81,7 @@ export const DealsTable = ({
   opportunityLinkFields,
   records,
   lineItems,
+  allDealLineItems,
   lineItemFilters,
   hasLineItemFilters = false,
   showAllPositionOppIds,
@@ -99,6 +102,7 @@ export const DealsTable = ({
   errorMessage,
   attentionOpportunityIds = null,
   boardStream,
+  onUnlinkSmeta,
 }: DealsTableProps) => {
   const theme = useTheme();
   const { colors, font, spacing } = theme;
@@ -239,6 +243,16 @@ export const DealsTable = ({
     return grouped;
   }, [lineItems]);
 
+  const allDealLineItemsByOpportunity = useMemo(() => {
+    const source = allDealLineItems ?? lineItems;
+    const grouped = new Map<string, typeof source>();
+    for (const item of source) {
+      const current = grouped.get(item.opportunityId) ?? [];
+      grouped.set(item.opportunityId, [...current, item]);
+    }
+    return grouped;
+  }, [allDealLineItems, lineItems]);
+
   const opportunityStageById = useMemo(
     () =>
       new Map(
@@ -324,6 +338,7 @@ export const DealsTable = ({
         childDescriptorByField={childDescriptorByField}
         opportunityLinkFields={opportunityLinkFields}
         lineItemsByOpportunity={lineItemsByOpportunity}
+        allDealLineItemsByOpportunity={allDealLineItemsByOpportunity}
         companyNameMap={companyNameMap}
         lineItemFilters={lineItemFilters}
         hasLineItemFilters={hasLineItemFilters}
@@ -336,6 +351,7 @@ export const DealsTable = ({
         sort={effectiveSort}
         onSortChange={onSortChange}
         boardStream={boardStream}
+        onUnlinkSmeta={onUnlinkSmeta}
       />
 
       <div

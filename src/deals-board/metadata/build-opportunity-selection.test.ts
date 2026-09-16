@@ -26,7 +26,11 @@ describe('buildOpportunityNodeSelection', () => {
 
   it('includes link sub-selection for LINKS fields', () => {
     const selection = buildOpportunityNodeSelection(['tonyLink']);
-    expect(selection.tonyLink).toEqual({ primaryLinkUrl: true, primaryLinkLabel: true });
+    expect(selection.tonyLink).toEqual({
+      primaryLinkUrl: true,
+      primaryLinkLabel: true,
+      secondaryLinks: true,
+    });
   });
 
   it('includes relation sub-selection for RELATION fields', () => {

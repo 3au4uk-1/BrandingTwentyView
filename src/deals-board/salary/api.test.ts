@@ -18,7 +18,9 @@ import { RestApiClient } from 'twenty-client-sdk/rest';
 import { fetchOpportunities, patchOpportunity } from '../api/opportunities';
 import { buildOkleykaDealGroups } from './compute';
 import {
+  buildOkleykaAllLineItemsFilter,
   buildOkleykaSalaryLineItemsFilter,
+  fetchOkleykaSalaryFullPageData,
   fetchOkleykaSalaryPageData,
   patchOkleykaDealCost,
 } from './api';
@@ -32,6 +34,130 @@ describe('buildOkleykaSalaryLineItemsFilter', () => {
     expect(filter).toContain('tipDetail[eq]:"NASHI"');
     expect(filter).toContain('OKLEYKA');
     expect(filter).toContain('GOTOVO');
+  });
+});
+
+describe('buildOkleykaAllLineItemsFilter', () => {
+  it('filters only by opportunity ids', () => {
+    const filter = buildOkleykaAllLineItemsFilter(['opp-1', 'opp-2']);
+    expect(filter).toContain('opportunityId[in]:["opp-1","opp-2"]');
+    expect(filter).not.toContain('PLENKA');
+    expect(filter).not.toContain('NASHI');
+    expect(filter).not.toContain('OKLEYKA');
+  });
+});
+
+describe('fetchOkleykaSalaryFullPageData', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns [] without REST when opportunityIds is empty', async () => {
+    const get = vi.fn();
+    vi.mocked(RestApiClient).mockImplementation(
+      () => ({ get }) as unknown as RestApiClient,
+    );
+    await expect(
+      fetchOkleykaSalaryFullPageData('2026-07-01', '2026-07-31', []),
+    ).resolves.toEqual([]);
+    expect(fetchOpportunities).not.toHaveBeenCalled();
+    expect(get).not.toHaveBeenCalled();
+  });
+
+  it('loads unfiltered line items and extra rashod, then builds full groups', async () => {
+    const get = vi.fn().mockResolvedValue({ data: [] });
+    vi.mocked(RestApiClient).mockImplementation(
+      () => ({ get }) as unknown as RestApiClient,
+    );
+    vi.mocked(fetchOpportunities).mockResolvedValue({
+      records: [
+        { id: 'opp-1', name: 'Deal', loadDate: '2026-07-10' },
+        { id: 'opp-skip', name: 'Other', loadDate: '2026-07-10' },
+      ],
+      totalCount: 2,
+    });
+    vi.mocked(buildOkleykaDealGroups).mockReturnValue([]);
+
+    await fetchOkleykaSalaryFullPageData('2026-07-01', '2026-07-31', ['opp-1']);
+
+    expect(fetchOpportunities).toHaveBeenCalledWith(
+      expect.objectContaining({
+        restFieldNames: expect.arrayContaining([
+          'rashodLogistika',
+          'rashodBeznal',
+          'rashodPechat',
+          'rashodFrezerovka',
+          'rashodOkleyka',
+        ]),
+      }),
+    );
+    const restNames = vi.mocked(fetchOpportunities).mock.calls[0]?.[0]?.restFieldNames as string[];
+    expect(restNames).not.toContain('rashodVyezdnayaKomanda');
+    expect(restNames).not.toContain('rashodItogo');
+    expect(get.mock.calls[0]?.[1]?.query?.filter).toBe(
+      buildOkleykaAllLineItemsFilter(['opp-1']),
+    );
+    expect(buildOkleykaDealGroups).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.any(Map),
+      'full',
+    );
+    const dealsById = vi.mocked(buildOkleykaDealGroups).mock.calls[0]?.[1] as Map<string, { id: string }>;
+    expect(dealsById.has('opp-1')).toBe(true);
+    expect(dealsById.has('opp-skip')).toBe(false);
+  });
+
+  it('stops REST pagination when endCursor does not advance', async () => {
+    let calls = 0;
+    const get = vi.fn().mockImplementation(async () => {
+      calls += 1;
+      if (calls > 8) throw new Error('infinite pagination');
+      return {
+        data: {
+          dealLineItems: [{ id: 'li-1', name: 'Pos', opportunityId: 'opp-1' }],
+        },
+        pageInfo: { hasNextPage: true, endCursor: 'stuck-cursor' },
+      };
+    });
+    vi.mocked(RestApiClient).mockImplementation(
+      () => ({ get }) as unknown as RestApiClient,
+    );
+    vi.mocked(fetchOpportunities).mockResolvedValue({
+      records: [{ id: 'opp-1', name: 'Deal', loadDate: '2026-07-10' }],
+      totalCount: 1,
+    });
+    vi.mocked(buildOkleykaDealGroups).mockReturnValue([]);
+
+    await fetchOkleykaSalaryFullPageData('2026-07-01', '2026-07-31', ['opp-1']);
+
+    expect(get).toHaveBeenCalledTimes(2);
+    expect(get.mock.calls[1]?.[1]?.query?.after).toBe('stuck-cursor');
+  });
+
+  it('chunks full-mode opportunity ids by 20 so REST pages fit under limit', async () => {
+    const opportunityIds = Array.from({ length: 21 }, (_, index) => `opp-${index + 1}`);
+    const get = vi.fn().mockResolvedValue({ data: [] });
+    vi.mocked(RestApiClient).mockImplementation(
+      () => ({ get }) as unknown as RestApiClient,
+    );
+    vi.mocked(fetchOpportunities).mockResolvedValue({
+      records: opportunityIds.map((id) => ({
+        id,
+        name: id,
+        loadDate: '2026-07-15',
+      })),
+      totalCount: 21,
+    });
+    vi.mocked(buildOkleykaDealGroups).mockReturnValue([]);
+
+    await fetchOkleykaSalaryFullPageData('2026-07-01', '2026-07-31', opportunityIds);
+
+    expect(get).toHaveBeenCalledTimes(2);
+    const filters = get.mock.calls.map((call) => call[1]?.query?.filter as string);
+    expect(filters[0]).toContain('opp-1');
+    expect(filters[0]).toContain('opp-20');
+    expect(filters[0]).not.toContain('opp-21');
+    expect(filters[1]).toContain('opp-21');
   });
 });
 
@@ -146,15 +272,24 @@ describe('fetchOkleykaSalaryPageData', () => {
             qty: 1,
             unitPriceRub: 0,
             saleRub: 0,
+            tip: 'PLENKA',
+            stage: 'OKLEYKA',
+            tipDetail: 'NASHI',
+            isQualifying: true,
+            isCancelled: false,
           },
         ],
         saleRub: 0,
+        qualifyingSaleRub: 0,
         printCostRub: 0,
         frezaCostRub: 0,
+        logisticsCostRub: 0,
+        beznalCostRub: 0,
         okleykaCostRub: null,
         costRub: 0,
         profitRub: 0,
         marginPct: null,
+        okleykaSharePct: 100,
         eventDate: '2026-07-10',
       },
     ]);

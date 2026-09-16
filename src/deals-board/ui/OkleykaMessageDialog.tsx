@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 import {
@@ -15,6 +15,8 @@ import {
 } from '../utils/okleyka-message-notify';
 import { openRecordSidePanel } from '../utils/open-record-side-panel';
 import { sendOkleykaPayload } from '../utils/send-okleyka-payload';
+import { shouldApplyOkleykaPollResult } from '../utils/should-apply-okleyka-poll-result';
+import { waitOkleykaJob } from '../utils/wait-okleyka-job';
 import { Button } from './Button';
 import { Input, Textarea } from './Input';
 import { resolvePortalContainer, usePortalHost } from './PortalHostContext';
@@ -39,15 +41,23 @@ export const OkleykaMessageDialogProvider = ({
   const [payload, setPayload] = useState<OkleykaNotifyPayload | null>(null);
   const [draft, setDraft] = useState<OkleykaMessageDraft | null>(null);
   const [sending, setSending] = useState(false);
+  const [queued, setQueued] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [queueHint, setQueueHint] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const [alreadySentAt, setAlreadySentAt] = useState<string | null>(null);
+  const sendGenerationRef = useRef(0);
+  const payloadRef = useRef<OkleykaNotifyPayload | null>(null);
+  payloadRef.current = payload;
   const { colors, radius, font, spacing, zIndex } = theme;
 
   useEffect(() => {
     registerOkleykaMessageHandler((next) => {
+      sendGenerationRef.current += 1;
       setSending(false);
+      setQueued(false);
       setSendError(null);
+      setQueueHint(null);
       setSent(false);
       setAlreadySentAt(null);
       setPayload(next);
@@ -57,10 +67,13 @@ export const OkleykaMessageDialogProvider = ({
   }, []);
 
   const handleDismiss = useCallback(() => {
+    sendGenerationRef.current += 1;
     setPayload(null);
     setDraft(null);
     setSending(false);
+    setQueued(false);
     setSendError(null);
+    setQueueHint(null);
     setSent(false);
     setAlreadySentAt(null);
   }, []);
@@ -75,29 +88,71 @@ export const OkleykaMessageDialogProvider = ({
   const handleSend = useCallback(
     async (force = false) => {
       if (!draft || !payload || sending) return;
+      const sendGeneration = sendGenerationRef.current;
+      const sendLineItemId = payload.lineItemId;
       setSending(true);
+      setQueued(false);
       setSendError(null);
+      setQueueHint(null);
       const text = formatOkleykaMessage(draft);
       const fileUrls = resolvePrevyuFileUrls(payload.lineItem.prevyuOkleyki);
       const result = await sendOkleykaPayload({
         text,
         fileUrls,
-        lineItemId: payload.lineItemId,
+        lineItemId: sendLineItemId,
         opportunityId: payload.opportunityId,
         force,
       });
-      setSending(false);
+      const sendStillCurrent = () =>
+        shouldApplyOkleykaPollResult({
+          sendGeneration,
+          currentGeneration: sendGenerationRef.current,
+          sendLineItemId,
+          currentLineItemId: payloadRef.current?.lineItemId,
+        });
+      if (!sendStillCurrent()) {
+        return;
+      }
       if (result.alreadySent && !force) {
+        setSending(false);
         setAlreadySentAt(result.lastSentAt ?? '');
         return;
       }
       if (!result.ok) {
+        setSending(false);
         setSendError(result.error ?? 'Не удалось отправить');
         return;
       }
+      if (result.queued) {
+        setQueued(true);
+        const job = await waitOkleykaJob(sendLineItemId);
+        if (!sendStillCurrent()) {
+          return;
+        }
+        if (job.status === 'sent') {
+          setAlreadySentAt(null);
+          setSent(true);
+          window.setTimeout(() => {
+            if (sendGenerationRef.current === sendGeneration) handleDismiss();
+          }, 800);
+          return;
+        }
+        if (job.status === 'failed') {
+          setSendError(job.error ?? 'Не удалось отправить');
+          setQueued(false);
+          setSending(false);
+          return;
+        }
+        setSending(false);
+        setQueueHint('Отправка продолжится в фоне');
+        return;
+      }
+      setSending(false);
       setAlreadySentAt(null);
       setSent(true);
-      window.setTimeout(() => handleDismiss(), 800);
+      window.setTimeout(() => {
+        if (sendGenerationRef.current === sendGeneration) handleDismiss();
+      }, 800);
     },
     [draft, payload, sending, handleDismiss],
   );
@@ -317,6 +372,18 @@ export const OkleykaMessageDialogProvider = ({
             </div>
           ) : null}
 
+          {queueHint ? (
+            <div
+              role="status"
+              style={{
+                fontSize: font.sizeSm,
+                color: colors.textMuted,
+              }}
+            >
+              {queueHint}
+            </div>
+          ) : null}
+
           <div style={{ display: 'flex', gap: spacing.xs, justifyContent: 'flex-end' }}>
             <Button theme={theme} variant="ghost" size="sm" onClick={handleDismiss}>
               Отмена
@@ -325,13 +392,13 @@ export const OkleykaMessageDialogProvider = ({
               theme={theme}
               variant="primary"
               size="sm"
-              disabled={sending}
+              disabled={sending || queued}
               onClick={() => void handleSend(alreadySentAt !== null)}
             >
               {sent
                 ? 'Отправлено'
-                : sending
-                  ? 'Отправка…'
+                : queued
+                  ? 'В очереди…'
                   : alreadySentAt !== null
                     ? 'Отправить ещё раз'
                     : 'Отправить в чат'}

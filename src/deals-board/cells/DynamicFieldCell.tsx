@@ -18,6 +18,7 @@ export type DynamicFieldCellProps = {
   value: unknown;
   variant?: 'parent' | 'child';
   lineItems?: LineItemRow[];
+  allDealLineItems?: LineItemRow[];
   isExpanded?: boolean;
   companyName?: string;
   row?: Record<string, unknown>;
@@ -99,6 +100,7 @@ export const DynamicFieldCell = (props: DynamicFieldCellProps) => {
     value: props.value,
     variant: props.variant,
     lineItems: props.lineItems,
+    allDealLineItems: props.allDealLineItems,
     isExpanded: props.isExpanded,
     companyName: props.companyName,
     row: props.row,

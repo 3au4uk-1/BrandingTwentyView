@@ -8,6 +8,7 @@ import {
   buildOkleykaSalaryFilename,
   dealGroupsToXlsxMatrix,
   formatOkleykaEventDate,
+  formatOkleykaShareCaption,
   isOkleykaSalaryLineItem,
   marginPctTone,
   sortOkleykaDealGroups,
@@ -20,12 +21,16 @@ const group = (over: Partial<OkleykaDealGroup>): OkleykaDealGroup => ({
   bitrixUrl: '',
   positions: [],
   saleRub: 100,
+  qualifyingSaleRub: 100,
   printCostRub: 0,
   frezaCostRub: 0,
+  logisticsCostRub: 0,
+  beznalCostRub: 0,
   okleykaCostRub: null,
   costRub: 0,
   profitRub: 100,
   marginPct: 100,
+  okleykaSharePct: 100,
   eventDate: '2026-07-01',
   ...over,
 });
@@ -50,6 +55,7 @@ const item = (over: Partial<LineItemRow>): LineItemRow =>
     stage: 'OKLEYKA',
     kolichestvo: 2,
     amount: { amountMicros: 50_000_000, currencyCode: 'RUB' },
+    productStream: 'BRANDING',
     ...over,
   }) as LineItemRow;
 
@@ -192,5 +198,217 @@ describe('okleyka salary compute', () => {
       new Map([['d1', deal('d1', { loadDate: '2026-07-20T12:00:00.000Z' })]]),
     );
     expect(groups[0]?.eventDate).toMatch(/^2026-07-20/);
+  });
+
+  it('full mode keeps branding positions like Realization, including stream intersection', () => {
+    const groups = buildOkleykaDealGroups(
+      [
+        item({ id: 'wrap', productStream: 'BRANDING' }),
+        item({
+          id: 'banner',
+          name: 'Баннер',
+          tip: 'BANNERA',
+          tipDetail: 'YURA',
+          stage: 'GOTOVO',
+          productStream: 'BRANDING',
+          kolichestvo: 1,
+          amount: { amountMicros: 40_000_000, currencyCode: 'RUB' },
+        }),
+        item({
+          id: 'both',
+          name: 'И фотобудка и оклейка',
+          tip: 'BANNERA',
+          stage: 'GOTOVO',
+          productStream: ['DECOR', 'BRANDING'],
+          kolichestvo: 1,
+          amount: { amountMicros: 15_000_000, currencyCode: 'RUB' },
+        }),
+        item({
+          id: 'decor',
+          name: 'Декор',
+          tip: 'BANNERA',
+          stage: 'GOTOVO',
+          productStream: 'DECOR',
+          kolichestvo: 1,
+          amount: { amountMicros: 80_000_000, currencyCode: 'RUB' },
+        }),
+        item({
+          id: 'mk',
+          name: 'МК',
+          tip: 'PODRYAD',
+          stage: 'GOTOVO',
+          productStream: ['MK'],
+          kolichestvo: 1,
+          amount: { amountMicros: 70_000_000, currencyCode: 'RUB' },
+        }),
+        item({
+          id: 'untagged',
+          name: 'Без потока',
+          tip: 'BANNERA',
+          stage: 'GOTOVO',
+          productStream: null,
+          kolichestvo: 1,
+          amount: { amountMicros: 60_000_000, currencyCode: 'RUB' },
+        }),
+      ],
+      new Map([['d1', deal('d1')]]),
+      'full',
+    );
+    const g = groups[0]!;
+    expect(new Set(g.positions.map((p) => p.lineItemId))).toEqual(
+      new Set(['wrap', 'banner', 'both']),
+    );
+    expect(g.saleRub).toBe(100 + 40 + 15);
+  });
+
+  it('full mode keeps only deals that have a qualifying position', () => {
+    const groups = buildOkleykaDealGroups(
+      [
+        item({ id: 'banner', opportunityId: 'd2', tip: 'BANNERA', tipDetail: 'YURA', stage: 'GOTOVO' }),
+        item({ id: 'wrap', opportunityId: 'd1' }),
+      ],
+      new Map([
+        ['d1', deal('d1')],
+        ['d2', deal('d2')],
+      ]),
+      'full',
+    );
+    expect(groups.map((g) => g.opportunityId)).toEqual(['d1']);
+  });
+
+  it('full mode lists sibling positions and excludes OTMENA from sale', () => {
+    const groups = buildOkleykaDealGroups(
+      [
+        item({ id: 'wrap', name: 'Оклейка наши' }),
+        item({
+          id: 'banner',
+          name: 'Баннер',
+          tip: 'BANNERA',
+          tipDetail: 'YURA',
+          stage: 'GOTOVO',
+          kolichestvo: 1,
+          amount: { amountMicros: 40_000_000, currencyCode: 'RUB' },
+        }),
+        item({
+          id: 'cancel',
+          name: 'Отмена',
+          tip: 'PODRYAD',
+          tipDetail: 'SVOE',
+          stage: 'OTMENA',
+          kolichestvo: 1,
+          amount: { amountMicros: 999_000_000, currencyCode: 'RUB' },
+        }),
+        item({
+          id: 'draft',
+          name: 'Новая позиция',
+          tip: 'PROIZVODSTVO',
+          tipDetail: null,
+          stage: 'NOVYY',
+          kolichestvo: 1,
+          amount: { amountMicros: 10_000_000, currencyCode: 'RUB' },
+        }),
+      ],
+      new Map([
+        [
+          'd1',
+          deal('d1', {
+            rashodLogistika: { amountMicros: 8_000_000, currencyCode: 'RUB' },
+            rashodBeznal: { amountMicros: 2_000_000, currencyCode: 'RUB' },
+            rashodVyezdnayaKomanda: { amountMicros: 50_000_000, currencyCode: 'RUB' },
+            rashodItogo: { amountMicros: 99_000_000, currencyCode: 'RUB' },
+          }),
+        ],
+      ]),
+      'full',
+    );
+    const g = groups[0]!;
+    expect(g.positions).toHaveLength(4);
+    expect(g.positions.find((p) => p.lineItemId === 'wrap')?.isQualifying).toBe(true);
+    expect(g.positions.find((p) => p.lineItemId === 'cancel')?.isCancelled).toBe(true);
+    expect(g.positions.find((p) => p.lineItemId === 'cancel')?.isQualifying).toBe(false);
+    expect(g.saleRub).toBe(100 + 40 + 10);
+    expect(g.qualifyingSaleRub).toBe(100);
+    expect(g.printCostRub).toBe(10);
+    expect(g.frezaCostRub).toBe(5);
+    expect(g.logisticsCostRub).toBe(8);
+    expect(g.beznalCostRub).toBe(2);
+    expect(g.costRub).toBe(10 + 5 + 8 + 2);
+    expect(g.okleykaSharePct).toBeCloseTo((100 / 150) * 100);
+  });
+
+  it('compact mode ignores logistics/beznal even when present on the deal', () => {
+    const groups = buildOkleykaDealGroups(
+      [item({})],
+      new Map([
+        [
+          'd1',
+          deal('d1', {
+            rashodLogistika: { amountMicros: 8_000_000, currencyCode: 'RUB' },
+            rashodBeznal: { amountMicros: 2_000_000, currencyCode: 'RUB' },
+          }),
+        ],
+      ]),
+    );
+    expect(groups[0]?.logisticsCostRub).toBe(0);
+    expect(groups[0]?.beznalCostRub).toBe(0);
+    expect(groups[0]?.costRub).toBe(15);
+    expect(groups[0]?.positions).toHaveLength(1);
+  });
+
+  it('applyDealOkleykaOverride keeps logistics/beznal in cost', () => {
+    const g = buildOkleykaDealGroups(
+      [item({})],
+      new Map([
+        [
+          'd1',
+          deal('d1', {
+            rashodLogistika: { amountMicros: 8_000_000, currencyCode: 'RUB' },
+            rashodBeznal: { amountMicros: 2_000_000, currencyCode: 'RUB' },
+          }),
+        ],
+      ]),
+      'full',
+    )[0]!;
+    const next = applyDealOkleykaOverride(g, 30);
+    expect(next.costRub).toBe(10 + 5 + 8 + 2 + 30);
+  });
+
+  it('formatOkleykaShareCaption rounds and hides empty', () => {
+    expect(formatOkleykaShareCaption(null)).toBeNull();
+    expect(formatOkleykaShareCaption((100 / 150) * 100)).toBe('оклейка 67%');
+  });
+
+  it('full xlsx inserts logistics, beznal, and оклейка %', () => {
+    const groups = buildOkleykaDealGroups(
+      [item({})],
+      new Map([
+        [
+          'd1',
+          deal('d1', {
+            rashodLogistika: { amountMicros: 8_000_000, currencyCode: 'RUB' },
+            rashodBeznal: { amountMicros: 2_000_000, currencyCode: 'RUB' },
+          }),
+        ],
+      ]),
+      'full',
+    );
+    const matrix = dealGroupsToXlsxMatrix(groups, 'full');
+    expect(matrix[0]).toEqual([
+      'Bitrix',
+      'Сделка',
+      'Дата',
+      'Позиций',
+      'Продажа',
+      'Оклейка %',
+      'Расход печать',
+      'Расход фреза',
+      'Расход логистика',
+      'Расход безнал',
+      'Расход оклейка',
+      'Расход итого',
+      'Прибыль',
+      'Маржа %',
+    ]);
+    expect(matrix[1]![5]).toBe(100);
   });
 });

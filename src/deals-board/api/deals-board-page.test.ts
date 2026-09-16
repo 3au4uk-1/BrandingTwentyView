@@ -6,10 +6,11 @@ import {
   fetchLegacyDealsBoardPage,
 } from './deals-board-page';
 import { fetchLineItemsByOpportunityIds } from './line-items';
-import { fetchOpportunities } from './opportunities';
+import { fetchChildOpportunitiesByParentIds, fetchOpportunities } from './opportunities';
 
 vi.mock('./opportunities', () => ({
   fetchOpportunities: vi.fn(),
+  fetchChildOpportunitiesByParentIds: vi.fn(async () => []),
 }));
 
 vi.mock('./line-items', () => ({
@@ -276,6 +277,7 @@ describe('fetchLegacyDealsBoardPage', () => {
       records: [{ id: 'o1', name: 'Deal 1' }],
       totalCount: 1,
     });
+    vi.mocked(fetchChildOpportunitiesByParentIds).mockResolvedValue([]);
     vi.mocked(fetchLineItemsByOpportunityIds).mockResolvedValue([
       { id: 'l1', opportunityId: 'o1', name: 'Item 1' } as never,
     ]);
@@ -303,6 +305,7 @@ describe('fetchLegacyDealsBoardPage', () => {
         filters: { datePreset: 'future' },
       }),
     );
+    expect(fetchChildOpportunitiesByParentIds).toHaveBeenCalledWith(['o1']);
     expect(fetchLineItemsByOpportunityIds).toHaveBeenCalledWith(['o1'], undefined);
     expect(result).toEqual({
       opportunities: [{ id: 'o1', name: 'Deal 1' }],

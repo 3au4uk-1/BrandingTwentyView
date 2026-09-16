@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DealBoardDatePreset } from 'src/deals-board/types';
 
 import { fetchCompanyNames } from './api/companies';
+import { applyAmountMinToClauses } from './filter-model/amount-min';
 import { formatFilterClauseLabel } from './filter-model/format-clause-label';
 import {
   FILTER_BUILDER_FIELDS,
@@ -58,13 +59,9 @@ export const FilterBar = ({
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [activeBuilderField, setActiveBuilderField] = useState<FilterBuilderField | null>(null);
   const [companySearch, setCompanySearch] = useState('');
+  const [amountDraft, setAmountDraft] = useState('');
   const [debouncedCompanySearch, setDebouncedCompanySearch] = useState('');
   const builderRef = useRef<HTMLDivElement | null>(null);
-  const dismissBuilder = useCallback(() => {
-    setIsBuilderOpen(false);
-    setActiveBuilderField(null);
-  }, []);
-  const dismissLayer = useOutsideDismiss(isBuilderOpen, builderRef, dismissBuilder);
 
   const effectiveClauses =
     value.sessionClauses === undefined ? viewClauses : value.sessionClauses;
@@ -119,14 +116,17 @@ export const FilterBar = ({
     return [...byId.values()].sort((left, right) => left.name.localeCompare(right.name, 'ru'));
   }, [companiesQuery.data, selectedCompanyIds, selectedCompanyNamesQuery.data]);
 
-  const withSessionClauses = (mutator: (clauses: FilterClause[]) => FilterClause[]): void => {
-    const base =
-      value.sessionClauses === undefined ? beginSessionClauses(viewClauses) : value.sessionClauses;
-    onChange({
-      ...value,
-      sessionClauses: commitSessionClauses(mutator([...base])),
-    });
-  };
+  const withSessionClauses = useCallback(
+    (mutator: (clauses: FilterClause[]) => FilterClause[]): void => {
+      const base =
+        value.sessionClauses === undefined ? beginSessionClauses(viewClauses) : value.sessionClauses;
+      onChange({
+        ...value,
+        sessionClauses: commitSessionClauses(mutator([...base])),
+      });
+    },
+    [onChange, value, viewClauses],
+  );
 
   const upsertClause = (nextClause: FilterClause): void => {
     withSessionClauses((clauses) => {
@@ -216,7 +216,33 @@ export const FilterBar = ({
     if (field.kind !== 'company') {
       setCompanySearch('');
     }
+    if (field.kind === 'amount') {
+      const existing = effectiveClauses.find(
+        (clause) => clause.level === 'deal' && clause.field === 'amount',
+      );
+      setAmountDraft(typeof existing?.value === 'number' ? String(existing.value) : '');
+    }
   };
+
+  const commitAmountDraft = useCallback(() => {
+    withSessionClauses((clauses) => {
+      const next = applyAmountMinToClauses(clauses, amountDraft);
+      const resolved = next.find(
+        (clause) => clause.level === 'deal' && clause.field === 'amount',
+      );
+      setAmountDraft(typeof resolved?.value === 'number' ? String(resolved.value) : '');
+      return next;
+    });
+  }, [amountDraft, withSessionClauses]);
+
+  const dismissBuilder = useCallback(() => {
+    if (activeBuilderField?.kind === 'amount') {
+      commitAmountDraft();
+    }
+    setIsBuilderOpen(false);
+    setActiveBuilderField(null);
+  }, [activeBuilderField, amountDraft, commitAmountDraft]);
+  const dismissLayer = useOutsideDismiss(isBuilderOpen, builderRef, dismissBuilder);
 
   const renderBuilderPanel = () => {
     if (!activeBuilderField) {
@@ -366,6 +392,43 @@ export const FilterBar = ({
               </label>
             );
           })}
+        </div>
+      );
+    }
+
+    if (activeBuilderField.kind === 'amount') {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm, minWidth: '220px' }}>
+          <button
+            type="button"
+            onClick={() => setActiveBuilderField(null)}
+            style={{
+              alignSelf: 'flex-start',
+              border: 'none',
+              background: 'transparent',
+              color: colors.textMuted,
+              fontSize: font.sizeXs,
+              cursor: 'pointer',
+              padding: 0,
+            }}
+          >
+            ← Назад
+          </button>
+          <Input
+            theme={theme}
+            inputMode="decimal"
+            placeholder="от, ₽"
+            value={amountDraft}
+            onChange={(event) => setAmountDraft(event.target.value)}
+            onBlur={commitAmountDraft}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                commitAmountDraft();
+              }
+            }}
+            style={{ padding: '5px 8px', fontSize: font.sizeSm }}
+          />
         </div>
       );
     }
@@ -521,10 +584,11 @@ export const FilterBar = ({
           type="button"
           data-segment-btn
           onClick={() => {
-            setIsBuilderOpen((prev) => !prev);
             if (isBuilderOpen) {
-              setActiveBuilderField(null);
+              dismissBuilder();
+              return;
             }
+            setIsBuilderOpen(true);
           }}
           style={{
             ...segmentStyle(false),

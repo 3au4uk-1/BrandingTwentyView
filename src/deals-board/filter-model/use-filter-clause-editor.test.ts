@@ -24,4 +24,14 @@ describe('FILTER_BUILDER_FIELDS', () => {
       options: LINE_ITEM_STAGES,
     });
   });
+
+  it('exposes amount as a deal builder field', () => {
+    const amount = FILTER_BUILDER_FIELDS.find(
+      (field) => field.level === 'deal' && field.field === 'amount',
+    );
+    expect(amount).toMatchObject({
+      label: 'Сумма',
+      kind: 'amount',
+    });
+  });
 });
