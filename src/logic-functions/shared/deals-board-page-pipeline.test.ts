@@ -9,7 +9,10 @@ describe('runDealsBoardPagePipeline', () => {
     let bothStartedBeforeEitherFinished = false;
 
     const deps = {
-      queryOpportunities: vi.fn(async (args: { filter?: Record<string, unknown> }) => {
+      queryOpportunities: vi.fn(async (args: {
+        filter?: Record<string, unknown>;
+        nodeSelection?: Record<string, unknown>;
+      }) => {
         const isChildQuery = Boolean(
           args.filter &&
             typeof args.filter === 'object' &&
@@ -91,13 +94,26 @@ describe('runDealsBoardPagePipeline', () => {
     expect(result.lineItemsByOppId['child-1']).toHaveLength(1);
   });
 
-  it('skips enrich when restFieldNames empty', async () => {
+  it('skips enrich when restFieldNames empty and no children', async () => {
     const enrichWithRest = vi.fn(async (rows: Array<Record<string, unknown>>) => rows);
     const result = await runDealsBoardPagePipeline(
       {
-        queryOpportunities: async () => ({
-          opportunities: { edges: [{ node: { id: 'o1' } }], totalCount: 1 },
-        }),
+        queryOpportunities: async (args) => {
+          const isChildQuery = Boolean(
+            args.filter &&
+              typeof args.filter === 'object' &&
+              Array.isArray((args.filter as { and?: unknown[] }).and) &&
+              (args.filter as { and: Array<Record<string, unknown>> }).and.some(
+                (clause) => clause.parentOpportunityId,
+              ),
+          );
+          if (isChildQuery) {
+            return { opportunities: { edges: [], totalCount: 0 } };
+          }
+          return {
+            opportunities: { edges: [{ node: { id: 'o1' } }], totalCount: 1 },
+          };
+        },
         enrichWithRest,
         fetchLineItems: async () => [],
         fetchListStatus: vi.fn(),
@@ -114,5 +130,81 @@ describe('runDealsBoardPagePipeline', () => {
     );
     expect(enrichWithRest).not.toHaveBeenCalled();
     expect(result.totalCount).toBe(1);
+  });
+
+  it('enriches child smetas via REST for tony/bitrix links, not GraphQL', async () => {
+    const enrichWithRest = vi.fn(async (rows: Array<Record<string, unknown>>) =>
+      rows.map((row) =>
+        row.id === 'child-1'
+          ? { ...row, tonyLink: { primaryLinkUrl: 'https://tony.example/1' } }
+          : row,
+      ),
+    );
+
+    const result = await runDealsBoardPagePipeline(
+      {
+        queryOpportunities: async (args) => {
+          const isChildQuery = Boolean(
+            args.filter &&
+              typeof args.filter === 'object' &&
+              Array.isArray((args.filter as { and?: unknown[] }).and) &&
+              (args.filter as { and: Array<Record<string, unknown>> }).and.some(
+                (clause) => clause.parentOpportunityId,
+              ),
+          );
+          if (isChildQuery) {
+            expect(args.nodeSelection).toEqual({
+              id: true,
+              name: true,
+              parentOpportunityId: true,
+            });
+            expect(args.nodeSelection).not.toHaveProperty('tonyLink');
+            expect(args.nodeSelection).not.toHaveProperty('bitrixLink');
+            return {
+              opportunities: {
+                edges: [
+                  {
+                    node: {
+                      id: 'child-1',
+                      name: 'Смета 1',
+                      parentOpportunityId: 'o1',
+                    },
+                  },
+                ],
+                totalCount: 1,
+              },
+            };
+          }
+          return {
+            opportunities: {
+              edges: [{ node: { id: 'o1', name: 'Deal' } }],
+              totalCount: 1,
+            },
+          };
+        },
+        enrichWithRest,
+        fetchLineItems: async () => [],
+      },
+      {
+        limit: 10,
+        offset: 0,
+        orderBy: [],
+        visibleCrmFieldNames: ['name'],
+        includeCompanyRelation: false,
+        restFieldNames: [],
+        includeListStatus: false,
+      },
+    );
+
+    expect(enrichWithRest).toHaveBeenCalledWith(
+      [expect.objectContaining({ id: 'child-1' })],
+      ['tonyLink', 'bitrixLink'],
+    );
+    expect(result.opportunities[0].childSmetas?.[0]).toEqual(
+      expect.objectContaining({
+        id: 'child-1',
+        tonyLink: { primaryLinkUrl: 'https://tony.example/1' },
+      }),
+    );
   });
 });

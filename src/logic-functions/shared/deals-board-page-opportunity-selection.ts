@@ -9,13 +9,14 @@ const LINKS_SELECTION = {
 const RELATION_SELECTION = { id: true, name: true };
 const RICH_TEXT_SELECTION = { markdown: true };
 
+/** Core GraphQL has no workspace link fields — fetch tony/bitrix via REST after query. */
 export const CHILD_SMETA_NODE_SELECTION: Record<string, unknown> = {
   id: true,
   name: true,
   parentOpportunityId: true,
-  tonyLink: LINKS_SELECTION,
-  bitrixLink: LINKS_SELECTION,
 };
+
+export const CHILD_SMETA_REST_LINK_FIELDS = ['tonyLink', 'bitrixLink'] as const;
 
 const shouldIncludeCompanyRelation = (
   visibleCrmFieldNames: string[],
