@@ -160,6 +160,38 @@ describe('buildBannerCalendar', () => {
     expect(model.undated.map((card) => card.assignees)).toEqual([['Мага']]);
   });
 
+  it('carries the deal load date on every card, including the undated strip', () => {
+    const model = buildBannerCalendar([
+      deal({
+        slots: [
+          {
+            supplierId: 'sup-1',
+            supplierName: 'Юра',
+            startsAt: '2026-09-07T07:00:00.000Z',
+            endsAt: '2026-09-09T15:00:00.000Z',
+          },
+        ],
+      }),
+      deal({ id: 'opp-2', name: 'Заказ Б', slots: [] }),
+      deal({
+        id: 'opp-3',
+        name: 'Заказ В',
+        loadDate: null,
+        slots: [{ supplierId: 'sup-2', supplierName: 'Мага', startsAt: null, endsAt: null }],
+      }),
+      deal({ id: 'opp-4', name: 'Заказ Г', loadDate: 'not-a-date', slots: [] }),
+    ]);
+    const dated = Object.values(model.cardsByDate).flat();
+    expect(dated.length).toBeGreaterThan(0);
+    for (const card of dated) {
+      expect(card.loadDate).toBe('2026-09-08T06:00:00.000Z');
+    }
+    expect(model.undated.map((card) => [card.dealId, card.loadDate])).toEqual([
+      ['opp-3', null],
+      ['opp-4', 'not-a-date'],
+    ]);
+  });
+
   it('drops cancelled deals', () => {
     const model = buildBannerCalendar([deal({ stage: 'OTMENA' })]);
     expect(model.cardsByDate).toEqual({});

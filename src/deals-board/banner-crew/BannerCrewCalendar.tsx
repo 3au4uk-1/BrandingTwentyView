@@ -16,7 +16,7 @@ type BannerCrewCalendarProps = {
   onToday: () => void;
   onToggleMode: () => void;
   onSelectDate: (date: string) => void;
-  onOpenDeal: (dealId: string, name: string) => void;
+  onOpenDeal: (dealId: string, name: string, loadDate: string | null) => void;
   onShowGantt: () => void;
 };
 
@@ -167,13 +167,13 @@ export const BannerCrewCalendar = ({
         : '';
 
   const openCard = (card: BannerDayCard) => {
-    onOpenDeal(card.dealId, card.name);
+    onOpenDeal(card.dealId, card.name, card.loadDate);
     if (card.date) onSelectDate(card.date);
   };
 
   const openRow = (event: MouseEvent | KeyboardEvent, card: BannerDayCard) => {
     event.stopPropagation();
-    onOpenDeal(card.dealId, card.name);
+    onOpenDeal(card.dealId, card.name, card.loadDate);
   };
 
   const panelStyle = {
