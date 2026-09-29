@@ -179,4 +179,70 @@ describe('buildBannerCalendar', () => {
       }),
     ]);
   });
+
+  it('keeps a first-day open edge when another slot ends the same day', () => {
+    const model = buildBannerCalendar([
+      deal({
+        slots: [
+          {
+            supplierId: 'sup-1',
+            supplierName: 'Юра',
+            startsAt: '2026-09-07T07:00:00.000Z',
+            endsAt: '2026-09-09T15:00:00.000Z',
+          },
+          {
+            supplierId: 'sup-2',
+            supplierName: 'Мага',
+            startsAt: '2026-09-07T09:00:00.000Z',
+            endsAt: '2026-09-07T11:00:00.000Z',
+          },
+        ],
+      }),
+    ]);
+    expect(model.cardsByDate['2026-09-07']?.[0]?.timeLabel).toBe('с 10:00');
+  });
+
+  it('keeps a last-day open edge when another slot starts the same day', () => {
+    const model = buildBannerCalendar([
+      deal({
+        slots: [
+          {
+            supplierId: 'sup-1',
+            supplierName: 'Юра',
+            startsAt: '2026-09-07T07:00:00.000Z',
+            endsAt: '2026-09-09T15:00:00.000Z',
+          },
+          {
+            supplierId: 'sup-2',
+            supplierName: 'Мага',
+            startsAt: '2026-09-09T05:00:00.000Z',
+            endsAt: '2026-09-09T06:00:00.000Z',
+          },
+        ],
+      }),
+    ]);
+    expect(model.cardsByDate['2026-09-09']?.[0]?.timeLabel).toBe('до 18:00');
+  });
+
+  it('shows весь день when first-day and last-day marks meet on one day', () => {
+    const model = buildBannerCalendar([
+      deal({
+        slots: [
+          {
+            supplierId: 'sup-1',
+            supplierName: 'Юра',
+            startsAt: '2026-09-08T07:00:00.000Z',
+            endsAt: '2026-09-10T15:00:00.000Z',
+          },
+          {
+            supplierId: 'sup-2',
+            supplierName: 'Мага',
+            startsAt: '2026-09-06T06:00:00.000Z',
+            endsAt: '2026-09-08T12:00:00.000Z',
+          },
+        ],
+      }),
+    ]);
+    expect(model.cardsByDate['2026-09-08']?.[0]?.timeLabel).toBe('весь день');
+  });
 });

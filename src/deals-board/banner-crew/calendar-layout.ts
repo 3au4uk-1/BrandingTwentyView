@@ -101,16 +101,32 @@ const loadParts = (loadDate: string | null): { date: string; time: string } | nu
 
 const timeLabel = (marks: DayMark[], fallback: string): string => {
   if (marks.some((mark) => mark.kind === 'all-day')) return 'весь день';
-  let start: string | null = null;
-  let end: string | null = null;
+
+  let earliestStart: string | null = null;
+  let latestEnd: string | null = null;
+  let hasFirstDay = false;
+  let hasLastDay = false;
+
   for (const mark of marks) {
     if (mark.kind !== 'range') continue;
-    if (mark.start && (!start || mark.start < start)) start = mark.start;
-    if (mark.end && (!end || mark.end > end)) end = mark.end;
+    const isFirstDay = mark.start != null && mark.end == null;
+    const isLastDay = mark.end != null && mark.start == null;
+    if (isFirstDay) hasFirstDay = true;
+    if (isLastDay) hasLastDay = true;
+    if (mark.start && (!earliestStart || mark.start < earliestStart)) {
+      earliestStart = mark.start;
+    }
+    if (mark.end && (!latestEnd || mark.end > latestEnd)) {
+      latestEnd = mark.end;
+    }
   }
-  if (start && end) return `${start}–${end}`;
-  if (start) return `с ${start}`;
-  if (end) return `до ${end}`;
+
+  if (hasFirstDay && hasLastDay) return 'весь день';
+  if (hasFirstDay && earliestStart) return `с ${earliestStart}`;
+  if (hasLastDay && latestEnd) return `до ${latestEnd}`;
+  if (earliestStart && latestEnd) return `${earliestStart}–${latestEnd}`;
+  if (earliestStart) return `с ${earliestStart}`;
+  if (latestEnd) return `до ${latestEnd}`;
   return fallback;
 };
 
