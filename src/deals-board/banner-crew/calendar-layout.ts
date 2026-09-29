@@ -21,6 +21,7 @@ export type BannerDayCard = {
   dealId: string;
   name: string;
   date: string;
+  loadDate: string | null;
   timeLabel: string;
   address: string;
   assignees: string[];
@@ -141,6 +142,7 @@ const cardFrom = (
     dealId: deal.id,
     name: deal.name,
     date,
+    loadDate: deal.loadDate,
     timeLabel: time,
     address: deal.address,
     assignees,

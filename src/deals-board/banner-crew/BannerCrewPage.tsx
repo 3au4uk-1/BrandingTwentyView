@@ -27,6 +27,7 @@ const queryClient = new QueryClient({
 type OpenDeal = {
   opportunityId: string;
   opportunityName: string;
+  loadDate: string | null;
 };
 
 const BannerCrewPageInner = () => {
@@ -81,14 +82,16 @@ const BannerCrewPageInner = () => {
           onToday={() => setView((current) => viewForToday(current.mode, mskToday(new Date())))}
           onToggleMode={() => setView((current) => toggleCalendarMode(current))}
           onSelectDate={(date) => setView((current) => ({ ...current, anchorDate: date }))}
-          onOpenDeal={(dealId, name) => setOpenDeal({ opportunityId: dealId, opportunityName: name })}
+          onOpenDeal={(dealId, name, loadDate) =>
+            setOpenDeal({ opportunityId: dealId, opportunityName: name, loadDate })
+          }
           onShowGantt={() => setMode('gantt')}
         />
         {openDeal ? (
           <BannerCrewModal
             opportunityId={openDeal.opportunityId}
             opportunityName={openDeal.opportunityName}
-            loadDate={null}
+            loadDate={openDeal.loadDate}
             isOpen
             onClose={() => setOpenDeal(null)}
           />
