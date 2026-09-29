@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
 import { updateLineItem } from '../api/line-items';
@@ -22,6 +22,7 @@ const queryClient = new QueryClient({
 });
 
 const ProductionPageInner = () => {
+  const queryClient = useQueryClient();
   const [overrides, setOverrides] = useState<Record<string, { vzato: boolean; gotovo: boolean }>>({});
   const [moveError, setMoveError] = useState<string | null>(null);
   const cardsQuery = useQuery({
@@ -46,22 +47,49 @@ const ProductionPageInner = () => {
   const onMove = (card: ProductionCard, column: ProductionColumnId) => {
     const patch = productionDragPatch(card, column);
     if (!patch) return;
-    setOverrides((current) => ({
-      ...current,
-      [card.id]: {
-        vzato: patch.vzatoVRabotuProizvodstva,
-        gotovo: patch.gotovoProizvodstva,
-      },
-    }));
-    setMoveError(null);
-    void updateLineItem(card.id, patch).catch(() => {
-      setOverrides((current) => {
-        const next = { ...current };
-        delete next[card.id];
-        return next;
-      });
-      setMoveError(PRODUCTION_DRAG_ERROR);
+    const checks = {
+      vzato: patch.vzatoVRabotuProizvodstva,
+      gotovo: patch.gotovoProizvodstva,
+    };
+    let previous: { vzato: boolean; gotovo: boolean } | undefined;
+    setOverrides((current) => {
+      previous = current[card.id];
+      return { ...current, [card.id]: checks };
     });
+    setMoveError(null);
+    void updateLineItem(card.id, patch)
+      .then(() => {
+        queryClient.setQueryData<ProductionCard[]>(['production-kanban'], (old) =>
+          old?.map((item) =>
+            item.id === card.id ? { ...item, vzato: checks.vzato, gotovo: checks.gotovo } : item,
+          ) ?? old,
+        );
+        setOverrides((current) => {
+          const live = current[card.id];
+          if (live && (live.vzato !== checks.vzato || live.gotovo !== checks.gotovo)) {
+            return current;
+          }
+          const next = { ...current };
+          delete next[card.id];
+          return next;
+        });
+      })
+      .catch(() => {
+        setOverrides((current) => {
+          const live = current[card.id];
+          if (live && (live.vzato !== checks.vzato || live.gotovo !== checks.gotovo)) {
+            return current;
+          }
+          const next = { ...current };
+          if (previous) {
+            next[card.id] = previous;
+          } else {
+            delete next[card.id];
+          }
+          return next;
+        });
+        setMoveError(PRODUCTION_DRAG_ERROR);
+      });
   };
 
   return (

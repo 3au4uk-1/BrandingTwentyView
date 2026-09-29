@@ -78,6 +78,9 @@ export const ProductionBoard = ({
                     dragged.current = true;
                     event.dataTransfer.setData('text/plain', card.id);
                   }}
+                  onDragEnd={() => {
+                    dragged.current = false;
+                  }}
                   onClick={() => {
                     if (dragged.current) {
                       dragged.current = false;
