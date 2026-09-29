@@ -58,6 +58,23 @@ export const ProductionPanel = ({ item }: { item: LineItemRow }) => {
     }
   };
 
+  const syncDraftsFromItem = () => {
+    setComment(readString(item, 'kommentariyDlyaProizvodstva'));
+    setDateValue(
+      item.dataGotovnostiProizvodstva
+        ? (toLocalInputDate(String(item.dataGotovnostiProizvodstva)) ?? '')
+        : '',
+    );
+    const t = splitTime(readString(item, 'vremyaGotovnostiProizvodstva'));
+    setHour(t.hour);
+    setMinute(t.minute);
+  };
+
+  const openPanel = () => {
+    syncDraftsFromItem();
+    setOpen(true);
+  };
+
   const tone = productionChipTone({ flagged, vzato, gotovo });
   const chipColors =
     tone === 'gotovo'
@@ -75,7 +92,7 @@ export const ProductionPanel = ({ item }: { item: LineItemRow }) => {
       <button
         type="button"
         data-production-chip
-        onClick={() => setOpen(true)}
+        onClick={openPanel}
         style={{
           maxWidth: '100%',
           padding: '3px 8px',
@@ -93,7 +110,13 @@ export const ProductionPanel = ({ item }: { item: LineItemRow }) => {
       >
         {productionChipLabel({ flagged, vzato, gotovo })}
       </button>
-      <Modal theme={theme} isOpen={open} title="Производство" onClose={() => setOpen(false)}>
+      <Modal
+        theme={theme}
+        isOpen={open}
+        title="Производство"
+        onClose={() => setOpen(false)}
+        portalTarget="root"
+      >
         <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <input
             type="checkbox"
@@ -166,7 +189,11 @@ export const ProductionPanel = ({ item }: { item: LineItemRow }) => {
           aria-label="Комментарий для производства"
           value={comment}
           onChange={(event) => setComment(event.target.value)}
-          onBlur={() => void patch({ kommentariyDlyaProizvodstva: comment })}
+          onBlur={() => {
+            const stored = readString(item, 'kommentariyDlyaProizvodstva');
+            if (comment === stored) return;
+            void patch({ kommentariyDlyaProizvodstva: comment });
+          }}
         />
       </Modal>
     </>
