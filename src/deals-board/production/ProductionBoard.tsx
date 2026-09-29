@@ -27,6 +27,7 @@ export const ProductionBoard = ({
   const { colors, spacing, font } = useTheme();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const dragged = useRef(false);
+  const draggingId = useRef<string | null>(null);
   const columns = placeProductionBoard(cards);
 
   if (loading) return <p>Загрузка</p>;
@@ -50,7 +51,9 @@ export const ProductionBoard = ({
             onDragOver={(event) => event.preventDefault()}
             onDrop={(event) => {
               event.preventDefault();
-              const card = cards.find((item) => item.id === event.dataTransfer.getData('text/plain'));
+              const fromTransfer = event.dataTransfer.getData('text/plain');
+              const id = fromTransfer || draggingId.current || '';
+              const card = cards.find((item) => item.id === id);
               if (!card) return;
               const patch = productionDragPatch(card, column.id);
               if (!patch) return;
@@ -76,10 +79,16 @@ export const ProductionBoard = ({
                   draggable
                   onDragStart={(event) => {
                     dragged.current = true;
-                    event.dataTransfer.setData('text/plain', card.id);
+                    draggingId.current = card.id;
+                    try {
+                      event.dataTransfer.setData('text/plain', card.id);
+                    } catch {
+                      // Some environments throw; draggingId still identifies the card.
+                    }
                   }}
                   onDragEnd={() => {
                     dragged.current = false;
+                    draggingId.current = null;
                   }}
                   onClick={() => {
                     if (dragged.current) {

@@ -75,6 +75,14 @@ export const ProductionPanel = ({ item }: { item: LineItemRow }) => {
     setOpen(true);
   };
 
+  const closePanel = async () => {
+    const stored = readString(item, 'kommentariyDlyaProizvodstva');
+    if (comment !== stored) {
+      await patch({ kommentariyDlyaProizvodstva: comment });
+    }
+    setOpen(false);
+  };
+
   const tone = productionChipTone({ flagged, vzato, gotovo });
   const chipColors =
     tone === 'gotovo'
@@ -114,7 +122,7 @@ export const ProductionPanel = ({ item }: { item: LineItemRow }) => {
         theme={theme}
         isOpen={open}
         title="Производство"
-        onClose={() => setOpen(false)}
+        onClose={() => void closePanel()}
         portalTarget="root"
       >
         <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
