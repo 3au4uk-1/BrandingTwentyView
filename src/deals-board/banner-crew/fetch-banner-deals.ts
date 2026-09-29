@@ -1,10 +1,19 @@
 import { RestApiClient } from 'twenty-client-sdk/rest';
 
-import { extractRestPageInfo, normalizeRestListResponse } from '../api/rest-list';
+import { extractRestPageInfo, normalizeRestListResponse, resolveNextRestCursor } from '../api/rest-list';
 import type { BannerLineRecord, BannerOpportunityRecord } from './banner-deals';
 
 const PAGE_LIMIT = 200;
 const OPPORTUNITY_CHUNK = 50;
+const BANNER_TIP_FILTER = 'tip[in]:["BANNERA"]';
+
+const bannerLineFilter = (afterId?: string): string =>
+  afterId ? `and(${BANNER_TIP_FILTER},id[gt]:"${afterId}")` : BANNER_TIP_FILTER;
+
+const readId = (raw: unknown): string | null =>
+  raw && typeof raw === 'object' && typeof (raw as { id?: unknown }).id === 'string'
+    ? (raw as { id: string }).id
+    : null;
 
 const readString = (value: unknown): string | null =>
   typeof value === 'string' ? value : null;
@@ -43,13 +52,20 @@ const fetchPages = async <T>(
     const response = await client.get<unknown>(path, {
       query: { limit: PAGE_LIMIT, ...query, ...(after ? { after } : {}) },
     });
-    all.push(
-      ...normalizeRestListResponse<unknown>(response, listKey)
-        .map(normalize)
-        .filter((item): item is T => item !== null),
-    );
     const pageInfo = extractRestPageInfo(response);
-    after = pageInfo.hasNextPage && pageInfo.endCursor ? String(pageInfo.endCursor) : undefined;
+    const next = resolveNextRestCursor(after, pageInfo);
+    const stuck = after !== undefined
+      && next === undefined
+      && pageInfo.hasNextPage === true
+      && String(pageInfo.endCursor ?? '') === after;
+    if (!stuck) {
+      all.push(
+        ...normalizeRestListResponse<unknown>(response, listKey)
+          .map(normalize)
+          .filter((item): item is T => item !== null),
+      );
+    }
+    after = next;
   } while (after);
   return all;
 };
@@ -62,10 +78,29 @@ const chunk = <T,>(items: T[], size: number): T[][] => {
   return chunks;
 };
 
-export const fetchBannerLineRecords = (): Promise<BannerLineRecord[]> =>
-  fetchPages('/rest/dealLineItems', 'dealLineItems', {
-    filter: `tip[in]:${JSON.stringify(['BANNERA'])}`,
-  }, normalizeBannerLine);
+export const fetchBannerLineRecords = async (): Promise<BannerLineRecord[]> => {
+  const client = new RestApiClient();
+  const all: BannerLineRecord[] = [];
+  let afterId: string | undefined;
+
+  for (;;) {
+    const response = await client.get<unknown>('/rest/dealLineItems', {
+      query: { limit: PAGE_LIMIT, filter: bannerLineFilter(afterId) },
+    });
+    const raw = normalizeRestListResponse<unknown>(response, 'dealLineItems');
+    const lastId = raw.map(readId).filter((id): id is string => id !== null).at(-1);
+    if (!lastId || (afterId !== undefined && lastId <= afterId)) break;
+    all.push(
+      ...raw
+        .map(normalizeBannerLine)
+        .filter((item): item is BannerLineRecord => item !== null),
+    );
+    if (raw.length < PAGE_LIMIT) break;
+    afterId = lastId;
+  }
+
+  return all;
+};
 
 export const fetchBannerOpportunities = async (
   ids: string[],
