@@ -3,6 +3,7 @@ import {
   getMskWeekRange,
   isoToMskParts,
   mskPartsToIso,
+  mskToday,
   shiftMskWeek,
   validateLocationTimes,
 } from './msk-datetime';
@@ -39,6 +40,12 @@ describe('mskPartsToIso / isoToMskParts', () => {
 
   it('returns null for invalid ISO', () => {
     expect(isoToMskParts('not-a-date')).toBeNull();
+  });
+});
+
+describe('mskToday', () => {
+  it('returns the Moscow calendar date', () => {
+    expect(mskToday(new Date('2026-09-09T21:30:00.000Z'))).toBe('2026-09-10');
   });
 });
 

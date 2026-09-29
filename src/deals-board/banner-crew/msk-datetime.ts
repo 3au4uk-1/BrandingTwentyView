@@ -72,6 +72,12 @@ export const isoToMskParts = (iso: string): { date: string; time: string } | nul
   return mskDateTimeParts(new Date(ms));
 };
 
+export const mskToday = (now: Date): string => {
+  const parts = mskDateTimeParts(now);
+  if (!parts) throw new Error('Unable to format Moscow calendar date');
+  return parts.date;
+};
+
 export const getMskWeekRange = (now: Date): MskWeekRange => {
   const parts = mskDateTimeParts(now);
   if (!parts) {
