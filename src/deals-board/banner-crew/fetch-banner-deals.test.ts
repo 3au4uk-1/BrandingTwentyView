@@ -7,7 +7,7 @@ describe('banner deal normalizers', () => {
       id: 'opp-1',
       name: 'Заказ А',
       stage: 'NOVYY',
-      address: 'Тверская 1',
+      clientAddress: 'Тверская 1',
       loadDate: '2026-09-08T06:00:00.000Z',
     })).toEqual({
       id: 'opp-1',

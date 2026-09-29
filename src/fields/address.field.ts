@@ -5,7 +5,7 @@ import { OPPORTUNITY_ADDRESS_FIELD_UNIVERSAL_IDENTIFIER } from 'src/constants/un
 export default defineField({
   universalIdentifier: OPPORTUNITY_ADDRESS_FIELD_UNIVERSAL_IDENTIFIER,
   objectUniversalIdentifier: OPPORTUNITY_OBJECT_UNIVERSAL_IDENTIFIER,
-  name: 'address',
+  name: 'clientAddress',
   type: FieldType.TEXT,
   label: 'Адрес',
   icon: 'IconMapPin',
