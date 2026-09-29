@@ -10,7 +10,12 @@ import { Button } from '../ui/Button';
 import { PortalHostProvider } from '../ui/PortalHostContext';
 import { BannerCrewModal } from './BannerCrewModal';
 import { ganttBarRect } from './gantt-layout';
-import { getMskWeekRange, shiftMskWeek, type MskWeekRange } from './msk-datetime';
+import {
+  getMskWeekRange,
+  shiftMskWeek,
+  weekRangeFromMonday,
+  type MskWeekRange,
+} from './msk-datetime';
 import { findConflicts, isOccupyingSlot } from './occupancy';
 import type { BannerCrewSlot } from './types';
 import { useBannerCrewSlots } from './useBannerCrewSlots';
@@ -106,10 +111,20 @@ type OpenDeal = {
   opportunityName: string;
 };
 
-const BannerCrewGanttPageInner = () => {
+type BannerCrewGanttViewProps = {
+  initialWeekStart?: string;
+  onShowCalendar?: () => void;
+};
+
+export const BannerCrewGanttView = ({
+  initialWeekStart,
+  onShowCalendar,
+}: BannerCrewGanttViewProps) => {
   const theme = useTheme();
   const { colors, font, spacing, radius } = theme;
-  const [week, setWeek] = useState(() => getMskWeekRange(new Date()));
+  const [week, setWeek] = useState(() =>
+    initialWeekStart ? weekRangeFromMonday(initialWeekStart) : getMskWeekRange(new Date()),
+  );
   const [openDeal, setOpenDeal] = useState<OpenDeal | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const slotsQuery = useBannerCrewSlots();
@@ -173,6 +188,11 @@ const BannerCrewGanttPageInner = () => {
           Баннерщики
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: spacing.xs }}>
+          {onShowCalendar ? (
+            <Button theme={theme} size="sm" variant="ghost" onClick={onShowCalendar}>
+              Календарь
+            </Button>
+          ) : null}
           <Button
             theme={theme}
             size="sm"
@@ -389,7 +409,7 @@ const BannerCrewGanttPageInner = () => {
 export const BannerCrewGanttPage = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <BannerCrewGanttPageInner />
+      <BannerCrewGanttView />
     </ThemeProvider>
   </QueryClientProvider>
 );
