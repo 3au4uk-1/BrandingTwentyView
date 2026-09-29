@@ -3,6 +3,7 @@ import { PRINT_FIELD_GROUP_ID } from 'src/constants/print-field-group';
 
 import { FrezaPanelChip } from '../editors/FrezaPanelChip';
 import { PrintPanelChip } from '../editors/PrintPanelChip';
+import { ProductionPanel } from '../production/ProductionPanel';
 import { useGroupChipMode } from '../hooks/useGroupChipMode';
 import { useLineItemGroupExpand } from '../hooks/useLineItemGroupExpand';
 import { useTheme } from '../theme/ThemeContext';
@@ -58,6 +59,7 @@ export const GroupChipsCell = ({
         <>
           <PrintPanelChip item={item} />
           <FrezaPanelChip item={item} />
+          <ProductionPanel item={item} />
         </>
       ) : null}
 
