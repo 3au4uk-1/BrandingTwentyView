@@ -52,7 +52,7 @@ const mondayOf = (date: string): string => {
   return addCalendarDays(date, -fromMonday);
 };
 
-const weekFromMonday = (monday: string): MskWeekRange => {
+export const weekRangeFromMonday = (monday: string): MskWeekRange => {
   const days = Array.from({ length: 7 }, (_, index) => addCalendarDays(monday, index));
   return {
     startIso: mskPartsToIso(monday, '00:00'),
@@ -83,7 +83,7 @@ export const getMskWeekRange = (now: Date): MskWeekRange => {
   if (!parts) {
     throw new Error('Unable to format Moscow calendar date');
   }
-  return weekFromMonday(mondayOf(parts.date));
+  return weekRangeFromMonday(mondayOf(parts.date));
 };
 
 export const shiftMskWeek = (range: { startIso: string }, weeks: number): MskWeekRange => {
@@ -91,7 +91,7 @@ export const shiftMskWeek = (range: { startIso: string }, weeks: number): MskWee
   if (!parts) {
     throw new Error('Unable to shift Moscow week from startIso');
   }
-  return weekFromMonday(addCalendarDays(parts.date, weeks * 7));
+  return weekRangeFromMonday(addCalendarDays(parts.date, weeks * 7));
 };
 
 export const validateLocationTimes = (
