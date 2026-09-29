@@ -17,7 +17,7 @@ export const normalizeBannerOpportunity = (raw: unknown): BannerOpportunityRecor
     id: record.id,
     name: readString(record.name) ?? '',
     stage: readString(record.stage),
-    address: readString(record.address),
+    address: readString(record.clientAddress),
     loadDate: readString(record.loadDate),
   };
 };
