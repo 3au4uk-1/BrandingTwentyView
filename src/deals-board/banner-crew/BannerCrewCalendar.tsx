@@ -128,12 +128,14 @@ const DayCard = ({ card, theme, hovered, onHover, onClick }: DayCardProps) => {
         <span style={{ ...ellipsis, color: colors.textSecondary }}>{card.address}</span>
       ) : null}
       {assignees ? <span style={{ ...ellipsis, color: colors.textMuted }}>{assignees}</span> : null}
-      <span
-        data-banner-positions
-        style={{ color: colors.textMuted, whiteSpace: 'normal', wordBreak: 'break-word' }}
-      >
-        {hovered ? card.positionNames.join(', ') : ''}
-      </span>
+      {card.positionNames.length > 0 ? (
+        <span
+          data-banner-positions
+          style={{ color: colors.textMuted, whiteSpace: 'normal', wordBreak: 'break-word' }}
+        >
+          {hovered ? `позиции: ${card.positionNames.join(', ')}` : 'позиции'}
+        </span>
+      ) : null}
     </button>
   );
 };
