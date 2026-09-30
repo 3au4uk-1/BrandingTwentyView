@@ -1,4 +1,4 @@
-import { useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from 'react';
 
 import { resolvePrevyuFileUrls } from '../api/files-field';
 import { useTheme } from '../theme/ThemeContext';
@@ -11,11 +11,7 @@ import {
   type ProductionCard,
   type ProductionColumnId,
 } from './board';
-import {
-  isProductionInteractiveTarget,
-  readProductionColumnId,
-  type PointerNode,
-} from './production-pointer';
+import { isProductionInteractiveTarget, type PointerNode } from './production-pointer';
 
 const DRAG_THRESHOLD_PX = 6;
 
@@ -43,15 +39,6 @@ const formatReady = (date: string | null, time: string | null): string | null =>
         .replace('.', '')
     : '';
   return [dayLabel, clock].filter(Boolean).join(' · ');
-};
-
-const columnFromPoint = (x: number, y: number): ProductionColumnId | null => {
-  if (typeof document === 'undefined' || typeof document.elementFromPoint !== 'function') {
-    return null;
-  }
-  const node = document.elementFromPoint(x, y);
-  if (!node || typeof node !== 'object') return null;
-  return readProductionColumnId(node as PointerNode);
 };
 
 const cueColor = (theme: ThemeTokens, column: ProductionColumnId): string => {
@@ -132,55 +119,126 @@ export const ProductionBoard = ({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [overColumn, setOverColumn] = useState<ProductionColumnId | null>(null);
+  const dragRef = useRef<{
+    card: ProductionCard;
+    pointerId: number | null;
+    startX: number;
+    startY: number;
+    moved: boolean;
+  } | null>(null);
+  const overRef = useRef<ProductionColumnId | null>(null);
+  const detachRef = useRef<(() => void) | null>(null);
+  const suppressClick = useRef(false);
   const columns = placeProductionBoard(cards);
 
-  const beginPointerDrag = (event: ReactPointerEvent<HTMLElement>, card: ProductionCard) => {
-    if (event.button !== 0 || isProductionInteractiveTarget(event.target as PointerNode | null)) return;
-    const pointerId = event.pointerId;
-    const startX = event.clientX;
-    const startY = event.clientY;
-    let moved = false;
-    try {
-      event.currentTarget.setPointerCapture(pointerId);
-    } catch {
-      // Capture is optional; window listeners still follow the pointer.
-    }
-
-    const finish = (ev: PointerEvent) => {
-      if (ev.pointerId !== pointerId) return;
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', finish);
-      window.removeEventListener('pointercancel', finish);
-      const target = moved ? columnFromPoint(ev.clientX, ev.clientY) : null;
-      setDraggingId(null);
-      setOverColumn(null);
-      if (target) {
-        onMove(card, target);
-        return;
-      }
-      if (!moved) {
-        setExpandedId((current) => (current === card.id ? null : card.id));
-      }
-    };
-
-    const move = (ev: PointerEvent) => {
-      if (ev.pointerId !== pointerId) return;
-      if (!moved && Math.hypot(ev.clientX - startX, ev.clientY - startY) < DRAG_THRESHOLD_PX) {
-        return;
-      }
-      moved = true;
-      ev.preventDefault();
-      setDraggingId(card.id);
-      setOverColumn(columnFromPoint(ev.clientX, ev.clientY));
-    };
-
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', finish);
-    window.addEventListener('pointercancel', finish);
+  const setOver = (id: ProductionColumnId | null) => {
+    overRef.current = id;
+    setOverColumn(id);
   };
+
+  const detachDrag = () => {
+    detachRef.current?.();
+    detachRef.current = null;
+  };
+
+  const noteMove = (clientX: number, clientY: number, pointerId?: number) => {
+    const session = dragRef.current;
+    if (!session) return;
+    if (session.pointerId !== null && pointerId != null && pointerId !== session.pointerId) return;
+    if (Math.hypot(clientX - session.startX, clientY - session.startY) < DRAG_THRESHOLD_PX) return;
+    session.moved = true;
+    setDraggingId(session.card.id);
+  };
+
+  const finishDrag = (clientX: number, clientY: number) => {
+    const session = dragRef.current;
+    if (!session) return;
+    const moved =
+      session.moved ||
+      Math.hypot(clientX - session.startX, clientY - session.startY) >= DRAG_THRESHOLD_PX;
+    const target = moved ? overRef.current : null;
+    dragRef.current = null;
+    detachDrag();
+    setDraggingId(null);
+    setOver(null);
+    if (moved) suppressClick.current = true;
+    if (target) onMove(session.card, target);
+  };
+
+  const beginDrag = (event: ReactPointerEvent<HTMLElement> | ReactMouseEvent<HTMLElement>, card: ProductionCard) => {
+    if (event.button != null && event.button !== 0) return;
+    if (isProductionInteractiveTarget(event.target as PointerNode | null)) return;
+    detachDrag();
+    const pointerId = 'pointerId' in event ? event.pointerId : null;
+    dragRef.current = {
+      card,
+      pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      moved: false,
+    };
+
+    // Twenty sandbox: setPointerCapture is often missing, and `window` does not
+    // receive the later move or release. Listen on the owner document instead.
+    const doc = event.currentTarget.ownerDocument;
+    const view = doc.defaultView;
+    const onPointerMove = (moveEvent: PointerEvent) => {
+      noteMove(moveEvent.clientX, moveEvent.clientY, moveEvent.pointerId);
+    };
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      noteMove(moveEvent.clientX, moveEvent.clientY);
+    };
+    const onUp = (upEvent: PointerEvent | MouseEvent) => {
+      finishDrag(upEvent.clientX, upEvent.clientY);
+    };
+    const onCancel = () => {
+      dragRef.current = null;
+      detachDrag();
+      setDraggingId(null);
+      setOver(null);
+    };
+
+    doc.addEventListener('pointermove', onPointerMove, true);
+    doc.addEventListener('mousemove', onMouseMove, true);
+    doc.addEventListener('pointerup', onUp, true);
+    doc.addEventListener('mouseup', onUp, true);
+    doc.addEventListener('pointercancel', onCancel, true);
+    view?.addEventListener('pointermove', onPointerMove, true);
+    view?.addEventListener('mousemove', onMouseMove, true);
+    view?.addEventListener('pointerup', onUp, true);
+    view?.addEventListener('mouseup', onUp, true);
+    view?.addEventListener('pointercancel', onCancel, true);
+
+    detachRef.current = () => {
+      doc.removeEventListener('pointermove', onPointerMove, true);
+      doc.removeEventListener('mousemove', onMouseMove, true);
+      doc.removeEventListener('pointerup', onUp, true);
+      doc.removeEventListener('mouseup', onUp, true);
+      doc.removeEventListener('pointercancel', onCancel, true);
+      view?.removeEventListener('pointermove', onPointerMove, true);
+      view?.removeEventListener('mousemove', onMouseMove, true);
+      view?.removeEventListener('pointerup', onUp, true);
+      view?.removeEventListener('mouseup', onUp, true);
+      view?.removeEventListener('pointercancel', onCancel, true);
+    };
+  };
+
+  const armColumn = (
+    columnId: ProductionColumnId,
+    event: ReactPointerEvent<HTMLElement> | ReactMouseEvent<HTMLElement>,
+  ) => {
+    noteMove(event.clientX, event.clientY, 'pointerId' in event ? event.pointerId : undefined);
+    if (dragRef.current?.moved) setOver(columnId);
+  };
+
+  useEffect(() => detachDrag, []);
 
   return (
     <div
+      onPointerMove={(event) => noteMove(event.clientX, event.clientY, event.pointerId)}
+      onMouseMove={(event) => noteMove(event.clientX, event.clientY)}
+      onPointerUp={(event) => finishDrag(event.clientX, event.clientY)}
+      onMouseUp={(event) => finishDrag(event.clientX, event.clientY)}
       style={{
         height: '100%',
         minHeight: 0,
@@ -238,6 +296,16 @@ export const ProductionBoard = ({
               key={column.id}
               aria-label={column.title}
               data-production-column={column.id}
+              onPointerEnter={() => {
+                if (dragRef.current) setOver(column.id);
+              }}
+              onMouseEnter={() => {
+                if (dragRef.current) setOver(column.id);
+              }}
+              onPointerMove={(event) => armColumn(column.id, event)}
+              onMouseMove={(event) => armColumn(column.id, event)}
+              onPointerUp={(event) => finishDrag(event.clientX, event.clientY)}
+              onMouseUp={(event) => finishDrag(event.clientX, event.clientY)}
               style={{
                 minHeight: 0,
                 display: 'flex',
@@ -324,7 +392,17 @@ export const ProductionBoard = ({
                   return (
                     <article
                       key={card.id}
-                      onPointerDown={(event) => beginPointerDrag(event, card)}
+                      onPointerDown={(event) => beginDrag(event, card)}
+                      onMouseDown={(event) => beginDrag(event, card)}
+                      onPointerUp={(event) => finishDrag(event.clientX, event.clientY)}
+                      onMouseUp={(event) => finishDrag(event.clientX, event.clientY)}
+                      onClick={() => {
+                        if (suppressClick.current) {
+                          suppressClick.current = false;
+                          return;
+                        }
+                        setExpandedId((current) => (current === card.id ? null : card.id));
+                      }}
                       style={{
                         padding: spacing.md,
                         borderRadius: radius.md,
@@ -396,7 +474,12 @@ export const ProductionBoard = ({
                           <ProductionCardPhotos files={card.files} />
                           <button
                             type="button"
-                            onClick={() => setExpandedId(null)}
+                            onPointerDown={(event) => event.stopPropagation()}
+                            onMouseDown={(event) => event.stopPropagation()}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setExpandedId(null);
+                            }}
                             style={{
                               alignSelf: 'flex-start',
                               padding: 0,
