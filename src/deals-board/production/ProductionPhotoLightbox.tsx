@@ -16,7 +16,8 @@ export const ProductionPhotoLightbox = ({
   const frameRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    frameRef.current?.focus();
+    const focus = (frameRef.current as { focus?: () => void } | null)?.focus;
+    if (typeof focus === 'function') focus();
     const view = typeof window !== 'undefined' ? window : undefined;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
