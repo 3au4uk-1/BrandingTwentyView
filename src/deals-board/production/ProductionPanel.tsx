@@ -178,6 +178,14 @@ export const ProductionPanel = ({ item }: { item: LineItemRow }) => {
     setOpen(false);
   };
 
+  const sendToProduction = () => {
+    void patch({
+      vProizvodstvo: true,
+      vzatoVRabotuProizvodstva: false,
+      gotovoProizvodstva: false,
+    });
+  };
+
   const tone = productionChipTone({ flagged, vzato, gotovo });
   const chipColors =
     tone === 'gotovo'
@@ -225,7 +233,24 @@ export const ProductionPanel = ({ item }: { item: LineItemRow }) => {
         onClose={() => void closePanel()}
         portalTarget="root"
         footer={
-          <div style={{ display: 'flex', width: '100%' }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: spacing.xs,
+              alignItems: 'center',
+              width: '100%',
+              flexWrap: 'wrap',
+            }}
+          >
+            <Button
+              theme={theme}
+              size="sm"
+              variant="primary"
+              disabled={flagged || updateMutation.isPending}
+              onClick={sendToProduction}
+            >
+              Отдать в производство
+            </Button>
             <div style={{ flex: 1 }} />
             <Button theme={theme} size="sm" variant="ghost" onClick={() => void closePanel()}>
               Закрыть
@@ -234,15 +259,6 @@ export const ProductionPanel = ({ item }: { item: LineItemRow }) => {
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.md }}>
-          <label style={{ display: 'flex', gap: 8, alignItems: 'center', ...sectionLabelStyle(font, colors.text) }}>
-            <input
-              type="checkbox"
-              checked={flagged}
-              onChange={(event) => void patch({ vProizvodstvo: event.target.checked })}
-            />
-            В производство
-          </label>
-
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={sectionLabelStyle(font, colors.textMuted)}>Статус</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
