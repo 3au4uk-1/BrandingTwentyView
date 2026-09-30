@@ -17,6 +17,7 @@ export type PrevyuUploadModalProps = {
   itemId: string;
   itemName?: string;
   files?: LineItemFileRef[] | null;
+  fieldName?: 'prevyuOkleyki' | 'fotoProizvodstva';
   isOpen: boolean;
   onClose: () => void;
 };
@@ -45,6 +46,7 @@ export const PrevyuUploadModal = ({
   itemId,
   itemName,
   files,
+  fieldName = 'prevyuOkleyki',
   isOpen,
   onClose,
 }: PrevyuUploadModalProps) => {
@@ -68,8 +70,9 @@ export const PrevyuUploadModal = ({
       postUrl,
       accessToken,
       uploadMode: 'auto',
+      fieldName,
     });
-  }, [isOpen, postUrl, accessToken, itemId, itemName, files]);
+  }, [isOpen, postUrl, accessToken, itemId, itemName, files, fieldName]);
 
   /**
    * Aggregate cold path keeps `useLineItems` disabled and only hydrates its cache
@@ -90,12 +93,12 @@ export const PrevyuUploadModal = ({
         queryClient.setQueryData(
           queryKey,
           items.map((item) =>
-            item.id === itemId ? { ...item, prevyuOkleyki: files } : item,
+            item.id === itemId ? { ...item, [fieldName]: files } : item,
           ),
         );
       }
     },
-    [itemId, queryClient],
+    [fieldName, itemId, queryClient],
   );
 
   const installBridge = useCallback(() => {
@@ -116,6 +119,7 @@ export const PrevyuUploadModal = ({
             filename: filename || 'prevyu.png',
             contentType: contentType || 'image/png',
             dataBase64,
+            field: fieldName,
           }),
         });
         const body = (await response.json().catch(() => ({}))) as Record<string, unknown>;
@@ -135,7 +139,7 @@ export const PrevyuUploadModal = ({
         };
       }
     };
-  }, [accessToken, patchPrevyuInLineItemCaches, postUrl, refreshLineItems]);
+  }, [accessToken, fieldName, patchPrevyuInLineItemCaches, postUrl, refreshLineItems]);
 
   useEffect(() => {
     if (!isOpen || !srcDoc) return;

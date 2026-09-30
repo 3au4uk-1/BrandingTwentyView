@@ -1,6 +1,9 @@
 import { RestApiClient } from 'twenty-client-sdk/rest';
 
+import { parsePrevyuFileRefsForDisplay } from 'src/logic-functions/shared/prevyu-upload-service';
+
 import { normalizeRestListResponse } from '../api/rest-list';
+import type { LineItemFileRef } from '../types';
 import type { ProductionCard } from './board';
 
 const PAGE_LIMIT = 200;
@@ -27,6 +30,7 @@ export type ProductionLineRecord = {
   comment: string;
   vzato: boolean;
   gotovo: boolean;
+  files: LineItemFileRef[];
 };
 
 export type ProductionOpportunityRecord = { id: string; name: string };
@@ -44,6 +48,7 @@ export const normalizeProductionLine = (raw: unknown): ProductionLineRecord | nu
     comment: readString(record.kommentariyDlyaProizvodstva) ?? '',
     vzato: record.vzatoVRabotuProizvodstva === true,
     gotovo: record.gotovoProizvodstva === true,
+    files: parsePrevyuFileRefsForDisplay(record.fotoProizvodstva),
   };
 };
 
@@ -70,6 +75,7 @@ export const assembleProductionCards = (
     comment: line.comment,
     vzato: line.vzato,
     gotovo: line.gotovo,
+    files: line.files,
   }));
 };
 

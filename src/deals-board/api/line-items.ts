@@ -200,6 +200,9 @@ const normalizeLineItemRow = (raw: unknown): LineItemRow | null => {
     ...(Object.prototype.hasOwnProperty.call(item, 'prevyuOkleyki')
       ? { prevyuOkleyki: parsePrevyuFileRefsForDisplay(item.prevyuOkleyki) }
       : {}),
+    ...(Object.prototype.hasOwnProperty.call(item, 'fotoProizvodstva')
+      ? { fotoProizvodstva: parsePrevyuFileRefsForDisplay(item.fotoProizvodstva) }
+      : {}),
   };
 };
 
@@ -379,6 +382,9 @@ export const updateLineItem = async (
   delete payload.supplier;
   if (Object.prototype.hasOwnProperty.call(payload, 'prevyuOkleyki')) {
     payload.prevyuOkleyki = sanitizePrevyuFileRefs(payload.prevyuOkleyki);
+  }
+  if (Object.prototype.hasOwnProperty.call(payload, 'fotoProizvodstva')) {
+    payload.fotoProizvodstva = sanitizePrevyuFileRefs(payload.fotoProizvodstva);
   }
   await client.patch(`/rest/dealLineItems/${id}`, payload);
 };

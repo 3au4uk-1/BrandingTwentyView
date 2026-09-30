@@ -14,6 +14,8 @@ export type BuildPrevyuUploadHtmlOpts = {
    * `auto` — bridge if present, else direct.
    */
   uploadMode?: 'bridge' | 'direct' | 'auto';
+  /** Which FILES field the POST should append to. Empty keeps the okleyka preview. */
+  fieldName?: 'prevyuOkleyki' | 'fotoProizvodstva';
 };
 
 const escapeHtml = (value: string): string =>
@@ -36,6 +38,7 @@ export const buildPrevyuUploadHtml = ({
   postUrl,
   accessToken,
   uploadMode = 'auto',
+  fieldName,
 }: BuildPrevyuUploadHtmlOpts): string => {
   const safeId = escapeHtml(lineItemId);
   const safeName = escapeHtml(lineItemName || 'Позиция');
@@ -148,6 +151,7 @@ export const buildPrevyuUploadHtml = ({
   var accessToken = ${accessTokenJson};
   var uploadMode = ${uploadModeJson};
   var files = ${filesJson};
+  var uploadField = ${JSON.stringify(fieldName ?? '')};
   var zone = document.getElementById('zone');
   var pasteCatch = document.getElementById('pasteCatch');
   var fileInput = document.getElementById('file');
@@ -276,7 +280,7 @@ export const buildPrevyuUploadHtml = ({
         'Content-Type': 'application/json',
         Authorization: 'Bearer ' + accessToken,
       },
-      body: JSON.stringify({ filename: filename, contentType: contentType, dataBase64: dataBase64 }),
+      body: JSON.stringify({ filename: filename, contentType: contentType, dataBase64: dataBase64, field: uploadField || undefined }),
     }).then(function (res) {
       return res.json().then(function (body) { return { ok: res.ok, body: body }; });
     });

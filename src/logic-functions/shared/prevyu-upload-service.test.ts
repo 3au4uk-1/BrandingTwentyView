@@ -7,10 +7,19 @@ import {
   isTwentyFilesFieldUrl,
   parsePrevyuFileRefsForDisplay,
   parsePrevyuUploadBody,
+  readUploadFieldName,
   sanitizePrevyuFileRef,
   sanitizePrevyuFileRefs,
   toPersistablePrevyuLabel,
 } from './prevyu-upload-service';
+
+describe('readUploadFieldName', () => {
+  it('keeps okleyka photos unless the body names production', () => {
+    expect(readUploadFieldName({})).toBe('prevyuOkleyki');
+    expect(readUploadFieldName({ field: 'fotoProizvodstva' })).toBe('fotoProizvodstva');
+    expect(readUploadFieldName({ field: 'other' })).toEqual({ error: 'Unknown file field' });
+  });
+});
 
 describe('parsePrevyuUploadBody', () => {
   it('accepts dataBase64', () => {

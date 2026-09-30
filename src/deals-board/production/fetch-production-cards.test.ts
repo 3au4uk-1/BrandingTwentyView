@@ -33,6 +33,7 @@ describe('production card assembly', () => {
       comment: 'срочно',
       vzato: true,
       gotovo: false,
+      files: [],
     });
     expect(normalizeProductionLine({ name: 'без id' })).toBeNull();
     expect(normalizeProductionOpportunity({ id: 'opp-1', name: 'Альфа', stage: 'OTMENA' })).toEqual({
@@ -51,6 +52,7 @@ describe('production card assembly', () => {
           comment: '',
           vzato: false,
           gotovo: false,
+          files: [],
         },
         {
           id: 'line-2',
@@ -61,6 +63,7 @@ describe('production card assembly', () => {
           comment: '',
           vzato: false,
           gotovo: false,
+          files: [],
         },
       ],
       [{ id: 'other', name: 'Чужая' }],

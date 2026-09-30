@@ -17,9 +17,12 @@ import {
   remainingPrevyuSlots,
 } from './prevyu-media-actions';
 
+type PrevyuFileFieldName = 'prevyuOkleyki' | 'fotoProizvodstva';
+
 type UsePrevyuMediaActionsArgs = {
   itemId: string;
   files: LineItemFileRef[] | null | undefined;
+  fieldName?: PrevyuFileFieldName;
   /** side-panel = open card on truncated bytes; message = keep UI and set lastError */
   remoteDomFallback?: 'side-panel' | 'message';
 };
@@ -27,6 +30,7 @@ type UsePrevyuMediaActionsArgs = {
 export const usePrevyuMediaActions = ({
   itemId,
   files,
+  fieldName = 'prevyuOkleyki',
   remoteDomFallback = 'side-panel',
 }: UsePrevyuMediaActionsArgs) => {
   const queryClient = useQueryClient();
@@ -37,7 +41,7 @@ export const usePrevyuMediaActions = ({
   const clearError = useCallback(() => setLastError(null), []);
 
   const patchPrevyuInLineItemCaches = useCallback(
-    (prevyuOkleyki: LineItemFileRef[]) => {
+    (nextFiles: LineItemFileRef[]) => {
       for (const [queryKey, items] of queryClient.getQueriesData<LineItemRow[]>({
         queryKey: ['lineItems'],
       })) {
@@ -45,12 +49,12 @@ export const usePrevyuMediaActions = ({
         queryClient.setQueryData(
           queryKey,
           items.map((item) =>
-            item.id === itemId ? { ...item, prevyuOkleyki } : item,
+            item.id === itemId ? { ...item, [fieldName]: nextFiles } : item,
           ),
         );
       }
     },
-    [itemId, queryClient],
+    [fieldName, itemId, queryClient],
   );
 
   const addFiles = useCallback(
@@ -77,7 +81,7 @@ export const usePrevyuMediaActions = ({
       try {
         for (const file of toUpload) {
           try {
-            const next = await uploadPrevyuFilesViaLogicFunction(itemId, file);
+            const next = await uploadPrevyuFilesViaLogicFunction(itemId, file, fieldName);
             patchPrevyuInLineItemCaches(next);
           } catch (error) {
             const message =
@@ -98,7 +102,7 @@ export const usePrevyuMediaActions = ({
         setIsUploading(false);
       }
     },
-    [files, itemId, patchPrevyuInLineItemCaches, remoteDomFallback],
+    [fieldName, files, itemId, patchPrevyuInLineItemCaches, remoteDomFallback],
   );
 
   const addFromDataTransfer = useCallback(
@@ -137,7 +141,7 @@ export const usePrevyuMediaActions = ({
       try {
         await updateMutation.mutateAsync({
           id: itemId,
-          data: { prevyuOkleyki: movePrevyuFileToFront(files, fileId) },
+          data: { [fieldName]: movePrevyuFileToFront(files, fileId) },
         });
       } catch (error) {
         window.alert(
@@ -145,7 +149,7 @@ export const usePrevyuMediaActions = ({
         );
       }
     },
-    [files, itemId, updateMutation],
+    [fieldName, files, itemId, updateMutation],
   );
 
   const removeFile = useCallback(
@@ -153,7 +157,7 @@ export const usePrevyuMediaActions = ({
       try {
         await updateMutation.mutateAsync({
           id: itemId,
-          data: { prevyuOkleyki: removePrevyuFile(files, fileId) },
+          data: { [fieldName]: removePrevyuFile(files, fileId) },
         });
       } catch (error) {
         window.alert(
@@ -161,7 +165,7 @@ export const usePrevyuMediaActions = ({
         );
       }
     },
-    [files, itemId, updateMutation],
+    [fieldName, files, itemId, updateMutation],
   );
 
   return {

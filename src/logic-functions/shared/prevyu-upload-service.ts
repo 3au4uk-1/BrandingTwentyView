@@ -79,6 +79,21 @@ export const parsePrevyuFileRefsForDisplay = (raw: unknown): PrevyuFileRefLike[]
     .filter((file): file is PrevyuFileRefLike => file !== null);
 };
 
+export const PREVYU_FILE_FIELDS = ['prevyuOkleyki', 'fotoProizvodstva'] as const;
+
+export type PrevyuFileFieldName = (typeof PREVYU_FILE_FIELDS)[number];
+
+/** Missing field keeps the okleyka preview upload. Any other name is rejected. */
+export const readUploadFieldName = (
+  body: unknown,
+): PrevyuFileFieldName | { error: string } => {
+  if (!body || typeof body !== 'object') return 'prevyuOkleyki';
+  const field = (body as { field?: unknown }).field;
+  if (field == null || field === '') return 'prevyuOkleyki';
+  if (field === 'prevyuOkleyki' || field === 'fotoProizvodstva') return field;
+  return { error: 'Unknown file field' };
+};
+
 export const parsePrevyuUploadBody = (
   body: unknown,
 ): PrevyuUploadPostBody | { error: string } => {

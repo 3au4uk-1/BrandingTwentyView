@@ -227,6 +227,7 @@ const assertPrevyuFileReadable = async (file: File): Promise<ArrayBuffer> => {
 export const uploadPrevyuFilesViaLogicFunction = async (
   lineItemId: string,
   file: File,
+  fieldName?: 'prevyuOkleyki' | 'fotoProizvodstva',
 ): Promise<LineItemFileRef[]> => {
   const buffer = await assertPrevyuFileReadable(file);
 
@@ -248,6 +249,7 @@ export const uploadPrevyuFilesViaLogicFunction = async (
         filename: file.name || `prevyu-${Date.now()}.png`,
         contentType: file.type || 'image/png',
         dataBase64: arrayBufferToBase64(buffer),
+        ...(fieldName ? { field: fieldName } : {}),
       }),
     },
   );

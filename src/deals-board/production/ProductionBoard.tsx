@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 
+import { resolvePrevyuFileUrls } from '../api/files-field';
 import { useTheme } from '../theme/ThemeContext';
 import {
   placeProductionBoard,
@@ -12,6 +13,27 @@ import {
 } from './board';
 
 const checkText = (label: string, value: boolean) => `${label}: ${value ? 'да' : 'нет'}`;
+
+const ProductionCardPhotos = ({
+  files,
+}: {
+  files: ProductionCard['files'];
+}) => {
+  const urls = resolvePrevyuFileUrls(files);
+  if (!urls.length) return null;
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+      {urls.map((url) => (
+        <img
+          key={url}
+          src={url}
+          alt=""
+          style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 8, display: 'block' }}
+        />
+      ))}
+    </div>
+  );
+};
 
 export const ProductionBoard = ({
   cards,
@@ -109,11 +131,10 @@ export const ProductionBoard = ({
                   {card.dealName ? <div>{card.dealName}</div> : null}
                   {date || time ? <div>{[date, time].filter(Boolean).join(' ')}</div> : null}
                   {expanded ? (
-                    <div>
-                      <button type="button" onClick={(event) => {
-                        event.stopPropagation();
-                        setExpandedId(null);
-                      }}
+                    <div onClick={(event) => event.stopPropagation()}>
+                      <button
+                        type="button"
+                        onClick={() => setExpandedId(null)}
                       >
                         Свернуть
                       </button>
@@ -122,6 +143,7 @@ export const ProductionBoard = ({
                       <p>{checkText('Готово', card.gotovo)}</p>
                       <p>{card.date ?? ''}</p>
                       <p>{card.time ?? ''}</p>
+                      <ProductionCardPhotos files={card.files} />
                     </div>
                   ) : null}
                 </article>

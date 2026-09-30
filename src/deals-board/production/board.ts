@@ -9,6 +9,7 @@ export type ProductionCard = {
   comment: string;
   vzato: boolean;
   gotovo: boolean;
+  files?: { fileId: string; url?: string; label?: string }[];
 };
 
 export type ProductionSource = ProductionCard & { flagged: boolean };
