@@ -11,6 +11,11 @@ import {
   type ProductionCard,
   type ProductionColumnId,
 } from './board';
+import {
+  isProductionInteractiveTarget,
+  readProductionColumnId,
+  type PointerNode,
+} from './production-pointer';
 
 const DRAG_THRESHOLD_PX = 6;
 
@@ -21,8 +26,6 @@ const taskCountLabel = (count: number): string => {
   if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${count} задачи`;
   return `${count} задач`;
 };
-
-const COLUMN_IDS = new Set<ProductionColumnId>(['ne-vzyato', 'v-rabote', 'gotovo']);
 
 const ellipsis = {
   overflow: 'hidden',
@@ -47,13 +50,9 @@ const columnFromPoint = (x: number, y: number): ProductionColumnId | null => {
     return null;
   }
   const node = document.elementFromPoint(x, y);
-  const column = node instanceof Element ? node.closest('[data-production-column]') : null;
-  const id = column?.getAttribute('data-production-column');
-  return id && COLUMN_IDS.has(id as ProductionColumnId) ? (id as ProductionColumnId) : null;
+  if (!node || typeof node !== 'object') return null;
+  return readProductionColumnId(node as PointerNode);
 };
-
-const isInteractiveTarget = (target: EventTarget | null): boolean =>
-  target instanceof Element && Boolean(target.closest('button, a, input, textarea, select'));
 
 const cueColor = (theme: ThemeTokens, column: ProductionColumnId): string => {
   if (column === 'gotovo') return theme.colors.success;
@@ -136,7 +135,7 @@ export const ProductionBoard = ({
   const columns = placeProductionBoard(cards);
 
   const beginPointerDrag = (event: ReactPointerEvent<HTMLElement>, card: ProductionCard) => {
-    if (event.button !== 0 || isInteractiveTarget(event.target)) return;
+    if (event.button !== 0 || isProductionInteractiveTarget(event.target as PointerNode | null)) return;
     const pointerId = event.pointerId;
     const startX = event.clientX;
     const startY = event.clientY;
