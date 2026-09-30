@@ -12,6 +12,7 @@ import {
   type ProductionColumnId,
 } from './board';
 import { isProductionInteractiveTarget, type PointerNode } from './production-pointer';
+import { ProductionPhotoLightbox } from './ProductionPhotoLightbox';
 
 const DRAG_THRESHOLD_PX = 6;
 
@@ -47,26 +48,51 @@ const cueColor = (theme: ThemeTokens, column: ProductionColumnId): string => {
   return theme.colors.textMuted;
 };
 
-const ProductionCardPhotos = ({ files }: { files: ProductionCard['files'] }) => {
+const ProductionCardPhotos = ({
+  files,
+  onOpen,
+}: {
+  files: ProductionCard['files'];
+  onOpen: (url: string) => void;
+}) => {
   const { colors, radius } = useTheme();
   const urls = resolvePrevyuFileUrls(files);
   if (!urls.length) return null;
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
       {urls.map((url) => (
-        <img
+        <button
           key={url}
-          src={url}
-          alt=""
-          style={{
-            width: 72,
-            height: 72,
-            objectFit: 'cover',
-            borderRadius: radius.sm,
-            border: `1px solid ${colors.borderSubtle}`,
-            display: 'block',
+          type="button"
+          aria-label="Открыть фото"
+          onPointerDown={(event) => event.stopPropagation()}
+          onMouseDown={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation();
+            onOpen(url);
           }}
-        />
+          style={{
+            padding: 0,
+            border: `1px solid ${colors.borderSubtle}`,
+            borderRadius: radius.sm,
+            background: colors.bgInset,
+            cursor: 'pointer',
+            lineHeight: 0,
+          }}
+        >
+          <img
+            src={url}
+            alt=""
+            draggable={false}
+            style={{
+              width: 72,
+              height: 72,
+              objectFit: 'cover',
+              borderRadius: radius.sm,
+              display: 'block',
+            }}
+          />
+        </button>
       ))}
     </div>
   );
@@ -117,6 +143,7 @@ export const ProductionBoard = ({
   const theme = useTheme();
   const { colors, spacing, font, radius } = theme;
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [overColumn, setOverColumn] = useState<ProductionColumnId | null>(null);
   const dragRef = useRef<{
@@ -247,6 +274,7 @@ export const ProductionBoard = ({
         gap: spacing.md,
         padding: spacing.md,
         boxSizing: 'border-box',
+        position: 'relative',
         fontFamily: font.family,
         color: colors.text,
         background: colors.bg,
@@ -471,7 +499,7 @@ export const ProductionBoard = ({
                               {card.comment}
                             </p>
                           ) : null}
-                          <ProductionCardPhotos files={card.files} />
+                          <ProductionCardPhotos files={card.files} onOpen={setPhotoUrl} />
                           <button
                             type="button"
                             onPointerDown={(event) => event.stopPropagation()}
@@ -504,6 +532,9 @@ export const ProductionBoard = ({
           );
         })}
       </div>
+      {photoUrl ? (
+        <ProductionPhotoLightbox url={photoUrl} onClose={() => setPhotoUrl(null)} />
+      ) : null}
     </div>
   );
 };

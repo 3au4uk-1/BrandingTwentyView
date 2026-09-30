@@ -9,6 +9,7 @@ import { PrevyuUploadModal } from '../editors/prevyu/PrevyuUploadModal';
 import { usePrevyuMediaActions } from '../editors/prevyu/usePrevyuMediaActions';
 import { useTheme } from '../theme/ThemeContext';
 import type { LineItemFileRef } from '../types';
+import { ProductionPhotoLightbox } from './ProductionPhotoLightbox';
 
 const THUMB_SIZE = 56;
 
@@ -30,6 +31,7 @@ export const ProductionPhotos = ({
   });
   const urls = resolvePrevyuFileUrls(files);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   const handleDrop = (event: ReactDragEvent) => {
     event.preventDefault();
@@ -71,18 +73,32 @@ export const ProductionPhotos = ({
           return (
             <div key={file.fileId || index} style={{ position: 'relative' }}>
               {url ? (
-                <img
-                  src={url}
-                  alt={file.label || 'Фото для производства'}
+                <button
+                  type="button"
+                  aria-label="Открыть фото"
+                  onClick={() => setPhotoUrl(url)}
                   style={{
-                    width: THUMB_SIZE,
-                    height: THUMB_SIZE,
-                    objectFit: 'cover',
-                    borderRadius: radius.sm,
+                    padding: 0,
                     border: `1px solid ${colors.border}`,
-                    display: 'block',
+                    borderRadius: radius.sm,
+                    background: colors.bgInset,
+                    cursor: 'pointer',
+                    lineHeight: 0,
                   }}
-                />
+                >
+                  <img
+                    src={url}
+                    alt={file.label || 'Фото для производства'}
+                    draggable={false}
+                    style={{
+                      width: THUMB_SIZE,
+                      height: THUMB_SIZE,
+                      objectFit: 'cover',
+                      borderRadius: radius.sm,
+                      display: 'block',
+                    }}
+                  />
+                </button>
               ) : (
                 <div
                   style={{
@@ -141,6 +157,9 @@ export const ProductionPhotos = ({
       </div>
       {actions.lastError ? (
         <div style={{ fontSize: font.sizeXs, color: colors.danger }}>{actions.lastError}</div>
+      ) : null}
+      {photoUrl ? (
+        <ProductionPhotoLightbox url={photoUrl} onClose={() => setPhotoUrl(null)} />
       ) : null}
       <PrevyuUploadModal
         itemId={itemId}
