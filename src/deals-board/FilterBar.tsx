@@ -493,10 +493,10 @@ export const FilterBar = ({
       style={{
         display: 'flex',
         alignItems: 'center',
-        flexWrap: 'wrap',
+        flexWrap: layout === 'compact-top' ? 'nowrap' : 'wrap',
         gap: spacing.sm,
-        flex: 1,
-        minWidth: 0,
+        flex: layout === 'compact-top' ? '0 0 auto' : 1,
+        minWidth: layout === 'compact-top' ? 'max-content' : 0,
       }}
     >
       <div
