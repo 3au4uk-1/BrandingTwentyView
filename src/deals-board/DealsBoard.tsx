@@ -17,8 +17,6 @@ import {
   filterLineItemsByBoardStream,
   type BoardStream,
 } from 'src/constants/product-stream';
-import type { LineItemType } from 'src/constants/line-item-types';
-
 import {
   resolveOpportunityLinkFieldDescriptors,
   resolveOpportunityLinkFieldNames,
@@ -63,15 +61,8 @@ import { buildPersistedFiltersFromSession } from './filter-model/filter-session-
 import { hasLineItemFilterClauses } from './filter-model/has-line-item-filter-clauses';
 import { migrateLegacyFilters } from './filter-model/migrate-legacy-filters';
 import { resolveSessionOverride } from './filter-model/resolve-session-override';
-import {
-  beginSessionClauses,
-  commitSessionClauses,
-  getEffectiveClauses,
-} from './filter-model/session';
-import { toggleInClauseValue } from './filter-model/toggle-in-clause';
+import { getEffectiveClauses } from './filter-model/session';
 import type { FilterState } from './filter-model/types';
-import { BoardInsightPanel } from './BoardInsightPanel';
-import { computeAttention } from './attention/compute';
 import type {
   ColumnGroupConfig,
   DealBoardSort,
@@ -79,7 +70,6 @@ import type {
   LineItemRow,
   OpportunityRow,
 } from './types';
-import { getTodayInputDateMsk } from './utils/working-days';
 import { ThemeProvider, useTheme } from './theme/ThemeContext';
 import { CancelOtmenaProvider } from './ui/CancelOtmenaPopup';
 import { ManualSyncErrorToastProvider } from './ui/ManualSyncErrorToast';
@@ -140,7 +130,6 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
   const [sortSession, setSortSession] = useState<DealBoardSort[] | undefined>(undefined);
   const [showAllPositionOppIds, setShowAllPositionOppIds] = useState<Set<string>>(() => new Set());
   const [boardPane, setBoardPane] = useState<'deals' | 'analytics'>('deals');
-  const [attentionTip, setAttentionTip] = useState<LineItemType | null>(null);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const views = asArray<DealBoardViewRecord>(viewsQuery.data);
   const hasPrintGroupMigrationAttemptedRef = useRef(false);
@@ -203,7 +192,6 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     setFilterSession({});
     setSortSession(undefined);
     setShowAllPositionOppIds(new Set());
-    setAttentionTip(null);
   }, [activeView?.id]);
 
   const resolvedViewFilters = activeView?.filters ?? FUTURE_DEALS_VIEW_FILTERS;
@@ -592,41 +580,10 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     recordsById,
   ]);
 
-  const attentionStats = useMemo(() => {
-    const oppsById = new Map(streamFilteredRecords.map((record) => [record.id, record]));
-    return computeAttention(getTodayInputDateMsk(), streamFilteredLineItems, oppsById);
-  }, [streamFilteredLineItems, streamFilteredRecords]);
-
-  const attentionHighlightOppIds = useMemo(() => {
-    if (!attentionTip) return null;
-    const ids = new Set<string>();
-    for (const item of attentionStats.items) {
-      if (item.tip === attentionTip) ids.add(item.opportunityId);
-    }
-    return ids;
-  }, [attentionStats.items, attentionTip]);
-
-  const tableRecords = useMemo(() => {
-    if (!attentionHighlightOppIds) return filteredBoardData.deals;
-    return streamFilteredRecords.filter((deal) => attentionHighlightOppIds.has(deal.id));
-  }, [attentionHighlightOppIds, filteredBoardData.deals, streamFilteredRecords]);
-
-  const tableLineItems = useMemo(() => {
-    if (!attentionTip) return visibleLineItems;
-    const lineIds = new Set(
-      attentionStats.items
-        .filter((item) => item.tip === attentionTip)
-        .map((item) => item.lineItemId),
-    );
-    return streamFilteredLineItems.filter((item) => lineIds.has(item.id));
-  }, [attentionStats.items, attentionTip, streamFilteredLineItems, visibleLineItems]);
-
-  const visibleRecords = tableRecords;
-  const visibleTotalCount = attentionTip
-    ? tableRecords.length
-    : hasLineItemFilters
-      ? filteredBoardData.deals.length
-      : totalCount;
+  const visibleRecords = filteredBoardData.deals;
+  const visibleTotalCount = hasLineItemFilters
+    ? filteredBoardData.deals.length
+    : totalCount;
   const rashodQuery = useOpportunityRashodFields(
     visibleRecords,
     boardPane === 'analytics',
@@ -643,25 +600,11 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     });
   };
 
-  const toggleScoreboardClause = (field: 'tip' | 'stage', optionValue: string) => {
-    const base =
-      filterSession.sessionClauses === undefined
-        ? beginSessionClauses(viewClauses)
-        : filterSession.sessionClauses;
-    setFilterSession({
-      ...filterSession,
-      sessionClauses: commitSessionClauses(
-        toggleInClauseValue(base, 'lineItem', field, optionValue),
-      ),
-    });
-  };
-
   const handleFilterReset = () => {
     // Restore the active view's saved filters (drop session overrides).
     setFilterSession(RESET_FILTER_SESSION_TO_VIEW);
     setSortSession(undefined);
     setShowAllPositionOppIds(new Set());
-    setAttentionTip(null);
   };
 
   const handleSortChange = (next: DealBoardSort[]) => {
@@ -790,12 +733,12 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
   const labelFilteredDesktop = useMemo(
     () =>
       filterBoardByParserLabels(
-        tableLineItems,
+        visibleLineItems,
         visibleRecords,
         listStatusQuery.data,
         hiddenIds,
       ),
-    [hiddenIds, listStatusQuery.data, tableLineItems, visibleRecords],
+    [hiddenIds, listStatusQuery.data, visibleLineItems, visibleRecords],
   );
   const labelFilteredVisibleLineItems = useMemo(
     () =>
@@ -827,24 +770,6 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
       ).items,
     [allDealLineItemsForChip, hiddenIds, listStatusQuery.data],
   );
-  const displayedAttentionStats = useMemo(() => {
-    if (hiddenIds.size === 0) return attentionStats;
-    const oppsById = new Map(streamFilteredRecords.map((record) => [record.id, record]));
-    const items = filterBoardByParserLabels(
-      streamFilteredLineItems,
-      [],
-      listStatusQuery.data,
-      hiddenIds,
-    ).items;
-    return computeAttention(getTodayInputDateMsk(), items, oppsById);
-  }, [
-    attentionStats,
-    hiddenIds,
-    listStatusQuery.data,
-    streamFilteredLineItems,
-    streamFilteredRecords,
-  ]);
-
   const loadError = viewsQuery.error ?? coldLoadQuery.error ?? null;
   const metadataFieldsError =
     parentFieldsQuery.error ?? childFieldsQuery.error ?? null;
@@ -1052,31 +977,6 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
             </div>
           ) : null}
 
-          <BoardInsightPanel
-            lineItems={labelFilteredVisibleLineItems}
-            deals={filteredBoardData.deals}
-            selectedTypes={mergedFilters.types ?? []}
-            onToggleType={(tip) => toggleScoreboardClause('tip', tip)}
-            attentionStats={displayedAttentionStats}
-            attentionTip={attentionTip}
-            onToggleAttentionTip={(tip) =>
-              setAttentionTip((current) => (current === tip ? null : tip))
-            }
-            summaryTitle={
-              filterBarValue.datePreset === 'today'
-                ? 'Сводка на сегодня'
-                : filterBarValue.datePreset === 'tomorrow'
-                  ? 'Сводка на завтра'
-                  : filterBarValue.datePreset === 'dayAfterTomorrow'
-                    ? 'Сводка на послезавтра'
-                    : filterBarValue.datePreset === 'week'
-                      ? 'Сводка на неделю'
-                      : filterBarValue.datePreset === 'month'
-                        ? 'Сводка на месяц'
-                        : 'Сводка'
-            }
-          />
-
           {boardPane === 'analytics' ? (
             <div
               data-deals-board-body
@@ -1118,7 +1018,6 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
               hasLineItemFilters={hasLineItemFilters}
               showAllPositionOppIds={showAllPositionOppIds}
               onToggleShowAllPositions={handleToggleShowAllPositions}
-              attentionOpportunityIds={attentionHighlightOppIds}
               boardStream={boardStream}
               onUnlinkSmeta={(smetaId) => {
                 void handleUnlinkSmeta(smetaId);
