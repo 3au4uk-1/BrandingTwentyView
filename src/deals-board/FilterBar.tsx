@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import type { DealBoardDatePreset } from 'src/deals-board/types';
 
@@ -12,6 +13,7 @@ import {
 } from './filter-model/use-filter-clause-editor';
 import { beginSessionClauses, commitSessionClauses } from './filter-model/session';
 import type { FilterClause, FilterState } from './filter-model/types';
+import { useAnchoredFixedBox } from './hooks/useAnchoredFixedBox';
 import { useCompanies } from './hooks/useCompanies';
 import { useOutsideDismiss } from './hooks/useOutsideDismiss';
 import type { FieldDescriptor } from './metadata/types';
@@ -20,6 +22,7 @@ import { getPresetRange } from './utils/date-filters';
 import { useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
+import { resolvePortalContainer, usePortalHost } from './ui/PortalHostContext';
 
 type FilterDatePreset = Exclude<DealBoardDatePreset, 'future'> | null;
 
@@ -62,6 +65,8 @@ export const FilterBar = ({
   const [amountDraft, setAmountDraft] = useState('');
   const [debouncedCompanySearch, setDebouncedCompanySearch] = useState('');
   const builderRef = useRef<HTMLDivElement | null>(null);
+  const portalHostRef = usePortalHost();
+  const menuBox = useAnchoredFixedBox(isBuilderOpen, builderRef);
 
   const effectiveClauses =
     value.sessionClauses === undefined ? viewClauses : value.sessionClauses;
@@ -243,6 +248,7 @@ export const FilterBar = ({
     setActiveBuilderField(null);
   }, [activeBuilderField, amountDraft, commitAmountDraft]);
   const dismissLayer = useOutsideDismiss(isBuilderOpen, builderRef, dismissBuilder);
+  const portalTarget = resolvePortalContainer('root', portalHostRef);
 
   const renderBuilderPanel = () => {
     if (!activeBuilderField) {
@@ -600,23 +606,26 @@ export const FilterBar = ({
           + Фильтр
         </button>
 
-        {isBuilderOpen ? (
-          <div
-            style={{
-              position: 'absolute',
-              top: 'calc(100% + 6px)',
-              left: 0,
-              zIndex: zIndex.dropdown,
-              border: `1px solid ${colors.border}`,
-              borderRadius: radius.lg,
-              backgroundColor: colors.bgElevated,
-              boxShadow: colors.shadowLg,
-              padding: spacing.sm,
-            }}
-          >
-            {renderBuilderPanel()}
-          </div>
-        ) : null}
+        {isBuilderOpen && menuBox && portalTarget
+          ? createPortal(
+              <div
+                style={{
+                  position: 'fixed',
+                  top: menuBox.top,
+                  left: menuBox.left,
+                  zIndex: zIndex.dropdown,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: radius.lg,
+                  backgroundColor: colors.bgElevated,
+                  boxShadow: colors.shadowLg,
+                  padding: spacing.sm,
+                }}
+              >
+                {renderBuilderPanel()}
+              </div>,
+              portalTarget,
+            )
+          : null}
       </div>
 
       {effectiveClauses.map((clause) => (

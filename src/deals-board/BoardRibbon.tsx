@@ -197,6 +197,7 @@ export const BoardRibbon = ({
               open={parentPickerOpen}
               onOpenChange={setParentPickerOpen}
               hideTrigger
+              panelAlign="left"
               onSave={(columns) => onParentColumnsSave(columns)}
             />
           </span>
@@ -217,6 +218,7 @@ export const BoardRibbon = ({
               open={childPickerOpen}
               onOpenChange={setChildPickerOpen}
               hideTrigger
+              panelAlign="left"
               onSave={(columns, groups) => onChildColumnsSave(columns, groups)}
             />
           </span>

@@ -20,6 +20,8 @@ type ColumnPickerProps = {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   hideTrigger?: boolean;
+  /** Which anchor edge the panel sits on. `right` grows left; `left` grows right. */
+  panelAlign?: 'left' | 'right';
 };
 
 const EMPTY_GROUPS: ColumnGroupConfig[] = [];
@@ -48,6 +50,7 @@ export const ColumnPicker = ({
   open: controlledOpen,
   onOpenChange,
   hideTrigger = false,
+  panelAlign = 'right',
 }: ColumnPickerProps) => {
   const theme = useTheme();
   const { colors, radius, font, spacing, zIndex } = theme;
@@ -257,7 +260,7 @@ export const ColumnPicker = ({
           style={{
             position: 'absolute',
             top: 'calc(100% + 6px)',
-            right: 0,
+            ...(panelAlign === 'left' ? { left: 0 } : { right: 0 }),
             width: target === 'child' ? 'min(390px, calc(100vw - 24px))' : '320px',
             border: `1px solid ${colors.border}`,
             borderRadius: radius.lg,
