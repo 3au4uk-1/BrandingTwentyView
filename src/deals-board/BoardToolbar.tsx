@@ -99,7 +99,7 @@ export const BoardToolbar = ({
   boardStream,
 }: BoardToolbarProps) => {
   const theme = useTheme();
-  const { colors, font, spacing, radius } = theme;
+  const { colors, font, spacing, radius, zIndex } = theme;
 
   const [openTab, setOpenTab] = useState<RibbonTab | null>(null);
   const labelsAvailable = isLabelsTabAvailable(
@@ -206,6 +206,9 @@ export const BoardToolbar = ({
     <header
       data-deals-board-toolbar
       style={{
+        position: 'relative',
+        zIndex: zIndex.dropdown,
+        overflow: 'visible',
         borderBottom: `1px solid ${colors.borderSubtle}`,
         backgroundColor: 'transparent',
         padding: `${spacing.sm} ${spacing.md}`,
@@ -232,7 +235,7 @@ export const BoardToolbar = ({
             flexWrap: 'nowrap',
             alignItems: 'center',
             gap: spacing.sm,
-            overflowX: 'auto',
+            overflow: 'visible',
           }}
         >
           <ViewSwitcher

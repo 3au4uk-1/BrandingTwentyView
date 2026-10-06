@@ -1,14 +1,11 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 
 import { VIEW_VISIBILITY } from 'src/constants/view-visibility';
 
-import { ANCHOR_MENU_GAP_PX, useAnchoredRootBox } from './hooks/useAnchoredRootBox';
 import { useOutsideDismiss } from './hooks/useOutsideDismiss';
 import { useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
 import { ChevronDownIcon } from './ui/Icons';
-import { resolvePortalContainer, usePortalHost } from './ui/PortalHostContext';
 import type { DealBoardViewRecord } from './types';
 
 type ViewSwitcherProps = {
@@ -35,8 +32,6 @@ export const ViewSwitcher = ({
   const { colors, radius, font, spacing, zIndex } = theme;
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const portalHostRef = usePortalHost();
-  const menuBox = useAnchoredRootBox(isOpen, containerRef, portalHostRef);
   const dismiss = useCallback(() => setIsOpen(false), []);
   const dismissLayer = useOutsideDismiss(isOpen, containerRef, dismiss);
 
@@ -76,8 +71,6 @@ export const ViewSwitcher = ({
     );
   };
 
-  const portalTarget = resolvePortalContainer('root', portalHostRef);
-
   return (
     <div ref={containerRef} style={{ position: 'relative', minWidth: '220px', flexShrink: 0 }}>
       {dismissLayer}
@@ -107,24 +100,23 @@ export const ViewSwitcher = ({
         <ChevronDownIcon color={colors.textMuted} />
       </button>
 
-      {isOpen && menuBox && portalTarget
-        ? createPortal(
-            <div
-              style={{
-                position: 'absolute',
-                top: menuBox.bottom + ANCHOR_MENU_GAP_PX,
-                left: menuBox.left,
-                width: menuBox.width,
-                minWidth: '240px',
-                zIndex: zIndex.dropdown,
-                border: `1px solid ${colors.border}`,
-                borderRadius: radius.lg,
-                backgroundColor: colors.bgElevated,
-                boxShadow: colors.shadowLg,
-                padding: spacing.xs,
-                boxSizing: 'border-box',
-              }}
-            >
+      {isOpen ? (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 6px)',
+            left: 0,
+            width: '100%',
+            minWidth: '240px',
+            zIndex: zIndex.dropdown,
+            border: `1px solid ${colors.border}`,
+            borderRadius: radius.lg,
+            backgroundColor: colors.bgElevated,
+            boxShadow: colors.shadowLg,
+            padding: spacing.xs,
+            boxSizing: 'border-box',
+          }}
+        >
           <div
             style={{
               padding: '6px 10px 4px',
@@ -178,10 +170,8 @@ export const ViewSwitcher = ({
               + Новый view
             </Button>
           </div>
-            </div>,
-            portalTarget,
-          )
-        : null}
+        </div>
+      ) : null}
     </div>
   );
 };
