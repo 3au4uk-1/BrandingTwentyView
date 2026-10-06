@@ -214,6 +214,7 @@ export const MobileDealsBoard = (props: MobileDealsBoardProps) => {
         onEditView={onEditView}
         onParentColumnsSave={onParentColumnsSave ?? (async () => undefined)}
         onChildColumnsSave={onChildColumnsSave ?? (async () => undefined)}
+        boardStream={boardStream}
       />
     </div>
   );

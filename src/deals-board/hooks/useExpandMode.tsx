@@ -9,7 +9,7 @@ import {
 
 import { readLocalStorage, writeLocalStorage } from '../utils/browser-storage';
 
-export type ExpandMode = 'collapsed' | 'smart';
+export type ExpandMode = 'collapsed' | 'smart' | 'expanded';
 
 const STORAGE_KEY = 'deals-board-expand-mode';
 
@@ -22,7 +22,8 @@ const ExpandModeContext = createContext<ExpandModeContextValue | null>(null);
 
 const readStoredMode = (): ExpandMode => {
   const stored = readLocalStorage(STORAGE_KEY);
-  return stored === 'collapsed' ? 'collapsed' : 'smart';
+  if (stored === 'collapsed' || stored === 'expanded') return stored;
+  return 'smart';
 };
 
 export const ExpandModeProvider = ({ children }: { children: ReactNode }) => {

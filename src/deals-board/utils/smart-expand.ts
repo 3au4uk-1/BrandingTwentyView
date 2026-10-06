@@ -57,6 +57,10 @@ export const computeIsExpanded = (
     return overrides.expanded.includes(opportunityId);
   }
 
+  if (mode === 'expanded') {
+    return !overrides.collapsed.includes(opportunityId);
+  }
+
   if (mode === 'smart') {
     if (overrides.collapsed.includes(opportunityId)) {
       return false;
@@ -145,6 +149,20 @@ export const toggleExpandOverride = (
     };
   }
 
+  if (mode === 'expanded') {
+    if (isExpanded) {
+      return {
+        ...overrides,
+        collapsed: [...new Set([...overrides.collapsed, opportunityId])],
+      };
+    }
+
+    return {
+      ...overrides,
+      collapsed: overrides.collapsed.filter((id) => id !== opportunityId),
+    };
+  }
+
   if (isExpanded) {
     return {
       ...overrides,
@@ -162,6 +180,6 @@ export const clearOverridesForMode = (
   overrides: ExpandOverrides,
   mode: ExpandMode,
 ): ExpandOverrides =>
-  mode === 'smart'
-    ? { collapsed: [], expanded: [] }
-    : { ...overrides, collapsed: [] };
+  mode === 'collapsed'
+    ? { ...overrides, collapsed: [] }
+    : { collapsed: [], expanded: [] };

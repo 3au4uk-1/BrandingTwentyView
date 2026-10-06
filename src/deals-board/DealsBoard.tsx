@@ -37,6 +37,7 @@ import { DESKTOP_BOARD_HEIGHT_CSS } from './utils/desktop-layout';
 import { MobileDealsBoard } from './mobile/MobileDealsBoard';
 import { DealsTable } from './DealsTable/DealsTable';
 import { ExpandModeProvider } from './hooks/useExpandMode';
+import { ParserLabelFilterProvider, useParserLabelFilter } from './hooks/useParserLabelFilter';
 import { GroupChipModeProvider } from './hooks/useGroupChipMode';
 import { TypeSectionsProvider } from './hooks/useTypeSections';
 import { useDealBoardViews, useUpdateDealBoardView } from './hooks/useDealBoardViews';
@@ -104,6 +105,7 @@ import {
 } from './banner-crew/chip-line-items';
 import { applyPrintGroupSeed } from './utils/column-groups';
 import { asArray } from './utils/parse-json-field';
+import { filterBoardByParserLabels } from './utils/parser-label-filter';
 import { filterLineItemsForSearch, resolveSearchTerms } from './utils/search';
 import { ViewSettingsModal } from './ViewSettingsModal';
 const queryClient = new QueryClient({
@@ -770,14 +772,78 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
     visibleLineItems,
   ]);
 
-  const listStatusLineItemIds = useMemo(
-    () => displayLineItems.map((item) => item.id).filter(Boolean),
-    [displayLineItems],
-  );
-  usePrefetchLineItemListStatuses(
+  const listStatusLineItemIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const item of displayLineItems) {
+      if (item.id) ids.add(item.id);
+    }
+    for (const item of allDealLineItemsForChip) {
+      if (item.id) ids.add(item.id);
+    }
+    return [...ids];
+  }, [allDealLineItemsForChip, displayLineItems]);
+  const { hiddenIds } = useParserLabelFilter();
+  const listStatusQuery = usePrefetchLineItemListStatuses(
     listStatusLineItemIds,
     listStatusLineItemIds.length > 0 && !activeColdLoadLoading,
   );
+  const labelFilteredDesktop = useMemo(
+    () =>
+      filterBoardByParserLabels(
+        tableLineItems,
+        visibleRecords,
+        listStatusQuery.data,
+        hiddenIds,
+      ),
+    [hiddenIds, listStatusQuery.data, tableLineItems, visibleRecords],
+  );
+  const labelFilteredVisibleLineItems = useMemo(
+    () =>
+      filterBoardByParserLabels(
+        visibleLineItems,
+        filteredBoardData.deals,
+        listStatusQuery.data,
+        hiddenIds,
+      ).items,
+    [filteredBoardData.deals, hiddenIds, listStatusQuery.data, visibleLineItems],
+  );
+  const labelFilteredDisplay = useMemo(
+    () =>
+      filterBoardByParserLabels(
+        displayLineItems,
+        mobileRecords,
+        listStatusQuery.data,
+        hiddenIds,
+      ),
+    [displayLineItems, hiddenIds, listStatusQuery.data, mobileRecords],
+  );
+  const labelFilteredChipItems = useMemo(
+    () =>
+      filterBoardByParserLabels(
+        allDealLineItemsForChip,
+        [],
+        listStatusQuery.data,
+        hiddenIds,
+      ).items,
+    [allDealLineItemsForChip, hiddenIds, listStatusQuery.data],
+  );
+  const displayedAttentionStats = useMemo(() => {
+    if (hiddenIds.size === 0) return attentionStats;
+    const oppsById = new Map(streamFilteredRecords.map((record) => [record.id, record]));
+    const items = filterBoardByParserLabels(
+      streamFilteredLineItems,
+      [],
+      listStatusQuery.data,
+      hiddenIds,
+    ).items;
+    return computeAttention(getTodayInputDateMsk(), items, oppsById);
+  }, [
+    attentionStats,
+    hiddenIds,
+    listStatusQuery.data,
+    streamFilteredLineItems,
+    streamFilteredRecords,
+  ]);
 
   const loadError = viewsQuery.error ?? coldLoadQuery.error ?? null;
   const metadataFieldsError =
@@ -888,9 +954,9 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
           parentDescriptorByField={parentDescriptorByField}
           childDescriptorByField={childDescriptorByField}
           opportunityLinkFields={opportunityLinkFields}
-          records={mobileRecords}
-          lineItems={displayLineItems}
-          allDealLineItems={allDealLineItemsForChip}
+          records={labelFilteredDisplay.deals}
+          lineItems={labelFilteredDisplay.items}
+          allDealLineItems={labelFilteredChipItems}
           boardStream={boardStream}
           lineItemFilters={lineItemQueryFilters}
           totalCount={visibleTotalCount}
@@ -935,7 +1001,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
             parentFields={parentFieldsQuery.data ?? []}
             childFields={childFieldsQuery.data ?? []}
             deals={filteredBoardData.deals}
-            lineItems={visibleLineItems}
+            lineItems={labelFilteredVisibleLineItems}
             dealCount={visibleTotalCount}
             isLoading={coldLoadQuery.isLoading}
             onOpenAnalytics={() => setBoardPane('analytics')}
@@ -953,6 +1019,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
             activeFilterCount={activeFilterCount}
             canResetFilters={canResetFilters}
             onLinkDeals={() => setIsLinkModalOpen(true)}
+            boardStream={boardStream}
           />
 
           {metadataFieldsWarning ? (
@@ -986,11 +1053,11 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
           ) : null}
 
           <BoardInsightPanel
-            lineItems={visibleLineItems}
+            lineItems={labelFilteredVisibleLineItems}
             deals={filteredBoardData.deals}
             selectedTypes={mergedFilters.types ?? []}
             onToggleType={(tip) => toggleScoreboardClause('tip', tip)}
-            attentionStats={attentionStats}
+            attentionStats={displayedAttentionStats}
             attentionTip={attentionTip}
             onToggleAttentionTip={(tip) =>
               setAttentionTip((current) => (current === tip ? null : tip))
@@ -1022,7 +1089,7 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
             >
               <AnalyticsPanel
                 opportunities={rashodQuery.opportunities}
-                lineItems={visibleLineItems}
+                lineItems={labelFilteredVisibleLineItems}
                 onBack={() => setBoardPane('deals')}
               />
             </div>
@@ -1044,9 +1111,9 @@ const DealsBoardContent = ({ boardStream }: { boardStream: BoardStream }) => {
               parentDescriptorByField={parentDescriptorByField}
               childDescriptorByField={childDescriptorByField}
               opportunityLinkFields={opportunityLinkFields}
-              records={visibleRecords}
-              lineItems={tableLineItems}
-              allDealLineItems={allDealLineItemsForChip}
+              records={labelFilteredDesktop.deals}
+              lineItems={labelFilteredDesktop.items}
+              allDealLineItems={labelFilteredChipItems}
               lineItemFilters={lineItemQueryFilters}
               hasLineItemFilters={hasLineItemFilters}
               showAllPositionOppIds={showAllPositionOppIds}
@@ -1121,11 +1188,13 @@ export const DealsBoard = ({
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <ExpandModeProvider>
+          <ParserLabelFilterProvider>
           <TypeSectionsProvider>
             <GroupChipModeProvider>
               <DealsBoardContent boardStream={boardStream} />
             </GroupChipModeProvider>
           </TypeSectionsProvider>
+          </ParserLabelFilterProvider>
         </ExpandModeProvider>
       </ThemeProvider>
     </QueryClientProvider>

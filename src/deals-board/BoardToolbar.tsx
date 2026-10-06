@@ -7,9 +7,12 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
 
+import type { BoardStream } from 'src/constants/product-stream';
+
 import { formatRub, lineItemSaleRub } from './analytics/compute';
 import { FilterBar } from './FilterBar';
 import { ExpandModeToggle } from './ExpandModeToggle';
+import { ParserLabelFilter } from './ParserLabelFilter';
 import { TypeSectionsToggle } from './TypeSectionsToggle';
 import { ToolbarSettingsCluster } from './ToolbarSettingsCluster';
 import { ViewSwitcher } from './ViewSwitcher';
@@ -58,6 +61,7 @@ type BoardToolbarProps = {
   /** Show «Сбросить» only when session differs from the active view. */
   canResetFilters?: boolean;
   onLinkDeals?: () => void;
+  boardStream?: BoardStream;
 };
 
 export const BoardToolbar = ({
@@ -86,6 +90,7 @@ export const BoardToolbar = ({
   activeFilterCount: _activeFilterCount = 0,
   canResetFilters = false,
   onLinkDeals,
+  boardStream,
 }: BoardToolbarProps) => {
   const theme = useTheme();
   const { colors, font, spacing, radius } = theme;
@@ -354,6 +359,7 @@ export const BoardToolbar = ({
         >
           {formatRub(turnoverRub)}
         </button>
+        <ParserLabelFilter boardStream={boardStream} />
         <ExpandModeToggle />
         <TypeSectionsToggle />
         {onLinkDeals ? (

@@ -170,6 +170,42 @@ describe('toggleExpandOverride', () => {
     expect(computeIsExpanded('deal-1', activeItems, 'smart', expanded, 'DUBL')).toBe(true);
   });
 
+  it('expands every deal with positions in expanded mode', () => {
+    const activeItems = [{ stage: 'V_RABOTE' as const }];
+    const doneItems = [{ stage: 'GOTOVO' as const }];
+
+    expect(computeIsExpanded('deal-1', activeItems, 'expanded', EMPTY_EXPAND_OVERRIDES)).toBe(
+      true,
+    );
+    expect(
+      computeIsExpanded('deal-1', doneItems, 'expanded', EMPTY_EXPAND_OVERRIDES, 'GOTOVO'),
+    ).toBe(true);
+    expect(
+      computeIsExpanded('deal-1', activeItems, 'expanded', EMPTY_EXPAND_OVERRIDES, 'OTMENA'),
+    ).toBe(true);
+    expect(
+      computeIsExpanded('deal-1', activeItems, 'expanded', EMPTY_EXPAND_OVERRIDES, 'DUBL'),
+    ).toBe(true);
+  });
+
+  it('remembers manual collapse in expanded mode', () => {
+    const activeItems = [{ stage: 'V_RABOTE' as const }];
+    const collapsed = toggleExpandOverride(
+      'deal-1',
+      activeItems,
+      'expanded',
+      EMPTY_EXPAND_OVERRIDES,
+      'GOTOVO',
+    );
+
+    expect(collapsed.collapsed).toEqual(['deal-1']);
+    expect(computeIsExpanded('deal-1', activeItems, 'expanded', collapsed, 'GOTOVO')).toBe(false);
+
+    const restored = toggleExpandOverride('deal-1', activeItems, 'expanded', collapsed, 'GOTOVO');
+    expect(restored.collapsed).toEqual([]);
+    expect(computeIsExpanded('deal-1', activeItems, 'expanded', restored, 'GOTOVO')).toBe(true);
+  });
+
   it('remembers manual expansion for a deal without positions', () => {
     const expanded = toggleExpandOverride(
       'deal-1',

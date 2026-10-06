@@ -1,6 +1,9 @@
+import type { BoardStream } from 'src/constants/product-stream';
+
 import { ColumnPicker } from '../ColumnPicker';
 import { ExpandModeToggle } from '../ExpandModeToggle';
 import { GroupChipModeToggle } from '../GroupChipModeToggle';
+import { ParserLabelFilter } from '../ParserLabelFilter';
 import { useTheme } from '../theme/ThemeContext';
 import { BottomSheet } from '../ui/BottomSheet';
 import { Button } from '../ui/Button';
@@ -15,6 +18,7 @@ type MobileSettingsSheetProps = {
   onEditView: () => void;
   onParentColumnsSave: (columns: ColumnConfig[], groups: ColumnGroupConfig[]) => Promise<void>;
   onChildColumnsSave: (columns: ColumnConfig[], groups: ColumnGroupConfig[]) => Promise<void>;
+  boardStream?: BoardStream;
 };
 
 export const MobileSettingsSheet = ({
@@ -26,6 +30,7 @@ export const MobileSettingsSheet = ({
   onEditView,
   onParentColumnsSave,
   onChildColumnsSave,
+  boardStream,
 }: MobileSettingsSheetProps) => {
   const theme = useTheme();
   const { spacing, font, colors } = theme;
@@ -39,6 +44,7 @@ export const MobileSettingsSheet = ({
           </div>
           <ExpandModeToggle />
         </div>
+        <ParserLabelFilter boardStream={boardStream} />
         <div>
           <div style={{ fontSize: font.sizeXs, color: colors.textMuted, marginBottom: spacing.xs }}>
             Отображение групп
