@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { BOARD_STREAM, type BoardStream } from 'src/constants/product-stream';
 
@@ -138,6 +138,13 @@ export const BoardRibbon = ({
   const [parentPickerOpen, setParentPickerOpen] = useState(false);
   const [childPickerOpen, setChildPickerOpen] = useState(false);
 
+  useEffect(() => {
+    if (openTab !== 'board') {
+      setParentPickerOpen(false);
+      setChildPickerOpen(false);
+    }
+  }, [openTab]);
+
   return (
     <div
       role="tabpanel"
@@ -147,7 +154,8 @@ export const BoardRibbon = ({
         alignItems: 'center',
         gap: spacing.sm,
         flexWrap: 'nowrap',
-        overflowX: 'auto',
+        overflowX: openTab === 'board' ? 'visible' : 'auto',
+        overflowY: openTab === 'board' ? 'visible' : 'hidden',
         minHeight: 40,
         minWidth: 0,
         padding: `4px 0 0`,
@@ -213,7 +221,13 @@ export const BoardRibbon = ({
             />
           </span>
           {onLinkDeals ? (
-            <Button theme={theme} variant="secondary" size="sm" onClick={onLinkDeals}>
+            <Button
+              theme={theme}
+              variant="secondary"
+              size="sm"
+              disabled={settingsDisabled}
+              onClick={onLinkDeals}
+            >
               Связать сделки
             </Button>
           ) : null}
