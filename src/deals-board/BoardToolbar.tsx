@@ -7,15 +7,21 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
 
+import { BOARD_STREAM } from 'src/constants/product-stream';
 import type { BoardStream } from 'src/constants/product-stream';
 
+import { isCrmparserConfigured } from './api/crmparser';
 import { formatRub, lineItemSaleRub } from './analytics/compute';
+import { BoardRibbon, RibbonTabButtons } from './BoardRibbon';
 import { FilterBar } from './FilterBar';
-import { ExpandModeToggle } from './ExpandModeToggle';
-import { ParserLabelFilter } from './ParserLabelFilter';
-import { TypeSectionsToggle } from './TypeSectionsToggle';
-import { ToolbarSettingsCluster } from './ToolbarSettingsCluster';
+import {
+  isLabelsTabAvailable,
+  resolveOpenRibbonTab,
+  toggleRibbonTab,
+  type RibbonTab,
+} from './ribbon-state';
 import { ViewSwitcher } from './ViewSwitcher';
+import { parserLabelsForBoard } from './utils/parser-label-filter';
 import { useTheme } from './theme/ThemeContext';
 import type { FilterClause, FilterState } from './filter-model/types';
 import type { FieldDescriptor } from './metadata/types';
@@ -94,6 +100,13 @@ export const BoardToolbar = ({
 }: BoardToolbarProps) => {
   const theme = useTheme();
   const { colors, font, spacing, radius } = theme;
+
+  const [openTab, setOpenTab] = useState<RibbonTab | null>(null);
+  const labelsAvailable = isLabelsTabAvailable(
+    parserLabelsForBoard(boardStream ?? BOARD_STREAM.BRANDING).length,
+    isCrmparserConfigured(),
+  );
+  const resolvedOpenTab = resolveOpenRibbonTab(openTab, labelsAvailable);
 
   const prefixCounts = useMemo(() => countDealsByPrefix(deals), [deals]);
   const turnoverRub = useMemo(
@@ -197,44 +210,56 @@ export const BoardToolbar = ({
         backgroundColor: 'transparent',
         padding: `${spacing.sm} ${spacing.md}`,
         display: 'flex',
-        alignItems: 'center',
-        gap: spacing.sm,
+        flexDirection: 'column',
+        gap: spacing.xs,
         minWidth: 0,
       }}
     >
       <div
         style={{
-          flex: '1 1 auto',
-          minWidth: 0,
           display: 'flex',
-          flexWrap: 'wrap',
+          flexWrap: 'nowrap',
           alignItems: 'center',
           gap: spacing.sm,
+          minWidth: 0,
         }}
       >
-        <ViewSwitcher
-          views={views}
-          activeViewId={activeViewId}
-          onSelectView={onSelectView}
-          onCreateView={onCreateView}
-        />
-        <FilterBar
-          value={filterValue}
-          viewClauses={viewClauses}
-          onChange={onFilterChange}
-          onReset={handleFilterResetClick}
-          parentFields={parentFields}
-          childFields={childFields}
-          layout="compact-top"
-        />
         <div
           style={{
-            flex: 1,
-            minWidth: 180,
+            flex: '0 1 auto',
+            minWidth: 0,
+            display: 'flex',
+            flexWrap: 'nowrap',
+            alignItems: 'center',
+            gap: spacing.sm,
+            overflowX: 'auto',
+          }}
+        >
+          <ViewSwitcher
+            views={views}
+            activeViewId={activeViewId}
+            onSelectView={onSelectView}
+            onCreateView={onCreateView}
+          />
+          <FilterBar
+            value={filterValue}
+            viewClauses={viewClauses}
+            onChange={onFilterChange}
+            onReset={handleFilterResetClick}
+            parentFields={parentFields}
+            childFields={childFields}
+            layout="compact-top"
+          />
+        </div>
+        <div
+          style={{
+            flex: '1 1 120px',
+            minWidth: 120,
             display: 'flex',
             alignItems: 'center',
             gap: 6,
-            flexWrap: 'wrap',
+            flexWrap: 'nowrap',
+            overflowX: 'auto',
             minHeight: 34,
             padding: '4px 8px',
             borderRadius: radius.md,
@@ -261,6 +286,7 @@ export const BoardToolbar = ({
                 fontFamily: font.family,
                 cursor: 'pointer',
                 maxWidth: 180,
+                flexShrink: 0,
               }}
             >
               <span
@@ -292,7 +318,7 @@ export const BoardToolbar = ({
             placeholder={searchTerms.length > 0 ? 'Ещё слово + Enter…' : 'Поиск…'}
             style={{
               flex: 1,
-              minWidth: 140,
+              minWidth: 80,
               height: 26,
               padding: '0 4px',
               border: 'none',
@@ -302,81 +328,82 @@ export const BoardToolbar = ({
             }}
           />
         </div>
-        {showReset ? (
-          <Button theme={theme} variant="ghost" size="sm" onClick={handleFilterResetClick}>
-            Сбросить
-          </Button>
-        ) : null}
-      </div>
-
-      <div
-        style={{
-          flex: '0 0 auto',
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          justifyContent: 'flex-end',
-          gap: 8,
-        }}
-      >
-        {!isLoading ? (
-          <span
-            title={formatPrefixCountsTitle(prefixCounts) || undefined}
-            style={{
-              fontSize: font.sizeXs,
-              color: colors.textMuted,
-              fontVariantNumeric: 'tabular-nums',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {dealCount} сд
-          </span>
-        ) : null}
-        <button
-          type="button"
-          onClick={onOpenAnalytics}
-          onMouseEnter={(event) => {
-            event.currentTarget.style.backgroundColor = colors.bgElevated;
-          }}
-          onMouseLeave={(event) => {
-            event.currentTarget.style.backgroundColor = 'transparent';
-          }}
-          title="Оборот по текущему фильтру · открыть аналитику"
+        <div
           style={{
-            border: 'none',
-            cursor: 'pointer',
-            padding: '4px 6px',
-            borderRadius: radius.sm,
-            backgroundColor: 'transparent',
-            color: colors.text,
-            fontFamily: font.family,
-            fontSize: font.sizeSm,
-            fontWeight: font.weightSemibold,
-            fontVariantNumeric: 'tabular-nums',
-            whiteSpace: 'nowrap',
-            letterSpacing: '-0.02em',
+            flex: '0 0 auto',
+            display: 'flex',
+            flexWrap: 'nowrap',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            gap: 8,
           }}
         >
-          {formatRub(turnoverRub)}
-        </button>
-        <ParserLabelFilter boardStream={boardStream} />
-        <ExpandModeToggle />
-        <TypeSectionsToggle />
-        {onLinkDeals ? (
-          <Button theme={theme} variant="secondary" size="sm" onClick={onLinkDeals}>
-            Связать сделки
-          </Button>
-        ) : null}
-        <ToolbarSettingsCluster
-          disabled={settingsDisabled}
+          {showReset ? (
+            <Button theme={theme} variant="ghost" size="sm" onClick={handleFilterResetClick}>
+              Сбросить
+            </Button>
+          ) : null}
+          {!isLoading ? (
+            <span
+              title={formatPrefixCountsTitle(prefixCounts) || undefined}
+              style={{
+                fontSize: font.sizeXs,
+                color: colors.textMuted,
+                fontVariantNumeric: 'tabular-nums',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {dealCount} сд
+            </span>
+          ) : null}
+          <button
+            type="button"
+            onClick={onOpenAnalytics}
+            onMouseEnter={(event) => {
+              event.currentTarget.style.backgroundColor = colors.bgElevated;
+            }}
+            onMouseLeave={(event) => {
+              event.currentTarget.style.backgroundColor = 'transparent';
+            }}
+            title="Оборот по текущему фильтру · открыть аналитику"
+            style={{
+              border: 'none',
+              cursor: 'pointer',
+              padding: '4px 6px',
+              borderRadius: radius.sm,
+              backgroundColor: 'transparent',
+              color: colors.text,
+              fontFamily: font.family,
+              fontSize: font.sizeSm,
+              fontWeight: font.weightSemibold,
+              fontVariantNumeric: 'tabular-nums',
+              whiteSpace: 'nowrap',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            {formatRub(turnoverRub)}
+          </button>
+          <RibbonTabButtons
+            openTab={resolvedOpenTab}
+            boardStream={boardStream}
+            onToggle={(tab) => setOpenTab((current) => toggleRibbonTab(current, tab))}
+          />
+        </div>
+      </div>
+      {resolvedOpenTab ? (
+        <BoardRibbon
+          openTab={resolvedOpenTab}
+          boardStream={boardStream}
+          settingsDisabled={settingsDisabled}
           onEditView={onEditView}
           parentColumns={parentColumns}
           childColumns={childColumns}
           childGroups={childGroups}
           onParentColumnsSave={onParentColumnsSave}
           onChildColumnsSave={onChildColumnsSave}
+          onLinkDeals={onLinkDeals}
         />
-      </div>
+      ) : null}
     </header>
   );
 };
