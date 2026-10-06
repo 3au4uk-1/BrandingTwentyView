@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 
 import { VIEW_VISIBILITY } from 'src/constants/view-visibility';
 
-import { useAnchoredFixedBox } from './hooks/useAnchoredFixedBox';
+import { ANCHOR_MENU_GAP_PX, useAnchoredRootBox } from './hooks/useAnchoredRootBox';
 import { useOutsideDismiss } from './hooks/useOutsideDismiss';
 import { useTheme } from './theme/ThemeContext';
 import { Button } from './ui/Button';
@@ -36,7 +36,7 @@ export const ViewSwitcher = ({
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const portalHostRef = usePortalHost();
-  const menuBox = useAnchoredFixedBox(isOpen, containerRef);
+  const menuBox = useAnchoredRootBox(isOpen, containerRef, portalHostRef);
   const dismiss = useCallback(() => setIsOpen(false), []);
   const dismissLayer = useOutsideDismiss(isOpen, containerRef, dismiss);
 
@@ -111,8 +111,8 @@ export const ViewSwitcher = ({
         ? createPortal(
             <div
               style={{
-                position: 'fixed',
-                top: menuBox.top,
+                position: 'absolute',
+                top: menuBox.bottom + ANCHOR_MENU_GAP_PX,
                 left: menuBox.left,
                 width: menuBox.width,
                 minWidth: '240px',

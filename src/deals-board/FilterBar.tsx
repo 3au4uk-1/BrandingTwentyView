@@ -13,7 +13,7 @@ import {
 } from './filter-model/use-filter-clause-editor';
 import { beginSessionClauses, commitSessionClauses } from './filter-model/session';
 import type { FilterClause, FilterState } from './filter-model/types';
-import { useAnchoredFixedBox } from './hooks/useAnchoredFixedBox';
+import { ANCHOR_MENU_GAP_PX, useAnchoredRootBox } from './hooks/useAnchoredRootBox';
 import { useCompanies } from './hooks/useCompanies';
 import { useOutsideDismiss } from './hooks/useOutsideDismiss';
 import type { FieldDescriptor } from './metadata/types';
@@ -66,7 +66,7 @@ export const FilterBar = ({
   const [debouncedCompanySearch, setDebouncedCompanySearch] = useState('');
   const builderRef = useRef<HTMLDivElement | null>(null);
   const portalHostRef = usePortalHost();
-  const menuBox = useAnchoredFixedBox(isBuilderOpen, builderRef);
+  const menuBox = useAnchoredRootBox(isBuilderOpen, builderRef, portalHostRef);
 
   const effectiveClauses =
     value.sessionClauses === undefined ? viewClauses : value.sessionClauses;
@@ -610,8 +610,8 @@ export const FilterBar = ({
           ? createPortal(
               <div
                 style={{
-                  position: 'fixed',
-                  top: menuBox.top,
+                  position: 'absolute',
+                  top: menuBox.bottom + ANCHOR_MENU_GAP_PX,
                   left: menuBox.left,
                   zIndex: zIndex.dropdown,
                   border: `1px solid ${colors.border}`,
