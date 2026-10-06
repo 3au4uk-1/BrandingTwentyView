@@ -1,7 +1,7 @@
 # Реализация — лента вкладок вместо сводки
 
 Date: 2026-10-06  
-Status: approved in conversation, pending spec review  
+Status: approved  
 Repo: BrandingTwentyView  
 Scope: desktop chrome of the Реализация board (`BoardToolbar` + removal of `BoardInsightPanel`).  
 Replaces the top-block layout in `2026-07-30-deals-board-top-panel-minimal-design.md`. Turnover stays a text button. Prefix counts stay as the deal-count tooltip only.  
